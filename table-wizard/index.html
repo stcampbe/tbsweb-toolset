@@ -1,1 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeMirror Table Editor with Multi-Table Support</title>
+    <!-- CodeMirror CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+    <!-- CodeMirror Theme (Dracula for dark mode aesthetics) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css">
 
+    <!-- CodeMirror JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+    <!-- CodeMirror Modes for HTML -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js"></script>
+
+    <style>
+        /* Base styles for the main page (handles light and dark modes) */
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            background-color: #f3f4f6; /* Light mode background */
+            color: #1f2937; /* Light mode text */
+            box-sizing: border-box; /* Ensure padding/border included in element's total width/height */
+        }
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #1f2937; /* Dark mode background */
+                color: #f9fafb; /* Dark mode text */
+            }
+        }
+
+        /* Container for editor and preview panes */
+        .container {
+            display: flex;
+            flex: 1; /* Occupy remaining vertical space */
+            overflow: hidden; /* Prevent content overflow */
+            padding: 10px;
+        }
+
+        /* Styles for individual panes (editor and preview) */
+        .editor-pane, .preview-pane {
+            flex: 1; /* Distribute horizontal space equally */
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #d1d5db; /* Light mode border */
+            border-radius: 8px;
+            margin: 0 5px; /* Spacing between panes */
+            overflow: hidden;
+            background-color: #ffffff; /* Pane background in light mode */
+        }
+        @media (prefers-color-scheme: dark) {
+            .editor-pane, .preview-pane {
+                border-color: #4b5563; /* Dark mode border */
+                background-color: #374151; /* Pane background in dark mode */
+            }
+        }
+
+        h2 {
+            margin: 0;
+            padding: 10px;
+            font-size: 1.2em;
+            text-align: center;
+            border-bottom: 1px solid #d1d5db; /* Separator */
+            color: #333; /* Light mode heading color */
+        }
+        @media (prefers-color-scheme: dark) {
+            h2 {
+                border-color: #4b5563; /* Dark mode separator */
+                color: #f9fafb; /* Dark mode heading color */
+            }
+        }
+
+        /* CodeMirror editor specific styles */
+        .CodeMirror {
+            flex: 1; /* Occupy remaining vertical space */
+            height: auto; /* Allow CodeMirror to fill flex container */
+            font-size: 14px;
+            line-height: 1.5;
+            border-radius: 0 0 8px 8px; /* Match pane border-radius */
+        }
+
+        /* Styles for the iframe preview */
+        iframe {
+            flex: 1; /* Occupy remaining vertical space */
+            width: 100%;
+            border: none; /* Iframe itself has no border */
+            background-color: white; /* Default iframe background (will be overridden by inner body CSS) */
+        }
+
+        /* Styles for mode selection buttons */
+        .mode-selection {
+            display: flex;
+            justify-content: center;
+            padding: 10px;
+            background-color: #e0e7ee; /* Light mode background for controls */
+            border-bottom: 1px solid #d1d5db;
+        }
+        @media (prefers-color-scheme: dark) {
+            .mode-selection {
+                background-color: #2d3748; /* Dark mode background for controls */
+                border-bottom-color: #4b5563;
+            }
+        }
+
+        .mode-btn {
+            background-color: #cbd5e1; /* Light mode default button */
+            color: #1f2937;
+            border: 1px solid #9ca3af;
+            padding: 8px 15px;
+            margin: 0 5px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+        }
+        .mode-btn:hover {
+            background-color: #aeb9c6;
+        }
+        .mode-btn.active-mode {
+            background-color: #3b82f6; /* Blue active button */
+            color: white;
+            border-color: #2563eb;
+            pointer-events: none; /* Disable click on active button */
+        }
+        @media (prefers-color-scheme: dark) {
+            .mode-btn {
+                background-color: #4a5568; /* Dark mode default button */
+                color: #f9fafb;
+                border-color: #6b7280;
+            }
+            .mode-btn:hover {
+                background-color: #6b7280;
+            }
+            .mode-btn.active-mode {
+                background-color: #2563eb; /* Dark mode blue active button */
+                color: white;
+                border-color: #1d4ed8;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="editor-pane">
+            <h2>HTML Editor</h2>
+            <textarea id="code-editor"></textarea>
+        </div>
+        <div class="preview-pane">
+            <div class="mode-selection">
+                <button id="type-mode-btn" class="mode-btn active-mode" onclick="setMode('type')">Type Mode</button>
+                <button id="select-mode-btn" class="mode-btn" onclick="setMode('select')">Select Mode</button>
+            </div>
+            <h2>Table Preview</h2>
+            <iframe id="table-preview"></iframe>
+        </div>
+    </div>
+
+    <script>
+        // Initial HTML content for the tables
+        const initialTableHtml = `
+<p>First Table (Complex)</p>
+<table>
+  <thead>
+    <tr>
+      <th>Category</th>
+      <th colspan="2">Details</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Fruits</td>
+      <td>Apple</td>
+      <td>Red</td>
+    </tr>
+    <tr>
+      <td rowspan="2">Vegetables</td>
+      <td>Carrot</td>
+      <td>Orange</td>
+    </tr>
+    <tr>
+      <td>Spinach</td>
+      <td>Green</td>
+    </tr>
+    <tr>
+      <td>Dairy</td>
+      <td colspan="2">Milk, Cheese</td>
+    </tr>
+  </tbody>
+</table>
+
+<br>
+
+<p>Second Table (Simple)</p>
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Item</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>101</td>
+      <td>Laptop</td>
+    </tr>
+    <tr>
+      <td>102</td>
+      <td>Mouse</td>
+    </tr>
+  </tbody>
+</table>
+        `;
+
+        // Initialize CodeMirror
+        const cm = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
+            mode: 'htmlmixed',
+            lineNumbers: true,
+            theme: 'dracula', // Use the 'dracula' theme for a dark editor look
+            indentUnit: 2,
+            tabSize: 2,
+            lineWrapping: true
+        });
+
+        const iframe = document.getElementById('table-preview');
+        let updatingFromIframe = false; // Flag to prevent infinite sync loops
+
+        // Debounce function to limit how often iframe updates trigger CodeMirror
+        function debounce(func, delay) {
+            let timeout;
+            return function(...args) {
+                const context = this;
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(context, args), delay);
+            };
+        }
+
+        // Function to strip contenteditable attributes from an HTML string
+        function stripContentEditable(htmlString) {
+            const parser = new DOMParser();
+            // Using a template element allows parsing arbitrary HTML fragments
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlString;
+            const cells = tempDiv.querySelectorAll('td, th');
+            cells.forEach(cell => {
+                cell.removeAttribute('contenteditable');
+            });
+            return tempDiv.innerHTML;
+        }
+
+        // Debounced function to update CodeMirror from iframe changes (Type Mode)
+        const iframeToCmDebounced = debounce(() => {
+            if (iframe.contentDocument) {
+                // Get all tables' outer HTML and reconstruct the full content
+                const tempDiv = document.createElement('div');
+                Array.from(iframe.contentDocument.body.children).forEach(child => {
+                    tempDiv.appendChild(child.cloneNode(true)); // Clone to avoid modifying live DOM
+                });
+                const fullHtmlWithEditable = tempDiv.innerHTML;
+                const cleanedHtml = stripContentEditable(fullHtmlWithEditable);
+
+                updatingFromIframe = true;
+                cm.setValue(cleanedHtml);
+            }
+        }, 300); // 300ms delay
+
+        // Global variables for mode and selection logic
+        let currentMode = 'type'; // 'type' or 'select'
+        let selectedCells = new Set(); // Stores references to ALL selected DOM cells across all tables
+        let lastClickedCellInfo = null; // Stores {tableElement: HTMLTableElement, logicalCoords: {rowIndex, colIndex}}
+        let isDragging = false;
+        let dragStartCellInfo = null; // Stores {tableElement: HTMLTableElement, logicalCoords: {rowIndex, colIndex}}
+
+        // Event handler variables to allow for removal/attachment to iframe document
+        let currentIframeMouseDownHandler = null;
+        let currentIframeMouseMoveHandler = null;
+        let currentIframeMouseUpHandler = null;
+        let currentIframeSelectStartHandler = null;
+
+        // Map to store virtual grid data for each table element
+        // Key: HTMLTableElement, Value: { grid: HTMLTableCellElement[][], domCellToLogicalCoords: Map<HTMLTableCellElement, {rowIndex, colIndex}> }
+        const allTablesVirtualGridData = new Map();
+
+        /**
+         * Builds a virtual grid representing the visual layout of an HTML table,
+         * accounting for colspan and rowspan.
+         * @param {HTMLTableElement} tableElement The table DOM element.
+         * @returns {{grid: HTMLTableCellElement[][], domCellToLogicalCoords: Map<HTMLTableCellElement, {rowIndex: number, colIndex: number}>}}
+         */
+        function buildVirtualGrid(tableElement) {
+            const grid = [];
+            const domCellToLogicalCoords = new Map();
+
+            if (!tableElement) return { grid, domCellToLogicalCoords };
+
+            // Determine an estimated maximum number of columns needed for the grid
+            // This is a rough estimate to pre-fill rows and prevent `undefined` issues
+            let maxRows = tableElement.rows.length;
+            let maxCols = 0;
+            Array.from(tableElement.rows).forEach(row => {
+                let currentRowCols = 0;
+                Array.from(row.cells).forEach(cell => {
+                    currentRowCols += parseInt(cell.getAttribute('colspan') || '1', 10);
+                });
+                if (currentRowCols > maxCols) maxCols = currentRowCols;
+            });
+            // Add some buffer for maxCols, as the actual logical grid might be larger due to rowspans
+            maxCols = maxCols * 2;
+
+            // Initialize grid with nulls to represent empty slots
+            for (let r = 0; r < maxRows + 5; r++) { // Add buffer for rows as well
+                grid[r] = [];
+                for (let c = 0; c < maxCols; c++) {
+                    grid[r][c] = null;
+                }
+            }
+
+            // Iterate through table rows and cells to populate the virtual grid
+            for (let r = 0; r < tableElement.rows.length; r++) {
+                const row = tableElement.rows[r];
+                let currentLogicalCol = 0;
+
+                for (let c = 0; c < row.cells.length; c++) {
+                    const cell = row.cells[c];
+                    const rowspan = parseInt(cell.getAttribute('rowspan') || '1', 10);
+                    const colspan = parseInt(cell.getAttribute('colspan') || '1', 10);
+
+                    // Find the next available slot in the current row of the virtual grid
+                    while (grid[r][currentLogicalCol] !== null) {
+                        currentLogicalCol++;
+                    }
+
+                    // Store the logical coordinates for this cell
+                    domCellToLogicalCoords.set(cell, { rowIndex: r, colIndex: currentLogicalCol });
+
+                    // Place the cell in the virtual grid and mark spanned slots
+                    for (let rs = 0; rs < rowspan; rs++) {
+                        for (let cs = 0; cs < colspan; cs++) {
+                            // Ensure the row exists and is correctly sized
+                            if (!grid[r + rs]) {
+                                grid[r + rs] = [];
+                                for(let i = 0; i < maxCols; i++) grid[r + rs][i] = null;
+                            }
+                            // Place the cell reference
+                            grid[r + rs][currentLogicalCol + cs] = cell;
+                        }
+                    }
+                    currentLogicalCol += colspan; // Move to the next logical column after placing the cell
+                }
+            }
+
+            // Trim the grid to its actual content bounds dynamically
+            let actualMaxRow = 0;
+            let actualMaxCol = 0;
+            grid.forEach((rowArr, rowIndex) => {
+                rowArr.forEach((cell, colIndex) => {
+                    if (cell) {
+                        if (rowIndex > actualMaxRow) actualMaxRow = rowIndex;
+                        if (colIndex > actualMaxCol) actualMaxCol = colIndex;
+                    }
+                });
+            });
+
+            const trimmedGrid = [];
+            for (let r = 0; r <= actualMaxRow; r++) {
+                trimmedGrid[r] = [];
+                for (let c = 0; c <= actualMaxCol; c++) {
+                    trimmedGrid[r][c] = grid[r]?.[c] || null; // Use optional chaining
+                }
+            }
+            return { grid: trimmedGrid, domCellToLogicalCoords: domCellToLogicalCoords };
+        }
+
+        /**
+         * Gets the logical (virtual grid) coordinates for a given DOM cell within its table's context.
+         * @param {HTMLTableCellElement} cell The DOM cell.
+         * @param {HTMLTableElement} tableElement The parent table of the cell.
+         * @returns {{rowIndex: number, colIndex: number}|null}
+         */
+        function getLogicalCoords(cell, tableElement) {
+            const tableGridData = allTablesVirtualGridData.get(tableElement);
+            return tableGridData ? tableGridData.domCellToLogicalCoords.get(cell) : null;
+        }
+
+        /**
+         * Clears the visual selection and the internal selectedCells set.
+         */
+        function clearSelection() {
+            selectedCells.forEach(cell => {
+                if (cell && cell.classList) { // Check if cell still exists in DOM
+                    cell.classList.remove('selected-cell');
+                }
+            });
+            selectedCells.clear();
+            lastClickedCellInfo = null;
+        }
+
+        /**
+         * Adds a DOM cell to the selection.
+         * @param {HTMLTableCellElement} cell
+         */
+        function addCellToSelection(cell) {
+            if (cell && !selectedCells.has(cell)) {
+                cell.classList.add('selected-cell');
+                selectedCells.add(cell);
+            }
+        }
+
+        /**
+         * Removes a DOM cell from the selection.
+         * @param {HTMLTableCellElement} cell
+         */
+        function removeCellFromSelection(cell) {
+            if (cell && selectedCells.has(cell)) {
+                cell.classList.remove('selected-cell');
+                selectedCells.delete(cell);
+            }
+        }
+
+        /**
+         * Toggles the selection of a single DOM cell.
+         * @param {HTMLTableCellElement} cell
+         */
+        function toggleCellSelection(cell) {
+            if (!cell) return;
+            if (selectedCells.has(cell)) {
+                removeCellFromSelection(cell);
+            } else {
+                addCellToSelection(cell);
+            }
+        }
+
+        /**
+         * Selects all unique DOM cells within a logical rectangular region defined by
+         * start and end logical coordinates *within a specific table's grid*.
+         * @param {{rowIndex: number, colIndex: number}} startCoords
+         * @param {{rowIndex: number, colIndex: number}} endCoords
+         * @param {HTMLTableCellElement[][]} targetGrid The specific virtual grid for the table.
+         */
+        function selectCellsInLogicalRect(startCoords, endCoords, targetGrid) {
+            const minRow = Math.min(startCoords.rowIndex, endCoords.rowIndex);
+            const maxRow = Math.max(startCoords.rowIndex, endCoords.rowIndex);
+            const minCol = Math.min(startCoords.colIndex, endCoords.colIndex);
+            const maxCol = Math.max(startCoords.colIndex, endCoords.colIndex);
+
+            // Use a temporary set to ensure only unique DOM cells are added
+            const cellsToAdd = new Set();
+            for (let r = minRow; r <= maxRow; r++) {
+                if (targetGrid[r]) { // Ensure the row exists in the virtual grid
+                    for (let c = minCol; c <= maxCol; c++) {
+                        if (targetGrid[r][c] !== undefined && targetGrid[r][c] !== null) {
+                            cellsToAdd.add(targetGrid[r][c]); // Add the actual DOM cell
+                        }
+                    }
+                }
+            }
+            cellsToAdd.forEach(cell => addCellToSelection(cell));
+        }
+
+        // --- Select Mode Event Listener Management ---
+
+        function attachSelectModeListeners(iframeDoc) {
+            // Detach any previous handlers first to prevent duplicates
+            detachSelectModeListeners(iframeDoc);
+
+            currentIframeMouseDownHandler = (e) => {
+                const targetCell = e.target.closest('td, th');
+                if (!targetCell) {
+                    clearSelection(); // Clicked outside a cell in the table
+                    isDragging = false;
+                    dragStartCellInfo = null;
+                    return;
+                }
+
+                const targetTable = targetCell.closest('table');
+                if (!targetTable) { // Should not happen if targetCell is valid td/th
+                    clearSelection();
+                    isDragging = false;
+                    dragStartCellInfo = null;
+                    return;
+                }
+
+                const currentLogicalCoords = getLogicalCoords(targetCell, targetTable);
+                if (!currentLogicalCoords) return;
+
+                if (e.shiftKey && lastClickedCellInfo && lastClickedCellInfo.tableElement === targetTable) {
+                    // Shift+click on the same table
+                    clearSelection(); // Shift+click usually implies a new range selection
+                    const tableGrid = allTablesVirtualGridData.get(targetTable).grid;
+                    selectCellsInLogicalRect(lastClickedCellInfo.logicalCoords, currentLogicalCoords, tableGrid);
+                } else if (e.ctrlKey || e.metaKey) { // Ctrl/Cmd + click
+                    toggleCellSelection(targetCell);
+                } else { // Single click or start of drag
+                    clearSelection(); // Clear existing selection for new single or drag selection
+                    addCellToSelection(targetCell);
+                    isDragging = true;
+                    dragStartCellInfo = { tableElement: targetTable, logicalCoords: currentLogicalCoords };
+                }
+                lastClickedCellInfo = { tableElement: targetTable, logicalCoords: currentLogicalCoords };
+                e.preventDefault(); // Prevent default browser drag/selection behavior
+            };
+
+            currentIframeMouseMoveHandler = (e) => {
+                if (isDragging && dragStartCellInfo) {
+                    const targetCell = e.target.closest('td, th');
+                    // Only continue if still dragging within the initial table
+                    if (targetCell && targetCell.closest('table') === dragStartCellInfo.tableElement) {
+                        const currentLogicalCoords = getLogicalCoords(targetCell, dragStartCellInfo.tableElement);
+                        if (currentLogicalCoords) {
+                            // Clear all cells, then re-select based on the current drag rectangle
+                            clearSelection(); // Clear the current selection first
+                            const tableGrid = allTablesVirtualGridData.get(dragStartCellInfo.tableElement).grid;
+                            selectCellsInLogicalRect(dragStartCellInfo.logicalCoords, currentLogicalCoords, tableGrid);
+                        }
+                    }
+                }
+            };
+
+            currentIframeMouseUpHandler = () => {
+                isDragging = false;
+                dragStartCellInfo = null;
+            };
+
+            currentIframeSelectStartHandler = (e) => {
+                if (currentMode === 'select') {
+                    e.preventDefault(); // Prevent native text selection when in select mode
+                }
+            };
+
+            iframeDoc.addEventListener('mousedown', currentIframeMouseDownHandler);
+            iframeDoc.addEventListener('mousemove', currentIframeMouseMoveHandler);
+            iframeDoc.addEventListener('mouseup', currentIframeMouseUpHandler);
+            iframeDoc.addEventListener('selectstart', currentIframeSelectStartHandler); // Prevent text selection
+        }
+
+        function detachSelectModeListeners(iframeDoc) {
+            if (currentIframeMouseDownHandler) {
+                iframeDoc.removeEventListener('mousedown', currentIframeMouseDownHandler);
+                iframeDoc.removeEventListener('mousemove', currentIframeMouseMoveHandler);
+                iframeDoc.removeEventListener('mouseup', currentIframeMouseUpHandler);
+                iframeDoc.removeEventListener('selectstart', currentIframeSelectStartHandler);
+            }
+            currentIframeMouseDownHandler = null;
+            currentIframeMouseMoveHandler = null;
+            currentIframeMouseUpHandler = null;
+            currentIframeSelectStartHandler = null;
+        }
+
+        // --- Core Functions ---
+
+        // Function to update the iframe's content and configure cells
+        function updateIframeContent(htmlContent) {
+            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+            iframeDoc.open();
+            // Wrap the HTML content in a full document structure for proper rendering and styling
+            iframeDoc.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>
+                        /* Styles specific to the iframe content */
+                        body {
+                            font-family: sans-serif;
+                            margin: 0;
+                            padding: 10px;
+                            background-color: white; /* Default light background */
+                            color: #1f2937; /* Default light text */
+                            box-sizing: border-box;
+                        }
+                        @media (prefers-color-scheme: dark) {
+                            body {
+                                background-color: #374151; /* Dark mode background */
+                                color: #f9fafb; /* Dark mode text */
+                            }
+                        }
+                        table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin-bottom: 1em;
+                            background-color: #ffffff; /* Light mode table background */
+                            color: #1f2937; /* Light mode table text */
+                        }
+                        @media (prefers-color-scheme: dark) {
+                            table {
+                                background-color: #4b5563; /* Dark mode table background */
+                                color: #f9fafb; /* Dark mode table text */
+                            }
+                        }
+                        th, td {
+                            border: 1px solid #d1d5db; /* Light mode border */
+                            padding: 8px;
+                            text-align: left;
+                            user-select: none; /* Prevent browser text selection in cells */
+                        }
+                        @media (prefers-color-scheme: dark) {
+                            th, td {
+                                border-color: #6b7280; /* Dark mode border */
+                            }
+                        }
+                        th {
+                            background-color: #e5e7eb; /* Light mode header background */
+                        }
+                        @media (prefers-color-scheme: dark) {
+                            th {
+                                background-color: #6b7280; /* Dark mode header background */
+                            }
+                        }
+                        /* Style for contenteditable cells */
+                        td[contenteditable="true"]:focus, th[contenteditable="true"]:focus {
+                            outline: 2px solid #3b82f6; /* Blue outline on focus */
+                            outline-offset: -1px; /* Bring outline inside border */
+                        }
+                        td[contenteditable="true"]:hover, th[contenteditable="true"]:hover {
+                            background-color: #f0f4f8; /* Light hover background */
+                        }
+                        @media (prefers-color-scheme: dark) {
+                            td[contenteditable="true"]:hover, th[contenteditable="true"]:hover {
+                                background-color: #526071; /* Dark hover background */
+                            }
+                        }
+                        /* Style for selected cells in Select Mode */
+                        .selected-cell {
+                            background-color: #bfdbfe; /* Light blue selection */
+                            border-color: #3b82f6;
+                        }
+                        @media (prefers-color-scheme: dark) {
+                            .selected-cell {
+                                background-color: #1e3a8a; /* Darker blue selection */
+                                border-color: #3b82f6;
+                            }
+                        }
+                        p { /* Basic paragraph style for tables separation */
+                            margin-top: 1.5em;
+                            margin-bottom: 0.5em;
+                            color: inherit;
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${htmlContent}
+                </body>
+                </html>
+            `);
+            iframeDoc.close();
+
+            // Clear previous virtual grid data and rebuild for all tables
+            allTablesVirtualGridData.clear();
+            const tablesInIframe = iframeDoc.querySelectorAll('table');
+            tablesInIframe.forEach(tableElement => {
+                allTablesVirtualGridData.set(tableElement, buildVirtualGrid(tableElement));
+            });
+
+            // If no tables, ensure select mode listeners are detached
+            if (tablesInIframe.length === 0) {
+                detachSelectModeListeners(iframeDoc);
+                return;
+            }
+
+            // Get all cells from all tables
+            const allCells = iframeDoc.querySelectorAll('td, th');
+
+            // Configure cells and attach/detach listeners based on current mode
+            if (currentMode === 'type') {
+                allCells.forEach(cell => {
+                    cell.contentEditable = 'true';
+                    cell.removeEventListener('input', iframeToCmDebounced); // Remove existing to prevent duplicates
+                    cell.removeEventListener('blur', iframeToCmDebounced); // Remove existing
+                    cell.addEventListener('input', iframeToCmDebounced);
+                    cell.addEventListener('blur', iframeToCmDebounced);
+                });
+                detachSelectModeListeners(iframeDoc); // Ensure select mode listeners are removed
+            } else { // currentMode === 'select'
+                allCells.forEach(cell => {
+                    cell.contentEditable = 'false'; // Disable direct editing
+                    cell.removeEventListener('input', iframeToCmDebounced); // Remove type mode listeners
+                    cell.removeEventListener('blur', iframeToCmDebounced); // Remove type mode listeners
+                });
+                attachSelectModeListeners(iframeDoc); // Re-attach select mode listeners
+            }
+
+            // Re-apply visual selection for the *new* DOM elements
+            // This is complex for multiple tables and re-renders. A simplified approach:
+            // If the last selected cell was in a table that still exists and has the same logical position,
+            // re-select it. Otherwise, clear. For robust re-selection, you'd need stable IDs.
+            const currentlySelectedElements = Array.from(selectedCells); // Preserve current selection references
+            clearSelection(); // Clear old references and visual classes
+
+            if (currentMode === 'select') {
+                currentlySelectedElements.forEach(oldCell => {
+                    // Try to find the new equivalent cell using its table and logical coords
+                    const oldCellTable = oldCell.closest('table');
+                    const oldLogicalCoords = getLogicalCoords(oldCell, oldCellTable);
+
+                    if (oldCellTable && oldLogicalCoords) {
+                        const newGridData = allTablesVirtualGridData.get(oldCellTable);
+                        if (newGridData && newGridData.grid[oldLogicalCoords.rowIndex]) {
+                            const newCell = newGridData.grid[oldLogicalCoords.rowIndex][oldLogicalCoords.colIndex];
+                            if (newCell) {
+                                addCellToSelection(newCell);
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Function to set the mode (Type or Select)
+        window.setMode = function(newMode) { // Made global to be accessible from inline onclick
+            if (currentMode === newMode) return;
+
+            currentMode = newMode;
+            clearSelection(); // Clear any existing selection when changing modes
+
+            // Update button styles
+            document.getElementById('type-mode-btn').classList.remove('active-mode');
+            document.getElementById('select-mode-btn').classList.remove('active-mode');
+            document.getElementById(`${newMode}-mode-btn`).classList.add('active-mode');
+
+            // Re-render iframe content to apply new contenteditable state and listeners
+            updateIframeContent(cm.getValue());
+        };
+
+        // Set initial content for CodeMirror and then update the iframe
+        cm.setValue(initialTableHtml);
+        updateIframeContent(initialTableHtml);
+
+        // CodeMirror change listener: updates iframe when CM content changes
+        cm.on('change', () => {
+            // If the change came from the iframe (Type Mode), don't update the iframe again
+            if (updatingFromIframe) {
+                updatingFromIframe = false; // Reset flag
+                return;
+            }
+            const newHtml = cm.getValue();
+            updateIframeContent(newHtml);
+        });
+    </script>
+</body>
+</html>
