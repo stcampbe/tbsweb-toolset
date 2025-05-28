@@ -1,1 +1,2266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BeforeYouPost&#8482; - QA/Prototype Wizard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/dracula.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/show-hint.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/dialog/dialog.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.0/beautify-html.min.js"></script>
 
+    <style>
+        /* Custom styles for the editor */
+        html, body {
+            height: 100%; /* Ensure html and body take full viewport height */
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Prevent body from scrolling */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif; /* Using Inter font */
+            display: flex;
+            flex-direction: column;
+            background-color: #1a202c; /* Dark background */
+        }
+        .editor-container {
+            display: flex;
+            flex-grow: 1; /* Allow container to grow and fill available space */
+            padding: 1rem; /* Apply padding to all sides */
+            gap: 1rem; /* Space between editor and preview */
+            margin: 0;
+            width: 100%; /* Full width */
+            height: calc(100% - 2rem); /* Take full height minus padding */
+            box-sizing: border-box; /* Include padding in total height */
+        }
+        .code-panel, .preview-panel {
+            background-color: #2d3748; /* Slightly lighter dark background for panels */
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); /* Darker shadow */
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            /* Flex properties will be managed by JavaScript for resizing */
+            min-width: 200px; /* Minimum width for panels */
+            min-height: 400px; /* Minimum height for panels */
+            height: 100%; /* Explicitly make panels take full height of editor-container */
+            box-sizing: border-box; /* Include padding and border in element's total width/height */
+            overflow: hidden; /* Important: Panel itself should not scroll, its children should */
+        }
+
+        /* Resizer bar styling */
+        .resizer {
+            width: 10px; /* Width of the draggable bar */
+            background-color: #4a5568; /* Darker gray for the bar */
+            cursor: ew-resize; /* East-west resize cursor */
+            flex-shrink: 0; /* Prevent resizer from shrinking */
+            border-radius: 0.25rem; /* Slightly rounded corners */
+            transition: background-color 0.2s ease; /* Smooth transition on hover */
+        }
+        .resizer:hover {
+            background-color: #6a768f; /* Lighter gray on hover */
+        }
+
+        textarea {
+            width: 100%;
+            flex-grow: 1; /* Allow textarea to fill available height */
+            border: 1px solid #4a5568; /* Darker border */
+            border-radius: 0.5rem; /* rounded-lg */
+            padding: 0.75rem;
+            font-family: monospace; /* Monospace font for code */
+            font-size: 0.9rem;
+            resize: vertical; /* Allow vertical resizing */
+            min-height: 200px; /* Minimum height for textarea */
+            outline: none; /* Remove default outline */
+            background-color: #2d3748; /* Darker background for textarea */
+            color: #ffffff; /* Lighter text color */
+        }
+        iframe {
+            width: 100%;
+            height: 100%; /* Make iframe fill its parent's height */
+            flex-grow: 1;
+            border: 1px solid #4a5568; /* Darker border */
+            border-radius: 0.5rem; /* rounded-lg */
+            background-color: #ffffff; /* Preview window background remains white */
+            overflow: auto; /* Ensure iframe itself can scroll if its content overflows */
+        }
+        h1 {
+            color: #ffffff; /* White text for H1 in editor panel */
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        h2 {
+            color: #ffffff; /* White text for H2 in panel headers */
+        }
+        label {
+            color: #cbd5e0; /* Lighter gray for labels */
+        }
+        input[type="text"] {
+            background-color: #4a5568; /* Darker background for input */
+            color: #ffffff; /* White text for input */
+            border-color: #4a5568; /* Darker border for input */
+        }
+        input[type="text"]::placeholder {
+            color: #a0aec0; /* Lighter placeholder text */
+        }
+
+
+        /* CodeMirror specific adjustments */
+        .CodeMirror {
+            border: 1px solid #4a5568; /* Match new border style */
+            border-radius: 0.5rem; /* Match existing border-radius */
+            height: 100%; /* Ensure CodeMirror takes full height of its flex parent */
+            width: 100%; /* Ensure CodeMirror takes full width of its flex parent */
+            flex-grow: 1; /* Allow CodeMirror to fill available height */
+            font-size: 0.9rem; /* Match textarea font size */
+        }
+        .CodeMirror-scroll {
+            height: 100%; /* Ensure the scrollable area also takes full height */
+            min-height: 200px; /* Keep min-height for small content */
+            overflow: auto; /* Allow scrolling within the editor */
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .editor-container {
+                flex-direction: column; /* Stack vertically on small screens */
+            }
+            .code-panel, .preview-panel {
+                min-height: 300px; /* Adjust min height for smaller screens */
+            }
+            .CodeMirror-scroll {
+                min-height: 150px; /* Adjust min height for smaller screens */
+            }
+            .resizer {
+                width: 100%; /* Full width for vertical resizer on small screens */
+                height: 10px; /* Height for vertical resizer */
+                cursor: ns-resize; /* North-south resize cursor */
+            }
+        }
+
+        /* Styles for button group */
+        .button-group {
+            display: flex;
+            width: 100%; /* Make it span full width */
+            border-radius: 0.5rem; /* rounded-md */
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow-sm */
+            border: 1px solid #4a5568; /* Darker border for button group */
+            flex-wrap: wrap; /* Keep for responsiveness on smaller screens */
+        }
+
+        .button-group button {
+            flex: 1; /* Make buttons take up equal space */
+            border-radius: 0; /* Remove individual button rounded corners */
+            border: none; /* Remove individual button borders */
+            margin: 0; /* Remove individual button margins */
+            padding: 0.5rem 0.75rem; /* Consistent padding */
+            font-size: 0.875rem; /* text-sm */
+            line-height: 1.25rem; /* leading-5 */
+            position: relative; /* For z-index if needed */
+            color: #ffffff; /* White text for all buttons */
+            font-weight: bold; /* Make buttons bold */
+        }
+
+        /* Specific styles for the Sections and Headings buttons - NO FLEX */
+        #toggleSectionsBtn,
+        #toggleHeadingsBtn {
+            flex: none; /* Override flex: 1; for these specific buttons */
+            width: auto; /* Allow buttons to size based on content */
+            border: 1px solid #4a5568; /* Add border back for individual buttons */
+            border-radius: 0.5rem; /* Add rounded corners back for individual buttons */
+            margin-left: 0.5rem; /* Add spacing between them and other buttons */
+        }
+
+        /* Adjust border between buttons in the main button groups */
+        .button-group:not(.no-border-buttons) button:not(:last-child) {
+            border-right: 1px solid rgba(74, 85, 104, 0.5); /* Darker separator between buttons */
+        }
+        .button-group.no-border-buttons button:not(:last-child) {
+            border-right: none; /* Remove border for this specific group */
+        }
+
+        /* Specific styling for the byline and URL/Image source button groups */
+        .button-group.individual-rounded-buttons {
+            border: none; /* Remove group border */
+            box-shadow: none; /* Remove group shadow */
+            width: auto; /* Allow the group to size to content */
+            gap: 0.5rem; /* Add gap between individual buttons */
+        }
+
+        .button-group.individual-rounded-buttons button {
+            flex: none; /* Do not make buttons take equal space */
+            border-radius: 0.5rem; /* Ensure rounded corners */
+            border: 1px solid #4a5568; /* Add individual button border */
+            padding: 0.5rem 0.75rem; /* Consistent padding */
+        }
+        /* Remove right border for individual rounded buttons */
+        .button-group.individual-rounded-buttons button:not(:last-child) {
+            border-right: 1px solid #4a5568; /* Keep individual border */
+        }
+
+
+        .button-group button:first-child {
+            border-top-left-radius: 0.5rem;
+            border-bottom-left-radius: 0.5rem;
+        }
+
+        .button-group button:last-child {
+            border-top-right-radius: 0.5rem;
+            border-bottom-right-radius: 0.5rem;
+        }
+
+        .button-group button:hover {
+            z-index: 1; /* Bring hovered button to front to show full border/shadow */
+        }
+
+        /* Fullscreen editor styles */
+        .editor-container.fullscreen-editor .code-panel {
+            width: 100% !important; /* Override inline style */
+            flex-grow: 1 !important;
+            flex-shrink: 1 !important;
+        }
+        .editor-container.fullscreen-editor .preview-panel,
+        .editor-container.fullscreen-editor .resizer {
+            display: none !important;
+        }
+
+        /* Fullscreen preview styles */
+        .editor-container.fullscreen-preview .preview-panel {
+            width: 100% !important; /* Override inline style */
+            flex-grow: 1 !important;
+            flex-shrink: 1 !important;
+        }
+        .editor-container.fullscreen-preview .code-panel,
+        .editor-container.fullscreen-preview .resizer {
+            display: none !important;
+        }
+
+        /* Customize section styles */
+        .customize-section {
+            background-color: #3b455a; /* Slightly darker than panel, lighter than background */
+            border-radius: 0.5rem;
+            padding: 1rem; /* Re-added padding */
+            margin-bottom: 1rem; /* Re-added margin-bottom */
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .customize-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            /* Removed padding-bottom, margin-bottom, border-bottom */
+        }
+
+        .customize-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .customize-content.expanded {
+            max-height: 500px; /* Adjust as needed to fit content */
+            transition: max-height 0.5s ease-in;
+            padding-top: 0.5rem; /* Add padding to content when expanded */
+        }
+
+        .customize-header svg {
+            transition: transform 0.3s ease;
+        }
+
+        .customize-header.expanded svg {
+            transform: rotate(180deg);
+        }
+
+        /* Adjustments for button spacing */
+        .code-panel h2 .inline-flex.mr-auto button,
+        .preview-panel h2 .inline-flex.mr-auto button {
+            margin-right: 0.5rem; /* Default margin for buttons within the group */
+        }
+
+        /* When in fullscreen editor mode, remove margin from the first button group */
+        .editor-container.fullscreen-editor .code-panel h2 .inline-flex.mr-auto {
+            margin-left: 0 !important; /* Remove any left margin on the button container */
+        }
+
+        /* When in fullscreen preview mode, remove margin from the first button group */
+        .editor-container.fullscreen-preview .preview-panel h2 .inline-flex.mr-auto {
+            margin-left: 0 !important; /* Remove any left margin on the button */
+        }
+
+        /* Ensure the button itself doesn't have an undesired left margin when its parent is adjusted */
+        .editor-container.fullscreen-editor .code-panel h2 .inline-flex.mr-auto #fullScreenBtn,
+        .editor-container.fullscreen-editor .code-panel h2 .inline-flex.mr-auto #exitFullScreenBtn,
+        .editor-container.fullscreen-preview .preview-panel h2 .inline-flex.mr-auto #fullScreenPreviewBtn,
+        .editor-container.fullscreen-preview .preview-panel h2 .inline-flex.mr-auto #exitFullScreenPreviewBtn {
+            margin-left: 0; /* Explicitly remove any left margin on the button */
+        }
+
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: #2d3748;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            color: #ffffff;
+            text-align: left; /* Left align content */
+            max-width: 90%;
+            width: 400px;
+        }
+
+        .modal-content h3 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            text-align: left; /* Ensure title is left aligned */
+        }
+
+        .modal-content p {
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-content button {
+            background-color: #4299e1; /* Blue-500 */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: bold;
+            transition: background-color 0.2s ease;
+        }
+
+        .modal-content button:hover {
+            background-color: #3182ce; /* Blue-600 */
+        }
+
+        .modal-content .button-group {
+            border: none; /* Remove border for button groups inside modal */
+            box-shadow: none; /* Remove shadow for button groups inside modal */
+            width: auto; /* Allow buttons to size naturally */
+        }
+
+        .modal-content .button-group button {
+            flex: none; /* Prevent buttons from taking equal space */
+            margin: 0.25rem; /* Add some margin between buttons */
+            border: 1px solid #4a5568; /* Add border back for individual buttons */
+            border-radius: 0.5rem; /* Add rounded corners back for individual buttons */
+            padding: 0.3rem 0.6rem; /* Reduced padding for smaller buttons */
+            font-size: 0.8rem; /* Reduced font size for smaller buttons */
+        }
+
+        .modal-content .button-group button.active {
+            background-color: #4f46e5; /* Indigo-600 for active state */
+            color: white;
+            border-color: #4f46e5;
+        }
+    </style>
+</head>
+<body>
+    <div class="editor-container">
+        <div class="code-panel">
+            <h2 class="text-xl font-semibold text-white mb-4 text-center flex flex-col sm:flex-row items-center justify-between flex-wrap">
+                <div class="inline-flex space-x-2 mr-auto">
+                    <button id="fullScreenBtn" class="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75v4.5m0-4.5h-4.5m4.5 0L15 9M20.25 20.25v-4.5m0 4.5h-4.5m4.5 0L15 15" />
+                        </svg>
+                    </button>
+                    <button id="exitFullScreenBtn" class="px-3 py-1 text-sm bg-orange-600 text-white rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50 font-bold flex items-center justify-center" style="display: none;">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 9l6-6m0 0l6 6m-6-6v12a6 6 0 01-12 0v-3" />
+                        </svg>
+                    </button>
+                </div>
+                <span class="flex-grow text-center sm:text-left">AEM Code</span>
+                <div class="inline-flex space-x-2 ml-auto mt-2 sm:mt-0">
+                    <button id="clearAllBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">Clear All</button>
+                    <button id="importHtmlBtn" class="px-3 py-1 text-sm bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 font-bold">Import HTML</button>
+                    <button id="exportHtmlBtn" class="px-3 py-1 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 font-bold">Export HTML</button>
+                    <input type="file" id="htmlFileInput" accept=".html" style="display: none;">
+                </div>
+            </h2>
+            <div class="flex flex-col items-start w-full sm:w-auto mb-4">
+                <div class="button-group flex-wrap w-full">
+                    <button id="cleanSpacesBtn" class="bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">Clean Spaces</button>
+                    <button id="cleanUrlsBtn" class="bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">Clean URLs</button>
+                    <button id="timeTagsBtn" class="bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">Time Tags</button>
+                    <button id="fixFnIdsBtn" class="px-4 py-2 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-semibold">
+                        Fix FN ID's
+                    </button>
+                    <button id="colophonBtn" class="bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">Colophon</button>
+                </div>
+            </div>
+            <textarea id="htmlCode" class="focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out" placeholder="Start typing your HTML body content here!">
+<p class="lead">This is a lead&nbsp;paragraph&nbsp;providing a brief introduction to the content below.</p>
+<section>
+    <h2 id="toc1">Sample Section Title</h2>
+    <section>
+        <h3 id="toc1-1">Section Heading 1</h3>
+<p>Lorem ipsum dolor sit amet, <a href="https://www.canada.ca/en/treasury-board-secretariat/services/benefit-plans/health-care-plan/public-service-health-care-plan-glance.html">consectetur</a> adipiscing elit. Sed do eiusmod tempor incididunt ut  labore et dolore’s magna aliqua.   Ut enim ad minim veniam, quis nostrud exercitation ullamco&rsquo;s laboris nisi ut aliquip ex ea commodo consequat.</p>
+<p><a href="/content/canadasite/en/government/system/government-wide-reporting-spending-operations.html">Duis aute irure dolor</a> in reprehenderit in &ldquo;voluptate&rdquo; velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint “occaeca” cupidatat non <a href="https://www.google.com/" target="_blank">proident</a>, sunt in culpa <a href="https://canada-preview.adobecqms.net/en/government/system/government-wide-reporting-spending-operations/government-spending.html">qui officia deserunt</a> mollit anim id est March 20, 2023 laborum.</p>
+<section>
+<h4 id="toc1-1-1">Subsection Heading A</h4>
+<ul>
+<li>List item one<sup id="fn1-rf"><a class="fn-lnk" href="#fn1"><span class="wb-inv">Footnote </span>1</a></sup></li>
+<li>List item two<sup id="fn1-rf"><a class="fn-lnk" href="#fn1"><span class="wb-inv">Footnote </span>1</a></sup></li>
+<li>List item three<sup id="fn1-rf"><a class="fn-lnk" href="#fn1"><span class="wb-inv">Footnote </span>1</a></sup></li>
+</ul>
+<section>
+<h5 id="toc1-1-1-1">Sub-subsection Heading i</h5>
+<ol>
+<li>Ordered list item A</li>
+<li>Ordered list item B<sup id="fn2-rf"><a class="fn-lnk" href="#fn2"><span class="wb-inv">Footnote </span>2</a></sup></li>
+<li>Ordered list item C</li>
+</ol>
+<figure>
+
+    <figcaption class="text-center"><strong>Figure 1: Graph</strong></figcaption>
+
+   
+
+    <img src="/content/dam/tbs-sct/images/reports/dr/24-25-dp-fig1-en.png" class="img-responsive center-block" alt="Just a graph. Text version below:" />
+
+   
+
+    <details class="brdr-tp brdr-rght brdr-bttm brdr-lft">
+
+                <summary class="wb-toggle"  data-toggle='{"print":"on"}'>Figure 1 - Text version</summary>
+
+       
+
+        <p>[Long Description content]</p>
+
+    </details>
+
+</figure>
+</section>
+</section>
+    </section>
+    <section>
+        <h3 id="toc1-2">Section Heading 2</h3>
+        <div class="table-responsive">
+            <table id="tbl1" class="table table-bordered table-condensed">
+                <caption class="text-left">Table 1: Example Data Overview</caption>
+                <thead>
+                    <tr class="active">
+                        <th scope="col">Header 1<sup id="tbl1fn2-rf"><a class="fn-lnk" href="#tbl1fn2"><span class="wb-inv">table 1 note </span>*</a></sup></th>
+                        <th scope="col">Header 2<sup id="tbl1fn2-rf"><a class="fn-lnk" href="#tbl1fn2"><span class="wb-inv">table 1 note </span>*</a></sup></th>
+                        <th scope="col">Header 3<sup id="tbl1fn2-rf"><a class="fn-lnk" href="#tbl1fn2"><span class="wb-inv">table 1 note </span>*</a></sup></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th scope="row">Row Header 1</th>
+                        <td>Data 1A</td>
+                        <td>Data 1C<sup id="tbl1fn1-rf"><a class="fn-lnk" href="#tbl1fn1"><span class="wb-inv">table 1 note </span>1</a></sup></td>
+                    </tr>
+                    <tr>
+                        <th scope="row">Row Header 2</th>
+                        <td>Data 2A</td>
+                        <td>Data 2B</td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                <tr>
+                <td colspan="3">
+                <section class="wb-fnote">
+                <h2 id="tbl1fn" class="wb-inv">Table 1 Notes</h2>
+                <dl>
+                <dt>Table 1 Note 1</dt>
+                <dd id="tbl1fn1">
+
+                <p>Table Note Content</p>
+
+                <p class="fn-rtn"> <a href="#tbl1fn1-rf"><span class="wb-inv">Return to table 1 note </span>1<span class="wb-inv"> referrer</span></a> </p>
+
+                </dd>
+                <dt>Table 1 Note 2</dt>
+                <dd id="tbl1fn2">
+
+                <p>Table Note Content</p>
+
+                <p class="fn-rtn"> <a href="#tbl1fn2-rf"><span class="wb-inv">Return to table 1 note </span>*<span class="wb-inv"> referrer</span></a> </p>
+
+                </dd>
+                </dl>
+                </section>
+                </td>
+                </tr>
+                </tfoot>
+            </table>
+        </div>
+    </section>
+</section>
+<section>
+    <h2 id="toc2">Another Section Title</h2>
+    <section>
+        <h3 id="toc2-1">Call to Action</h3>
+        <p>Ready to learn more?</a></p>
+        <a href="#" class="btn btn-primary">Primary Action</a>
+        <button type="button" class="btn btn-default">Secondary Action</button>
+    </section>
+        <h3 id="toc2-2">Good well stuff</h3>
+        <div class="well">
+            <p>This is an example of a "well" or callout box, often used for important notes or supplementary information.</p>
+        </div>
+</section>
+<aside class="wb-fnote" role="note">
+
+<h2 id="fn">Footnotes</h2>
+
+<dl>
+
+<dt>Footnote 1</dt>
+
+<dd id="fn1">
+
+<p>Footnote content.</p>
+
+<p class="fn-rtn"> <a href="#fn1-rf"><span class="wb-inv">Return to footnote </span>1<span class="wb-inv"> referrer</span></a> </p>
+
+</dd>
+<dt>Footnote 1</dt>
+<dd id="fn2">
+
+    <p>Footnote content.</p>
+    
+    <p class="fn-rtn"> <a href="#fn2-rf"><span class="wb-inv">Return to footnote </span>2<span class="wb-inv"> referrer</span></a> </p>
+    
+    </dd>
+
+</dl>
+
+</aside>
+            </textarea>
+            <div class="mt-auto pt-4 flex justify-center space-x-2">
+                <button id="undoBtn" class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 mr-1">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
+                    </svg>
+                    Undo
+                </button>
+                <button id="redoBtn" class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 15l6-6m0 0l-6-6m6 6H9a6 6 0 000 12H6" />
+                    </svg>
+                </button>
+                <button id="cleanEntitiesBtn" class="px-4 py-2 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 font-semibold">
+                    Clean Entities
+                </button>
+                <button id="autoFormatBtn" class="px-4 py-2 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 font-semibold">
+                    Auto-Indent
+                </button>
+                <button id="copyCodeBtn" class="px-4 py-2 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-semibold">
+                    Copy Code
+                </button>
+            </div>
+        </div>
+
+        <div id="resizer" class="resizer"></div>
+
+        <div class="preview-panel">
+            <h2 class="text-xl font-semibold text-white mb-4 text-center flex items-center justify-between flex-wrap">
+                <div class="inline-flex space-x-2 mr-auto">
+                    <button id="fullScreenPreviewBtn" class="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75v4.5m0-4.5h-4.5m4.5 0L15 9M20.25 20.25v-4.5m0 4.5h-4.5m4.5 0L15 15" />
+                        </svg>
+                    </button>
+                    <button id="exitFullScreenPreviewBtn" class="px-3 py-1 text-sm bg-orange-600 text-white rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50 font-bold flex items-center justify-center" style="display: none;">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 9l6-6m0 0l6 6m-6-6v12a6 6 0 01-12 0v-3" />
+                        </svg>
+                    </button>
+                </div>
+                <span class="flex-grow text-center sm:text-left">Live Preview</span>
+                <div class="inline-flex space-x-2 ml-auto mt-2 sm:mt-0">
+                    <button id="langEnBtn" class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">EN</button>
+                    <button id="langFrBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">FR</button>
+                    <button id="exportPrototypeBtn" class="px-3 py-1 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 font-bold">Export Prototype</button>
+                </div>
+            </h2>
+            <div class="customize-section">
+                <div id="customizeHeader" class="customize-header">
+                    <h3 class="text-lg font-semibold text-white">Customize</h3>
+                    <svg id="customizeToggleIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-white">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                    </svg>
+                </div>
+                <div id="customizeContent" class="customize-content">
+                    <div class="flex flex-col space-y-2 w-full mb-4">
+                        <div class="flex flex-col items-start w-full">
+                            <div class="button-group flex-wrap w-full"> <button id="toggleContainerBtn" class="bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">Custom Width</button>
+                                <button id="toggleTitleBtn" class="bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">Hide Title</button>
+                                <button id="toggleCssBtn" class="bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">Disable CSS</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-4" id="h1TitleInputContainer">
+                        <input type="text" id="h1TitleInput" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., My Custom ENG Title">
+                    </div>
+                    <div class="flex flex-col space-y-2 w-full">
+                        <div class="flex flex-row flex-wrap justify-center sm:justify-start w-full mt-2 space-x-4">
+                            <div class="flex flex-col items-start mt-2 sm:mt-0">
+                                <span class="text-sm font-medium text-gray-200 mb-1">Byline:</span>
+                                <div class="button-group individual-rounded-buttons flex-wrap justify-center sm:justify-start">
+                                    <button id="noneBylineBtn" class="bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">None</button>
+                                    <button id="englishBylineBtn" class="bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">English</button>
+                                    <button id="frenchBylineBtn" class="bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">French</button>
+                                </div>
+                            </div>
+                            <div class="flex flex-col items-start">
+                                <span class="text-sm font-medium text-gray-200 mb-1">Image source:</span>
+                                <div class="button-group individual-rounded-buttons flex-wrap justify-center sm:justify-start">
+                                    <button id="localImagesBtn" class="bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">Local</button>
+                                    <button id="previewImagesBtn" class="bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50" title="Users MUST be on TBS network">Preview</button>
+                                    <button id="toggleLiveImagesBtn" class="bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">Live</button>
+                                </div>
+                            </div>
+                            <div class="flex flex-col items-start mt-2 sm:mt-0">
+                                <span class="text-sm font-medium text-gray-200 mb-1">URL source:</span>
+                                <div class="button-group individual-rounded-buttons flex-wrap justify-center sm:justify-start">
+                                    <button id="localUrlsBtn" class="bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">Local</button>
+                                    <button id="previewUrlsBtn" class="bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50" title="Users MUST be on TBS network">Preview</button>
+                                    <button id="toggleLiveUrlsBtn" class="bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">Live</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <iframe id="previewFrame" title="Live HTML Preview"></iframe>
+            <div class="mt-auto pt-4 flex flex-col space-y-2 w-full">
+                <div class="flex items-center space-x-2 w-full flex-wrap">
+                    <input type="text" id="previewSearchInput" placeholder="Find in preview..." class="px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 flex-grow">
+                    <button id="previewFindPrevBtn" class="px-3 py-1 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold">Prev</button>
+                    <button id="previewFindNextBtn" class="px-3 py-1 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold">Next</button>
+                    <button id="toggleSectionsBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">Sections</button>
+                    <button id="toggleHeadingsBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">Headings</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/htmlmixed/htmlmixed.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/dialog/dialog.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/search/searchcursor.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/search/search.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/show-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/html-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/css-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/javascript-hint.min.js"></script>
+
+
+    <script>
+        // Get references to the textarea and iframe
+        const htmlCodeTextarea = document.getElementById('htmlCode');
+        const previewFrame = document.getElementById('previewFrame');
+        const resizer = document.getElementById('resizer');
+        const codePanel = document.querySelector('.code-panel');
+        const previewPanel = document.querySelector('.preview-panel');
+        const editorContainer = document.querySelector('.editor-container');
+        const copyCodeBtn = document.getElementById('copyCodeBtn');
+        const autoFormatBtn = document.getElementById('autoFormatBtn');
+        const exportHtmlBtn = document.getElementById('exportHtmlBtn');
+        const importHtmlBtn = document.getElementById('importHtmlBtn');
+        const htmlFileInput = document.getElementById('htmlFileInput');
+        const toggleSectionsBtn = document.getElementById('toggleSectionsBtn');
+        const previewSearchInput = document.getElementById('previewSearchInput');
+        const previewFindNextBtn = document.getElementById('previewFindNextBtn');
+        const previewFindPrevBtn = document.getElementById('previewFindPrevBtn');
+        const toggleContainerBtn = document.getElementById('toggleContainerBtn');
+        const toggleTitleBtn = document.getElementById('toggleTitleBtn');
+        const h1TitleInput = document.getElementById('h1TitleInput');
+        const h1TitleInputContainer = document.getElementById('h1TitleInputContainer'); // New reference
+        const toggleLiveImagesBtn = document.getElementById('toggleLiveImagesBtn');
+        const exportPrototypeBtn = document.getElementById('exportPrototypeBtn');
+        const localImagesBtn = document.getElementById('localImagesBtn');
+        const previewImagesBtn = document.getElementById('previewImagesBtn');
+        const noneBylineBtn = document.getElementById('noneBylineBtn');
+        const englishBylineBtn = document.getElementById('englishBylineBtn');
+        const frenchBylineBtn = document.getElementById('frenchBylineBtn');
+        const fullScreenBtn = document.getElementById('fullScreenBtn');
+        const exitFullScreenBtn = document.getElementById('exitFullScreenBtn');
+        const fullScreenPreviewBtn = document.getElementById('fullScreenPreviewBtn');
+        const exitFullScreenPreviewBtn = document.getElementById('exitFullScreenPreviewBtn');
+        const customizeHeader = document.getElementById('customizeHeader');
+        const customizeContent = document.getElementById('customizeContent');
+        const customizeToggleIcon = document.getElementById('customizeToggleIcon');
+        const toggleCssBtn = document.getElementById('toggleCssBtn');
+        const cleanEntitiesBtn = document.getElementById('cleanEntitiesBtn');
+        // New Undo/Redo buttons
+        const undoBtn = document.getElementById('undoBtn');
+        const redoBtn = document.getElementById('redoBtn');
+        // Renamed Set Time Tags button
+        const timeTagsBtn = document.getElementById('timeTagsBtn');
+        // New Clean Spaces button
+        const cleanSpacesBtn = document.getElementById('cleanSpacesBtn');
+        // New Clean URLs button
+        const cleanUrlsBtn = document.getElementById('cleanUrlsBtn');
+        // New URL source buttons
+        const localUrlsBtn = document.getElementById('localUrlsBtn');
+        const previewUrlsBtn = document.getElementById('previewUrlsBtn');
+        const toggleLiveUrlsBtn = document.getElementById('toggleLiveUrlsBtn');
+        // New Show Headings button
+        const toggleHeadingsBtn = document.getElementById('toggleHeadingsBtn');
+        // New Colophon button
+        const colophonBtn = document.getElementById('colophonBtn');
+        // New Fix FN ID's button
+        const fixFnIdsBtn = document.getElementById('fixFnIdsBtn');
+        // New EN and FR buttons
+        const langEnBtn = document.getElementById('langEnBtn');
+        const langFrBtn = document.getElementById('langFrBtn');
+        // New Clear All button
+        const clearAllBtn = document.getElementById('clearAllBtn');
+
+
+        let editor; // Declare editor globally
+        let showSections = false;
+        let showHeadings = false; // New state variable for headings
+        let useContainerDiv = true;
+        let showTitle = true;
+        let imageSourceMode = 'local';
+        let bylineMode = 'none';
+        let isFullScreen = false;
+        let isFullScreenPreview = false;
+        let isCustomizeExpanded = false;
+        let enableCss = true;
+        let urlSourceMode = 'local'; // New variable for URL source mode
+        let currentLanguage = 'en'; // Default language
+
+        // Store H1 titles for English and French separately
+        let h1TitleEn = '';
+        let h1TitleFr = '';
+
+        // Variables for resizing
+        let isResizing = false;
+        let startX;
+        let startCodeWidth;
+        // Define a constant for the visual buffer on the right side
+        const VISUAL_RIGHT_BUFFER = 16; // Pixels to reserve on the right for visual balance/shadow
+        const MIN_PANEL_WIDTH = 200; // Minimum width for panels
+
+        // Define placeholders globally for &nbsp; and &#160;
+        const NBSP_ENTITY_PLACEHOLDER = '__NBSP_ENTITY_PLACEHOLDER__';
+        const NUMERIC_NBSP_ENTITY_PLACEHOLDER = '__NUMERIC_NBSP_ENTITY_PLACEHOLDER__';
+        const LITERAL_NBSP_CHAR_PLACEHOLDER = '__LITERAL_NBSP_CHAR_PLACEHOLDER__'; // For \u00A0
+
+        /**
+         * Helper function to apply placeholders for &nbsp;, &#160;, and literal non-breaking space character.
+         * @param {string} htmlString - The HTML string to process.
+         * @returns {string} The HTML string with placeholders.
+         */
+        function applyNBSPPlaceholders(htmlString) {
+            // Order matters: replace numeric first, then named, then literal char
+            htmlString = htmlString.replace(/&#160;/g, NUMERIC_NBSP_ENTITY_PLACEHOLDER);
+            htmlString = htmlString.replace(/&nbsp;/g, NBSP_ENTITY_PLACEHOLDER);
+            htmlString = htmlString.replace(/\u00A0/g, LITERAL_NBSP_CHAR_PLACEHOLDER); // Handle literal non-breaking space character
+            return htmlString;
+        }
+
+        /**
+         * Helper function to revert placeholders back to their original &nbsp; or &#160; forms.
+         * @param {string} htmlString - The HTML string with placeholders.
+         * @returns {string} The HTML string with original entities restored.
+         */
+        function revertNBSPPlaceholders(htmlString) {
+            htmlString = htmlString.replace(new RegExp(NBSP_ENTITY_PLACEHOLDER, 'g'), '&nbsp;');
+            htmlString = htmlString.replace(new RegExp(NUMERIC_NBSP_ENTITY_PLACEHOLDER, 'g'), '&#160;');
+            htmlString = htmlString.replace(new RegExp(LITERAL_NBSP_CHAR_PLACEHOLDER, 'g'), '\u00A0'); // Revert literal char
+            return htmlString;
+        }
+
+
+        /**
+         * Handles the mouse down event on the resizer.
+         */
+        function startResize(e) {
+            isResizing = true;
+            startX = e.clientX;
+            startCodeWidth = codePanel.offsetWidth;
+            document.addEventListener('mousemove', resizePanels);
+            document.addEventListener('mouseup', stopResize);
+            document.body.style.userSelect = 'none';
+            document.body.style.cursor = 'ew-resize';
+        }
+
+        /**
+         * Handles the mouse move event during resizing.
+         */
+        function resizePanels(e) {
+            if (!isResizing) return;
+            const diff = e.clientX - startX;
+            const computedStyle = getComputedStyle(editorContainer);
+            const paddingLeft = parseFloat(computedStyle.paddingLeft) || 0;
+            const paddingRight = parseFloat(computedStyle.paddingRight) || 0;
+            const availableContentWidth = editorContainer.offsetWidth - paddingLeft - paddingRight; // Total inner width of container
+            const gapWidth = parseFloat(computedStyle.gap) || 0;
+
+            // The combined width that the two panels should occupy, leaving space for the gap and the right buffer
+            const targetPanelsCombinedWidth = availableContentWidth - gapWidth - VISUAL_RIGHT_BUFFER;
+
+            let newCodeWidth = startCodeWidth + diff;
+
+            // Ensure newCodeWidth respects minimum panel width and leaves space for previewPanel's minimum width
+            newCodeWidth = Math.max(MIN_PANEL_WIDTH, newCodeWidth);
+            newCodeWidth = Math.min(targetPanelsCombinedWidth - MIN_PANEL_WIDTH, newCodeWidth);
+
+            let newPreviewWidth = targetPanelsCombinedWidth - newCodeWidth;
+
+            // Apply the calculated widths
+            codePanel.style.flexGrow = 0;
+            codePanel.style.flexShrink = 0;
+            codePanel.style.width = `${newCodeWidth}px`;
+
+            previewPanel.style.flexGrow = 0;
+            previewPanel.style.flexShrink = 0;
+            previewPanel.style.width = `${newPreviewWidth}px`;
+
+            if (editor) {
+                editor.refresh();
+            }
+        }
+
+        /**
+         * Handles the mouse up event, stopping the resizing process.
+         */
+        function stopResize() {
+            isResizing = false;
+            document.removeEventListener('mousemove', resizePanels);
+            document.removeEventListener('mouseup', stopResize);
+            document.body.style.userSelect = '';
+            document.body.style.cursor = '';
+        }
+
+        /**
+         * Toggles full screen mode for the editor.
+         */
+        function toggleFullScreen() {
+            isFullScreen = !isFullScreen;
+            isFullScreenPreview = false;
+            if (isFullScreen) {
+                editorContainer.classList.add('fullscreen-editor');
+                editorContainer.classList.remove('fullscreen-preview');
+                fullScreenBtn.style.display = 'none';
+                exitFullScreenBtn.style.display = 'inline-block';
+                fullScreenPreviewBtn.style.display = 'inline-block';
+                exitFullScreenPreviewBtn.style.display = 'none';
+            } else {
+                editorContainer.classList.remove('fullscreen-editor');
+                fullScreenBtn.style.display = 'inline-block';
+                exitFullScreenBtn.style.display = 'none';
+                const computedStyle = getComputedStyle(editorContainer);
+                const paddingLeft = parseFloat(computedStyle.paddingLeft) || 0;
+                const paddingRight = parseFloat(computedStyle.paddingRight) || 0;
+                const availableContentWidth = editorContainer.offsetWidth - paddingLeft - paddingRight;
+                const gapWidth = parseFloat(computedStyle.gap) || 0;
+                const initialWidth = (availableContentWidth - gapWidth - VISUAL_RIGHT_BUFFER) / 2; // Apply buffer here too
+                codePanel.style.width = `${initialWidth}px`;
+                previewPanel.style.width = `${initialWidth}px`;
+                codePanel.style.flexGrow = 0;
+                codePanel.style.flexShrink = 0;
+                previewPanel.style.flexGrow = 0;
+                previewPanel.style.flexShrink = 0;
+            }
+            editor.refresh();
+        }
+
+        /**
+         * Toggles full screen mode for the preview.
+         */
+        function toggleFullScreenPreview() {
+            isFullScreenPreview = !isFullScreenPreview;
+            isFullScreen = false;
+            if (isFullScreenPreview) {
+                editorContainer.classList.add('fullscreen-preview');
+                editorContainer.classList.remove('fullscreen-editor');
+                fullScreenPreviewBtn.style.display = 'none';
+                exitFullScreenPreviewBtn.style.display = 'inline-block';
+                fullScreenBtn.style.display = 'inline-block';
+                exitFullScreenBtn.style.display = 'none';
+            } else {
+                editorContainer.classList.remove('fullscreen-preview');
+                fullScreenPreviewBtn.style.display = 'inline-block';
+                exitFullScreenPreviewBtn.style.display = 'none';
+                const computedStyle = getComputedStyle(editorContainer);
+                const paddingLeft = parseFloat(computedStyle.paddingLeft) || 0;
+                const paddingRight = parseFloat(computedStyle.paddingRight) || 0;
+                const availableContentWidth = editorContainer.offsetWidth - paddingLeft - paddingRight;
+                const gapWidth = parseFloat(computedStyle.gap) || 0;
+                const initialWidth = (availableContentWidth - gapWidth - VISUAL_RIGHT_BUFFER) / 2; // Apply buffer here too
+                codePanel.style.width = `${initialWidth}px`;
+                previewPanel.style.width = `${initialWidth}px`;
+                codePanel.style.flexGrow = 0;
+                codePanel.style.flexShrink = 0;
+                previewPanel.style.flexGrow = 0;
+                previewPanel.style.flexShrink = 0;
+            }
+            editor.refresh();
+            updatePreview();
+        }
+
+        /**
+         * Updates the visual state of image source buttons.
+         */
+        function updateImageSourceButtonStates() {
+            localImagesBtn.classList.remove('bg-gray-600');
+            previewImagesBtn.classList.remove('bg-gray-600');
+            toggleLiveImagesBtn.classList.remove('bg-gray-600');
+            localImagesBtn.classList.add('bg-gray-700', 'hover:bg-gray-600');
+            previewImagesBtn.classList.add('bg-gray-700', 'hover:bg-gray-600');
+            toggleLiveImagesBtn.classList.add('bg-gray-700', 'hover:bg-gray-600');
+            if (imageSourceMode === 'local') {
+                localImagesBtn.classList.add('bg-gray-600');
+                localImagesBtn.classList.remove('bg-gray-700', 'hover:bg-gray-600');
+            } else if (imageSourceMode === 'preview') {
+                previewImagesBtn.classList.add('bg-gray-600');
+                previewImagesBtn.classList.remove('bg-gray-700', 'hover:bg-gray-600');
+            } else if (imageSourceMode === 'live') {
+                toggleLiveImagesBtn.classList.add('bg-gray-600');
+                toggleLiveImagesBtn.classList.remove('bg-gray-700', 'hover:bg-gray-600');
+            }
+        }
+
+        /**
+         * Updates the visual state of byline buttons.
+         */
+        function updateBylineButtonStates() {
+            noneBylineBtn.classList.remove('bg-gray-600');
+            englishBylineBtn.classList.remove('bg-gray-600');
+            frenchBylineBtn.classList.remove('bg-gray-600');
+            noneBylineBtn.classList.add('bg-gray-700', 'hover:bg-gray-600');
+            englishBylineBtn.classList.add('bg-gray-700', 'hover:bg-gray-600');
+            frenchBylineBtn.classList.add('bg-gray-700', 'hover:bg-gray-600');
+            if (bylineMode === 'none') {
+                noneBylineBtn.classList.add('bg-gray-600');
+                noneBylineBtn.classList.remove('bg-gray-700', 'hover:bg-gray-600');
+            } else if (bylineMode === 'english') {
+                englishBylineBtn.classList.add('bg-gray-600');
+                englishBylineBtn.classList.remove('bg-gray-700', 'hover:bg-gray-600');
+            } else if (bylineMode === 'french') {
+                frenchBylineBtn.classList.add('bg-gray-600');
+                frenchBylineBtn.classList.remove('bg-gray-700', 'hover:bg-gray-600');
+            }
+        }
+
+        /**
+         * Updates the visual state of settings buttons.
+         */
+        function updateSettingsButtonStates() {
+            toggleContainerBtn.classList.remove('bg-gray-500', 'hover:bg-gray-600', 'bg-gray-600', 'bg-gray-700');
+            if (useContainerDiv) {
+                toggleContainerBtn.classList.add('bg-gray-600', 'hover:bg-gray-700');
+            } else {
+                toggleContainerBtn.classList.add('bg-gray-700', 'hover:bg-gray-600');
+            }
+            toggleTitleBtn.classList.remove('bg-gray-500', 'hover:bg-gray-600', 'bg-gray-600', 'bg-gray-700');
+            if (showTitle) {
+                toggleTitleBtn.classList.add('bg-gray-600', 'hover:bg-gray-700');
+            } else {
+                toggleTitleBtn.classList.add('bg-gray-700', 'hover:bg-gray-600');
+            }
+        }
+
+        /**
+         * Updates the visual state of format buttons.
+         */
+        function updateFormatButtonStates() {
+            // Auto-Indent button is now red and part of the bottom group, so its styling is handled there.
+        }
+
+        /**
+         * Updates the visual state of the CSS toggle button.
+         */
+        function updateCssButtonState() {
+            toggleCssBtn.classList.remove('bg-gray-600', 'hover:bg-gray-700', 'bg-gray-700', 'hover:bg-gray-600', 'bg-red-600', 'hover:bg-red-700');
+            if (enableCss) {
+                toggleCssBtn.classList.add('bg-gray-700', 'hover:bg-gray-600');
+                toggleCssBtn.textContent = 'Disable CSS';
+            } else {
+                toggleCssBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+                toggleCssBtn.textContent = 'Enable CSS';
+            }
+        }
+
+        /**
+         * Updates the enabled/disabled state of Undo and Redo buttons.
+         */
+        function updateUndoRedoButtonStates() {
+            if (editor) {
+                const history = editor.historySize();
+                undoBtn.disabled = history.undo === 0;
+                redoBtn.disabled = history.redo === 0;
+                // Tailwind's disabled:opacity-50 and disabled:cursor-not-allowed should handle styling
+            }
+        }
+
+        /**
+         * Updates the visual state of URL source buttons.
+         */
+        function updateUrlSourceButtonStates() {
+            localUrlsBtn.classList.remove('bg-gray-600');
+            previewUrlsBtn.classList.remove('bg-gray-600');
+            toggleLiveUrlsBtn.classList.remove('bg-gray-600');
+            localUrlsBtn.classList.add('bg-gray-700', 'hover:bg-gray-600');
+            previewUrlsBtn.classList.add('bg-gray-700', 'hover:bg-gray-600');
+            toggleLiveUrlsBtn.classList.add('bg-gray-700', 'hover:bg-gray-600');
+            if (urlSourceMode === 'local') {
+                localUrlsBtn.classList.add('bg-gray-600');
+                localUrlsBtn.classList.remove('bg-gray-700', 'hover:bg-gray-600');
+            } else if (urlSourceMode === 'preview') {
+                previewUrlsBtn.classList.add('bg-gray-600');
+                previewUrlsBtn.classList.remove('bg-gray-700', 'hover:bg-gray-600');
+            } else if (urlSourceMode === 'live') {
+                toggleLiveUrlsBtn.classList.add('bg-gray-600');
+                toggleLiveUrlsBtn.classList.remove('bg-gray-700', 'hover:bg-gray-600');
+            }
+        }
+
+        /**
+         * Updates the visual state of the Sections and Headings buttons.
+         */
+        function updateSectionHeadingButtonStates() {
+            // Sections button
+            if (showSections) {
+                toggleSectionsBtn.classList.add('bg-yellow-400', 'text-black');
+                toggleSectionsBtn.classList.remove('bg-gray-700', 'text-white', 'hover:bg-gray-600');
+            } else {
+                toggleSectionsBtn.classList.add('bg-gray-700', 'text-white', 'hover:bg-gray-600');
+                toggleSectionsBtn.classList.remove('bg-yellow-400', 'text-black');
+            }
+            // Headings button
+            if (showHeadings) {
+                toggleHeadingsBtn.classList.add('bg-yellow-400', 'text-black');
+                toggleHeadingsBtn.classList.remove('bg-gray-700', 'text-white', 'hover:bg-gray-600');
+            } else {
+                toggleHeadingsBtn.classList.add('bg-gray-700', 'text-white', 'hover:bg-gray-600');
+                toggleHeadingsBtn.classList.remove('bg-yellow-400', 'text-black');
+            }
+        }
+
+        /**
+         * Updates the visual state of the EN/FR language buttons,
+         * the Export Prototype button text, and byline button visibility/state.
+         */
+        function updateLanguageButtonStates() {
+            // Update EN/FR button styles
+            langEnBtn.classList.remove('bg-gray-600', 'bg-gray-700');
+            langFrBtn.classList.remove('bg-gray-600', 'bg-gray-700');
+
+            if (currentLanguage === 'en') {
+                langEnBtn.classList.add('bg-gray-600', 'hover:bg-gray-700');
+                langFrBtn.classList.add('bg-gray-700', 'hover:bg-gray-600');
+                exportPrototypeBtn.textContent = 'Export Prototype (EN)';
+                englishBylineBtn.style.display = 'inline-block'; // Show English byline button
+                frenchBylineBtn.style.display = 'none'; // Hide French byline button
+                if (bylineMode === 'french') { // If French byline was active, switch to English
+                    bylineMode = 'english';
+                }
+                // Update H1 title input placeholder and value for English
+                h1TitleInput.placeholder = 'e.g., My Custom ENG Title';
+                h1TitleInput.value = h1TitleEn; // Set input value from stored English title
+            } else { // currentLanguage === 'fr'
+                langEnBtn.classList.add('bg-gray-700', 'hover:bg-gray-600');
+                langFrBtn.classList.add('bg-gray-600', 'hover:bg-gray-700');
+                exportPrototypeBtn.textContent = 'Export Prototype (FR)';
+                englishBylineBtn.style.display = 'none'; // Hide English byline button
+                frenchBylineBtn.style.display = 'inline-block'; // Show French byline button
+                if (bylineMode === 'english') { // If English byline was active, switch to French
+                    bylineMode = 'french';
+                }
+                // Update H1 title input placeholder and value for French
+                h1TitleInput.placeholder = 'e.g., My Custom FRA Title';
+                h1TitleInput.value = h1TitleFr; // Set input value from stored French title
+            }
+            updateBylineButtonStates(); // Re-render byline buttons based on new bylineMode
+        }
+
+        /**
+         * Generates the full HTML content for the preview or export.
+         * @param {boolean} isForPreview - True if the HTML is for the live preview, false for export.
+         */
+        function generateFullHtml(isForPreview) {
+            const bodyContent = editor.getValue();
+            // Use the stored title for the current language
+            let customH1Title = (currentLanguage === 'en' ? h1TitleEn : h1TitleFr).trim();
+
+            if (customH1Title === '') {
+                customH1Title = (currentLanguage === 'en') ? 'Canada.ca Page Title (EN)' : 'Titre de la page Canada.ca (FR)';
+            }
+            const pageTitle = customH1Title;
+            let titleHtml = showTitle ? `<h1 property="name" id="wb-cont">${customH1Title}</h1>` : '';
+            let bylineHtml = '';
+            if (bylineMode === 'english') {
+                bylineHtml = '<p class="gc-byline"><strong>From: <a href="/en/treasury-board-secretariat.html">Treasury Board of Canada of Canada Secretariat</a></strong></p>';
+            } else if (bylineMode === 'french') {
+                bylineHtml = '<p class="gc-byline"><strong>De : <a href="/fr/secretariat-conseil-tresor.html">Secrétariat du Conseil du Trésor du Canada</a></strong></p>';
+            }
+            let contentToInject = useContainerDiv ? `<div class="container">${titleHtml}${bylineHtml}${bodyContent}</div>` : `${titleHtml}${bylineHtml}${bodyContent}`;
+
+            const parser = new DOMParser();
+            const tempDoc = parser.parseFromString(contentToInject, 'text/html');
+
+            // Define URL prefixes for different modes
+            const localPrefixes = [
+                '/content/canadasite/en/treasury-board-secretariat',
+                '/content/canadasite/fr/secretariat-conseil-tresor',
+                '/content/canadasite/en/government',
+                '/content/canadasite/fr/gouvernement'
+            ];
+
+            const previewPrefixes = [
+                'https://canada-preview.adobecqms.net/en/treasury-board-secretariat',
+                'https://canada-preview.adobecqms.net/fr/secretariat-conseil-tresor',
+                'https://canada-preview.adobecqms.net/en/government',
+                'https://canada-preview.adobecqms.net/fr/gouvernement'
+            ];
+
+            const livePrefixes = [
+                'https://www.canada.ca/en/treasury-board-secretariat',
+                'https://www.canada.ca/fr/secretariat-conseil-tresor',
+                'https://www.canada.ca/en/government',
+                'https://www.canada.ca/fr/gouvernement'
+            ];
+
+            // Helper function to replace URL prefixes
+            function replaceUrlPrefix(url, currentPrefixes, targetPrefixes) {
+                for (let i = 0; i < currentPrefixes.length; i++) {
+                    if (url.startsWith(currentPrefixes[i])) {
+                        return targetPrefixes[i] + url.substring(currentPrefixes[i].length);
+                    }
+                }
+                return url; // Return original URL if no matching prefix is found
+            }
+
+            // Handle image source replacement
+            const images = tempDoc.querySelectorAll('img');
+            images.forEach(img => {
+                let src = img.getAttribute('src');
+                if (src && !src.startsWith('http://') && !src.startsWith('https://') && !src.startsWith('//')) {
+                    let baseUrl = '';
+                    if (imageSourceMode === 'preview') baseUrl = 'https://canada-preview.adobecqms.net';
+                    else if (imageSourceMode === 'live') baseUrl = 'https://www.canada.ca';
+                    if (baseUrl) img.setAttribute('src', `${baseUrl}${src.startsWith('/') ? '' : '/'}${src}`);
+                }
+            });
+
+            // Handle URL source replacement for <a> tags
+            const links = tempDoc.querySelectorAll('a');
+            links.forEach(link => {
+                let href = link.getAttribute('href');
+                if (href) {
+                    // Only process internal links (not external or fragment links)
+                    if (href.startsWith('/') || href.startsWith('http://') || href.startsWith('https://')) {
+                        if (urlSourceMode === 'local') {
+                            href = replaceUrlPrefix(href, previewPrefixes, localPrefixes);
+                            href = replaceUrlPrefix(href, livePrefixes, localPrefixes);
+                        } else if (urlSourceMode === 'preview') {
+                            href = replaceUrlPrefix(href, localPrefixes, previewPrefixes);
+                            href = replaceUrlPrefix(href, livePrefixes, previewPrefixes);
+                        } else if (urlSourceMode === 'live') {
+                            href = replaceUrlPrefix(href, localPrefixes, livePrefixes);
+                            href = replaceUrlPrefix(href, previewPrefixes, livePrefixes);
+                        }
+                        link.setAttribute('href', href);
+                    }
+                }
+            });
+
+
+            contentToInject = tempDoc.body.innerHTML;
+
+            // Conditional bodyClass generation based on isForPreview
+            const bodyClassParts = [];
+            if (showSections && isForPreview) { // Only apply if for preview
+                bodyClassParts.push('show-sections-outline');
+            }
+            if (showHeadings && isForPreview) { // Only apply if for preview
+                bodyClassParts.push('show-headings-outline');
+            }
+            const bodyClass = bodyClassParts.filter(Boolean).join(' ');
+
+            const cssLinks = enableCss ? `
+                <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css">
+                <link rel="stylesheet" href="https://www.canada.ca/etc/designs/canada/wet-boew/css/theme.min.css">
+            ` : '';
+            return `
+<!DOCTYPE html>
+<html class="no-js" lang="${currentLanguage}" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${pageTitle}</title>
+    ${cssLinks}
+    <style>
+        body { text-align: left; font-family: 'Noto Sans', sans-serif; }
+        .show-sections-outline section { border: 2px dashed #007bff; padding: 10px; margin-bottom: 10px; box-sizing: border-box; }
+        .show-sections-outline section:hover { background-color: rgba(0, 123, 255, 0.1); }
+
+        /* Heading highlighting styles */
+        .show-headings-outline h1 {
+            border: 2px solid #FF0000; /* Red */
+            background-color: rgba(255, 0, 0, 0.1);
+            padding: 5px;
+            margin-bottom: 5px;
+            box-sizing: border-box;
+        }
+        .show-headings-outline h2 {
+            border: 2px solid #FF7F00; /* Orange */
+            background-color: rgba(255, 127, 0, 0.1);
+            padding: 5px;
+            margin-bottom: 5px;
+            box-sizing: border-box;
+        }
+        .show-headings-outline h3 {
+            border: 2px solid #FFFF00; /* Yellow */
+            background-color: rgba(255, 255, 0, 0.1);
+            padding: 5px;
+            margin-bottom: 5px;
+            box-sizing: border-box;
+        }
+        .show-headings-outline h4 {
+            border: 2px solid #00FF00; /* Lime Green */
+            background-color: rgba(0, 255, 0, 0.1);
+            padding: 5px;
+            margin-bottom: 5px;
+            box-sizing: border-box;
+        }
+        .show-headings-outline h5 {
+            border: 2px solid #0000FF; /* Blue */
+            background-color: rgba(0, 0, 255, 0.1);
+            padding: 5px;
+            margin-bottom: 5px;
+            box-sizing: border-box;
+        }
+        .show-headings-outline h6 {
+            border: 2px solid #4B0082; /* Indigo */
+            background-color: rgba(75, 0, 130, 0.1);
+            padding: 5px;
+            margin-bottom: 5px;
+            box-sizing: border-box;
+        }
+
+        .show-headings-outline h1:hover,
+        .show-headings-outline h2:hover,
+        .show-headings-outline h3:hover,
+        .show-headings-outline h4:hover,
+        .show-headings-outline h5:hover,
+        .show-headings-outline h6:hover {
+            opacity: 0.8; /* Slight opacity change on hover */
+        }
+        .table thead tr.active { background-color: #e0f2f7; }
+    </style>
+</head>
+<body class="${bodyClass}">
+    <main property="mainContentOfPage" resource="#wb-main" typeof="WebPageElement">
+        ${contentToInject}
+    </main>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"><\/script>
+    <script src="https://www.canada.ca/etc/designs/canada/wet-boew/js/wet-boew.min.js"><\/script>
+    <script src="https://www.canada.ca/etc/designs/canada/wet-boew/js/theme.min.js"><\/script>
+</body>
+</html>`;
+        }
+
+        /**
+         * Updates the content of the iframe.
+         */
+        function updatePreview() {
+            if (editor) {
+                const fullHtml = generateFullHtml(true); // Pass true for preview
+                const iframeDocument = previewFrame.contentDocument || previewFrame.contentWindow.document;
+                iframeDocument.open();
+                iframeDocument.write(fullHtml);
+                iframeDocument.close();
+            }
+        }
+
+        /**
+         * Exports the rendered HTML content to a file.
+         */
+        function exportPrototype() {
+            const fullHtml = generateFullHtml(false); // Pass false for export
+            const blob = new Blob([fullHtml], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `prototype_${currentLanguage.toUpperCase()}.html`; // Dynamic filename
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            const originalText = exportPrototypeBtn.textContent;
+            exportPrototypeBtn.textContent = 'Exported!';
+            exportPrototypeBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+            exportPrototypeBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+            setTimeout(() => {
+                exportPrototypeBtn.textContent = originalText;
+                exportPrototypeBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                exportPrototypeBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+            }, 1500);
+        }
+
+        /**
+         * Displays a modal dialog with a given message and interactive elements.
+         * @param {string} title - The title of the modal.
+         * @param {string} contentHtml - The HTML content for the modal body.
+         */
+        function showModal(title, contentHtml) {
+            const modalOverlay = document.createElement('div');
+            modalOverlay.className = 'modal-overlay';
+            modalOverlay.innerHTML = `
+                <div class="modal-content">
+                    <h3>${title}</h3>
+                    <div id="modalBody">${contentHtml}</div>
+                    <div class="flex justify-end mt-4 space-x-2">
+                        <button id="modalCancelBtn" class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">Cancel</button>
+                        <button id="modalInsertBtn" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Insert</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modalOverlay);
+
+            document.getElementById('modalCancelBtn').addEventListener('click', () => {
+                modalOverlay.remove();
+            });
+
+            // Get references to elements within the newly created modal
+            const langEnglishBtn = document.getElementById('langEnglishBtn');
+            const langFrenchBtn = document.getElementById('langFrenchBtn');
+            const monarchKingBtn = document.getElementById('monarchKingBtn');
+            const monarchQueenBtn = document.getElementById('monarchQueenBtn');
+            const idISBNBtn = document.getElementById('idISBNBtn');
+            const idISSNBtn = document.getElementById('idISSNBtn');
+            const colophonYearInput = document.getElementById('colophonYear');
+            const colophonNumberInput = document.getElementById('colophonNumber'); // Reference for the number input
+            const modalInsertBtn = document.getElementById('modalInsertBtn');
+
+            let selectedLanguage = 'English'; // Default to English
+            let selectedMonarch = 'King'; // Default
+            let selectedIdentifier = 'ISBN'; // Default
+
+            // Function to update button active state
+            function updateButtonActiveState(buttons, activeBtn) {
+                buttons.forEach(btn => {
+                    btn.classList.remove('active', 'bg-indigo-600');
+                    btn.classList.add('bg-gray-700', 'hover:bg-gray-600');
+                });
+                activeBtn.classList.add('active', 'bg-indigo-600');
+                activeBtn.classList.remove('bg-gray-700', 'hover:bg-gray-600');
+            }
+
+            // Initial active states
+            updateButtonActiveState([langEnglishBtn, langFrenchBtn], langEnglishBtn);
+            updateButtonActiveState([monarchKingBtn, monarchQueenBtn], monarchKingBtn);
+            updateButtonActiveState([idISBNBtn, idISSNBtn], idISBNBtn);
+
+            // Event listeners for language buttons
+            langEnglishBtn.addEventListener('click', () => {
+                selectedLanguage = 'English';
+                updateButtonActiveState([langEnglishBtn, langFrenchBtn], langEnglishBtn);
+            });
+
+            langFrenchBtn.addEventListener('click', () => {
+                selectedLanguage = 'French';
+                updateButtonActiveState([langEnglishBtn, langFrenchBtn], langFrenchBtn);
+            });
+
+            // Event listeners for Monarch toggle
+            monarchKingBtn.addEventListener('click', () => {
+                selectedMonarch = 'King';
+                updateButtonActiveState([monarchKingBtn, monarchQueenBtn], monarchKingBtn);
+            });
+
+            monarchQueenBtn.addEventListener('click', () => {
+                selectedMonarch = 'Queen';
+                updateButtonActiveState([monarchKingBtn, monarchQueenBtn], monarchQueenBtn);
+            });
+
+            // Event listeners for ISBN/ISSN toggle
+            idISBNBtn.addEventListener('click', () => {
+                selectedIdentifier = 'ISBN';
+                updateButtonActiveState([idISBNBtn, idISSNBtn], idISBNBtn);
+            });
+
+            idISSNBtn.addEventListener('click', () => {
+                selectedIdentifier = 'ISSN';
+                updateButtonActiveState([idISBNBtn, idISSNBtn], idISSNBtn);
+            });
+
+            // Year input validation
+            colophonYearInput.addEventListener('input', (event) => {
+                const input = event.target;
+                // Remove any non-digit characters
+                input.value = input.value.replace(/\D/g, '');
+                // Truncate to 4 digits if longer
+                if (input.value.length > 4) {
+                    input.value = input.value.substring(0, 4);
+                }
+            });
+
+            // Insert button logic
+            modalInsertBtn.addEventListener('click', () => {
+                const currentYear = new Date().getFullYear();
+                const year = colophonYearInput.value || currentYear;
+                const number = colophonNumberInput.value || '###';
+                let colophonHtml = `<section id="colophon">\n<p class="mrgn-tp-lg text-center small">© `;
+
+                if (selectedLanguage === 'English') {
+                    if (selectedMonarch === 'King') {
+                        colophonHtml += `His Majesty the King in Right of Canada, represented by the President of the Treasury Board, ${year},<br>${selectedIdentifier}:&#160;${number}</p>\n</section>`;
+                    } else { // Queen
+                        colophonHtml += `Her Majesty the Queen in Right of Canada, represented by the President of the Treasury Board, ${year},<br>${selectedIdentifier}:&#160;${number}</p>\n</section>`;
+                    }
+                } else { // French
+                    if (selectedMonarch === 'King') {
+                        colophonHtml += `Sa Majesté le Roi du chef du Canada, représenté par le président du Conseil du Trésor, ${year},<br>${selectedIdentifier}&#160;:&#160;${number}</p>\n</section>`;
+                    } else { // Queen
+                        colophonHtml += `Sa Majesté la Reine du chef du Canada, représentée par le président du Conseil du Trésor, ${year},<br>${selectedIdentifier}&#160;:&#160;${number}</p>\n</section>`;
+                    }
+                }
+
+                // Insert the generated HTML into the editor at the end
+                editor.replaceRange(colophonHtml, CodeMirror.Pos(editor.lastLine()));
+                modalOverlay.remove(); // Close the modal
+            });
+        }
+
+        /**
+         * Converts common character entities and named entities to their numeric HTML entity equivalents.
+         * This function operates on an HTML string, parsing it to a temporary DOM, modifying text nodes,
+         * and then serializing it back to a string, ensuring numeric entities are preserved.
+         * @param {string} htmlString - The HTML string to process.
+         * @returns {string} The processed HTML string with numeric entities.
+         */
+        function convertAllEntitiesToNumeric(htmlString) {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlString; // This parses entities to characters
+
+            const walker = document.createTreeWalker(
+                tempDiv,
+                NodeFilter.SHOW_TEXT,
+                {
+                    acceptNode: function(textNode) {
+                        let parent = textNode.parentNode;
+                        while (parent) {
+                            const tagName = parent.tagName ? parent.tagName.toLowerCase() : '';
+                            if (tagName === 'script' || tagName === 'style' || tagName === 'time') {
+                                return NodeFilter.FILTER_REJECT;
+                            }
+                            parent = parent.parentNode;
+                        }
+                        return NodeFilter.FILTER_ACCEPT;
+                    }
+                },
+                false
+            );
+
+            let currentNode;
+            const textNodesToProcess = [];
+            while (currentNode = walker.nextNode()) {
+                textNodesToProcess.push(currentNode);
+            }
+
+            textNodesToProcess.forEach(textNode => {
+                let text = textNode.nodeValue;
+                // Replace specific named entities/characters with their numeric character references
+                text = text.replace(/’/g, '&#8217;');    // literal ’
+                text = text.replace(/&rsquo;/g, '&#8217;'); // &rsquo;
+                text = text.replace(/“/g, '&#8220;');    // literal “
+                text = text.replace(/&ldquo;/g, '&#8220;'); // &ldquo;
+                text = text.replace(/”/g, '&#8221;');    // literal ”
+                text = text.replace(/&rdquo;/g, '&#8221;'); // &rdquo;
+                text = text.replace(/«/g, '&#171;');    // literal «
+                text = text.replace(/&laquo;/g, '&#171;'); // &laquo;
+                text = text.replace(/»/g, '&#187;');    // literal »
+                text = text.replace(/&raquo;/g, '&#187;'); // &raquo;
+                text = text.replace(/\u00A0/g, '&#160;'); // This converts literal NBSP char to numeric entity
+                text = text.replace(/&nbsp;/g, '&#160;'); // This handles named NBSP entity to numeric
+
+                textNode.nodeValue = text;
+            });
+
+            let processedHtml = tempDiv.innerHTML; // This re-serializes characters to entities
+
+            // Final string-based replacements to ensure numeric entities are explicitly present
+            // This is a safeguard against browser's innerHTML serialization re-converting entities.
+            processedHtml = processedHtml.replace(/&nbsp;/g, '&#160;');
+            processedHtml = processedHtml.replace(/&rsquo;/g, '&#8217;');
+            processedHtml = processedHtml.replace(/&ldquo;/g, '&#8220;');
+            processedHtml = processedHtml.replace(/&rdquo;/g, '&#8221;');
+            processedHtml = processedHtml.replace(/&laquo;/g, '&#171;');
+            processedHtml = processedHtml.replace(/&raquo;/g, '&#187;');
+
+            // Handle double encoding if it occurs (e.g., &amp;#160; -> &#160;)
+            processedHtml = processedHtml.replace(/&amp;#(\d+);/g, '&#$1;');
+
+            return processedHtml;
+        }
+
+
+        // Initialize CodeMirror and set up event listeners on window load
+        window.onload = function() {
+            editor = CodeMirror.fromTextArea(htmlCodeTextarea, {
+                mode: 'htmlmixed',
+                theme: 'dracula',
+                lineNumbers: true,
+                indentUnit: 4,
+                tabSize: 4,
+                indentWithTabs: false,
+                autoCloseTags: true,
+                autoCloseBrackets: true,
+                matchBrackets: true,
+                autofocus: true,
+                lineWrapping: true,
+                extraKeys: {
+                    "Ctrl-Space": (cm) => { CodeMirror.commands.autocomplete(cm, CodeMirror.hint.html, { completeSingle: false }); },
+                    "Shift-Tab": "indentLess",
+                    "Ctrl-F": "findPersistent",
+                    "Cmd-F": "findPersistent",
+                    "Ctrl-H": "replace",
+                    "Cmd-Option-F": "replace"
+                },
+                hintOptions: { hint: CodeMirror.hint.html }
+            });
+
+            const computedStyle = getComputedStyle(editorContainer);
+            const paddingLeft = parseFloat(computedStyle.paddingLeft) || 0;
+            const paddingRight = parseFloat(computedStyle.paddingRight) || 0;
+            const availableContentWidth = editorContainer.offsetWidth - paddingLeft - paddingRight;
+            const gapWidth = parseFloat(computedStyle.gap) || 0;
+            // Calculate initial width for panels, leaving space for the right buffer
+            const initialWidth = (availableContentWidth - gapWidth - VISUAL_RIGHT_BUFFER) / 2;
+            codePanel.style.width = `${initialWidth}px`;
+            previewPanel.style.width = `${initialWidth}px`;
+            codePanel.style.flexGrow = 0;
+            codePanel.style.flexShrink = 0;
+            previewPanel.style.flexGrow = 0;
+            previewPanel.style.flexShrink = 0;
+
+            resizer.addEventListener('mousedown', startResize);
+
+            copyCodeBtn.addEventListener('click', async () => {
+                if (editor) {
+                    const codeContent = editor.getValue();
+                    try {
+                        const tempTextArea = document.createElement('textarea');
+                        tempTextArea.value = codeContent;
+                        document.body.appendChild(tempTextArea);
+                        tempTextArea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(tempTextArea);
+                        const originalText = copyCodeBtn.textContent;
+                        copyCodeBtn.textContent = 'Copied!';
+                        copyCodeBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                        copyCodeBtn.classList.remove('bg-gray-700', 'hover:bg-gray-600');
+                        setTimeout(() => {
+                            copyCodeBtn.textContent = originalText;
+                            copyCodeBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                            copyCodeBtn.classList.add('bg-gray-700', 'hover:bg-gray-600');
+                        }, 1500);
+                    } catch (err) {
+                        console.error('Failed to copy text: ', err);
+                        showModal('Copy Error', '<p>Failed to copy code. Please copy manually.</p>');
+                    }
+                }
+            });
+
+            autoFormatBtn.addEventListener('click', () => {
+                if (editor && typeof html_beautify === 'function') {
+                    const formattedCode = html_beautify(editor.getValue(), { indent_size: 4, indent_char: ' ' });
+                    editor.setValue(formattedCode);
+                    const originalText = autoFormatBtn.textContent;
+                    autoFormatBtn.textContent = 'Formatted!';
+                    autoFormatBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                    autoFormatBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                    setTimeout(() => {
+                        autoFormatBtn.textContent = originalText;
+                        autoFormatBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                        autoFormatBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+                    }, 1500);
+                } else {
+                    showModal('Formatting Error', '<p>Beautify library not loaded.</p>');
+                }
+            });
+
+            exportHtmlBtn.addEventListener('click', () => {
+                if (editor) {
+                    const htmlContent = editor.getValue();
+                    const blob = new Blob([htmlContent], { type: 'text/html' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'index.html';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    const originalText = exportHtmlBtn.textContent;
+                    exportHtmlBtn.textContent = 'Exported!';
+                    exportHtmlBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                    exportHtmlBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                    setTimeout(() => {
+                        exportHtmlBtn.textContent = originalText;
+                        exportHtmlBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                        exportHtmlBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+                    }, 1500);
+                }
+            });
+
+            importHtmlBtn.addEventListener('click', () => htmlFileInput.click());
+            htmlFileInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        editor.setValue(e.target.result);
+                        updatePreview();
+                        const originalText = importHtmlBtn.textContent;
+                        importHtmlBtn.textContent = 'Imported!';
+                        importHtmlBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                        importHtmlBtn.classList.remove('bg-purple-600', 'hover:bg-purple-700');
+                        setTimeout(() => {
+                            importHtmlBtn.textContent = originalText;
+                            importHtmlBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                            importHtmlBtn.classList.add('bg-purple-600', 'hover:bg-purple-700');
+                        }, 1500);
+                    };
+                    reader.onerror = () => {
+                        showModal('File Error', '<p>Error reading file.</p>');
+                    };
+                    reader.readAsText(file);
+                }
+            });
+
+            toggleSectionsBtn.addEventListener('click', () => {
+                showSections = !showSections;
+                updateSectionHeadingButtonStates(); // Call the new function
+                updatePreview();
+            });
+
+            toggleHeadingsBtn.addEventListener('click', () => {
+                showHeadings = !showHeadings;
+                updateSectionHeadingButtonStates(); // Call the new function
+                updatePreview();
+            });
+
+            toggleContainerBtn.addEventListener('click', () => {
+                useContainerDiv = !useContainerDiv;
+                toggleContainerBtn.textContent = useContainerDiv ? 'Custom Width' : 'Default Width';
+                updateSettingsButtonStates();
+                updatePreview();
+            });
+
+            toggleTitleBtn.addEventListener('click', () => {
+                showTitle = !showTitle;
+                toggleTitleBtn.textContent = showTitle ? 'Hide Title' : 'Show Title';
+                updateSettingsButtonStates();
+                // Toggle visibility of the H1 title input container
+                if (showTitle) {
+                    h1TitleInputContainer.style.display = 'block';
+                } else {
+                    h1TitleInputContainer.style.display = 'none';
+                }
+                updatePreview();
+            });
+
+            // Modified h1TitleInput event listener to store values
+            h1TitleInput.addEventListener('input', () => {
+                if (currentLanguage === 'en') {
+                    h1TitleEn = h1TitleInput.value;
+                } else {
+                    h1TitleFr = h1TitleInput.value;
+                }
+                updatePreview();
+            });
+
+            localImagesBtn.addEventListener('click', () => { imageSourceMode = 'local'; updateImageSourceButtonStates(); updatePreview(); });
+            previewImagesBtn.addEventListener('click', () => { imageSourceMode = 'preview'; updateImageSourceButtonStates(); updatePreview(); });
+            toggleLiveImagesBtn.addEventListener('click', () => { imageSourceMode = 'live'; updateImageSourceButtonStates(); updatePreview(); });
+            noneBylineBtn.addEventListener('click', () => { bylineMode = 'none'; updateBylineButtonStates(); updatePreview(); });
+            englishBylineBtn.addEventListener('click', () => { bylineMode = 'english'; updateBylineButtonStates(); updatePreview(); });
+            frenchBylineBtn.addEventListener('click', () => { bylineMode = 'french'; updateBylineButtonStates(); updatePreview(); });
+            exportPrototypeBtn.addEventListener('click', exportPrototype);
+            fullScreenBtn.addEventListener('click', toggleFullScreen);
+            exitFullScreenBtn.addEventListener('click', toggleFullScreen);
+            fullScreenPreviewBtn.addEventListener('click', toggleFullScreenPreview);
+            exitFullScreenPreviewBtn.addEventListener('click', toggleFullScreenPreview);
+            toggleCssBtn.addEventListener('click', () => { enableCss = !enableCss; updateCssButtonState(); updatePreview(); });
+
+            cleanEntitiesBtn.addEventListener('click', () => {
+                if (editor) {
+                    let htmlContent = editor.getValue();
+                    let cleanedHtml = convertAllEntitiesToNumeric(htmlContent); // Use the new function
+                    editor.setValue(cleanedHtml);
+
+                    // Update button feedback
+                    const originalText = cleanEntitiesBtn.textContent;
+                    cleanEntitiesBtn.textContent = 'Cleaned!';
+                    cleanEntitiesBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                    cleanEntitiesBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                    setTimeout(() => {
+                        cleanEntitiesBtn.textContent = originalText;
+                        cleanEntitiesBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                        cleanEntitiesBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+                    }, 1500);
+                }
+            });
+
+            // Event listener for Clean Spaces button
+            cleanSpacesBtn.addEventListener('click', () => {
+                if (editor) {
+                    let originalCode = editor.getValue();
+
+                    // Step 1: Replace non-breaking space entities and literal non-breaking space characters with placeholders
+                    let processedCode = applyNBSPPlaceholders(originalCode);
+
+                    // Step 2: Clean normal spaces:
+                    // Remove spaces before/after placeholders, but keep the placeholders.
+                    // This regex targets one or more normal spaces (\s+) that are immediately followed by a placeholder
+                    // OR immediately preceded by a placeholder.
+                    processedCode = processedCode.replace(/\s+(__NBSP_ENTITY_PLACEHOLDER__|__NUMERIC_NBSP_ENTITY_PLACEHOLDER__|__LITERAL_NBSP_CHAR_PLACEHOLDER__)/g, '$1');
+                    processedCode = processedCode.replace(/(__NBSP_ENTITY_PLACEHOLDER__|__NUMERIC_NBSP_ENTITY_PLACEHOLDER__|__LITERAL_NBSP_CHAR_PLACEHOLDER__)\s+/g, '$1');
+
+                    // Split by lines to handle trimming and multiple internal spaces per line
+                    const lines = processedCode.split('\n');
+                    const processedLines = [];
+
+                    for (let line of lines) {
+                        // Trim leading/trailing normal whitespace from the line
+                        line = line.trim();
+                        // Replace multiple internal normal whitespace characters with a single normal space
+                        line = line.replace(/ {2,}/g, ' '); // Only target multiple normal spaces
+
+                        // Only add non-empty lines to the result
+                        if (line.length > 0) {
+                            processedLines.push(line);
+                        }
+                    }
+
+                    // Join the processed lines with a single newline character
+                    let finalCleanedContent = processedLines.join('\n');
+
+                    // Step 3: Revert placeholders back to original non-breaking space entities
+                    finalCleanedContent = revertNBSPPlaceholders(finalCleanedContent);
+
+                    editor.setValue(finalCleanedContent);
+
+                    // Update button feedback
+                    const originalText = cleanSpacesBtn.textContent;
+                    cleanSpacesBtn.textContent = 'Cleaned!'; // Set text to "Cleaned!"
+                    cleanSpacesBtn.classList.add('bg-green-500', 'hover:bg-green-600'); // Change to green
+                    cleanSpacesBtn.classList.remove('bg-gray-700', 'hover:bg-gray-600'); // Remove gray
+                    setTimeout(() => {
+                        cleanSpacesBtn.textContent = originalText; // Revert text
+                        cleanSpacesBtn.classList.remove('bg-green-500', 'hover:bg-green-600'); // Revert to gray
+                        cleanSpacesBtn.classList.add('bg-gray-700', 'hover:bg-gray-600');
+                    }, 1500);
+                }
+            });
+
+            // Event listener for Clean URLs button
+            cleanUrlsBtn.addEventListener('click', () => {
+                if (editor) {
+                    let htmlContent = editor.getValue();
+                    htmlContent = applyNBSPPlaceholders(htmlContent); // Apply placeholders
+
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(htmlContent, 'text/html');
+
+                    const links = doc.querySelectorAll('a');
+                    links.forEach(link => {
+                        // Remove target="_blank"
+                        if (link.hasAttribute('target') && link.getAttribute('target') === '_blank') {
+                            link.removeAttribute('target');
+                        }
+
+                        // Convert specific URLs
+                        let href = link.getAttribute('href');
+                        if (href) {
+                            href = href.replace('https://www.canada.ca/en/treasury-board-secretariat/', '/content/canadasite/en/treasury-board-secretariat/');
+                            href = href.replace('https://www.canada.ca/en/government/', '/content/canadasite/en/government/');
+                            href = href.replace('https://www.canada.ca/fr/secretariat-conseil-tresor', '/content/canadasite/fr/secretariat-conseil-tresor');
+                            href = href.replace('https://www.canada.ca/fr/gouvernement/', '/content/canadasite/fr/gouvernement/');
+                            // New replacement rule
+                            href = href.replace('https://canada-preview.adobecqms.net', '/content/canadasite');
+                            link.setAttribute('href', href);
+                        }
+                    });
+
+                    let cleanedHtml = doc.body.innerHTML;
+                    cleanedHtml = revertNBSPPlaceholders(cleanedHtml); // Revert placeholders
+
+                    editor.setValue(cleanedHtml);
+
+                    const originalText = cleanUrlsBtn.textContent;
+                    cleanUrlsBtn.textContent = 'Cleaned!';
+                    cleanUrlsBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                    cleanUrlsBtn.classList.remove('bg-gray-700', 'hover:bg-gray-600');
+                    setTimeout(() => {
+                        cleanUrlsBtn.textContent = originalText;
+                        cleanUrlsBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                        cleanUrlsBtn.classList.add('bg-gray-700', 'hover:bg-gray-600');
+                    }, 1500);
+                }
+            });
+
+            // Set Time Tags button functionality
+            timeTagsBtn.addEventListener('click', () => {
+                if (editor) {
+                    let originalHtml = editor.getValue();
+                    originalHtml = applyNBSPPlaceholders(originalHtml); // Apply placeholders
+
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(originalHtml, 'text/html');
+                    const body = doc.body;
+
+                    // Step 1: Pre-clean existing <time> tags' datetime attributes
+                    const existingTimeElements = doc.querySelectorAll('time');
+                    existingTimeElements.forEach(timeEl => {
+                        let datetimeAttr = timeEl.getAttribute('datetime');
+                        if (datetimeAttr) {
+                            const cleanedDatetime = datetimeAttr.replace(/<[^>]*>/g, '').replace(/&nbsp;|&#160;/g, ' ').replace(/\s+/g, ' ').trim();
+                            const dateMatch = cleanedDatetime.match(/^(\d{4}-\d{2}-\d{2})|(\d{4}-\d{2})$/);
+                            if (dateMatch) {
+                                timeEl.setAttribute('datetime', dateMatch[0]);
+                            } else {
+                                timeEl.removeAttribute('datetime');
+                            }
+                        }
+                    });
+
+                    // Month mapping for conversion to numeric format
+                    const monthMap = {
+                        'january': '01', 'jan': '01', 'janvier': '01',
+                        'february': '02', 'feb': '02', 'février': '02',
+                        'march': '03', 'mar': '03', 'mars': '03',
+                        'april': '04', 'apr': '04', 'avril': '04',
+                        'may': '05', 'mai': '05',
+                        'june': '06', 'jun': '06', 'juin': '06',
+                        'july': '07', 'jul': '07', 'juillet': '07',
+                        'august': '08', 'aug': '08', 'août': '08',
+                        'september': '09', 'sep': '09', 'septembre': '09',
+                        'october': '10', 'oct': '10', 'octobre': '10',
+                        'november': '11', 'nov': '11', 'novembre': '11',
+                        'december': '12', 'dec': '12', 'décembre': '12'
+                    };
+
+                    function getMonthNumber(monthName) {
+                        return monthMap[monthName.toLowerCase()] || null;
+                    }
+
+                    const monthPattern = Object.keys(monthMap).map(m => m.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|');
+                    // Updated spaceOrNBSPChar to include placeholders
+                    const spaceOrNBSPChar = `(?:\\s|\\u00A0|&nbsp;|&#160;|${NBSP_ENTITY_PLACEHOLDER}|${NUMERIC_NBSP_ENTITY_PLACEHOLDER}|${LITERAL_NBSP_CHAR_PLACEHOLDER})+`;
+
+                    // Collect all text nodes to process first, then iterate and modify.
+                    const textNodesToModify = [];
+                    const walker = doc.createTreeWalker(
+                        body,
+                        NodeFilter.SHOW_TEXT,
+                        {
+                            acceptNode: function(node) {
+                                let parent = node.parentNode;
+                                while (parent) {
+                                    const tagName = parent.tagName ? parent.tagName.toLowerCase() : '';
+                                    if (tagName === 'script' || tagName === 'style' || tagName === 'time') {
+                                        return NodeFilter.FILTER_REJECT; // Reject if inside these tags
+                                    }
+                                    parent = parent.parentNode;
+                                }
+                                return NodeFilter.FILTER_ACCEPT; // Accept other text nodes
+                            }
+                        },
+                        false
+                    );
+
+                    let currentNode;
+                    while (currentNode = walker.nextNode()) {
+                        textNodesToModify.push(currentNode);
+                    }
+
+                    // Now iterate through the collected nodes and apply modifications
+                    textNodesToModify.forEach(textNode => {
+                        let text = textNode.nodeValue;
+                        let currentText = text;
+
+                        const regexYYYYMMDD_or_YYYYMM = /(\d{4}-\d{2}-\d{2})|(\d{4}-\d{2})/i;
+                        const regexMonthDayYear = new RegExp(`(${monthPattern})${spaceOrNBSPChar}(\\d{1,2}),?${spaceOrNBSPChar}(\\d{4})`, 'i');
+                        const regexDayMonthYear = new RegExp(`(\\d{1,2})${spaceOrNBSPChar}(${monthPattern})${spaceOrNBSPChar}(\\d{4})`, 'i');
+                        const regexMonthYear = new RegExp(`(${monthPattern})${spaceOrNBSPChar}(\\d{4})`, 'i');
+
+                        let allMatches = [];
+                        const patternsToTest = [
+                            { name: 'DayMonthYear', regex: regexDayMonthYear, handler: (match) => {
+                                const [, day, month, year] = match;
+                                const monthNum = getMonthNumber(month);
+                                return monthNum ? `${year}-${monthNum}-${String(day).padStart(2, '0')}` : null;
+                            }},
+                            { name: 'MonthDayYear', regex: regexMonthDayYear, handler: (match) => {
+                                const [, month, day, year] = match;
+                                const monthNum = getMonthNumber(month);
+                                return monthNum ? `${year}-${monthNum}-${String(day).padStart(2, '0')}` : null;
+                            }},
+                            { name: 'YYYYMMDD_or_YYYYMM', regex: regexYYYYMMDD_or_YYYYMM, handler: (match) => match[1] || match[2] },
+                            { name: 'MonthYear', regex: regexMonthYear, handler: (match) => {
+                                const [, month, year] = match;
+                                const monthNum = getMonthNumber(month);
+                                return monthNum ? `${year}-${monthNum}` : null;
+                            }}
+                        ];
+
+                        patternsToTest.forEach(pattern => {
+                            let localRegex = new RegExp(pattern.regex.source, pattern.regex.flags + 'g');
+                            let match;
+                            while ((match = localRegex.exec(currentText)) !== null) {
+                                const datetimeValue = pattern.handler(match);
+                                if (datetimeValue) {
+                                    allMatches.push({
+                                        start: match.index,
+                                        end: match.index + match[0].length,
+                                        original: match[0],
+                                        datetime: datetimeValue,
+                                        priority: (pattern.name === 'DayMonthYear' || pattern.name === 'MonthDayYear') ? 2 : (pattern.name === 'YYYYMMDD_or_YYYYMM' ? 1 : 0)
+                                    });
+                                }
+                            }
+                        });
+
+                        allMatches.sort((a, b) => {
+                            if (a.start !== b.start) {
+                                return a.start - b.start;
+                            }
+                            return b.priority - a.priority;
+                        });
+
+                        let nonOverlappingMatches = [];
+                        let lastEnd = -1;
+                        allMatches.forEach(match => {
+                            if (match.start >= lastEnd) {
+                                nonOverlappingMatches.push(match);
+                                lastEnd = match.end;
+                            }
+                        });
+
+                        if (nonOverlappingMatches.length > 0) {
+                            let resultParts = [];
+                            let currentIndex = 0;
+                            nonOverlappingMatches.forEach(match => {
+                                resultParts.push(currentText.substring(currentIndex, match.start));
+                                resultParts.push(`<time datetime="${match.datetime}">${match.original}</time>`);
+                                currentIndex = match.end;
+                            });
+                            resultParts.push(currentText.substring(currentIndex));
+                            const newHtmlContent = resultParts.join('');
+
+                            const fragment = doc.createRange().createContextualFragment(newHtmlContent);
+                            textNode.parentNode.replaceChild(fragment, textNode);
+                        }
+                    });
+
+                    let finalHtml = body.innerHTML;
+                    finalHtml = revertNBSPPlaceholders(finalHtml); // Revert placeholders
+
+                    editor.setValue(finalHtml);
+
+                    // Update button feedback
+                    const originalText = timeTagsBtn.textContent;
+                    timeTagsBtn.textContent = 'Tagged!';
+                    timeTagsBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                    timeTagsBtn.classList.remove('bg-gray-700', 'hover:bg-gray-600');
+                    setTimeout(() => {
+                        timeTagsBtn.textContent = originalText;
+                        timeTagsBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                        timeTagsBtn.classList.add('bg-gray-700', 'hover:bg-gray-600');
+                    }, 1500);
+                }
+            });
+
+            // Colophon button event listener
+            colophonBtn.addEventListener('click', () => {
+                const currentYear = new Date().getFullYear();
+                const colophonContentHtml = `
+                    <div class="flex flex-col space-y-4">
+                        <div class="flex flex-col space-y-4">
+                            <div>
+                                <span class="text-sm font-medium text-gray-200 mr-2">Language:</span>
+                                <div class="button-group inline-flex">
+                                    <button id="langEnglishBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">English</button>
+                                    <button id="langFrenchBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">French</button>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="text-sm font-medium text-gray-200 mr-2">Monarch:</span>
+                                <div class="button-group inline-flex">
+                                    <button id="monarchKingBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">King</button>
+                                    <button id="monarchQueenBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">Queen</button>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="text-sm font-medium text-gray-200 mr-2">Identifier:</span>
+                                <div class="button-group inline-flex">
+                                    <button id="idISBNBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">ISBN</button>
+                                    <button id="idISSNBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">ISSN</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="colophonYear" class="block text-sm font-medium text-gray-200">Year:</label>
+                                <input type="text" id="colophonYear" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="YYYY" maxlength="4" pattern="\\d{4}" value="${currentYear}">
+                            </div>
+                            <div>
+                                <label for="colophonNumber" class="block text-sm font-medium text-gray-200">ISBN/ISSN #:</label>
+                                <input type="text" id="colophonNumber" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter number">
+                            </div>
+                        </div>
+                    </div>
+                `;
+                showModal('Insert Colophon', colophonContentHtml);
+            });
+
+            // Fix FN ID's button event listener
+            fixFnIdsBtn.addEventListener('click', () => {
+                if (editor) {
+                    let htmlContent = editor.getValue();
+                    htmlContent = applyNBSPPlaceholders(htmlContent); // Apply placeholders
+
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(htmlContent, 'text/html');
+
+                    // Map to store lists of <sup> elements for each baseId (e.g., 'fn1')
+                    const baseIdToSupElements = new Map();
+
+                    // First pass: Collect all <sup> elements with IDs ending in -rf
+                    const supElements = doc.querySelectorAll('sup[id$="-rf"]');
+                    supElements.forEach(sup => {
+                        const originalId = sup.id;
+                        const baseId = originalId.replace(/-rf$/, ''); // Get 'fn1' from 'fn1-rf'
+
+                        if (!baseIdToSupElements.has(baseId)) {
+                            baseIdToSupElements.set(baseId, []);
+                        }
+                        baseIdToSupElements.get(baseId).push(sup);
+                    });
+
+                    const idMapping = {}; // Map from original sup ID to the new canonical target ID for links
+
+                    // Second pass: Rectify IDs and build the idMapping
+                    for (const [baseId, supList] of baseIdToSupElements.entries()) {
+                        let canonicalTargetId = supList[0].id; // Default to the first sup's original ID
+
+                        if (supList.length > 1) {
+                            // If duplicates exist, we'll assign new sequential IDs to sups
+                            // and the canonical target for links will be the first one's new ID.
+                            canonicalTargetId = `${baseId}-rf-0`; // The new ID for the first instance
+                            supList.forEach((sup, index) => {
+                                const newSupId = `${baseId}-rf-${index}`;
+                                sup.id = newSupId; // Update the ID of the <sup> element
+                            });
+                        }
+                        // Now, map all original sup IDs for this baseId to the determined canonicalTargetId
+                        supList.forEach(sup => {
+                            idMapping[sup.id] = canonicalTargetId; // This maps the *new* sup.id to the canonical target
+                        });
+                        // Need to also map the *original* IDs to the canonical target, as links might still point to them
+                        // This handles cases where a link might point to 'fn1-rf' and we want it to go to 'fn1-rf-0'
+                        if (supList.length > 1) {
+                            idMapping[`${baseId}-rf`] = canonicalTargetId;
+                        }
+                    }
+
+                    // Third pass: Update <a> tags with corresponding hrefs
+                    const links = doc.querySelectorAll('a[href^="#"]');
+                    links.forEach(link => {
+                        let href = link.getAttribute('href');
+                        const anchor = href.substring(1); // Remove the '#'
+
+                        // If the anchor is in our mapping, update the href
+                        if (idMapping.hasOwnProperty(anchor)) {
+                            link.setAttribute('href', `#${idMapping[anchor]}`);
+                        } else {
+                            // If the anchor is an original ID that became canonical (e.g., 'fn1-rf' when no duplicates)
+                            // and it's not explicitly in idMapping because it wasn't renamed, ensure it links to itself.
+                            // This case is implicitly handled if targetIdForLinks was the original ID.
+                        }
+                    });
+
+                    let finalHtml = doc.body.innerHTML;
+                    finalHtml = revertNBSPPlaceholders(finalHtml); // Revert placeholders
+
+                    editor.setValue(finalHtml);
+
+                    const originalText = fixFnIdsBtn.textContent;
+                    fixFnIdsBtn.textContent = 'Fixed!';
+                    fixFnIdsBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                    fixFnIdsBtn.classList.remove('bg-gray-700', 'hover:bg-gray-600');
+                    setTimeout(() => {
+                        fixFnIdsBtn.textContent = originalText;
+                        fixFnIdsBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                        fixFnIdsBtn.classList.add('bg-gray-700', 'hover:bg-gray-600');
+                    }, 1500);
+                }
+            });
+
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape') {
+                    if (isFullScreen) toggleFullScreen();
+                    else if (isFullScreenPreview) toggleFullScreenPreview();
+                }
+            });
+
+            customizeHeader.addEventListener('click', () => {
+                isCustomizeExpanded = !isCustomizeExpanded;
+                customizeContent.classList.toggle('expanded', isCustomizeExpanded);
+                customizeHeader.classList.toggle('expanded', isCustomizeExpanded);
+            });
+
+            let lastSearchTerm = '';
+            function performPreviewSearch(searchForward = true) {
+                const searchTerm = previewSearchInput.value;
+                if (!searchTerm || !previewFrame.contentWindow) return;
+                const iframeWindow = previewFrame.contentWindow;
+                
+                // Clear any previous selection in the iframe
+                iframeWindow.getSelection().removeAllRanges();
+                
+                // Reset search if the term has changed
+                if (searchTerm !== lastSearchTerm) {
+                    iframeWindow.scrollTo(0, 0); // Scroll to top to start new search from beginning
+                    lastSearchTerm = searchTerm;
+                }
+                
+                // Perform the search
+                let found = iframeWindow.find(searchTerm, false, !searchForward, true, false, false, false);
+                
+                // Log to console instead of showing a modal if not found
+                if (!found) {
+                    console.log(`Search term "${searchTerm}" not found in preview.`);
+                }
+                
+                previewSearchInput.focus();
+            }
+            previewFindNextBtn.addEventListener('click', () => performPreviewSearch(true));
+            previewFindPrevBtn.addEventListener('click', () => performPreviewSearch(false));
+            previewSearchInput.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') { event.preventDefault(); performPreviewSearch(true); }
+            });
+            // Removed the event listener that cleared the message box on Enter, as there is no message box anymore.
+
+            // Undo and Redo button event listeners
+            undoBtn.addEventListener('click', () => {
+                if (editor) {
+                    editor.undo();
+                    editor.focus();
+                    updateUndoRedoButtonStates();
+                }
+            });
+            redoBtn.addEventListener('click', () => {
+                if (editor) {
+                    editor.redo();
+                    editor.focus();
+                    updateUndoRedoButtonStates();
+                }
+            });
+
+            // URL source button event listeners
+            localUrlsBtn.addEventListener('click', () => { urlSourceMode = 'local'; updateUrlSourceButtonStates(); updatePreview(); });
+            previewUrlsBtn.addEventListener('click', () => { urlSourceMode = 'preview'; updateUrlSourceButtonStates(); updatePreview(); });
+            toggleLiveUrlsBtn.addEventListener('click', () => { urlSourceMode = 'live'; updateUrlSourceButtonStates(); updatePreview(); });
+
+            // EN/FR language button event listeners
+            langEnBtn.addEventListener('click', () => {
+                currentLanguage = 'en';
+                updateLanguageButtonStates();
+                updatePreview();
+            });
+
+            langFrBtn.addEventListener('click', () => {
+                currentLanguage = 'fr';
+                updateLanguageButtonStates();
+                updatePreview();
+            });
+
+            // Clear All button event listener
+            clearAllBtn.addEventListener('click', () => {
+                if (editor) {
+                    editor.setValue(''); // Clear the CodeMirror editor content
+                    updatePreview(); // Clear the preview
+                    const originalText = clearAllBtn.textContent;
+                    clearAllBtn.textContent = 'Cleared!';
+                    clearAllBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                    clearAllBtn.classList.remove('bg-gray-700', 'hover:bg-gray-600');
+                    setTimeout(() => {
+                        clearAllBtn.textContent = originalText;
+                        clearAllBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                        clearAllBtn.classList.add('bg-gray-700', 'hover:bg-gray-600');
+                    }, 1500);
+                }
+            });
+
+            editor.on('change', () => {
+                updatePreview();
+                updateUndoRedoButtonStates(); // Update button states on any change
+            });
+
+            // Add beforeunload event listener for warning
+            window.addEventListener('beforeunload', (event) => {
+                // Check if there are unsaved changes (e.g., editor content is different from initial or last saved)
+                // For simplicity, we'll always show the warning if the editor has content.
+                // A more robust solution would involve tracking actual changes.
+                if (editor && editor.getValue().trim() !== '') {
+                    event.preventDefault(); // Standard for browsers
+                    event.returnValue = 'Are you sure you want to leave? You will lose unsaved data.'; // For older browsers
+                    return 'Are you sure you want to leave? You will lose unsaved data.'; // For modern browsers
+                }
+            });
+
+            // Initial updates
+            updatePreview();
+            updateImageSourceButtonStates();
+            updateBylineButtonStates();
+            updateSettingsButtonStates();
+            updateFormatButtonStates();
+            updateCssButtonState();
+            updateUndoRedoButtonStates(); // Initial state for undo/redo buttons
+            updateUrlSourceButtonStates(); // Initial state for URL source buttons
+            updateSectionHeadingButtonStates(); // Initial state for sections/headings buttons
+            updateLanguageButtonStates(); // Initial state for EN/FR buttons
+            // Set initial visibility of H1 title input container
+            h1TitleInputContainer.style.display = showTitle ? 'block' : 'none';
+
+
+            window.addEventListener('resize', () => {
+                editor.refresh();
+                if (!isResizing) {
+                    const computedStyle = getComputedStyle(editorContainer);
+                    const paddingLeft = parseFloat(computedStyle.paddingLeft) || 0;
+                    const paddingRight = parseFloat(computedStyle.PaddingRight) || 0;
+                    const availableContentWidth = editorContainer.offsetWidth - paddingLeft - paddingRight;
+                    const gapWidth = parseFloat(computedStyle.gap) || 0;
+                    const newInitialWidth = (availableContentWidth - gapWidth - VISUAL_RIGHT_BUFFER) / 2; // Apply buffer here too
+                    codePanel.style.width = `${newInitialWidth}px`;
+                    previewPanel.style.width = `${newInitialWidth}px`;
+                }
+            });
+        };
+    </script>
+</body>
+</html>
