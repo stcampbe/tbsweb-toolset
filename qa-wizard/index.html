@@ -1848,7 +1848,7 @@
                         }
                     });
 
-                    // Month mapping for conversion to numeric format
+// Month mapping for conversion to numeric format
                     const monthMap = {
                         'january': '01', 'jan': '01', 'janvier': '01',
                         'february': '02', 'feb': '02', 'février': '02',
@@ -1872,7 +1872,7 @@
                     // Updated spaceOrNBSPChar to include placeholders
                     const spaceOrNBSPChar = `(?:\\s|\\u00A0|&nbsp;|&#160;|${NBSP_ENTITY_PLACEHOLDER}|${NUMERIC_NBSP_ENTITY_PLACEHOLDER}|${LITERAL_NBSP_CHAR_PLACEHOLDER})+`;
 
-                    // Collect all text nodes to process first, then iterate and modify.
+// Collect all text nodes to process first, then iterate and modify.
                     const textNodesToModify = [];
                     const walker = doc.createTreeWalker(
                         body,
@@ -1903,9 +1903,10 @@
                         let text = textNode.nodeValue;
                         let currentText = text;
 
-                        const regexYYYYMMDD_or_YYYYMM = /(\d{4}-\d{2}-\d{2})|(\d{4}-\d{2})/i;
+const regexYYYYMMDD_or_YYYYMM = /(\d{4}-\d{2}-\d{2})|(\d{4}-\d{2})/i;
                         const regexMonthDayYear = new RegExp(`(${monthPattern})${spaceOrNBSPChar}(\\d{1,2}),?${spaceOrNBSPChar}(\\d{4})`, 'i');
-                        const regexDayMonthYear = new RegExp(`(\\d{1,2})${spaceOrNBSPChar}(${monthPattern})${spaceOrNBSPChar}(\\d{4})`, 'i');
+                        // Modified regexDayMonthYear to optionally include a comma after the month
+                        const regexDayMonthYear = new RegExp(`(\\d{1,2})${spaceOrNBSPChar}(${monthPattern}),?${spaceOrNBSPChar}(\\d{4})`, 'i');
                         const regexMonthYear = new RegExp(`(${monthPattern})${spaceOrNBSPChar}(\\d{4})`, 'i');
 
                         let allMatches = [];
@@ -1928,7 +1929,7 @@
                             }}
                         ];
 
-                        patternsToTest.forEach(pattern => {
+patternsToTest.forEach(pattern => {
                             let localRegex = new RegExp(pattern.regex.source, pattern.regex.flags + 'g');
                             let match;
                             while ((match = localRegex.exec(currentText)) !== null) {
@@ -1961,7 +1962,7 @@
                             }
                         });
 
-                        if (nonOverlappingMatches.length > 0) {
+if (nonOverlappingMatches.length > 0) {
                             let resultParts = [];
                             let currentIndex = 0;
                             nonOverlappingMatches.forEach(match => {
@@ -1994,6 +1995,7 @@
                     }, 1500);
                 }
             });
+
 
             // Colophon button event listener
             colophonBtn.addEventListener('click', () => {
