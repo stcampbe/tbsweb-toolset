@@ -14,7 +14,7 @@ This tool allows TBS webmasters to preview a fully rendered copy of their work b
         *   Clean URLs (convert all non AEM local URL’s to /content/canadasite)
         *   Time tags
         *   Fix FN ID’s (rectify duplicate sup ID’s)
-        *   Clean Entities to convert chars like “&nbsp;” to “&#160;” (should be done after options above, can be repeated)
+        *   Clean Entities to convert chars like “&amp;nbsp;” to “&amp;#160;” (should be done after options above, can be repeated)
         *   Auto-Indent (can be repeated as “Clean Spaces” will wipe tabs)
     *   Editor is able to accept both English and French with all feature above working in both, in addition to the new GCDS coding schema
     *   Colophon dialog box – insert at bottom without coding. The “Year” field is auto-filling current system time year, can be overwritten. “King” is also selected by default, but option to choose “Queen” exists as well.
