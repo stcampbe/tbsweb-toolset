@@ -1,12 +1,11 @@
 # BeforeYouPost - A QA and Prototyping Wizard
 This tool allows TBS webmasters to preview a fully rendered copy of their work before posting to Canada.ca and AEM.
+
 Features:
 
-\-          Limited code editor with a preview only (no typing) window
-
-\-          Ability to full screen either side or drag and resize.
-
-\-          CTRL+R “lock” to prevent accidental loss of data, asking user to confirm refresh
+*   Limited code editor with a preview only (no typing) window
+*   Ability to full screen either side or drag and resize.
+*   CTRL+R “lock” to prevent accidental loss of data, asking user to confirm refresh
 
 \-          **Code Editor**
 
