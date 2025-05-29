@@ -21,7 +21,7 @@ This tool allows TBS webmasters to preview a fully rendered copy of their work b
 *   **Preview**
     *   Viewer is specifically focused on controllable elements within <main> as there is no coding needed for header and footer.
     *   Ability to switch between coding for WET4, GC Design System (latest alpha source) or “WET+”
-        *   WET4 – CSS/JS loaded from the current live versions of the **GCWeb theme** being used on **ca**.
+        *   WET4 – CSS/JS loaded from the current live versions of the **GCWeb theme** being used on **canada.ca**.
         *   GCDS – CSS/JS loaded from the latest live **alpha GC Design System version** sourced from **design-system.alpha.canada.ca**
         *   WET+ - CSS/JS loaded from both WET4 and GCDS as they are **currently implemented as experimental in AEM.**
     *   EN/FR toggle to switch HTML wrapper, title, and byline. **NOT a full language toggle switch. Wizard UI will stay English and you must input your own French content**
