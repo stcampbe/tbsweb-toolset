@@ -1,4 +1,4 @@
-# BeforeYouPost - A QA and Prototyping Wizard
+# BeforeYouPost&#8482; - A QA and Prototyping Wizard
 This tool allows TBS webmasters to preview a fully rendered copy of their work before posting to Canada.ca and AEM. For use in conjunction with your own editor and any AI augmentation. This is meant to limit the back and forth traffic to/from AEM to debug design issues.
 
 **Features:**
