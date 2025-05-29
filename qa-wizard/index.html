@@ -368,6 +368,11 @@
             color: white;
             border-color: #4f46e5;
         }
+
+        /* Specific style for WET4 button */
+        #wetGcdsToggleBtn {
+            font-family: monospace;
+        }
     </style>
 </head>
 <body>
@@ -386,7 +391,7 @@
                         </svg>
                     </button>
                 </div>
-                <span class="flex-grow text-center sm:text-left">AEM Code</span>
+                <span class="flex-grow text-center sm:text-left">Code Editor</span>
                 <div class="inline-flex space-x-2 ml-auto mt-2 sm:mt-0">
                     <button id="clearAllBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">Clear All</button>
                     <button id="importHtmlBtn" class="px-3 py-1 text-sm bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 font-bold">Import HTML</button>
@@ -587,8 +592,9 @@
                         </svg>
                     </button>
                 </div>
-                <span class="flex-grow text-center sm:text-left">Live Preview</span>
+                <span class="flex-grow text-center sm:text-left">Preview</span>
                 <div class="inline-flex space-x-2 ml-auto mt-2 sm:mt-0">
+                    <button id="wetGcdsToggleBtn" class="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold">WET4</button>
                     <button id="langEnBtn" class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">EN</button>
                     <button id="langFrBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">FR</button>
                     <button id="exportPrototypeBtn" class="px-3 py-1 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 font-bold">Export Prototype</button>
@@ -643,7 +649,7 @@
                     </div>
                 </div>
             </div>
-            <iframe id="previewFrame" title="Live HTML Preview"></iframe>
+            <iframe id="previewFrame" title="HTML Preview"></iframe>
             <div class="mt-auto pt-4 flex flex-col space-y-2 w-full">
                 <div class="flex items-center space-x-2 w-full flex-wrap">
                     <input type="text" id="previewSearchInput" placeholder="Find in preview..." class="px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 flex-grow">
@@ -731,6 +737,8 @@
         const langFrBtn = document.getElementById('langFrBtn');
         // New Clear All button
         const clearAllBtn = document.getElementById('clearAllBtn');
+        // New WET/GCDS toggle button
+        const wetGcdsToggleBtn = document.getElementById('wetGcdsToggleBtn');
 
 
         let editor; // Declare editor globally
@@ -746,6 +754,7 @@
         let enableCss = true;
         let urlSourceMode = 'local'; // New variable for URL source mode
         let currentLanguage = 'en'; // Default language
+        let currentFramework = 'wet'; // Default framework: 'wet' or 'gcds'
 
         // Store H1 titles for English and French separately
         let h1TitleEn = '';
@@ -1095,6 +1104,21 @@
         }
 
         /**
+         * Updates the visual state of the WET/GCDS toggle button.
+         */
+        function updateWetGcdsButtonState() {
+            wetGcdsToggleBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700', 'bg-indigo-600', 'hover:bg-indigo-700');
+            if (currentFramework === 'wet') {
+                wetGcdsToggleBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                wetGcdsToggleBtn.textContent = 'WET4'; // Renamed to WET4
+            } else {
+                wetGcdsToggleBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+                wetGcdsToggleBtn.textContent = 'GCDS';
+            }
+        }
+
+
+        /**
          * Generates the full HTML content for the preview or export.
          * @param {boolean} isForPreview - True if the HTML is for the live preview, false for export.
          */
@@ -1107,14 +1131,37 @@
                 customH1Title = (currentLanguage === 'en') ? 'Canada.ca Page Title (EN)' : 'Titre de la page Canada.ca (FR)';
             }
             const pageTitle = customH1Title;
-            let titleHtml = showTitle ? `<h1 property="name" id="wb-cont">${customH1Title}</h1>` : '';
+            
+            let dynamicTitleHtml = '';
+            if (showTitle) {
+                if (currentFramework === 'wet') {
+                    dynamicTitleHtml = `<h1 property="name" id="wb-cont">${customH1Title}</h1>`;
+                } else if (currentFramework === 'gcds') {
+                    dynamicTitleHtml = `<gcds-heading tag="h1">${customH1Title}</gcds-heading>`;
+                }
+            }
+
             let bylineHtml = '';
             if (bylineMode === 'english') {
-                bylineHtml = '<p class="gc-byline"><strong>From: <a href="/en/treasury-board-secretariat.html">Treasury Board of Canada of Canada Secretariat</a></strong></p>';
+                if (currentFramework === 'wet') {
+                    bylineHtml = '<p class="gc-byline"><strong>From: <a href="/en/treasury-board-secretariat.html">Treasury Board of Canada of Canada Secretariat</a></strong></p>';
+                } else if (currentFramework === 'gcds') {
+                    bylineHtml = `<gcds-text><strong>From: <gcds-link href="/en/treasury-board-secretariat.html">Treasury Board of Canada of Canada Secretariat</gcds-link></strong></gcds-text>`;
+                }
             } else if (bylineMode === 'french') {
-                bylineHtml = '<p class="gc-byline"><strong>De : <a href="/fr/secretariat-conseil-tresor.html">Secrétariat du Conseil du Trésor du Canada</a></strong></p>';
+                if (currentFramework === 'wet') {
+                    bylineHtml = '<p class="gc-byline"><strong>De : <a href="/fr/secretariat-conseil-tresor.html">Secrétariat du Conseil du Trésor du Canada</a></strong></p>';
+                } else if (currentFramework === 'gcds') {
+                    bylineHtml = `<gcds-text><strong>De : <gcds-link href="/fr/secretariat-conseil-tresor.html">Secrétariat du Conseil du Trésor du Canada</gcds-link></strong></gcds-text>`;
+                }
             }
-            let contentToInject = useContainerDiv ? `<div class="container">${titleHtml}${bylineHtml}${bodyContent}</div>` : `${titleHtml}${bylineHtml}${bodyContent}`;
+            
+            let h1AndBylineSection = `${dynamicTitleHtml}${bylineHtml}`;
+            if (currentFramework === 'gcds' && (dynamicTitleHtml || bylineHtml)) {
+                h1AndBylineSection = `<section>${h1AndBylineSection}</section>`;
+            }
+
+            let contentToInject = useContainerDiv ? `<div class="container">${h1AndBylineSection}${bodyContent}</div>` : `${h1AndBylineSection}${bodyContent}`;
 
             const parser = new DOMParser();
             const tempDoc = parser.parseFromString(contentToInject, 'text/html');
@@ -1198,15 +1245,57 @@
             }
             const bodyClass = bodyClassParts.filter(Boolean).join(' ');
 
-            const cssLinks = enableCss ? `
-                <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css">
-                <link rel="stylesheet" href="https://www.canada.ca/etc/designs/canada/wet-boew/css/theme.min.css">
-            ` : '';
+            let cssLinks = '';
+            if (enableCss) {
+                if (currentFramework === 'wet') {
+                    cssLinks = `
+                        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css">
+                        <link rel="stylesheet" href="https://www.canada.ca/etc/designs/canada/wet-boew/css/theme.min.css">
+                    `;
+                } else if (currentFramework === 'gcds') {
+                    cssLinks = `
+                        <link rel="stylesheet" href="https://cdn.design-system.alpha.canada.ca/@cdssnc/gcds-utility@latest/dist/gcds-utility.min.css">
+                        <link rel="stylesheet" href="https://cdn.design-system.alpha.canada.ca/@cdssnc/gcds-components@latest/dist/gcds/gcds.css">
+                    `;
+                }
+            }
+
+            let jsScripts = '';
+            if (currentFramework === 'wet') {
+                jsScripts = `
+                    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"><\/script>
+                    <script src="https://www.canada.ca/etc/designs/canada/wet-boew/js/wet-boew.min.js"><\/script>
+                    <script src="https://www.canada.ca/etc/designs/canada/wet-boew/js/theme.min.js"><\/script>
+                `;
+            } else if (currentFramework === 'gcds') {
+                jsScripts = `
+                    <script type="module" src="https://cdn.design-system.alpha.canada.ca/@cdssnc/gcds-components@latest/dist/gcds/gcds.esm.js"><\/script>
+                    <script nomodule src="https://cdn.design-system.alpha.canada.ca/@cdssnc/gcds-components@0.34.3/dist/gcds/gcds.js"><\/script>
+                `;
+            }
+
+            let mainContentWrapper = '';
+            if (currentFramework === 'wet') {
+                mainContentWrapper = `
+                    <main property="mainContentOfPage" resource="#wb-main" typeof="WebPageElement">
+                        ${contentToInject}
+                    </main>
+                `;
+            } else if (currentFramework === 'gcds') {
+                // In GCDS, the contentToInject already includes the H1/byline section if applicable
+                mainContentWrapper = `
+                    <gcds-container id="main-content" main-container size="xl" centered tag="main">
+                        ${contentToInject}
+                    </gcds-container>
+                `;
+            }
+
+
             return `
 <!DOCTYPE html>
 <html class="no-js" lang="${currentLanguage}" dir="ltr">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${pageTitle}</title>
     ${cssLinks}
@@ -1216,42 +1305,48 @@
         .show-sections-outline section:hover { background-color: rgba(0, 123, 255, 0.1); }
 
         /* Heading highlighting styles */
-        .show-headings-outline h1 {
+        .show-headings-outline h1,
+        .show-headings-outline gcds-heading[tag="h1"] {
             border: 2px solid #FF0000; /* Red */
             background-color: rgba(255, 0, 0, 0.1);
             padding: 5px;
             margin-bottom: 5px;
             box-sizing: border-box;
         }
-        .show-headings-outline h2 {
+        .show-headings-outline h2,
+        .show-headings-outline gcds-heading[tag="h2"] {
             border: 2px solid #FF7F00; /* Orange */
             background-color: rgba(255, 127, 0, 0.1);
             padding: 5px;
             margin-bottom: 5px;
             box-sizing: border-box;
         }
-        .show-headings-outline h3 {
+        .show-headings-outline h3,
+        .show-headings-outline gcds-heading[tag="h3"] {
             border: 2px solid #FFFF00; /* Yellow */
             background-color: rgba(255, 255, 0, 0.1);
             padding: 5px;
             margin-bottom: 5px;
             box-sizing: border-box;
         }
-        .show-headings-outline h4 {
+        .show-headings-outline h4,
+        .show-headings-outline gcds-heading[tag="h4"] {
             border: 2px solid #00FF00; /* Lime Green */
             background-color: rgba(0, 255, 0, 0.1);
             padding: 5px;
             margin-bottom: 5px;
             box-sizing: border-box;
         }
-        .show-headings-outline h5 {
+        .show-headings-outline h5,
+        .show-headings-outline gcds-heading[tag="h5"] {
             border: 2px solid #0000FF; /* Blue */
             background-color: rgba(0, 0, 255, 0.1);
             padding: 5px;
             margin-bottom: 5px;
             box-sizing: border-box;
         }
-        .show-headings-outline h6 {
+        .show-headings-outline h6,
+        .show-headings-outline gcds-heading[tag="h6"] {
             border: 2px solid #4B0082; /* Indigo */
             background-color: rgba(75, 0, 130, 0.1);
             padding: 5px;
@@ -1264,19 +1359,16 @@
         .show-headings-outline h3:hover,
         .show-headings-outline h4:hover,
         .show-headings-outline h5:hover,
-        .show-headings-outline h6:hover {
+        .show-headings-outline h6:hover,
+        .show-headings-outline gcds-heading[tag]:hover {
             opacity: 0.8; /* Slight opacity change on hover */
         }
         .table thead tr.active { background-color: #e0f2f7; }
     </style>
 </head>
 <body class="${bodyClass}">
-    <main property="mainContentOfPage" resource="#wb-main" typeof="WebPageElement">
-        ${contentToInject}
-    </main>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"><\/script>
-    <script src="https://www.canada.ca/etc/designs/canada/wet-boew/js/wet-boew.min.js"><\/script>
-    <script src="https://www.canada.ca/etc/designs/canada/wet-boew/js/theme.min.js"><\/script>
+    ${mainContentWrapper}
+    ${jsScripts}
 </body>
 </html>`;
         }
@@ -2099,7 +2191,7 @@ if (nonOverlappingMatches.length > 0) {
                             link.setAttribute('href', `#${idMapping[anchor]}`);
                         } else {
                             // If the anchor is an original ID that became canonical (e.g., 'fn1-rf' when no duplicates)
-                            // and it's not explicitly in idMapping because it wasn't renamed, ensure it links to itself.
+                            // and it's not explicitly in idMapping because it's not renamed, ensure it links to itself.
                             // This case is implicitly handled if targetIdForLinks was the original ID.
                         }
                     });
@@ -2200,6 +2292,13 @@ if (nonOverlappingMatches.length > 0) {
                 updatePreview();
             });
 
+            // WET/GCDS toggle button event listener
+            wetGcdsToggleBtn.addEventListener('click', () => {
+                currentFramework = (currentFramework === 'wet') ? 'gcds' : 'wet';
+                updateWetGcdsButtonState();
+                updatePreview(); // Re-render preview with new CSS/JS
+            });
+
             // Clear All button event listener
             clearAllBtn.addEventListener('click', () => {
                 if (editor) {
@@ -2245,6 +2344,7 @@ if (nonOverlappingMatches.length > 0) {
             updateUrlSourceButtonStates(); // Initial state for URL source buttons
             updateSectionHeadingButtonStates(); // Initial state for sections/headings buttons
             updateLanguageButtonStates(); // Initial state for EN/FR buttons
+            updateWetGcdsButtonState(); // Initial state for WET/GCDS button
             // Set initial visibility of H1 title input container
             h1TitleInputContainer.style.display = showTitle ? 'block' : 'none';
 
