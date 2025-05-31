@@ -646,6 +646,7 @@
         const toggleMsOfficeJunk = document.getElementById('toggleMsOfficeJunk'); // Get reference to MS Office Junk toggle
         const toggleUrlCleaning = document.getElementById('toggleUrlCleaning'); // Get reference to URL Cleaning toggle
         const toggleZeroBookmarks = document.getElementById('toggleZeroBookmarks'); // Get reference to Zero Bookmarks toggle
+        const toggleAutoSpacing = document.getElementById('toggleAutoSpacing'); // Get reference to Auto-Spacing toggle
 
 
         let richTextEditorInstance; // HugeRTE editor instance
@@ -811,6 +812,38 @@
                 }
                 // Remove the <a> tag itself
                 a.parentNode.removeChild(a);
+            });
+
+            return tempDiv.innerHTML;
+        }
+
+        /**
+         * Applies auto-spacing to HTML content.
+         * Replaces multiple spaces with a single space, and trims leading/trailing spaces
+         * within block-level elements.
+         * @param {string} htmlString - The HTML content to clean.
+         * @returns {string} The cleaned HTML content.
+         */
+        function applyAutoSpacing(htmlString) {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlString;
+
+            // Define block-level elements to trim spaces within
+            const blockElements = tempDiv.querySelectorAll('p, h1, h2, h3, h4, h5, h6, li, td, th, div');
+
+            blockElements.forEach(element => {
+                // Trim leading/trailing spaces and replace multiple spaces with a single space
+                // This regex replaces one or more whitespace characters with a single space
+                element.innerHTML = element.innerHTML.replace(/\s+/g, ' ').trim();
+            });
+
+            // Additionally, handle text nodes directly in the root of tempDiv or other non-block elements
+            // This ensures general text content also gets auto-spacing
+            tempDiv.normalize(); // Merges adjacent text nodes
+            Array.from(tempDiv.childNodes).forEach(node => {
+                if (node.nodeType === Node.TEXT_NODE) {
+                    node.textContent = node.textContent.replace(/\s+/g, ' ').trim();
+                }
             });
 
             return tempDiv.innerHTML;
@@ -1038,7 +1071,14 @@
 
             autoFormatBtn.addEventListener('click', () => {
                 if (monacoEditorInstance) {
-                    monacoEditorInstance.getAction('editor.action.formatDocument').run();
+                    const currentContent = monacoEditorInstance.getValue();
+                    // Use js_beautify to format the HTML content
+                    const formattedContent = html_beautify(currentContent, {
+                        indent_size: 4, // You can customize indentation size
+                        space_in_paren: true // Example option
+                    });
+                    monacoEditorInstance.setValue(formattedContent);
+
                     const originalText = autoFormatBtn.textContent;
                     autoFormatBtn.textContent = 'Formatted!';
                     autoFormatBtn.classList.add('bg-green-500', 'hover:bg-green-600');
@@ -1378,6 +1418,11 @@
                 if (toggleZeroBookmarks.checked) {
                     cleanedContent = applyZeroBookmarksCleaning(cleanedContent);
                     console.log("Zero Bookmarks cleaning applied.");
+                }
+
+                if (toggleAutoSpacing.checked) {
+                    cleanedContent = applyAutoSpacing(cleanedContent);
+                    console.log("Auto-Spacing cleaning applied.");
                 }
 
                 // Update the active editor with the final cleaned content
