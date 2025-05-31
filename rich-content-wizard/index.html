@@ -710,6 +710,10 @@
          * table-specific attributes (width, height, border, cellspacing, cellpadding),
          * completely removes colgroup and col tags, and removes classes starting with "xl" within tables.
          * This function assumes entities are already decoded.
+         *
+         * NEW: Also removes <a>, <div>, and <span> tags that have no attributes.
+         * NEW: Removes <hr> tags with 'size' or 'width' attributes.
+         * NEW: Removes <div> tags with IDs starting with "_com_".
          * @param {string} htmlString - The HTML content to clean.
          * @returns {string} The cleaned HTML content.
          */
@@ -800,6 +804,36 @@
                 });
             });
 
+            // 8. Remove <a>, <div>, and <span> tags with no attributes
+            const tagsToRemoveIfNoAttributes = tempDiv.querySelectorAll('a, div, span');
+            for (let i = tagsToRemoveIfNoAttributes.length - 1; i >= 0; i--) {
+                const element = tagsToRemoveIfNoAttributes[i];
+                // Check if the element has no attributes AND it has a parent node
+                if (element.attributes.length === 0 && element.parentNode) {
+                    // Move all children to the parent before removing the element
+                    while (element.firstChild) {
+                        element.parentNode.insertBefore(element.firstChild, element);
+                    }
+                    element.parentNode.removeChild(element);
+                }
+            }
+
+            // 9. Remove <hr> tags with 'size' or 'width' attributes
+            const hrElements = tempDiv.querySelectorAll('hr[size], hr[width]');
+            hrElements.forEach(hr => {
+                if (hr.parentNode) {
+                    hr.parentNode.removeChild(hr);
+                }
+            });
+
+            // 10. Completely remove any <div> with an ID starting with "_com_"
+            const comDivs = tempDiv.querySelectorAll('div[id^="_com_"]');
+            comDivs.forEach(div => {
+                if (div.parentNode) {
+                    div.parentNode.removeChild(div);
+                }
+            });
+
             return tempDiv.innerHTML;
         }
 
@@ -879,6 +913,7 @@
          * Applies auto-spacing and cleans multiple <br> tags in HTML content.
          * Replaces multiple spaces with a single space, and trims leading/trailing spaces
          * within block-level elements. Also replaces sequences of two or more <br> tags with </p><p>.
+         * NEW: Also cleans `<br clear="all">` tags.
          * @param {string} htmlString - The HTML content to clean.
          * @returns {string} The cleaned HTML content.
          */
@@ -889,6 +924,9 @@
             // 2. Replace sequences of two or more <br> tags (with optional whitespace) with </p><p>.
             // This handles <br><br>, <br> <br>, <br/><br/>, etc.
             cleanedHtml = cleanedHtml.replace(/(<br\s*\/?>\s*){2,}/gi, '</p><p>');
+
+            // 3. Remove <br clear="all"> tags
+            cleanedHtml = cleanedHtml.replace(/<br\s+clear="all"\s*\/?>/gi, '');
 
             return cleanedHtml;
         }
