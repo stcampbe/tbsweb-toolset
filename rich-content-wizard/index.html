@@ -227,15 +227,17 @@
         }
 
         .customize-content {
-            max-height: 0;
+            height: 0; /* Changed from max-height: 0; */
             overflow: hidden;
-            transition: max-height 0.3s ease-out;
-            padding: 0 1rem; /* Padding for content area */
+            /* Unified transition for smoother effect */
+            transition: height 0.5s ease-in-out, padding 0.5s ease-in-out; /* Transition height and padding */
+            padding: 0 1rem; /* Padding for content area, default to 0 for collapsed */
+            background-color: #3f3f46; /* Match header background */
+            border-radius: 0 0 0.5rem 0.5rem; /* Rounded bottom corners */
         }
 
-        .customize-content.expanded {
-            max-height: 500px; /* Adjust as needed to fit content */
-            transition: max-height 0.5s ease-in;
+        .collapsible-content.expanded {
+            /* height: auto; will be set by JS dynamically */
             padding-top: 0.75rem; /* Add padding to content when expanded */
             padding-bottom: 0.75rem; /* Add padding to content when expanded */
         }
@@ -387,17 +389,17 @@
         }
 
         .collapsible-content {
-            max-height: 0;
+            height: 0; /* Changed from max-height: 0; */
             overflow: hidden;
             /* Unified transition for smoother effect */
-            transition: max-height 0.5s ease-in-out, padding 0.5s ease-in-out;
+            transition: height 0.5s ease-in-out, padding 0.5s ease-in-out; /* Transition height and padding */
             padding: 0 1rem; /* Padding for content area, default to 0 for collapsed */
             background-color: #3f3f46; /* Match header background */
             border-radius: 0 0 0.5rem 0.5rem; /* Rounded bottom corners */
         }
 
         .collapsible-content.expanded {
-            max-height: 1000px; /* Increased max-height for smoother transition */
+            /* height: auto; will be set by JS dynamically */
             padding-top: 0.75rem; /* Add padding to content when expanded */
             padding-bottom: 0.75rem; /* Add padding to content when expanded */
         }
@@ -486,69 +488,118 @@
                 <div class="flex flex-grow gap-4">
                     <div id="monacoEditorContainer" class="flex-grow border border-zinc-700 rounded-lg overflow-hidden"></div>
                     
-                    <div id="sidebar" class="w-1/4 bg-zinc-800 rounded-lg p-4 flex-shrink-0 overflow-y-auto">
+                    <div id="sidebar" class="w-1/4 bg-zinc-800 rounded-lg p-4 flex-shrink-0 flex flex-col">
                         <h3 class="text-lg font-semibold text-white mb-4">Formatting</h3>
                         
-                        <div class="collapsible-section">
-                            <div class="collapsible-header" id="automatedFunctionsHeader">
-                                <h4 class="text-white">Automated Functions</h4>
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-white">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                                </svg>
+                        <div class="flex-grow overflow-y-auto min-h-0">
+                            <div class="collapsible-section">
+                                <div class="collapsible-header" id="generalCleaningHeader">
+                                    <h4 class="text-white">General Cleaning</h4>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-white">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                                    </svg>
+                                </div>
+                                <div class="collapsible-content" id="generalCleaningContent">
+                                    <button id="runSelectedBtn" class="w-full px-4 py-2 mb-4 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 font-semibold">
+                                        Run Selected
+                                    </button>
+
+                                    <div class="toggle-switch-container">
+                                        <span class="toggle-switch-label">MS Office Junk</span>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="toggleMsOfficeJunk" checked>
+                                            <span class="toggle-switch-slider"></span>
+                                        </label>
+                                    </div>
+
+                                    <div class="toggle-switch-container">
+                                        <span class="toggle-switch-label">URL Cleaning</span>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="toggleUrlCleaning" checked>
+                                            <span class="toggle-switch-slider"></span>
+                                        </label>
+                                    </div>
+
+                                    <div class="toggle-switch-container">
+                                        <span class="toggle-switch-label">Zero Bookmarks</span>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="toggleZeroBookmarks" checked>
+                                            <span class="toggle-switch-slider"></span>
+                                        </label>
+                                    </div>
+
+                                    <div class="toggle-switch-container">
+                                        <span class="toggle-switch-label">Auto-Spacing</span>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="toggleAutoSpacing" checked>
+                                            <span class="toggle-switch-slider"></span>
+                                        </label>
+                                    </div>
+
+                                </div>
                             </div>
-                            <div class="collapsible-content" id="automatedFunctionsContent">
-                                <button id="runSelectedBtn" class="w-full px-4 py-2 mb-4 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 font-semibold">
-                                    Run Selected
-                                </button>
 
-                                <div class="toggle-switch-container">
-                                    <span class="toggle-switch-label">General Cleaning</span>
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" id="toggleGeneralCleaning">
-                                        <span class="toggle-switch-slider"></span>
-                                    </label>
+                            <div class="collapsible-section">
+                                <div class="collapsible-header" id="tableCleaningHeader">
+                                    <h4 class="text-white">Table Cleaning</h4>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-white">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                                    </svg>
                                 </div>
+                                <div class="collapsible-content" id="tableCleaningContent">
+                                    <button id="runSelectedTableBtn" class="w-full px-4 py-2 mb-4 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 font-semibold">
+                                        Run Selected
+                                    </button>
+                                    
+                                    <div class="toggle-switch-container">
+                                        <span class="toggle-switch-label">Responsive Tables</span>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="toggleResponsiveTables" checked>
+                                            <span class="toggle-switch-slider"></span>
+                                        </label>
+                                    </div>
 
-                                <div class="toggle-switch-container">
-                                    <span class="toggle-switch-label">URL Cleaning</span>
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" id="toggleUrlCleaning" checked>
-                                        <span class="toggle-switch-slider"></span>
-                                    </label>
+                                    <div class="toggle-switch-container">
+                                        <span class="toggle-switch-label">WET Alignment</span>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="toggleWetAlignment" checked>
+                                            <span class="toggle-switch-slider"></span>
+                                        </label>
+                                    </div>
+
+                                    <div class="toggle-switch-container">
+                                        <span class="toggle-switch-label">Apply Basic Classes</span>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="toggleApplyBasicClasses" checked>
+                                            <span class="toggle-switch-slider"></span>
+                                        </label>
+                                    </div>
+
+                                    <div class="toggle-switch-container">
+                                        <span class="toggle-switch-label">Remove &lt;p&gt; Tags</span>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="toggleRemovePTags" checked>
+                                            <span class="toggle-switch-slider"></span>
+                                        </label>
+                                    </div>
                                 </div>
+                            </div>
 
-                                <div class="toggle-switch-container">
-                                    <span class="toggle-switch-label">Zero Bookmarks</span>
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" id="toggleZeroBookmarks">
-                                        <span class="toggle-switch-slider"></span>
-                                    </label>
+                            <div class="collapsible-section">
+                                <div class="collapsible-header" id="componentsHeader">
+                                    <h4 class="text-white">Components</h4>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-white">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                                    </svg>
                                 </div>
-
-                                <div class="toggle-switch-container">
-                                    <span class="toggle-switch-label">Auto-Spacing</span>
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" id="toggleAutoSpacing">
-                                        <span class="toggle-switch-slider"></span>
-                                    </label>
+                                <div class="collapsible-content" id="componentsContent">
+                                    <p class="text-zinc-300 text-sm mb-2">Content for components will go here.</p>
+                                    <button class="mt-2 px-3 py-1 text-xs bg-green-600 text-white rounded-md hover:bg-green-700">Button Comp</button>
+                                    <button class="mt-2 ml-2 px-3 py-1 text-xs bg-green-600 text-white rounded-md hover:bg-green-700">Card Comp</button>
                                 </div>
-
                             </div>
                         </div>
 
-                        <div class="collapsible-section">
-                            <div class="collapsible-header" id="componentsHeader">
-                                <h4 class="text-white">Components</h4>
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-white">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                                </svg>
-                            </div>
-                            <div class="collapsible-content" id="componentsContent">
-                                <p class="text-zinc-300 text-sm mb-2">Content for components will go here.</p>
-                                <button class="mt-2 px-3 py-1 text-xs bg-green-600 text-white rounded-md hover:bg-green-700">Button Comp</button>
-                                <button class="mt-2 ml-2 px-3 py-1 text-xs bg-green-600 text-white rounded-md hover:bg-green-700">Card Comp</button>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -591,6 +642,11 @@
         const undoBtn = document.getElementById('undoBtn');
         const redoBtn = document.getElementById('redoBtn');
         const clearAllBtn = document.getElementById('clearAllBtn');
+        const runSelectedBtn = document.getElementById('runSelectedBtn'); // Get reference to Run Selected button
+        const toggleMsOfficeJunk = document.getElementById('toggleMsOfficeJunk'); // Get reference to MS Office Junk toggle
+        const toggleUrlCleaning = document.getElementById('toggleUrlCleaning'); // Get reference to URL Cleaning toggle
+        const toggleZeroBookmarks = document.getElementById('toggleZeroBookmarks'); // Get reference to Zero Bookmarks toggle
+
 
         let richTextEditorInstance; // HugeRTE editor instance
         let monacoEditorInstance; // Monaco editor instance
@@ -601,25 +657,200 @@
         let htmlOutputContent = ''; // This will now hold the content for Monaco
 
         /**
+         * Decodes HTML entities within a string to their actual Unicode characters.
+         * Uses a temporary textarea element for reliable decoding.
+         * @param {string} html - The HTML string containing entities.
+         * @returns {string} The HTML string with entities decoded.
+         */
+        function decodeHtmlEntities(html) {
+            const textarea = document.createElement('textarea');
+            textarea.innerHTML = html; // Browser decodes entities when setting innerHTML
+            return textarea.value; // Retrieving value gives the decoded string
+        }
+
+        /**
          * Cleans HTML content for display in HugeRTE.
+         * This function is specifically for preparing content *before* setting it to the rich text editor.
+         * It decodes HTML entities to ensure they render correctly in the visual editor.
          * @param {string} content - The HTML content to clean.
          * @returns {string} The cleaned HTML content.
          */
-        function cleanHtmlForRichText(content) {
-            let cleanedContent = content;
-
-            // 1. Decode HTML entities first using a temporary DOM element
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = cleanedContent;
-            cleanedContent = tempDiv.innerHTML;
-
-            // No other content cleaning is performed here to prevent data loss.
-
-            if (cleanedContent.trim() === '') {
-                cleanedContent = '';
-            }
-            return cleanedContent;
+        function cleanHtmlForRichTextDisplay(content) {
+            // Ensure content passed to rich text editor is also decoded
+            return decodeHtmlEntities(content);
         }
+
+        /**
+         * Applies MS Office Junk cleaning to HTML content.
+         * Removes classes starting with "Mso", all inline style attributes, all span tags,
+         * empty div tags (without class/id), and 'type' attributes from lists.
+         * This function assumes entities are already decoded.
+         * @param {string} htmlString - The HTML content to clean.
+         * @returns {string} The cleaned HTML content.
+         */
+        function applyMsOfficeJunkCleaning(htmlString) {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlString;
+
+            // 1. Remove all style attributes and classes starting with "Mso"
+            const allElements = tempDiv.querySelectorAll('*');
+            allElements.forEach(element => {
+                // Remove any class starting with "Mso"
+                if (element.hasAttribute('class')) {
+                    const classList = element.className.split(' ');
+                    const filteredClasses = classList.filter(cls => !cls.startsWith('Mso'));
+                    element.className = filteredClasses.join(' ').trim();
+                    if (element.className === '') {
+                        element.removeAttribute('class');
+                    }
+                }
+
+                // Remove all style attributes
+                if (element.hasAttribute('style')) {
+                    element.removeAttribute('style');
+                }
+            });
+
+            // 2. Remove all <span> tags
+            const spanElements = tempDiv.querySelectorAll('span');
+            spanElements.forEach(span => {
+                // Replace span with its children, effectively removing the span tag itself
+                while (span.firstChild) {
+                    span.parentNode.insertBefore(span.firstChild, span);
+                }
+                span.parentNode.removeChild(span);
+            });
+
+            // 3. Remove all 'type' attributes from <ol> and <ul> lists
+            const listElements = tempDiv.querySelectorAll('ol, ul');
+            listElements.forEach(list => {
+                if (list.hasAttribute('type')) {
+                    list.removeAttribute('type');
+                }
+            });
+
+            // 4. Remove empty <div> tags that have no classes or ids
+            // Iterate backwards to safely remove elements without affecting the NodeList index
+            const divElements = tempDiv.querySelectorAll('div');
+            for (let i = divElements.length - 1; i >= 0; i--) {
+                const div = divElements[i];
+                // Check if the div has no class, no id, and no significant content
+                // InnerHTML check covers text nodes and child elements
+                if (!div.hasAttribute('class') && !div.hasAttribute('id') && div.innerHTML.trim() === '') {
+                    div.parentNode.removeChild(div);
+                }
+            }
+
+            return tempDiv.innerHTML;
+        }
+
+        /**
+         * Applies URL cleaning to HTML content.
+         * Converts specific absolute URLs to relative paths and removes target/rel attributes from <a> tags.
+         * @param {string} htmlString - The HTML content to clean.
+         * @returns {string} The cleaned HTML content.
+         */
+        function applyUrlCleaning(htmlString) {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlString;
+
+            const urlMappings = [
+                { old: 'https://canada-preview.adobecqms.net/en/treasury-board-secretariat', new: '/content/canadasite/en/treasury-board-secretariat' },
+                { old: 'https://canada-preview.adobecqms.net/fr/secretariat-conseil-tresor', new: '/content/canadasite/fr/secretariat-conseil-tresor' },
+                { old: 'https://canada-preview.adobecqms.net/en/government', new: '/content/canadasite/en/government' },
+                { old: 'https://canada-preview.adobecqms.net/fr/gouvernement', new: '/content/canadasite/fr/gouvernement' },
+                { old: 'https://www.canada.ca/en/treasury-board-secretariat', new: '/content/canadasite/en/treasury-board-secretariat' },
+                { old: 'https://www.canada.ca/fr/secretariat-conseil-tresor', new: '/content/canadasite/fr/secretariat-conseil-tresor' },
+                { old: 'https://www.canada.ca/en/government', new: '/content/canadasite/en/government' },
+                { old: 'https://www.canada.ca/fr/gouvernement', new: '/content/canadasite/fr/gouvernement' }
+            ];
+
+            const aElements = tempDiv.querySelectorAll('a');
+            aElements.forEach(a => {
+                let href = a.getAttribute('href');
+                if (href) {
+                    // Convert URLs
+                    for (const mapping of urlMappings) {
+                        if (href.startsWith(mapping.old)) {
+                            href = href.replace(mapping.old, mapping.new);
+                            a.setAttribute('href', href);
+                            break; // Stop after the first match
+                        }
+                    }
+                }
+
+                // Remove target attribute
+                if (a.hasAttribute('target')) {
+                    a.removeAttribute('target');
+                }
+
+                // Remove rel attribute
+                if (a.hasAttribute('rel')) {
+                    a.removeAttribute('rel');
+                }
+            });
+
+            return tempDiv.innerHTML;
+        }
+
+        /**
+         * Applies Zero Bookmarks cleaning to HTML content.
+         * Removes <a> tags with a 'name' attribute, keeping content if present.
+         * @param {string} htmlString - The HTML content to clean.
+         * @returns {string} The cleaned HTML content.
+         */
+        function applyZeroBookmarksCleaning(htmlString) {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlString;
+
+            const aElementsWithName = tempDiv.querySelectorAll('a[name]');
+            aElementsWithName.forEach(a => {
+                // If the <a> tag has children (content), move them before removing the tag
+                while (a.firstChild) {
+                    a.parentNode.insertBefore(a.firstChild, a);
+                }
+                // Remove the <a> tag itself
+                a.parentNode.removeChild(a);
+            });
+
+            return tempDiv.innerHTML;
+        }
+
+        /**
+         * Removes <p>&nbsp;</p> tags that are not within <table> or <li> tags.
+         * @param {string} htmlString - The HTML content to clean.
+         * @returns {string} The cleaned HTML content.
+         */
+        function removeEmptyParagraphsOutsideTablesAndLists(htmlString) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlString, 'text/html');
+            const paragraphs = doc.querySelectorAll('p');
+
+            for (let i = paragraphs.length - 1; i >= 0; i--) {
+                const p = paragraphs[i];
+                // Check if the paragraph contains only &nbsp; or is effectively empty after decoding
+                // After decodeHtmlEntities, &nbsp; becomes a non-breaking space character (\u00A0)
+                const containsOnlyNBSP = p.innerHTML.trim() === '&nbsp;' || p.innerHTML.trim() === '\u00A0';
+
+                if (containsOnlyNBSP) {
+                    let parent = p.parentElement;
+                    let isInsideTableOrList = false;
+                    while (parent) {
+                        if (parent.tagName === 'TABLE' || parent.tagName === 'LI') {
+                            isInsideTableOrList = true;
+                            break;
+                        }
+                        parent = parent.parentElement;
+                    }
+
+                    if (!isInsideTableOrList) {
+                        p.parentNode.removeChild(p);
+                    }
+                }
+            }
+            return doc.body.innerHTML;
+        }
+
 
         /**
          * Function to set the content of the HugeRTE editor.
@@ -627,7 +858,7 @@
          */
         window.setRichEditorContent = function(content) {
             if (richTextEditorInstance) {
-                richTextEditorInstance.setContent(cleanHtmlForRichText(content));
+                richTextEditorInstance.setContent(cleanHtmlForRichTextDisplay(content));
                 richTextEditorInstance.focus(); // Re-focus the rich editor after content update
                 console.log('HugeRTE updated from HTML editor.');
             } else {
@@ -664,9 +895,15 @@
                 } else {
                     console.warn("Rich Text Editor not ready for content retrieval on toggle.");
                 }
+
+                // Apply French entity conversion (decode HTML entities)
+                let processedContent = decodeHtmlEntities(richTextContent);
+
+                // Apply removal of <p>&nbsp;</p> outside tables/lists
+                processedContent = removeEmptyParagraphsOutsideTablesAndLists(processedContent);
                 
                 // 2. Update HTML output content and Monaco editor.
-                htmlOutputContent = richTextContent; // The HTML output will now reflect the rich text content
+                htmlOutputContent = processedContent; // The HTML output will now reflect the rich text content
                 if (monacoEditorInstance) {
                     monacoEditorInstance.setValue(htmlOutputContent);
                     monacoEditorInstance.focus(); // Focus the Monaco editor
@@ -700,7 +937,7 @@
                 // 2. Update Rich Text content and editor.
                 richTextContent = htmlOutputContent; // The Rich Text will now reflect the HTML output content
                 if (default_ifr.contentWindow && default_ifr.contentWindow.setRichEditorContent) {
-                    default_ifr.contentWindow.setRichEditorContent(cleanHtmlForRichText(richTextContent));
+                    default_ifr.contentWindow.setRichEditorContent(cleanHtmlForRichTextDisplay(richTextContent));
                 } else {
                     console.warn("Rich Text Editor not ready for content setting on toggle.");
                 }
@@ -896,6 +1133,7 @@
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
                     <title>Rich Editor</title>
                     <script src="https://cdn.jsdelivr.net/npm/hugerte@1/hugerte.min.js"><\/script>
+                    <script src="https://cdn.tailwindcss.com"><\/script>
                     <style>
                         html, body {
                             height: 100%; /* Ensure html and body take full height */
@@ -995,10 +1233,15 @@
                         hugerte.init({
                             selector: '#richEditor',
                             content_css: 'https://www.canada.ca/etc/designs/canada/wet-boew/css/theme.min.css',
-                            toolbar: 'undo redo styles bold italic alignleft aligncenter alignright outdent indent code table',
-                            plugins: [ 'code', 'table', 'lists' ],
+                            toolbar: 'undo redo styles bold italic alignleft aligncenter alignright numlist bullist table',
+                            plugins: [ 'table', 'lists' ],
                             height: '100%', // Explicitly set height for TinyMCE
                             tab_focus: false, // Allow tab to indent instead of changing focus
+                            formats: { // Define custom formats for alignment to use classes
+                                alignleft: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img', classes: 'text-left', exact: true },
+                                aligncenter: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img', classes: 'text-center', exact: true },
+                                alignright: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img', classes: 'text-right', exact: true },
+                            },
                             init_instance_callback: function(editorInstance) {
                                 console.log('HugeRTE editor initialized inside iframe.');
                                 richTextEditorInstance = editorInstance; // Store the instance globally
@@ -1030,28 +1273,60 @@
 
         // Collapsible section logic
         document.addEventListener('DOMContentLoaded', () => {
-            const automatedFunctionsHeader = document.getElementById('automatedFunctionsHeader');
-            const automatedFunctionsContent = document.getElementById('automatedFunctionsContent');
-            const componentsHeader = document.getElementById('componentsHeader');
-            const componentsContent = document.getElementById('componentsContent');
+            const collapsibleSections = document.querySelectorAll('.collapsible-section');
 
             function toggleCollapsible(header, content) {
-                header.classList.toggle('collapsed');
-                header.classList.toggle('expanded');
-                content.classList.toggle('expanded');
+                const isExpanded = header.classList.contains('expanded');
+
+                // Collapse all other sections first
+                collapsibleSections.forEach(section => {
+                    const otherHeader = section.querySelector('.collapsible-header');
+                    const otherContent = section.querySelector('.collapsible-content');
+                    if (otherHeader !== header && otherHeader.classList.contains('expanded')) {
+                        otherHeader.classList.remove('expanded');
+                        otherHeader.classList.add('collapsed');
+                        // Collapse content by setting height to 0 and removing padding
+                        otherContent.style.height = '0';
+                        otherContent.style.paddingTop = '0';
+                        otherContent.style.paddingBottom = '0';
+                    }
+                });
+
+                // Then toggle the clicked section
+                if (isExpanded) {
+                    header.classList.remove('expanded');
+                    header.classList.add('collapsed');
+                    content.style.height = '0';
+                    content.style.paddingTop = '0';
+                    content.style.paddingBottom = '0';
+                } else {
+                    header.classList.add('expanded');
+                    header.classList.remove('collapsed');
+                    // Set height to scrollHeight to animate to full height
+                    content.style.height = content.scrollHeight + 'px';
+                    content.style.paddingTop = '0.75rem';
+                    content.style.paddingBottom = '0.75rem';
+
+                    // After transition, set height to 'auto' to handle dynamic content changes
+                    content.addEventListener('transitionend', function handler() {
+                        if (header.classList.contains('expanded')) { // Only set to auto if still expanded
+                            content.style.height = 'auto';
+                        }
+                        content.removeEventListener('transitionend', handler);
+                    });
+                }
             }
 
-            // Initialize both sections as collapsed
-            automatedFunctionsHeader.classList.add('collapsed');
-            componentsHeader.classList.add('collapsed');
-
-            automatedFunctionsHeader.addEventListener('click', () => {
-                toggleCollapsible(automatedFunctionsHeader, automatedFunctionsContent);
+            // Initialize all sections as collapsed and attach event listeners
+            collapsibleSections.forEach(section => {
+                const header = section.querySelector('.collapsible-header');
+                const content = section.querySelector('.collapsible-content');
+                header.classList.add('collapsed'); // Ensure all start collapsed
+                header.addEventListener('click', () => {
+                    toggleCollapsible(header, content);
+                });
             });
-
-            componentsHeader.addEventListener('click', () => {
-                toggleCollapsible(componentsHeader, componentsContent);
-            });
+            
 
             // Toggle switch logic
             const toggleSwitches = document.querySelectorAll('.toggle-switch input[type="checkbox"]');
@@ -1073,6 +1348,56 @@
                     }
                     console.log(`Toggle switch '${switchId}' is now: ${isChecked ? 'ON' : 'OFF'}`);
                 });
+            });
+
+            // Functionality for "Run Selected" button for General Cleaning
+            runSelectedBtn.addEventListener('click', () => {
+                let contentToClean;
+                if (currentView === 'richtext') {
+                    contentToClean = window.getRichEditorContent();
+                    // When running from rich text, entities are already decoded
+                    // and empty paragraphs outside tables/lists are removed by toggleEditorView
+                } else { // currentView === 'code'
+                    contentToClean = monacoEditorInstance.getValue();
+                    // If running from code view, ensure entities are decoded before cleaning functions
+                    contentToClean = decodeHtmlEntities(contentToClean);
+                }
+                
+                let cleanedContent = contentToClean; // Start with current content
+
+                if (toggleMsOfficeJunk.checked) {
+                    cleanedContent = applyMsOfficeJunkCleaning(cleanedContent);
+                    console.log("MS Office Junk cleaning applied.");
+                }
+
+                if (toggleUrlCleaning.checked) {
+                    cleanedContent = applyUrlCleaning(cleanedContent);
+                    console.log("URL Cleaning applied.");
+                }
+
+                if (toggleZeroBookmarks.checked) {
+                    cleanedContent = applyZeroBookmarksCleaning(cleanedContent);
+                    console.log("Zero Bookmarks cleaning applied.");
+                }
+
+                // Update the active editor with the final cleaned content
+                if (currentView === 'richtext') {
+                    window.setRichEditorContent(cleanedContent);
+                } else { // currentView === 'code'
+                    monacoEditorInstance.setValue(cleanedContent);
+                    htmlOutputContent = cleanedContent; // Keep the main content variable updated
+                }
+
+                // Provide visual feedback
+                const originalText = runSelectedBtn.textContent;
+                runSelectedBtn.textContent = 'Cleaned!';
+                runSelectedBtn.classList.add('bg-blue-500', 'hover:bg-blue-600');
+                runSelectedBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                setTimeout(() => {
+                    runSelectedBtn.textContent = originalText;
+                    runSelectedBtn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+                    runSelectedBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                }, 1500);
             });
         });
     </script>
