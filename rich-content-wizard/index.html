@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WordToCode™ - Rich Content Wizard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.0/beautify-html.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.49.0/min/vs/loader.js"></script>
+    <style>
+        /* Custom styles for the editor */
+        html, body {
+            height: 100%; /* Ensure html and body take full viewport height */
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Prevent body from scrolling */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif; /* Using Inter font */
+            display: flex;
+            flex-direction: column;
+            background-color: #09090b; /* Very dark zinc */
+        }
+        .editor-container {
+            display: flex;
+            flex-grow: 1; /* Allow container to grow and fill available space */
+            padding: 1rem; /* Apply padding to all sides */
+            gap: 1rem; /* Space between editor and richtext-output */
+            margin: 0;
+            width: 100%; /* Full width */
+            box-sizing: border-box; /* Include padding in total height */
+        }
+        .code-panel, .richtext-output-panel { /* Updated class name */
+            background-color: #18181b; /* Darker zinc */
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); /* Darker shadow */
+            padding: 1rem;
+            display: flex;
+            flex-direction: column; /* Keep column for header, content area, and footer */
+            width: 100%; /* Take full width of container */
+            height: 100%; /* Take full height of container */
+            box-sizing: border-box; /* Include padding and border in element's total width/height */
+            overflow: hidden; /* Important: Panel itself should not scroll, its children should */
+        }
+
+        /* Resizer bar styling (removed from layout, but keeping styles for reference if needed) */
+        .resizer {
+            width: 10px; /* Width of the draggable bar */
+            background-color: #3f3f46; /* Medium zinc */
+            cursor: ew-resize; /* East-west resize cursor */
+            flex-shrink: 0; /* Prevent resizer from shrinking */
+            border-radius: 0.25rem; /* Slightly rounded corners */
+            transition: background-color 0.2s ease; /* Smooth transition on hover */
+            display: none; /* Hide resizer in toggle view */
+        }
+        .resizer:hover {
+            background-color: #52525b; /* Lighter zinc on hover */
+        }
+
+        textarea {
+            width: 100%;
+            flex-grow: 1; /* Allow textarea to fill available height */
+            border: 1px solid #3f3f46; /* Medium zinc border */
+            border-radius: 0.5rem; /* rounded-lg */
+            padding: 0.75rem;
+            font-family: monospace; /* Monospace font for code */
+            font-size: 0.9rem;
+            resize: none; /* Prevent manual resizing */
+            outline: none; /* Remove default outline */
+            background-color: #27272a; /* Darker zinc for textarea */
+            color: #ffffff; /* White text color */
+        }
+        iframe {
+            width: 100%;
+            height: 100%; /* Make iframe fill its parent's height */
+            flex-grow: 1;
+            border: 1px solid #3f3f46; /* Medium zinc border */
+            border-radius: 0.5rem; /* rounded-lg */
+            background-color: #ffffff; /* Rich-Text Output window background remains white */
+            overflow: auto; /* Ensure iframe itself can scroll if its content overflows */
+        }
+        h1 {
+            color: #ffffff; /* White text for H1 in editor panel */
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        h2 {
+            color: #ffffff; /* White text for H2 in panel headers */
+        }
+        label {
+            color: #d4d4d8; /* Zinc-300 for labels */
+        }
+        input[type="text"] {
+            background-color: #27272a; /* Darker zinc for input */
+            color: #ffffff; /* White text for input */
+            border-color: #3f3f46; /* Medium zinc border for input */
+        }
+        input[type="text"]::placeholder {
+            color: #a1a1aa; /* Zinc-400 for placeholder text */
+        }
+
+        /* Responsive adjustments (will be simpler with toggle view) */
+        @media (max-width: 768px) {
+            .editor-container {
+                flex-direction: column; /* Stack vertically on small screens */
+            }
+            .code-panel, .richtext-output-panel { /* Updated class name */
+                min-height: 300px; /* Adjust min height for smaller screens */
+            }
+            .resizer {
+                width: 100%; /* Full width for vertical resizer on small screens */
+                height: 10px; /* Height for vertical resizer */
+                cursor: ns-resize; /* North-south resize cursor */
+            }
+            /* Stack editor and sidebar vertically on small screens */
+            .code-panel > .flex-grow {
+                flex-direction: column;
+            }
+            .code-panel #monacoEditorContainer {
+                width: 100%; /* Full width on small screens */
+            }
+            .code-panel #sidebar {
+                width: 100%; /* Full width on small screens */
+            }
+        }
+
+        /* Styles for button group */
+        .button-group {
+            display: flex;
+            width: 100%; /* Make it span full width */
+            border-radius: 0.5rem; /* rounded-md */
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow-sm */
+            border: 1px solid #3f3f46; /* Darker border for button group */
+            flex-wrap: wrap; /* Keep for responsiveness on smaller screens */
+        }
+
+        .button-group button {
+            flex: 1; /* Make buttons take up equal space */
+            border-radius: 0; /* Remove individual button rounded corners */
+            border: none; /* Remove individual button borders */
+            margin: 0; /* Remove individual button margins */
+            padding: 0.5rem 0.75rem; /* Consistent padding */
+            font-size: 0.875rem; /* text-sm */
+            line-height: 1.25rem; /* leading-5 */
+            position: relative; /* For z-index if needed */
+            color: #ffffff; /* White text for all buttons */
+            font-weight: bold; /* Make buttons bold */
+        }
+
+        /* Specific styles for the Sections and Headings buttons - NO FLEX */
+        #toggleSectionsBtn,
+        #toggleHeadingsBtn {
+            flex: none; /* Override flex: 1; for these specific buttons */
+            width: auto; /* Allow buttons to size based on content */
+            border: 1px solid #3f3f46; /* Add border back for individual buttons */
+            border-radius: 0.5rem; /* Add rounded corners back for individual buttons */
+            margin-left: 0.5rem; /* Add spacing between them and other buttons */
+        }
+
+        /* Adjust border between buttons in the main button groups */
+        .button-group:not(.no-border-buttons) button:not(:last-child) {
+            border-right: 1px solid rgba(63, 63, 70, 0.5); /* Darker separator between buttons */
+        }
+        .button-group.no-border-buttons button:not(:last-child) {
+            border-right: none; /* Remove border for this specific group */
+        }
+
+        /* Specific styling for the byline and URL/Image source button groups */
+        .button-group.individual-rounded-buttons {
+            border: none; /* Remove group border */
+            box-shadow: none; /* Remove group shadow */
+            width: auto; /* Allow the group to size to content */
+            gap: 0.5rem; /* Add gap between individual buttons */
+        }
+
+        .button-group.individual-rounded-buttons button {
+            flex: none; /* Do not make buttons take equal space */
+            border-radius: 0.5rem; /* Ensure rounded corners */
+            border: 1px solid #3f3f46; /* Add individual button border */
+            padding: 0.5rem 0.75rem; /* Consistent padding */
+        }
+        /* Remove right border for individual rounded buttons */
+        .button-group.individual-rounded-buttons button:not(:last-child) {
+            border-right: 1px solid #3f3f46; /* Keep individual border */
+        }
+
+
+        .button-group button:first-child {
+            border-top-left-radius: 0.5rem;
+            border-bottom-left-radius: 0.5rem;
+        }
+
+        .button-group button:last-child {
+            border-top-right-radius: 0.5rem;
+            border-bottom-right-radius: 0.5rem;
+        }
+
+        .button-group button:hover {
+            z-index: 1; /* Bring hovered button to front to show full border/shadow */
+        }
+
+        /* Visibility classes for toggle view */
+        .panel-hidden {
+            display: none;
+        }
+        .panel-visible {
+            display: flex; /* Or 'block' for iframe if it's not a flex container */
+        }
+
+
+        /* Customize section styles (removed, but keeping styles for now to avoid breaking other parts) */
+        .customize-section {
+            background-color: #27272a; /* Same as input background */
+            border-radius: 0.5rem;
+            padding: 1rem; /* Re-added padding */
+            margin-bottom: 1rem; /* Re-added margin-bottom */
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .customize-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            /* Removed padding-bottom, margin-bottom, border-bottom */
+        }
+
+        .customize-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            padding: 0 1rem; /* Padding for content area */
+        }
+
+        .customize-content.expanded {
+            max-height: 500px; /* Adjust as needed to fit content */
+            transition: max-height 0.5s ease-in;
+            padding-top: 0.75rem; /* Add padding to content when expanded */
+            padding-bottom: 0.75rem; /* Add padding to content when expanded */
+        }
+
+        .customize-header svg {
+            transition: transform 0.3s ease;
+        }
+
+        .customize-header.expanded svg {
+            transform: rotate(180deg);
+        }
+
+        /* Adjustments for button spacing */
+        .code-panel h2 .inline-flex.mr-auto button,
+        .richtext-output-panel h2 .inline-flex.mr-auto button { /* Updated class name */
+            margin-right: 0.5rem; /* Default margin for buttons within the group */
+        }
+
+        /* When in fullscreen editor mode, remove margin from the first button group */
+        .editor-container.fullscreen-editor .code-panel h2 .inline-flex.mr-auto {
+            margin-left: 0 !important; /* Remove any left margin on the button container */
+        }
+
+        /* When in fullscreen richtext-output mode, remove margin from the first button group */
+        .editor-container.fullscreen-richtext .richtext-output-panel h2 .inline-flex.mr-auto { /* Updated class name */
+            margin-left: 0 !important; /* Remove any left margin on the button */
+        }
+
+        /* Ensure the button itself doesn't have an undesired left margin when its parent is adjusted */
+        .editor-container.fullscreen-editor .code-panel h2 .inline-flex.mr-auto #fullScreenBtn,
+        .editor-container.fullscreen-editor .code-panel h2 .inline-flex.mr-auto #exitFullScreenBtn,
+        .editor-container.fullscreen-richtext .richtext-output-panel h2 .inline-flex.mr-auto #fullScreenRichTextBtn, /* Updated ID */
+        .editor-container.fullscreen-richtext .richtext-output-panel h2 .inline-flex.mr-auto #exitFullScreenRichTextBtn { /* Updated ID */
+            margin-left: 0; /* Explicitly remove any left margin on the button */
+        }
+
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: #18181b; /* Darker zinc */
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            color: #ffffff;
+            text-align: left; /* Left align content */
+            max-width: 90%;
+            width: 400px;
+        }
+
+        .modal-content h3 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            text-align: left; /* Ensure title is left aligned */
+        }
+
+        .modal-content p {
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-content button {
+            background-color: #52525b; /* Zinc-600 */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: bold;
+            transition: background-color 0.2s ease;
+        }
+
+        .modal-content button:hover {
+            background-color: #3f3f46; /* Zinc-700 */
+        }
+
+        .modal-content .button-group {
+            border: none; /* Remove border for button groups inside modal */
+            box-shadow: none; /* Remove shadow for button groups inside modal */
+            width: auto; /* Allow buttons to size naturally */
+        }
+
+        .modal-content .button-group button {
+            flex: none; /* Prevent buttons from taking equal space */
+            margin: 0.25rem; /* Add some margin between buttons */
+            border: 1px solid #3f3f46; /* Add border back for individual buttons */
+            border-radius: 0.5rem; /* Add rounded corners back for individual buttons */
+            padding: 0.3rem 0.6rem; /* Reduced padding for smaller buttons */
+            font-size: 0.8rem; /* Reduced font size for smaller buttons */
+        }
+
+        .modal-content .button-group button.active {
+            background-color: #27272a; /* Zinc-800 for active state */
+            color: white;
+            border-color: #27272a;
+        }
+
+        /* Monaco Editor specific styling */
+        #monacoEditorContainer {
+            min-height: 200px; /* Ensure it has a minimum height */
+            /* Monaco editor will take full height of its flex parent */
+        }
+
+        /* Styles for collapsible sections */
+        .collapsible-section {
+            background-color: #3f3f46; /* Medium zinc for section background */
+            border-radius: 0.5rem;
+            margin-bottom: 0.75rem; /* Space between sections */
+            overflow: hidden; /* Hide overflowing content during collapse */
+        }
+
+        .collapsible-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            background-color: #3f3f46; /* Medium zinc for header background */
+            border-bottom: 1px solid #52525b; /* Lighter zinc border */
+            border-radius: 0.5rem 0.5rem 0 0; /* Rounded top corners */
+        }
+
+        .collapsible-header.collapsed {
+            border-bottom: none; /* No border when collapsed */
+            border-radius: 0.5rem; /* Fully rounded when collapsed */
+        }
+
+        .collapsible-header h4 {
+            font-size: 1rem;
+            font-weight: bold;
+            color: #ffffff;
+        }
+
+        .collapsible-header svg {
+            transition: transform 0.3s ease;
+        }
+
+        .collapsible-header.expanded svg {
+            transform: rotate(180deg);
+        }
+
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            /* Unified transition for smoother effect */
+            transition: max-height 0.5s ease-in-out, padding 0.5s ease-in-out;
+            padding: 0 1rem; /* Padding for content area, default to 0 for collapsed */
+            background-color: #3f3f46; /* Match header background */
+            border-radius: 0 0 0.5rem 0.5rem; /* Rounded bottom corners */
+        }
+
+        .collapsible-content.expanded {
+            max-height: 1000px; /* Increased max-height for smoother transition */
+            padding-top: 0.75rem; /* Add padding to content when expanded */
+            padding-bottom: 0.75rem; /* Add padding to content when expanded */
+        }
+
+        /* Toggle Switch Styles */
+        .toggle-switch-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between; /* Space out label and switch */
+            margin-bottom: 0.5rem; /* Space between switches */
+            padding: 0.5rem 0; /* Vertical padding for each switch row */
+        }
+
+        .toggle-switch-label {
+            color: #d4d4d8; /* Light gray for label text */
+            font-size: 0.9rem;
+            flex-grow: 1; /* Allow label to take available space */
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px; /* Width of the pill */
+            height: 24px; /* Height of the pill */
+            border-radius: 12px; /* Half of height for pill shape */
+            background-color: #71717a; /* Off state background - Zinc-600 */
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-switch-slider {
+            position: absolute;
+            content: "";
+            height: 20px; /* Height of the inner circle */
+            width: 20px; /* Width of the inner circle */
+            left: 2px; /* Initial position for off state */
+            bottom: 2px;
+            background-color: #ffffff; /* Circle color */
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+        }
+
+        /* Checked state styles (applied to the .toggle-switch label itself) */
+        .toggle-switch.is-checked {
+            background-color: #22c55e; /* Green for on state */
+        }
+
+        .toggle-switch.is-checked .toggle-switch-slider {
+            transform: translateX(20px); /* Move circle to the right */
+        }
+    </style>
+</head>
+<body>
+    <div class="flex flex-col h-full">
+        <div class="editor-container">
+            <div id="richtextOutputPanel" class="richtext-output-panel panel-visible">
+                <div class="flex items-center mb-4">
+                    <h2 class="text-xl font-semibold text-white">Rich-Text Editor</h2>
+                    <button id="toggleEditorViewBtnRichText" class="ml-4 px-4 py-2 text-base font-semibold bg-sky-700 text-white rounded-md hover:bg-sky-800 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:ring-opacity-50 font-bold">
+                        Go to HTML
+                    </button>
+                </div>
+                <iframe id="default_ifr"></iframe>
+            </div>
+
+            <div id="codePanel" class="code-panel panel-hidden">
+                <div class="flex items-center mb-4 flex-wrap">
+                    <h2 class="text-xl font-semibold text-white">HTML Editor</h2>
+                    <button id="toggleEditorViewBtnCode" class="ml-4 px-4 py-2 text-base font-semibold bg-zinc-700 text-white rounded-md hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-opacity-50 font-bold">
+                        Go to Rich-Text
+                    </button>
+                    <div class="inline-flex space-x-2 ml-auto mt-2 sm:mt-0">
+                        <button id="clearAllBtn" class="px-3 py-1 text-sm bg-zinc-700 text-white rounded-md hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-opacity-50 font-bold">Clear All</button>
+                        <button id="importHtmlBtn" class="px-3 py-1 text-sm bg-purple-700 text-white rounded-md hover:bg-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-opacity-50 font-bold">Import HTML</button>
+                        <button id="exportHtmlBtn" class="px-3 py-1 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-bold">Export HTML</button>
+                        <input type="file" id="htmlFileInput" accept=".html" style="display: none;">
+                    </div>
+                </div>
+                
+                <div class="flex flex-grow gap-4">
+                    <div id="monacoEditorContainer" class="flex-grow border border-zinc-700 rounded-lg overflow-hidden"></div>
+                    
+                    <div id="sidebar" class="w-1/4 bg-zinc-800 rounded-lg p-4 flex-shrink-0 overflow-y-auto">
+                        <h3 class="text-lg font-semibold text-white mb-4">Formatting</h3>
+                        
+                        <div class="collapsible-section">
+                            <div class="collapsible-header" id="automatedFunctionsHeader">
+                                <h4 class="text-white">Automated Functions</h4>
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-white">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                                </svg>
+                            </div>
+                            <div class="collapsible-content" id="automatedFunctionsContent">
+                                <button id="runSelectedBtn" class="w-full px-4 py-2 mb-4 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 font-semibold">
+                                    Run Selected
+                                </button>
+
+                                <div class="toggle-switch-container">
+                                    <span class="toggle-switch-label">General Cleaning</span>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="toggleGeneralCleaning">
+                                        <span class="toggle-switch-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div class="toggle-switch-container">
+                                    <span class="toggle-switch-label">URL Cleaning</span>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="toggleUrlCleaning" checked>
+                                        <span class="toggle-switch-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div class="toggle-switch-container">
+                                    <span class="toggle-switch-label">Zero Bookmarks</span>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="toggleZeroBookmarks">
+                                        <span class="toggle-switch-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div class="toggle-switch-container">
+                                    <span class="toggle-switch-label">Auto-Spacing</span>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="toggleAutoSpacing">
+                                        <span class="toggle-switch-slider"></span>
+                                    </label>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <div class="collapsible-section">
+                            <div class="collapsible-header" id="componentsHeader">
+                                <h4 class="text-white">Components</h4>
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-white">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                                </svg>
+                            </div>
+                            <div class="collapsible-content" id="componentsContent">
+                                <p class="text-zinc-300 text-sm mb-2">Content for components will go here.</p>
+                                <button class="mt-2 px-3 py-1 text-xs bg-green-600 text-white rounded-md hover:bg-green-700">Button Comp</button>
+                                <button class="mt-2 ml-2 px-3 py-1 text-xs bg-green-600 text-white rounded-md hover:bg-green-700">Card Comp</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-auto pt-4 flex justify-center space-x-2">
+                    <button id="undoBtn" class="px-4 py-2 text-sm bg-sky-700 text-white rounded-md hover:bg-sky-800 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:ring-opacity-50 font-semibold flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 mr-1">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
+                        </svg>
+                        Undo
+                    </button>
+                    <button id="redoBtn" class="px-4 py-2 text-sm bg-sky-700 text-white rounded-md hover:bg-sky-800 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:ring-opacity-50 font-semibold flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 15l6-6m0 0l-6-6m6 6H9a6 6 0 000 12H6" />
+                        </svg>
+                    </button>
+                    
+                    <button id="autoFormatBtn" class="px-4 py-2 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold">
+                        Auto-Indent
+                    </button>
+                    <button id="copyCodeBtn" class="px-4 py-2 text-sm bg-zinc-700 text-white rounded-md hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-opacity-50 font-semibold">
+                        Copy Code
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get references to the elements
+        const default_ifr = document.getElementById('default_ifr');
+        const codePanel = document.getElementById('codePanel');
+        const richtextOutputPanel = document.getElementById('richtextOutputPanel');
+        const toggleEditorViewBtnRichText = document.getElementById('toggleEditorViewBtnRichText'); 
+        const toggleEditorViewBtnCode = document.getElementById('toggleEditorViewBtnCode'); 
+        const copyCodeBtn = document.getElementById('copyCodeBtn');
+        const autoFormatBtn = document.getElementById('autoFormatBtn');
+        const exportHtmlBtn = document.getElementById('exportHtmlBtn');
+        const importHtmlBtn = document.getElementById('importHtmlBtn');
+        const htmlFileInput = document.getElementById('htmlFileInput');
+        const undoBtn = document.getElementById('undoBtn');
+        const redoBtn = document.getElementById('redoBtn');
+        const clearAllBtn = document.getElementById('clearAllBtn');
+
+        let richTextEditorInstance; // HugeRTE editor instance
+        let monacoEditorInstance; // Monaco editor instance
+        let currentView = 'richtext'; // 'richtext' or 'code'
+
+        // Separate content storage for each editor
+        let richTextContent = '';
+        let htmlOutputContent = ''; // This will now hold the content for Monaco
+
+        /**
+         * Cleans HTML content for display in HugeRTE.
+         * @param {string} content - The HTML content to clean.
+         * @returns {string} The cleaned HTML content.
+         */
+        function cleanHtmlForRichText(content) {
+            let cleanedContent = content;
+
+            // 1. Decode HTML entities first using a temporary DOM element
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = cleanedContent;
+            cleanedContent = tempDiv.innerHTML;
+
+            // No other content cleaning is performed here to prevent data loss.
+
+            if (cleanedContent.trim() === '') {
+                cleanedContent = '';
+            }
+            return cleanedContent;
+        }
+
+        /**
+         * Function to set the content of the HugeRTE editor.
+         * This is called from the parent window.
+         */
+        window.setRichEditorContent = function(content) {
+            if (richTextEditorInstance) {
+                richTextEditorInstance.setContent(cleanHtmlForRichText(content));
+                richTextEditorInstance.focus(); // Re-focus the rich editor after content update
+                console.log('HugeRTE updated from HTML editor.');
+            } else {
+                console.warn('HugeRTE editor not yet initialized. Content will be set once ready.');
+            }
+        };
+
+        /**
+         * Function to get the content from the HugeRTE editor.
+         * This is called from the parent window.
+         */
+        window.getRichEditorContent = function() {
+            if (richTextEditorInstance) {
+                const content = richTextEditorInstance.getContent();
+                console.log("Getting content from HugeRTE:", content);
+                return content;
+            } else {
+                console.warn('HugeRTE editor not yet initialized. Cannot get content.');
+                return '';
+            }
+        };
+
+        /**
+         * Toggles the active editor view between 'richtext' and 'code'.
+         * Includes automatic content synchronization.
+         */
+        function toggleEditorView() {
+            if (currentView === 'richtext') {
+                // When switching from Rich-Text to Code:
+                // 1. Get content from Rich-Text editor.
+                if (default_ifr.contentWindow && default_ifr.contentWindow.getRichEditorContent) {
+                    richTextContent = default_ifr.contentWindow.getRichEditorContent();
+                    console.log("Syncing from Rich Text to HTML. Rich Text Content:", richTextContent);
+                } else {
+                    console.warn("Rich Text Editor not ready for content retrieval on toggle.");
+                }
+                
+                // 2. Update HTML output content and Monaco editor.
+                htmlOutputContent = richTextContent; // The HTML output will now reflect the rich text content
+                if (monacoEditorInstance) {
+                    monacoEditorInstance.setValue(htmlOutputContent);
+                    monacoEditorInstance.focus(); // Focus the Monaco editor
+                } else {
+                    console.warn('Monaco editor not yet initialized. Content will be set once ready.');
+                }
+
+                // 3. Switch panel visibility.
+                richtextOutputPanel.classList.remove('panel-visible');
+                richtextOutputPanel.classList.add('panel-hidden');
+                codePanel.classList.remove('panel-hidden');
+                codePanel.classList.add('panel-visible');
+                
+                // 4. Update button styles.
+                toggleEditorViewBtnRichText.classList.remove('bg-sky-700', 'hover:bg-sky-800');
+                toggleEditorViewBtnRichText.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
+                toggleEditorViewBtnCode.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
+                toggleEditorViewBtnCode.classList.add('bg-sky-700', 'hover:bg-sky-800');
+                
+                currentView = 'code';
+            } else { // currentView === 'code'
+                // When switching from Code to Rich-Text:
+                // 1. Get content from Monaco editor.
+                if (monacoEditorInstance) {
+                    htmlOutputContent = monacoEditorInstance.getValue();
+                    console.log("Syncing from HTML to Rich Text. HTML Output Content:", htmlOutputContent);
+                } else {
+                    console.warn("Monaco editor not ready for content retrieval on toggle.");
+                }
+
+                // 2. Update Rich Text content and editor.
+                richTextContent = htmlOutputContent; // The Rich Text will now reflect the HTML output content
+                if (default_ifr.contentWindow && default_ifr.contentWindow.setRichEditorContent) {
+                    default_ifr.contentWindow.setRichEditorContent(cleanHtmlForRichText(richTextContent));
+                } else {
+                    console.warn("Rich Text Editor not ready for content setting on toggle.");
+                }
+                
+                // 3. Switch panel visibility.
+                codePanel.classList.remove('panel-visible');
+                codePanel.classList.add('panel-hidden');
+                richtextOutputPanel.classList.remove('panel-hidden');
+                richtextOutputPanel.classList.add('panel-visible');
+
+                // 4. Update button styles.
+                toggleEditorViewBtnCode.classList.remove('bg-sky-700', 'hover:bg-sky-800');
+                toggleEditorViewBtnCode.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
+                toggleEditorViewBtnRichText.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
+                toggleEditorViewBtnRichText.classList.add('bg-sky-700', 'hover:bg-sky-800');
+
+                currentView = 'richtext';
+                if (richTextEditorInstance) {
+                    richTextEditorInstance.focus();
+                }
+            }
+        }
+
+        // Initialize and set up event listeners on window load
+        window.onload = function() {
+            // Initial setup: Ensure rich text panel is visible and code panel is hidden
+            richtextOutputPanel.classList.add('panel-visible');
+            codePanel.classList.add('panel-hidden');
+            
+            // Set initial button styles based on default view (richtext)
+            toggleEditorViewBtnRichText.classList.add('bg-sky-700', 'hover:bg-sky-800');
+            toggleEditorViewBtnRichText.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
+            toggleEditorViewBtnCode.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
+            toggleEditorViewBtnCode.classList.remove('bg-sky-700', 'hover:bg-sky-800');
+
+            // Initialize Monaco Editor
+            require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.49.0/min/vs' } });
+            require(['vs/editor/editor.main'], function () {
+                monacoEditorInstance = monaco.editor.create(document.getElementById('monacoEditorContainer'), {
+                    value: htmlOutputContent, // Set initial content
+                    language: 'html',
+                    theme: 'vs-dark', // Or 'hc-black'
+                    automaticLayout: true, // Important for responsiveness
+                    minimap: { enabled: false },
+                    fontSize: 14,
+                    tabSize: 4,
+                    insertSpaces: true,
+                    // Additional options for better UX
+                    scrollBeyondLastLine: false,
+                    wordWrap: 'on',
+                    wrappingIndent: 'same',
+                });
+
+                // Update htmlOutputContent on Monaco content change
+                monacoEditorInstance.onDidChangeModelContent(() => {
+                    htmlOutputContent = monacoEditorInstance.getValue();
+                });
+
+                // Map Undo/Redo buttons to Monaco's built-in commands
+                undoBtn.addEventListener('click', () => {
+                    monacoEditorInstance.trigger('keyboard', 'undo');
+                });
+                redoBtn.addEventListener('click', () => {
+                    monacoEditorInstance.trigger('keyboard', 'redo');
+                });
+
+                // Ensure Monaco refreshes layout on window resize
+                window.addEventListener('resize', () => {
+                    if (monacoEditorInstance) {
+                        monacoEditorInstance.layout();
+                    }
+                });
+            });
+
+
+            copyCodeBtn.addEventListener('click', async () => {
+                const codeContent = monacoEditorInstance ? monacoEditorInstance.getValue() : '';
+                try {
+                    const tempTextArea = document.createElement('textarea');
+                    tempTextArea.value = codeContent;
+                    document.body.appendChild(tempTextArea);
+                    tempTextArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(tempTextArea);
+                    const originalText = copyCodeBtn.textContent;
+                    copyCodeBtn.textContent = 'Copied!';
+                    copyCodeBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                    copyCodeBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
+                    setTimeout(() => {
+                        copyCodeBtn.textContent = originalText;
+                        copyCodeBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                        copyCodeBtn.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
+                    }, 1500);
+                } catch (err) {
+                    console.error('Failed to copy text: ', err);
+                }
+            });
+
+            autoFormatBtn.addEventListener('click', () => {
+                if (monacoEditorInstance) {
+                    monacoEditorInstance.getAction('editor.action.formatDocument').run();
+                    const originalText = autoFormatBtn.textContent;
+                    autoFormatBtn.textContent = 'Formatted!';
+                    autoFormatBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                    autoFormatBtn.classList.remove('bg-red-700', 'hover:bg-red-800');
+                    setTimeout(() => {
+                        autoFormatBtn.textContent = originalText;
+                        autoFormatBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                        autoFormatBtn.classList.add('bg-red-700', 'hover:bg-red-800');
+                    }, 1500);
+                }
+            });
+
+            exportHtmlBtn.addEventListener('click', () => {
+                const htmlContent = monacoEditorInstance ? monacoEditorInstance.getValue() : '';
+                const blob = new Blob([htmlContent], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'index.html';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                const originalText = exportHtmlBtn.textContent;
+                exportHtmlBtn.textContent = 'Exported!';
+                exportHtmlBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                exportHtmlBtn.classList.remove('bg-red-700', 'hover:bg-red-800');
+                setTimeout(() => {
+                    exportHtmlBtn.textContent = originalText;
+                    exportHtmlBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                    exportHtmlBtn.classList.add('bg-red-700', 'hover:bg-red-800');
+                }, 1500);
+            });
+
+            importHtmlBtn.addEventListener('click', () => htmlFileInput.click());
+            htmlFileInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const importedContent = e.target.result;
+                        if (monacoEditorInstance) {
+                            monacoEditorInstance.setValue(importedContent);
+                            htmlOutputContent = importedContent; // Update stored content
+                        }
+                        const originalText = importHtmlBtn.textContent;
+                        importHtmlBtn.textContent = 'Imported!';
+                        importHtmlBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                        importHtmlBtn.classList.remove('bg-purple-700', 'hover:bg-purple-800');
+                        setTimeout(() => {
+                            importHtmlBtn.textContent = originalText;
+                            importHtmlBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                            importHtmlBtn.classList.add('bg-purple-700', 'hover:bg-purple-800');
+                        }, 1500);
+                    };
+                    reader.onerror = () => {
+                        // Error handling for file read removed.
+                    };
+                    reader.readAsText(file);
+                }
+            });
+
+            // Event listeners for the new individual toggle buttons
+            toggleEditorViewBtnRichText.addEventListener('click', toggleEditorView);
+            toggleEditorViewBtnCode.addEventListener('click', toggleEditorView);
+
+            // Clear All button event listener
+            clearAllBtn.addEventListener('click', () => {
+                if (monacoEditorInstance) {
+                    monacoEditorInstance.setValue(''); // Clear Monaco content
+                    htmlOutputContent = ''; // Clear stored content
+                }
+                const originalText = clearAllBtn.textContent;
+                clearAllBtn.textContent = 'Cleared!';
+                clearAllBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                clearAllBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
+                setTimeout(() => {
+                    clearAllBtn.textContent = originalText;
+                    clearAllBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                    clearAllBtn.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
+                }, 1500);
+            });
+
+            // Initial content for the iframe
+            const iframeDocument = default_ifr.contentDocument || default_ifr.contentWindow.document;
+            iframeDocument.open();
+            iframeDocument.write(`
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Rich Editor</title>
+                    <script src="https://cdn.jsdelivr.net/npm/hugerte@1/hugerte.min.js"><\/script>
+                    <style>
+                        html, body {
+                            height: 100%; /* Ensure html and body take full height */
+                            margin: 0;
+                            /* Removed padding from html, body to avoid height calculation issues */
+                            box-sizing: border-box; /* Include padding in height calculations for all elements */
+                        }
+                        body {
+                            font-family: sans-serif;
+                            background-color: #ffffff; /* White background for iframe body */
+                            color: #333;
+                            display: flex; /* Use flexbox for body to make form fill height */
+                            flex-direction: column;
+                            padding: 1rem; /* Add padding to the body of the iframe */
+                        }
+                        form {
+                            height: 100%;
+                            display: flex;
+                            flex-direction: column;
+                        }
+                        textarea {
+                            width: 100%;
+                            flex-grow: 1;
+                            border: 1px solid #ccc;
+                            border-radius: 0.5rem;
+                            padding: 0.75rem;
+                            font-size: 1rem;
+                            resize: none; /* Prevent manual resizing */
+                            box-sizing: border-box; /* Include padding in width/height */
+                        }
+                        /* Style for HugeRTE container */
+                        .tox.tox-tinymce { /* Use .tox.tox-tinymce as HugeRTE uses TinyMCE classes */
+                            height: 100% !important; /* Force full height */
+                            display: flex; /* Make it a flex container */
+                            flex-direction: column; /* Stack its children vertically */
+                        }
+                        .tox-editor-container {
+                            flex-grow: 1; /* Allow the editor area to grow */
+                            display: flex;
+                            flex-direction: column;
+                        }
+                        .tox-edit-area {
+                            flex-grow: 1; /* Allow the editing area to grow */
+                            display: flex;
+                            flex-direction: column;
+                        }
+                        .tox-edit-area__iframe {
+                            flex-grow: 1; /* Make the actual iframe within TinyMCE fill space */
+                        }
+                    </style>
+                     <link rel="stylesheet" href="https://www.canada.ca/etc/designs/canada/wet-boew/css/theme.min.css">
+                </head>
+                <body>
+                    <form method="post">
+                        <textarea id="richEditor"></textarea>
+                    </form>
+                    <script type="text/javascript">
+                        // Global variable to hold the HugeRTE editor instance
+                        let richTextEditorInstance;
+                        // Flag to prevent infinite loop when updating HugeRTE from CodeMirror
+                        let isUpdatingFromCodeMirror = false;
+
+                        /**
+                         * Function to set the content of the HugeRTE editor.
+                         * This is called from the parent window.
+                         */
+                        window.setRichEditorContent = function(content) {
+                            if (richTextEditorInstance && !isUpdatingFromCodeMirror) {
+                                isUpdatingFromCodeMirror = true;
+                                richTextEditorInstance.setContent(content);
+                                richTextEditorInstance.focus(); // Re-focus the rich editor after content update
+                                console.log('HugeRTE updated from parent:', content);
+                                isUpdatingFromCodeMirror = false;
+                            } else {
+                                console.warn('HugeRTE editor not yet initialized. Content will be set once ready.');
+                            }
+                        };
+
+                        /**
+                         * Function to get the content from the HugeRTE editor.
+                         * This is called from the parent window.
+                         */
+                        window.getRichEditorContent = function() {
+                            if (richTextEditorInstance) {
+                                const content = richTextEditorInstance.getContent();
+                                console.log("HugeRTE content requested by parent:", content);
+                                return content;
+                            } else {
+                                console.warn('HugeRTE editor not yet initialized. Cannot get content.');
+                                return '';
+                            }
+                        };
+
+                        /**
+                         * HugeRTE init
+                         */
+                        hugerte.init({
+                            selector: '#richEditor',
+                            content_css: 'https://www.canada.ca/etc/designs/canada/wet-boew/css/theme.min.css',
+                            toolbar: 'undo redo styles bold italic alignleft aligncenter alignright outdent indent code table',
+                            plugins: [ 'code', 'table', 'lists' ],
+                            height: '100%', // Explicitly set height for TinyMCE
+                            tab_focus: false, // Allow tab to indent instead of changing focus
+                            init_instance_callback: function(editorInstance) {
+                                console.log('HugeRTE editor initialized inside iframe.');
+                                richTextEditorInstance = editorInstance; // Store the instance globally
+
+                                // Handle Tab key for indentation and outdentation, especially for lists
+                                editorInstance.on('keydown', (event) => {
+                                    if (event.key === 'Tab') {
+                                        event.preventDefault(); // Prevent default tab behavior (focus change)
+                                        // No content modification (no spaces, no styles)
+                                        editorInstance.focus(); // Explicitly refocus the editor after command
+                                    }
+                                });
+
+                                // Initial content sync when editor loads
+                                console.log('HugeRTE editor ready.');
+                                // Set initial content if parent already has some
+                                if (window.parent.richTextContent) {
+                                    editorInstance.setContent(window.parent.richTextContent);
+                                    console.log("Initial HugeRTE content set from parent:", window.parent.richTextContent);
+                                }
+                            }
+                        });
+                    <\/script>
+                </body>
+                </html>
+            `);
+            iframeDocument.close();
+        };
+
+        // Collapsible section logic
+        document.addEventListener('DOMContentLoaded', () => {
+            const automatedFunctionsHeader = document.getElementById('automatedFunctionsHeader');
+            const automatedFunctionsContent = document.getElementById('automatedFunctionsContent');
+            const componentsHeader = document.getElementById('componentsHeader');
+            const componentsContent = document.getElementById('componentsContent');
+
+            function toggleCollapsible(header, content) {
+                header.classList.toggle('collapsed');
+                header.classList.toggle('expanded');
+                content.classList.toggle('expanded');
+            }
+
+            // Initialize both sections as collapsed
+            automatedFunctionsHeader.classList.add('collapsed');
+            componentsHeader.classList.add('collapsed');
+
+            automatedFunctionsHeader.addEventListener('click', () => {
+                toggleCollapsible(automatedFunctionsHeader, automatedFunctionsContent);
+            });
+
+            componentsHeader.addEventListener('click', () => {
+                toggleCollapsible(componentsHeader, componentsContent);
+            });
+
+            // Toggle switch logic
+            const toggleSwitches = document.querySelectorAll('.toggle-switch input[type="checkbox"]');
+            toggleSwitches.forEach(switchElement => {
+                // Set initial state based on checked attribute
+                if (switchElement.checked) {
+                    switchElement.closest('.toggle-switch').classList.add('is-checked');
+                }
+
+                switchElement.addEventListener('change', (event) => {
+                    const switchId = event.target.id;
+                    const isChecked = event.target.checked;
+                    const parentLabel = event.target.closest('.toggle-switch');
+
+                    if (isChecked) {
+                        parentLabel.classList.add('is-checked');
+                    } else {
+                        parentLabel.classList.remove('is-checked');
+                    }
+                    console.log(`Toggle switch '${switchId}' is now: ${isChecked ? 'ON' : 'OFF'}`);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
