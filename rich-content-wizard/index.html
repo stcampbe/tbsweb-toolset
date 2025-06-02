@@ -60,7 +60,7 @@
 
         textarea {
             width: 100%;
-            flex-grow: 1; /* Allow textarea to fill available height */
+            flex-grow: 1;
             border: 1px solid #3f3f46; /* Medium zinc border */
             border-radius: 0.5rem; /* rounded-lg */
             padding: 0.75rem;
@@ -209,7 +209,7 @@
         }
 
 
-        /* Customize section styles (removed, but keeping styles for now to avoid breaking other parts) */
+        /* Customize section styles (removed, but keeping styles for reference if needed) */
         .customize-section {
             background-color: #27272a; /* Same as input background */
             border-radius: 0.5rem;
@@ -516,22 +516,6 @@
                                 </button>
 
                                 <div class="toggle-switch-container">
-                                    <span class="toggle-switch-label" id="msOfficeJunkLabel">Clean MS+Inline Styles</span>
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" id="toggleMsOfficeJunk" checked>
-                                        <span class="toggle-switch-slider"></span>
-                                    </label>
-                                </div>
-
-                                <div class="toggle-switch-container">
-                                    <span class="toggle-switch-label">Clean Word Bookmarks</span>
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" id="toggleZeroBookmarks" checked>
-                                        <span class="toggle-switch-slider"></span>
-                                    </label>
-                                </div>
-
-                                <div class="toggle-switch-container">
                                     <span class="toggle-switch-label">Clean URLs</span>
                                     <label class="toggle-switch">
                                         <input type="checkbox" id="toggleUrlCleaning" checked>
@@ -548,12 +532,36 @@
                                 </div>
 
                                 <div class="toggle-switch-container">
+                                    <span class="toggle-switch-label">Clean COMM/FN/EDN</span>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="toggleCleanComments" checked>
+                                        <span class="toggle-switch-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div class="toggle-switch-container">
+                                    <span class="toggle-switch-label">Clean MSO Code</span>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="toggleCleanMsoCode">
+                                        <span class="toggle-switch-slider"></span>
+                                    </label>
+                                </div>
+                                
+                                <div class="toggle-switch-container">
                                     <span class="toggle-switch-label">Clean Single Breaks</span>
                                     <label class="toggle-switch">
                                         <input type="checkbox" id="toggleCleanSingleBreaks"> <span class="toggle-switch-slider"></span>
                                     </label>
                                 </div>
 
+                                <div class="toggle-switch-container">
+                                    <span class="toggle-switch-label">Clean MSO Lists</span>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="toggleCleanMsoLists">
+                                        <span class="toggle-switch-slider"></span>
+                                    </label>
+                                </div>
+                                
                             </div>
                         </div>
 
@@ -562,7 +570,7 @@
                                 <h4 class="text-white">Table Cleaning</h4>
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-white">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                                </svg>
+                                    </svg>
                             </div>
                             <div class="collapsible-content" id="tableCleaningContent">
                                 <button id="runSelectedTableBtn" class="w-full px-4 py-2 mb-4 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 font-semibold">
@@ -645,26 +653,45 @@
         const copyCodeBtn = document.getElementById('copyCodeBtn');
         const autoFormatBtn = document.getElementById('autoFormatBtn');
         const autoEncodeBtn = document.getElementById('autoEncodeBtn'); // New button reference
-        const exportHtmlBtn = document.getElementById('exportHtmlBtn');
+        const exportHtmlBtn = document = document.getElementById('exportHtmlBtn');
         const importHtmlBtn = document.getElementById('importHtmlBtn');
         const htmlFileInput = document.getElementById('htmlFileInput');
         // Removed undoBtn and redoBtn as per user request
         const clearAllBtn = document.getElementById('clearAllBtn');
         const runSelectedBtn = document.getElementById('runSelectedBtn'); // Get reference to Run Selected button
-        const msOfficeJunkLabel = document.getElementById('msOfficeJunkLabel'); // Get reference to the label
-        const toggleMsOfficeJunk = document.getElementById('toggleMsOfficeJunk'); // Get reference to MS Office Junk toggle
+        const runSelectedTableBtn = document.getElementById('runSelectedTableBtn'); // Get reference to Run Selected Table button
+        
+        // Removed references to the removed toggles
         const toggleUrlCleaning = document.getElementById('toggleUrlCleaning'); // Get reference to URL Cleaning toggle
-        const toggleZeroBookmarks = document.getElementById('toggleZeroBookmarks'); // Get reference to Zero Bookmarks toggle
         const toggleAutoSpacing = document.getElementById('toggleAutoSpacing'); // Get reference to Auto-Spacing toggle
         const toggleCleanSingleBreaks = document.getElementById('toggleCleanSingleBreaks'); // New toggle reference
+        const toggleCleanComments = document.getElementById('toggleCleanComments'); // New toggle reference for Clean Comments
+        const toggleCleanMsoCode = document.getElementById('toggleCleanMsoCode'); // New toggle reference for Clean MSO Code
+        const toggleCleanMsoLists = document.getElementById('toggleCleanMsoLists'); // New toggle reference for Clean MSO Lists
+
+        // Table cleaning toggles
+        const toggleResponsiveTables = document.getElementById('toggleResponsiveTables');
+        const toggleWetAlignment = document = document.getElementById('toggleWetAlignment');
+        const toggleApplyBasicClasses = document.getElementById('toggleApplyBasicClasses');
+        const toggleRemovePTags = document.getElementById('toggleRemovePTags');
+
 
         // Array of all general cleaning toggles for easy iteration
         const generalCleaningToggles = [
-            toggleMsOfficeJunk,
-            toggleZeroBookmarks,
             toggleUrlCleaning,
             toggleAutoSpacing,
-            toggleCleanSingleBreaks
+            toggleCleanComments,
+            toggleCleanMsoCode, // Add the new toggle here
+            toggleCleanSingleBreaks,
+            toggleCleanMsoLists // Add the new toggle here
+        ];
+
+        // Array of all table cleaning toggles for easy iteration
+        const tableCleaningToggles = [
+            toggleResponsiveTables,
+            toggleWetAlignment,
+            toggleApplyBasicClasses,
+            toggleRemovePTags
         ];
 
 
@@ -703,143 +730,12 @@
             return decodeHtmlEntities(content);
         }
 
-        /**
-         * Applies MS Office Junk cleaning to HTML content.
-         * Removes classes starting with "Mso", all inline style attributes, all span tags,
-         * empty div tags (without class/id), 'type' attributes from lists,
-         * table-specific attributes (width, height, border, cellspacing, cellpadding),
-         * completely removes colgroup and col tags, and removes classes starting with "xl" within tables.
-         * This function assumes entities are already decoded.
-         *
-         * NEW: Also removes <a>, <div>, and <span> tags that have no attributes.
-         * NEW: Removes <hr> tags with 'size' or 'width' attributes.
-         * NEW: Removes <div> tags with IDs starting with "_com_".
-         * @param {string} htmlString - The HTML content to clean.
-         * @returns {string} The cleaned HTML content.
-         */
-        function applyMsOfficeJunkCleaning(htmlString) {
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = htmlString;
-
-            // 1. Remove all style attributes and classes starting with "Mso"
-            const allElements = tempDiv.querySelectorAll('*');
-            allElements.forEach(element => {
-                // Remove any class starting with "Mso"
-                if (element.hasAttribute('class')) {
-                    const classList = element.className.split(' ');
-                    const filteredClasses = classList.filter(cls => !cls.startsWith('Mso'));
-                    element.className = filteredClasses.join(' ').trim();
-                    if (element.className === '') {
-                        element.removeAttribute('class');
-                    }
-                }
-
-                // Remove all style attributes
-                if (element.hasAttribute('style')) {
-                    element.removeAttribute('style');
-                }
-            });
-
-            // 2. Remove all <span> tags
-            const spanElements = tempDiv.querySelectorAll('span');
-            spanElements.forEach(span => {
-                // Replace span with its children, effectively removing the span tag itself
-                while (span.firstChild) {
-                    span.parentNode.insertBefore(span.firstChild, span);
-                }
-                span.parentNode.removeChild(span);
-            });
-
-            // 3. Remove all 'type' attributes from <ol> and <ul> lists
-            const listElements = tempDiv.querySelectorAll('ol, ul');
-            listElements.forEach(list => {
-                if (list.hasAttribute('type')) {
-                    list.removeAttribute('type');
-                }
-            });
-
-            // 4. Remove empty <div> tags that have no classes or ids
-            // Iterate backwards to safely remove elements without affecting the NodeList index
-            const divElements = tempDiv.querySelectorAll('div');
-            for (let i = divElements.length - 1; i >= 0; i--) {
-                const div = divElements[i];
-                // Check if the div has no class, no id, and no significant content
-                // InnerHTML check covers text nodes and child elements
-                if (!div.hasAttribute('class') && !div.hasAttribute('id') && div.innerHTML.trim() === '') {
-                    div.parentNode.removeChild(div);
-                }
-            }
-
-            // 5. Remove specific attributes from table-related tags
-            const tableAttributesToRemove = ['width', 'height', 'border', 'cellspacing', 'cellpadding'];
-            const tableRelatedElements = tempDiv.querySelectorAll('table, thead, tbody, tfoot, tr, td, th');
-            tableRelatedElements.forEach(element => {
-                tableAttributesToRemove.forEach(attr => {
-                    if (element.hasAttribute(attr)) {
-                        element.removeAttribute(attr);
-                    }
-                });
-            });
-
-            // 6. Completely remove <colgroup> and <col> tags
-            const colgroupElements = tempDiv.querySelectorAll('colgroup');
-            colgroupElements.forEach(colgroup => colgroup.parentNode.removeChild(colgroup));
-
-            const colElements = tempDiv.querySelectorAll('col');
-            colElements.forEach(col => col.parentNode.removeChild(col));
-
-            // 7. Remove any classes within tables that start with "xl"
-            const tableElements = tempDiv.querySelectorAll('table');
-            tableElements.forEach(table => {
-                const elementsInTable = table.querySelectorAll('*');
-                elementsInTable.forEach(element => {
-                    if (element.hasAttribute('class')) {
-                        const classList = element.className.split(' ');
-                        const filteredClasses = classList.filter(cls => !cls.startsWith('xl'));
-                        element.className = filteredClasses.join(' ').trim();
-                        if (element.className === '') {
-                            element.removeAttribute('class');
-                        }
-                    }
-                });
-            });
-
-            // 8. Remove <a>, <div>, and <span> tags with no attributes
-            const tagsToRemoveIfNoAttributes = tempDiv.querySelectorAll('a, div, span');
-            for (let i = tagsToRemoveIfNoAttributes.length - 1; i >= 0; i--) {
-                const element = tagsToRemoveIfNoAttributes[i];
-                // Check if the element has no attributes AND it has a parent node
-                if (element.attributes.length === 0 && element.parentNode) {
-                    // Move all children to the parent before removing the element
-                    while (element.firstChild) {
-                        element.parentNode.insertBefore(element.firstChild, element);
-                    }
-                    element.parentNode.removeChild(element);
-                }
-            }
-
-            // 9. Remove <hr> tags with 'size' or 'width' attributes
-            const hrElements = tempDiv.querySelectorAll('hr[size], hr[width]');
-            hrElements.forEach(hr => {
-                if (hr.parentNode) {
-                    hr.parentNode.removeChild(hr);
-                }
-            });
-
-            // 10. Completely remove any <div> with an ID starting with "_com_"
-            const comDivs = tempDiv.querySelectorAll('div[id^="_com_"]');
-            comDivs.forEach(div => {
-                if (div.parentNode) {
-                    div.parentNode.removeChild(div);
-                }
-            });
-
-            return tempDiv.innerHTML;
-        }
+        // Removed applyMsOfficeJunkCleaning function
 
         /**
          * Applies URL cleaning to HTML content.
          * Converts specific absolute URLs to relative paths and removes target/rel attributes from <a> tags.
+         * Also removes <a> tags that ONLY contain a name attribute (i.e., no href).
          * @param {string} htmlString - The HTML content to clean.
          * @returns {string} The cleaned HTML content.
          */
@@ -861,6 +757,23 @@
             const aElements = tempDiv.querySelectorAll('a');
             aElements.forEach(a => {
                 let href = a.getAttribute('href');
+                const name = a.getAttribute('name');
+
+                // Case 1: Remove <a> tags that ONLY contain a name attribute (no href)
+                if (name && !href) {
+                    const parent = a.parentNode;
+                    if (parent) {
+                        // Move children out of the <a> tag
+                        while (a.firstChild) {
+                            parent.insertBefore(a.firstChild, a);
+                        }
+                        // Remove the <a> tag itself
+                        parent.removeChild(a);
+                    }
+                    return; // Skip further processing for this <a> tag
+                }
+
+                // Case 2: Process <a> tags with href (existing logic)
                 if (href) {
                     // Convert URLs
                     for (const mapping of urlMappings) {
@@ -886,46 +799,48 @@
             return tempDiv.innerHTML;
         }
 
-        /**
-         * Applies Zero Bookmarks cleaning to HTML content.
-         * Removes <a> tags with a 'name' attribute, keeping content if present.
-         * @param {string} htmlString - The HTML content to clean.
-         * @returns {string} The cleaned HTML content.
-         */
-        function applyZeroBookmarksCleaning(htmlString) {
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = htmlString;
-
-            const aElementsWithName = tempDiv.querySelectorAll('a[name]');
-            aElementsWithName.forEach(a => {
-                // If the <a> tag has children (content), move them before removing the tag
-                while (a.firstChild) {
-                    a.parentNode.insertBefore(a.firstChild, a);
-                }
-                // Remove the <a> tag itself
-                a.parentNode.removeChild(a);
-            });
-
-            return tempDiv.innerHTML;
-        }
+        // Removed applyZeroBookmarksCleaning function
 
         /**
          * Applies auto-spacing and cleans multiple <br> tags in HTML content.
          * Replaces multiple spaces with a single space, and trims leading/trailing spaces
          * within block-level elements. Also replaces sequences of two or more <br> tags with </p><p>.
          * NEW: Also cleans `<br clear="all">` tags.
+         * NEW: Also cleans `<span style="mso-spacerun: yes">` tags, preserving only normal spaces within them.
          * @param {string} htmlString - The HTML content to clean.
          * @returns {string} The cleaned HTML content.
          */
         function applyAutoSpacing(htmlString) {
-            // 1. Replace multiple spaces with a single space and trim.
-            let cleanedHtml = htmlString.replace(/\s+/g, ' ').trim();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlString, 'text/html');
 
-            // 2. Replace sequences of two or more <br> tags (with optional whitespace) with </p><p>.
+            // 1. Handle <span style="mso-spacerun: yes"> tags
+            const spacerunSpans = doc.querySelectorAll('span[style*="mso-spacerun: yes"]');
+            spacerunSpans.forEach(span => {
+                const parent = span.parentNode;
+                if (parent) {
+                    // Check if the span's text content contains a normal space
+                    if (span.textContent.includes(' ')) {
+                        // Replace the span with a single normal space
+                        parent.replaceChild(doc.createTextNode(' '), span);
+                    } else {
+                        // Remove the span entirely if it doesn't contain a normal space
+                        parent.removeChild(span);
+                    }
+                }
+            });
+
+            // Serialize the modified DOM back to a string for further processing
+            let cleanedHtml = doc.body.innerHTML;
+
+            // 2. Replace multiple spaces with a single space and trim.
+            cleanedHtml = cleanedHtml.replace(/\s+/g, ' ').trim();
+
+            // 3. Replace sequences of two or more <br> tags (with optional whitespace) with </p><p>.
             // This handles <br><br>, <br> <br>, <br/><br/>, etc.
             cleanedHtml = cleanedHtml.replace(/(<br\s*\/?>\s*){2,}/gi, '</p><p>');
 
-            // 3. Remove <br clear="all"> tags
+            // 4. Remove <br clear="all"> tags
             cleanedHtml = cleanedHtml.replace(/<br\s+clear="all"\s*\/?>/gi, '');
 
             return cleanedHtml;
@@ -1038,6 +953,39 @@
         }
 
         /**
+         * Removes empty <p> tags and <p> tags that contain only a single non-breaking space,
+         * specifically if they have a class starting with "Mso" and are not within a table.
+         * @param {string} htmlString - The HTML content to clean.
+         * @returns {string} The cleaned HTML content.
+         */
+        function removeEmptyParagraphs(htmlString) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlString, 'text/html');
+            const paragraphs = doc.querySelectorAll('p');
+
+            for (let i = paragraphs.length - 1; i >= 0; i--) {
+                const p = paragraphs[i];
+                
+                // Condition 1: Check if the paragraph is empty or contains only a non-breaking space
+                const trimmedContent = p.innerHTML.trim();
+                const isEmptyOrNBSP = trimmedContent === '' || trimmedContent === '&nbsp;' || trimmedContent === '\u00A0';
+
+                // Condition 2: Check if the paragraph has a class attribute starting with "Mso"
+                const hasMsoClass = p.classList.length > 0 && p.className.startsWith('Mso');
+
+                // Condition 3: Check if the paragraph is NOT within a table
+                const isInsideTable = p.closest('table');
+
+                if (isEmptyOrNBSP && hasMsoClass && !isInsideTable) {
+                    if (p.parentNode) {
+                        p.parentNode.removeChild(p);
+                    }
+                }
+            }
+            return doc.body.innerHTML;
+        }
+
+        /**
          * Removes inline width and height styles from all elements in the HTML content.
          * @param {string} htmlString - The HTML content to clean.
          * @returns {string} The cleaned HTML content.
@@ -1073,7 +1021,7 @@
          * Converts common character entities and named entities to their numeric HTML entity equivalents.
          * This function operates on an HTML string, parsing it to a temporary DOM, modifying text nodes,
          * and then serializing it back to a string, ensuring numeric entities are preserved.
-         * @param {string} htmlString - The HTML string to process.
+         * @param {string} htmlString - The HTML content to process.
          * @returns {string} The processed HTML string with numeric entities.
          */
         function convertAllEntitiesToNumeric(htmlString) {
@@ -1141,18 +1089,791 @@
             return processedHtml;
         }
 
+        /**
+         * Filters and preserves only specified HTML tags and their contents, and text nodes,
+         * from a source DOM node. Disallowed tags are unwrapped, preserving their allowed children.
+         * @param {HTMLElement} sourceNode - The DOM node whose children are to be filtered.
+         * @param {Document} doc - The document object to create new elements.
+         * @returns {string} The HTML string containing only the preserved content.
+         */
+        function filterAndPreserveContent(sourceNode, doc) {
+            let tempContainer = doc.createElement('div'); // Use a div as a temporary container
+
+            Array.from(sourceNode.childNodes).forEach(child => {
+                if (child.nodeType === Node.TEXT_NODE) {
+                    // Always preserve text nodes (including character entities which are parsed into text nodes)
+                    tempContainer.appendChild(child.cloneNode(true));
+                } else if (child.nodeType === Node.ELEMENT_NODE) {
+                    const tagName = child.tagName.toLowerCase();
+                    const hasClassOrId = child.hasAttribute('class') || child.hasAttribute('id');
+
+                    // List of always-allowed tags (no class/ID condition)
+                    const alwaysAllowedTags = ['p', 'br', 'br /', 'mark', 'strong', 'a', 'em', 'u', 'sup', 'sub', 'section'];
+
+                    if (alwaysAllowedTags.includes(tagName)) {
+                        // If it's an always-allowed tag, clone it (without children initially)
+                        const clonedChild = child.cloneNode(false);
+                        // Recursively populate its content
+                        clonedChild.innerHTML = filterAndPreserveContent(child, doc);
+                        tempContainer.appendChild(clonedChild);
+                    } else if ((tagName === 'span' || tagName === 'div') && hasClassOrId) {
+                        // If it's a span or div with class/ID, clone it (without children initially)
+                        const clonedChild = child.cloneNode(false);
+                        // Recursively populate its content
+                        clonedChild.innerHTML = filterAndPreserveContent(child, doc);
+                        tempContainer.appendChild(clonedChild);
+                    } else {
+                        // If the element is not explicitly allowed (e.g., a span without class/ID, or any other disallowed tag),
+                        // unwrap it by recursively processing its children and appending them directly to the current container.
+                        const unwrappedContentHtml = filterAndPreserveContent(child, doc);
+                        // Create a temporary div to parse the HTML string back into nodes
+                        const tempUnwrapDiv = doc.createElement('div');
+                        tempUnwrapDiv.innerHTML = unwrappedContentHtml;
+                        // Append the children of the temporary div to the main tempContainer
+                        while (tempUnwrapDiv.firstChild) {
+                            tempContainer.appendChild(tempUnwrapDiv.firstChild);
+                        }
+                    }
+                }
+                // Other node types (comments, processing instructions) are implicitly ignored.
+            });
+            return tempContainer.innerHTML; // Return the HTML string of preserved content
+        }
+
+        /**
+         * Applies cleaning for comments, footnotes, and endnotes.
+         * 1. Unwraps <span> tags with a class containing "MsoComment" (but not "MsoCommentReference"), preserving their contents.
+         * 2. Removes <a> tags where the href contains "#_edn" AND the name attribute also contains "_edn".
+         * 3. Completely removes <div> tags with "mso-element: comment" or "mso-element: endnote-list" styles, including their contents.
+         * 4. Completely removes <div> tags with "mso-element: comment-list" style, including their contents.
+         * 5. Completely removes <span> tags with class "MsoCommentReference", including their contents.
+         * 6. Unwraps any other tag with a style attribute containing "mso-comment", preserving their contents.
+         * 7. For <a> tags with href starting with "#_ftn", delete the title and name attributes and wrap the entire a tag with <sup>.
+         * 8. Removes everything within "<div style="mso-element: footnote-list">" including the <div> itself,
+         * leaving only the regular text, char entities and specified tags, and replacing the removed div with an <aside>.
+         * @param {string} htmlString - The HTML content to clean.
+         * @returns {string} The cleaned HTML content.
+         */
+        function applyCleanCommFnEdn(htmlString) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlString, 'text/html');
+
+            // 1. Unwrap <span> tags with class containing "MsoComment" (but not "MsoCommentReference")
+            const spanCommentElements = doc.querySelectorAll('span[class*="MsoComment"]');
+            // Iterate in reverse to avoid issues with DOM modification affecting the NodeList
+            for (let i = spanCommentElements.length - 1; i >= 0; i--) {
+                const span = spanCommentElements[i];
+                // Check if this span is NOT MsoCommentReference (which will be removed completely)
+                if (!span.classList.contains('MsoCommentReference') && span.parentNode) {
+                    // Move children out of the span tag
+                    while (span.firstChild) {
+                        span.parentNode.insertBefore(span.firstChild, span);
+                    }
+                    // Remove the empty span tag
+                    span.parentNode.removeChild(span);
+                }
+            }
+
+            // 2. Remove <a> tags where href contains "#_edn" AND name contains "_edn"
+            const aElements = doc.querySelectorAll('a');
+            aElements.forEach(a => {
+                const href = a.getAttribute('href');
+                const name = a.getAttribute('name');
+                if (href && href.includes('#_edn') && name && name.includes('_edn')) {
+                    if (a.parentNode) {
+                        a.parentNode.removeChild(a);
+                    }
+                }
+            });
+
+            // 3. Completely remove <div> tags with "mso-element: comment" or "mso-element: endnote-list" styles, including their contents.
+            // This now explicitly excludes "mso-element: footnote-list" as it's handled separately in step 8.
+            const divMsoElementsForRemoval = doc.querySelectorAll('div[style*="mso-element: comment"], div[style*="mso-element: endnote-list"]');
+            // Iterate in reverse to avoid issues with DOM modification affecting the NodeList
+            for (let i = divMsoElementsForRemoval.length - 1; i >= 0; i--) {
+                const div = divMsoElementsForRemoval[i];
+                if (div.parentNode) {
+                    div.parentNode.removeChild(div);
+                }
+            }
+
+            // 4. Completely remove <div> tags with "mso-element: comment-list" style, including their contents.
+            const divCommentListElements = doc.querySelectorAll('div[style*="mso-element: comment-list"]');
+            for (let i = divCommentListElements.length - 1; i >= 0; i--) {
+                const div = divCommentListElements[i];
+                if (div.parentNode) {
+                    div.parentNode.removeChild(div);
+                }
+            }
+
+            // 5. Completely remove <span> tags with class "MsoCommentReference", including their contents.
+            const spanCommentReferenceElements = doc.querySelectorAll('span.MsoCommentReference');
+            for (let i = spanCommentReferenceElements.length - 1; i >= 0; i--) {
+                const span = spanCommentReferenceElements[i];
+                if (span.parentNode) {
+                    span.parentNode.removeChild(span);
+                }
+            }
+
+            // 6. Unwraps any other tag with a style attribute containing "mso-comment", preserving their contents.
+            // This needs to be done carefully to avoid re-processing elements already removed.
+            const msoCommentStyleElements = doc.querySelectorAll('[style*="mso-comment"]');
+            // Convert to array to avoid live NodeList issues
+            Array.from(msoCommentStyleElements).forEach(element => {
+                // Only unwrap if the element hasn't been removed by previous steps (e.g., if it's not a div with mso-element: comment)
+                // And ensure it has a parent before trying to unwrap
+                if (element.parentNode && !element.hasAttribute('data-removed')) { // Use a data attribute to mark removed elements
+                    // Mark elements for removal if they contain 'mso-element: comment' or 'mso-element: endnote-list'
+                    // This check is a safeguard, as these should have been removed by steps 3 and 4.
+                    const style = element.getAttribute('style') || '';
+                    if (element.tagName.toLowerCase() === 'div' && (style.includes('mso-element: comment') || style.includes('mso-element: endnote-list') || style.includes('mso-element: comment-list'))) {
+                        // This case should ideally be handled by steps 3 and 4, but as a fallback:
+                        element.parentNode.removeChild(element);
+                        element.setAttribute('data-removed', 'true'); // Mark as removed
+                    } else if (element.tagName.toLowerCase() === 'span' && element.classList.contains('MsoCommentReference')) {
+                         // This case should be handled by step 5.
+                        element.parentNode.removeChild(element);
+                        element.setAttribute('data-removed', 'true'); // Mark as removed
+                    } else {
+                        // For other elements with mso-comment style, unwrap them
+                        while (element.firstChild) {
+                            element.parentNode.insertBefore(element.firstChild, element);
+                        }
+                        element.parentNode.removeChild(element);
+                    }
+                }
+            });
+
+            // 7. For <a> tags with href starting with "#_ftn", delete the title and name attributes and wrap the entire a tag with <sup>.
+            const ftnLinks = doc.querySelectorAll('a[href^="#_ftn"]');
+            ftnLinks.forEach(a => {
+                // Remove title and name attributes
+                if (a.hasAttribute('title')) {
+                    a.removeAttribute('title');
+                }
+                if (a.hasAttribute('name')) {
+                    a.removeAttribute('name');
+                }
+
+                // Create a <sup> element
+                const supElement = doc.createElement('sup');
+
+                // Move the <a> tag into the <sup> tag
+                if (a.parentNode) {
+                    a.parentNode.insertBefore(supElement, a); // Insert <sup> before <a>
+                    supElement.appendChild(a); // Move <a> into <sup>
+                }
+            });
+
+
+            // 8. Removes everything within "<div style="mso-element: footnote-list">" including the <div> itself,
+            //    leaving only the regular text, char entities and specified tags, and replacing the removed div with an <aside>.
+            const footnoteListDivs = doc.querySelectorAll('div[style*="mso-element: footnote-list"]');
+            for (let i = footnoteListDivs.length - 1; i >= 0; i--) {
+                const div = footnoteListDivs[i];
+                if (div.parentNode) {
+                    const asideElement = doc.createElement('aside');
+                    // Filter and preserve content from inside the div
+                    const preservedContentHtml = filterAndPreserveContent(div, doc);
+                    asideElement.innerHTML = preservedContentHtml;
+                    div.parentNode.replaceChild(asideElement, div);
+                }
+            }
+
+            return doc.body.innerHTML;
+        }
+
+        /**
+         * Processes <p> tags with "MsoListParagraph" class, converting them to <ul><li> structures
+         * and preserving specific child elements/text while removing others.
+         * This function now handles "MsoListParagraphCxSpFirst", "MsoListParagraphCxSpMiddle", and "MsoListParagraphCxSpLast"
+         * classes, and uses "level#" from style attribute for nesting.
+         * @param {string} htmlString - The HTML content to modify.
+         * @returns {string} The modified HTML content.
+         */
+        function processMsoListParagraphs(htmlString) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlString, 'text/html');
+            const body = doc.body;
+
+            // Helper to get the level from style attribute
+            function getLevel(styleAttr) {
+                if (!styleAttr) return 1;
+                const match = styleAttr.match(/level(\d+)/);
+                return match ? parseInt(match[1], 10) : 1; // Default to level 1 if no level found
+            }
+
+            // Helper to extract allowed content (reusing existing logic)
+            // This function now assumes the mso-list:Ignore span has already been removed if its content is needed.
+            function extractAllowedContent(sourceNode) {
+                let contentHtml = '';
+                const childrenToProcess = Array.from(sourceNode.childNodes);
+
+                childrenToProcess.forEach(child => {
+                    // The mso-list:Ignore span should be removed BEFORE this function is called if its content is to be used.
+                    // So, this check is now primarily for any *other* mso-list spans that should be ignored.
+                    if (child.nodeType === Node.ELEMENT_NODE && child.tagName.toLowerCase() === 'span' && child.hasAttribute('style') && child.getAttribute('style').includes('mso-list: Ignore')) {
+                        return; // Skip this node and its subtree
+                    }
+
+                    if (child.nodeType === Node.TEXT_NODE) {
+                        contentHtml += child.nodeValue;
+                    } else if (child.nodeType === Node.ELEMENT_NODE) {
+                        const tagName = child.tagName.toLowerCase();
+                        const hasClassOrId = child.hasAttribute('class') || child.hasAttribute('id');
+
+                        if (tagName === 'br' || tagName === 'strong' || tagName === 'a' || tagName === 'em' || tagName === 'u' || tagName === 'sup' || tagName === 'sub' || tagName === 'section') {
+                            // These tags are always allowed, clone them and get their outerHTML
+                            contentHtml += child.outerHTML;
+                        } else if ((tagName === 'span' || tagName === 'div') && hasClassOrId) {
+                            // span/div are allowed only if they have a class or ID
+                            contentHtml += child.outerHTML;
+                        } else {
+                            // For other elements (disallowed elements, or span/div without class/ID),
+                            // recursively process their children and concatenate the result.
+                            contentHtml += extractAllowedContent(child); // Recursive call
+                        }
+                    }
+                });
+                return contentHtml;
+            }
+
+            /**
+             * Determines the type of list based on the content of the mso-list:Ignore span.
+             * @param {HTMLElement} pElement - The <p> element representing a list item.
+             * @returns {string} 'ordered-numeric', 'ordered-alpha', 'complex-bullet', or 'unordered'.
+             */
+            function detectListType(pElement) {
+                const msoListIgnoreSpan = pElement.querySelector('span[style*="mso-list: Ignore"]');
+                if (msoListIgnoreSpan) {
+                    const bulletText = msoListIgnoreSpan.textContent.trim();
+                    // Regex for multi-level numeric bullets (e.g., "1.1.", "1.1.1.", "1.1)")
+                    if (/^\d+(\.\d+)+[\.\)]*$/.test(bulletText)) {
+                        return 'complex-bullet';
+                    }
+                    // Regex for multi-level alpha-numeric bullets (e.g., "A.1.", "B.1.1.", "a.1)")
+                    if (/^[A-Za-z](\.\d+)+[\.\)]*$/.test(bulletText)) {
+                        return 'complex-bullet';
+                    }
+                    // Regex for single-level numeric bullets (e.g., "1.", "1)")
+                    if (/^\d+[\.\)]$/.test(bulletText)) {
+                        return 'ordered-numeric';
+                    }
+                    // Regex for single-level lowercase alphabetic bullets (e.g., "a.", "a)")
+                    if (/^[a-z][\.\)]$/.test(bulletText)) {
+                        return 'ordered-alpha';
+                    }
+                }
+                // Default to unordered if no specific ordered bullet or complex bullet is detected
+                return 'unordered';
+            }
+
+
+            const paragraphs = Array.from(body.querySelectorAll('p'));
+            const paragraphsToReplace = new Map(); // Map original P to new UL/LI structure
+            const paragraphsToRemove = new Set(); // Set of P elements to remove
+
+            for (let i = 0; i < paragraphs.length; i++) {
+                const p = paragraphs[i];
+                const classList = Array.from(p.classList);
+                const isMsoListParagraph = classList.some(cls =>
+                    cls === 'MsoListParagraphCxSpFirst' ||
+                    cls === 'MsoListParagraphCxSpMiddle' ||
+                    cls === 'MsoListParagraphCxSpLast' ||
+                    cls === 'MsoListParagraph'
+                );
+
+                // If this paragraph is already marked for removal (part of a previous sequence), skip it
+                if (paragraphsToRemove.has(p)) {
+                    continue;
+                }
+
+                if (isMsoListParagraph) {
+                    const msoListIgnoreSpan = p.querySelector('span[style*="mso-list: Ignore"]');
+                    let bulletTextToPrepend = '';
+                    let listType = 'unordered'; // Default
+
+                    if (msoListIgnoreSpan) {
+                        bulletTextToPrepend = msoListIgnoreSpan.textContent.trim();
+                        listType = detectListType(p); // Use the p element to detect type
+
+                        // Temporarily remove the mso-list:Ignore span for content extraction
+                        // This ensures extractAllowedContent doesn't filter it out if we need its text.
+                        msoListIgnoreSpan.parentNode.removeChild(msoListIgnoreSpan);
+                    }
+
+                    let newRootListElement; // This will actually be the root of the current list sequence (ol or ul)
+
+                    if (listType === 'ordered-numeric') {
+                        newRootListElement = doc.createElement('ol');
+                    } else if (listType === 'ordered-alpha') {
+                        newRootListElement = doc.createElement('ol');
+                        newRootListElement.classList.add('lst-lwr-alph');
+                    } else { // 'unordered' or 'complex-bullet'
+                        newRootListElement = doc.createElement('ul');
+                    }
+
+                    let currentListStack = [newRootListElement]; // Stack of ULs/OLs for nesting
+                    let currentParentList = newRootListElement;
+
+                    // Process the current paragraph (first in sequence)
+                    const currentLevel = getLevel(p.getAttribute('style') || '');
+                    const li = doc.createElement('li');
+                    let listItemContent = extractAllowedContent(p); // Extract content AFTER removing mso-list:Ignore span
+
+                    if (listType === 'complex-bullet') {
+                        // Prepend the bullet text for complex bullets
+                        li.innerHTML = bulletTextToPrepend + ' ' + listItemContent;
+                    } else {
+                        li.innerHTML = listItemContent;
+                    }
+                    currentParentList.appendChild(li);
+                    paragraphsToReplace.set(p, newRootListElement); // Mark the first P for replacement
+
+                    // Look for contiguous list paragraphs
+                    let nextSibling = p.nextElementSibling;
+                    let currentSequenceIndex = i + 1;
+
+                    while (nextSibling && nextSibling.nodeType === Node.ELEMENT_NODE && nextSibling.tagName.toLowerCase() === 'p') {
+                        const nextP = nextSibling;
+                        const nextPClassList = Array.from(nextP.classList);
+                        const isNextPListParagraph = nextPClassList.some(cls =>
+                            cls === 'MsoListParagraphCxSpFirst' ||
+                            cls === 'MsoListParagraphCxSpMiddle' ||
+                            cls === 'MsoListParagraphCxSpLast' ||
+                            cls === 'MsoListParagraph'
+                        );
+
+                        if (isNextPListParagraph) {
+                            const nextLevel = getLevel(nextP.getAttribute('style') || '');
+                            let currentDepth = currentListStack.length;
+
+                            const nextMsoListIgnoreSpan = nextP.querySelector('span[style*="mso-list: Ignore"]');
+                            let nextBulletTextToPrepend = '';
+                            let nextListType = 'unordered';
+
+                            if (nextMsoListIgnoreSpan) {
+                                nextBulletTextToPrepend = nextMsoListIgnoreSpan.textContent.trim();
+                                nextListType = detectListType(nextP);
+                                nextMsoListIgnoreSpan.parentNode.removeChild(nextMsoListIgnoreSpan);
+                            }
+
+                            if (nextLevel > currentDepth) {
+                                // Deeper nesting: create new list and push to stack
+                                let nestedListElement;
+                                
+                                if (nextListType === 'ordered-numeric') {
+                                    nestedListElement = doc.createElement('ol');
+                                } else if (nextListType === 'ordered-alpha') {
+                                    nestedListElement = doc.createElement('ol');
+                                    nestedListElement.classList.add('lst-lwr-alph');
+                                } else { // 'unordered' or 'complex-bullet'
+                                    nestedListElement = doc.createElement('ul');
+                                }
+
+                                for (let k = currentDepth; k > nextLevel; k--) {
+                                    // Pop from stack if current level is shallower than expected
+                                    currentListStack.pop();
+                                    currentParentList = currentListStack[currentListStack.length - 1];
+                                }
+                                // If nextLevel is greater than currentDepth, we need to create nested lists.
+                                // The loop above handles popping. Now, ensure we have the correct parent for the new level.
+                                // If nextLevel > currentDepth, we need to create new lists and push them.
+                                // This loop ensures we create enough nested lists to reach the target level.
+                                while (currentListStack.length < nextLevel) {
+                                     let targetLi = currentParentList.lastElementChild;
+                                     if (!targetLi || targetLi.tagName.toLowerCase() !== 'li') {
+                                         targetLi = doc.createElement('li');
+                                         currentParentList.appendChild(targetLi);
+                                     }
+                                     let newNestedList;
+                                     if (currentListStack.length + 1 === nextLevel) { // Only apply type to the final nested list
+                                         if (nextListType === 'ordered-numeric') {
+                                             newNestedList = doc.createElement('ol');
+                                         } else if (nextListType === 'ordered-alpha') {
+                                             newNestedList = doc.createElement('ol');
+                                             newNestedList.classList.add('lst-lwr-alph');
+                                         } else {
+                                             newNestedList = doc.createElement('ul');
+                                         }
+                                     } else { // Intermediate levels are always unordered to just provide structure
+                                         newNestedList = doc.createElement('ul');
+                                     }
+                                     targetLi.appendChild(newNestedList);
+                                     currentListStack.push(newNestedList);
+                                     currentParentList = newNestedList;
+                                 }
+
+                            } else if (nextLevel < currentDepth) {
+                                // Shallower nesting: pop from stack
+                                for (let k = currentDepth; k > nextLevel; k--) {
+                                    currentListStack.pop();
+                                    currentParentList = currentListStack[currentListStack.length - 1];
+                                }
+                            }
+                            // At this point, currentParentList is the correct list element for the currentLevel
+
+                            const nextLi = doc.createElement('li');
+                            let nextListItemContent = extractAllowedContent(nextP);
+                            if (nextListType === 'complex-bullet') {
+                                nextLi.innerHTML = nextBulletTextToPrepend + ' ' + nextListItemContent;
+                            } else {
+                                nextLi.innerHTML = nextListItemContent;
+                            }
+                            currentParentList.appendChild(nextLi);
+                            paragraphsToRemove.add(nextP); // Mark for removal
+
+                            nextSibling = nextP.nextElementSibling;
+                            currentSequenceIndex++; // Advance index for the static `paragraphs` array
+                        } else {
+                            // Not a contiguous list paragraph, end the sequence
+                            break;
+                        }
+                    }
+                    // Update the main loop index to skip paragraphs already processed in this sequence
+                    i = currentSequenceIndex - 1; 
+                }
+            }
+
+            // Perform replacements and removals in a separate pass
+            paragraphs.forEach(p => {
+                if (paragraphsToReplace.has(p)) {
+                    if (p.parentNode) {
+                        p.parentNode.replaceChild(paragraphsToReplace.get(p), p);
+                    }
+                } else if (paragraphsToRemove.has(p)) {
+                    if (p.parentNode) {
+                        p.parentNode.removeChild(p);
+                    }
+                }
+            });
+
+            return body.innerHTML;
+        }
+
+        /**
+         * Applies cleaning for Microsoft Office specific code.
+         * 1. Unwraps <span> tags with "mso-bookmark" in their style attribute, preserving their contents.
+         * 2. Unwraps <span> tags whose class attribute starts with "Mso", preserving their contents.
+         * 3. Removes style attributes from <strong>, <a>, <em>, <u>, <sup>, <sub> tags.
+         * 4. Unwraps <div> tags with an 'align' attribute, preserving their contents.
+         * 5. Unwraps <span> tags with a 'lang' attribute ONLY if they are within an element
+         * that has "Mso" in its class or "mso-" in its style. The content within these spans is preserved.
+         * 6. Unwraps <div> tags with "mso-element" in their style attribute, *unless* it's "mso-element: footnote-list", preserving their contents.
+         * 7. Removes colgroup and col tags completely.
+         * 8. Removes all attributes except rowspan, colspan, class, id, headers, and scope
+         * from table, thead, tbody, tfoot, tr, th, and td tags.
+         * 9. For <p> tags with "MsoToc" in the class:
+         * a. Strip all attributes from the <p> tag.
+         * b. Delete everything within them EXCEPT <a> tags with an href and all basic text content.
+         * c. Within those preserved <a> tags, remove EVERYTHING within them ONLY leaving basic text content.
+         * 10. Deletes any <img> tag with "file://" or "data:" at the start of the src
+         * and replaces it with "<div class="clearfix"><mark>IMAGE NOT IMPORTED</mark></div>".
+         * 11. Removes the `class` attribute from `<table>` tags if the class contains "MsoTable".
+         * 12. Removes the `class` attribute from `<td>` tags if the class contains and starts with "xl".
+         * 13. Processes <p> tags with a class starting with "Mso" (unless in tables or MsoList),
+         * deleting all attributes and content within, strictly EXCEPT for specified tags and their contents.
+         * 14. For <p> tags within tables:
+         * a. Remove `class` attribute if it contains "Mso" or "Aligned".
+         * b. Remove `style` attribute.
+         * c. If `align` attribute exists, remove it and add `text-left`, `text-center`, or `text-right` to parent `<td>` or `<th>`.
+         * @param {string} htmlString - The HTML content to clean.
+         * @returns {string} The cleaned HTML content.
+         */
+        function applyCleanMsoCode(htmlString) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlString, 'text/html');
+
+            // 1. Unwrap <span> tags with "mso-bookmark" in their style attribute
+            const msoBookmarkSpans = doc.querySelectorAll('span[style*="mso-bookmark"]');
+            // Iterate in reverse for safety when modifying the DOM
+            for (let i = msoBookmarkSpans.length - 1; i >= 0; i--) {
+                const span = msoBookmarkSpans[i];
+                if (span.parentNode) {
+                    // Move children out of the span tag
+                    while (span.firstChild) {
+                        span.parentNode.insertBefore(span.firstChild, span);
+                    }
+                    // Remove the empty span tag
+                    span.parentNode.removeChild(span);
+                }
+            }
+
+            // 2. Unwraps <span> tags whose class attribute starts with "Mso"
+            const msoClassSpans = doc.querySelectorAll('span[class^="Mso"]');
+            for (let i = msoClassSpans.length - 1; i >= 0; i--) {
+                const span = msoClassSpans[i];
+                if (span.parentNode) {
+                    // Move children out of the span tag
+                    while (span.firstChild) {
+                        span.parentNode.insertBefore(span.firstChild, span);
+                    }
+                    // Remove the empty span tag
+                    span.parentNode.removeChild(span);
+                }
+            }
+
+            // 3. Remove style attributes from <strong>, <a>, <em>, u, sup, sub tags
+            const tagsToRemoveStyleFrom = doc.querySelectorAll('strong, a, em, u, sup, sub');
+            tagsToRemoveStyleFrom.forEach(element => {
+                if (element.hasAttribute('style')) {
+                    element.removeAttribute('style');
+                }
+            });
+
+            // 4. Unwraps <div> tags with an 'align' attribute
+            const divAlignElements = doc.querySelectorAll('div[align]');
+            // Iterate in reverse to avoid issues with DOM modification affecting the NodeList
+            for (let i = divAlignElements.length - 1; i >= 0; i--) {
+                const div = divAlignElements[i];
+                if (div.parentNode) {
+                    // Replace the div with its children to preserve content
+                    while (div.firstChild) {
+                        div.parentNode.insertBefore(div.firstChild, div);
+                    }
+                    div.parentNode.removeChild(div);
+                }
+            }
+
+            // 5. Unwraps <span> tags with a 'lang' attribute ONLY if they're within an element
+            //    that has "Mso" in its class or "mso-" in its style. Preserve content.
+            const spanLangElements = doc.querySelectorAll('span[lang]');
+            // Iterate in reverse to avoid issues with DOM modification affecting the NodeList
+            for (let i = spanLangElements.length - 1; i >= 0; i--) {
+                const span = spanLangElements[i];
+                let parent = span.parentElement;
+                let shouldUnwrap = false;
+                while (parent && parent !== doc.body) {
+                    const classAttr = parent.getAttribute('class');
+                    const styleAttr = parent.getAttribute('style');
+
+                    if ((classAttr && classAttr.includes('Mso')) || (styleAttr && styleAttr.includes('mso-'))) {
+                        shouldUnwrap = true;
+                        break;
+                    }
+                    parent = parent.parentElement;
+                }
+
+                if (shouldUnwrap && span.parentNode) {
+                    // Move all child nodes of the span directly before the span itself
+                    while (span.firstChild) {
+                        span.parentNode.insertBefore(span.firstChild, span);
+                    }
+                    // Remove the empty span tag
+                    span.parentNode.removeChild(span);
+                }
+            }
+
+            // 6. Unwrap <div> tags with "mso-element" in their style attribute, *unless* it's "mso-element: footnote-list"
+            const msoElementDivs = doc.querySelectorAll('div[style*="mso-element"]');
+            for (let i = msoElementDivs.length - 1; i >= 0; i--) {
+                const div = msoElementDivs[i];
+                const style = div.getAttribute('style') || '';
+
+                // Skip if it's specifically "mso-element: footnote-list"
+                if (style.includes('mso-element: footnote-list')) {
+                    continue;
+                }
+
+                if (div.parentNode) {
+                    // Move children out of the div tag
+                    while (div.firstChild) {
+                        div.parentNode.insertBefore(div.firstChild, div);
+                    }
+                    // Remove the empty div tag
+                    div.parentNode.removeChild(div);
+                }
+            }
+
+            // 7. Remove colgroup and col tags completely.
+            const colgroupElements = doc.querySelectorAll('colgroup');
+            for (let i = colgroupElements.length - 1; i >= 0; i--) {
+                if (colgroupElements[i].parentNode) {
+                    colgroupElements[i].parentNode.removeChild(colgroupElements[i]);
+                }
+            }
+
+            const colElements = doc.querySelectorAll('col');
+            for (let i = colElements.length - 1; i >= 0; i--) {
+                if (colElements[i].parentNode) {
+                    colElements[i].parentNode.removeChild(colElements[i]);
+                }
+            }
+
+            // 8. Removes all attributes except rowspan, colspan, class, id, headers, and scope
+            //    from table, thead, tbody, tfoot, tr, th, and td tags.
+            const tableRelatedTags = doc.querySelectorAll('table, thead, tbody, tfoot, tr, th, td');
+            tableRelatedTags.forEach(element => {
+                const attributesToKeep = ['rowspan', 'colspan', 'class', 'id', 'headers', 'scope'];
+                const attributesToRemove = [];
+                for (let j = 0; j < element.attributes.length; j++) {
+                    const attr = element.attributes[j];
+                    if (!attributesToKeep.includes(attr.name.toLowerCase())) {
+                        attributesToRemove.push(attr.name);
+                    }
+                }
+                attributesToRemove.forEach(attrName => {
+                    element.removeAttribute(attrName);
+                });
+            });
+
+            // 9. For <p> tags with "MsoToc" in the class: strip all attributes and delete everything within them
+            //    EXCEPT <a> tags with an href and all basic text content.
+            const msoTocParagraphs = doc.querySelectorAll('p[class*="MsoToc"]');
+            msoTocParagraphs.forEach(p => {
+                // Remove all attributes from the <p> tag
+                Array.from(p.attributes).forEach(attr => p.removeAttribute(attr.name));
+
+                // Create a temporary container for desired content
+                const tempDiv = doc.createElement('div');
+
+                // Iterate through child nodes to preserve only <a> with href and text nodes
+                Array.from(p.childNodes).forEach(node => {
+                    if (node.nodeType === Node.ELEMENT_NODE && node.tagName.toLowerCase() === 'a' && node.hasAttribute('href')) {
+                        // Preserve <a> tags with href
+                        const clonedA = node.cloneNode(true); // Clone the <a> tag
+
+                        // --- NEW: Clean content within the cloned <a> tag ---
+                        const linkText = clonedA.textContent; // Get all text content
+                        while (clonedA.firstChild) {
+                            clonedA.removeChild(clonedA.firstChild); // Remove all children
+                        }
+                        clonedA.appendChild(doc.createTextNode(linkText)); // Append only the text content back
+                        // --- END NEW ---
+
+                        tempDiv.appendChild(clonedA);
+                    } else if (node.nodeType === Node.TEXT_NODE) {
+                        // Preserve text nodes
+                        tempDiv.appendChild(node.cloneNode(true));
+                    }
+                    // All other nodes (elements without href, comments, processing instructions) are ignored
+                });
+
+                // Clear original <p> content
+                while (p.firstChild) {
+                    p.removeChild(p.firstChild);
+                }
+
+                // Append preserved content back to the <p> tag
+                while (tempDiv.firstChild) {
+                    p.appendChild(tempDiv.firstChild);
+                }
+            });
+
+            // 10. Deletes any <img> tag with "file://" or "data:" at the start of the src
+            //     and replaces it with "<div class="clearfix"><mark>IMAGE NOT IMPORTED</mark></div>".
+            doc.querySelectorAll('img').forEach(img => {
+                const src = img.getAttribute('src');
+                if (src && (src.startsWith('file://') || src.startsWith('data:'))) {
+                    const replacementDiv = doc.createElement('div');
+                    replacementDiv.classList.add('clearfix'); // Add the class "clearfix"
+                    const replacementMark = doc.createElement('mark');
+                    replacementMark.textContent = 'IMAGE NOT IMPORTED';
+                    replacementDiv.appendChild(replacementMark);
+                    if (img.parentNode) {
+                        img.parentNode.replaceChild(replacementDiv, img);
+                    }
+                }
+            });
+
+            // 11. Removes the `class` attribute from `<table>` tags if the class contains "MsoTable".
+            doc.querySelectorAll('table').forEach(table => {
+                const classAttr = table.getAttribute('class');
+                if (classAttr && classAttr.includes('MsoTable')) {
+                    table.removeAttribute('class');
+                }
+            });
+
+            // 12. Removes the `class` attribute from `<td>` tags if the class contains and starts with "xl".
+            doc.querySelectorAll('td').forEach(td => {
+                const classAttr = td.getAttribute('class');
+                if (classAttr && classAttr.startsWith('xl')) { // Checks if it starts with "xl"
+                    // No need to check if it contains "xl" because startsWith implies contains.
+                    td.removeAttribute('class');
+                }
+            });
+
+            // 13. Processes <p> tags with a class starting with "Mso" (unless in tables or MsoList),
+            //     deleting all attributes and content within, strictly EXCEPT for specified tags and their contents.
+            const allParagraphs = doc.querySelectorAll('p');
+            Array.from(allParagraphs).forEach(p => {
+                const classAttr = p.getAttribute('class') || '';
+                const isMsoParagraph = classAttr.startsWith('Mso');
+                const isInsideTable = p.closest('table');
+                const isMsoListParagraph = classAttr.startsWith('MsoList'); // Check for MsoList
+
+                if (isMsoParagraph && !isInsideTable && !isMsoListParagraph) {
+                    // Delete all attributes from the <p> tag
+                    Array.from(p.attributes).forEach(attr => p.removeAttribute(attr.name));
+
+                    // Filter and preserve content within the <p> tag
+                    const preservedContentHtml = filterAndPreserveContent(p, doc);
+                    p.innerHTML = preservedContentHtml;
+                }
+            });
+
+            // 14. New rule: For <p> tags within tables
+            doc.querySelectorAll('table p').forEach(p => {
+                const parentCell = p.closest('td, th'); // Find the closest parent td or th
+
+                if (parentCell) {
+                    // a. Remove `class` attribute if it contains "Mso" or "Aligned".
+                    const classAttr = p.getAttribute('class');
+                    if (classAttr && (classAttr.includes('Mso') || classAttr.includes('Aligned'))) {
+                        p.removeAttribute('class');
+                    }
+
+                    // b. Remove `style` attribute.
+                    if (p.hasAttribute('style')) {
+                        p.removeAttribute('style');
+                    }
+
+                    // c. If `align` attribute exists, remove it and add `text-left`, `text-center`, or `text-right` to parent `<td>` or `<th>`.
+                    const alignAttr = p.getAttribute('align');
+                    if (alignAttr) {
+                        p.removeAttribute('align');
+                        let tailwindAlignClass = '';
+                        switch (alignAttr.toLowerCase()) {
+                            case 'left':
+                                tailwindAlignClass = 'text-left';
+                                break;
+                            case 'center':
+                                tailwindAlignClass = 'text-center';
+                                break;
+                            case 'right':
+                                tailwindAlignClass = 'text-right';
+                                break;
+                        }
+                        if (tailwindAlignClass) {
+                            parentCell.classList.add(tailwindAlignClass);
+                        }
+                    }
+                }
+            });
+
+            // Final cleanup: Removes empty <p> tags with "Mso" class (if they became empty after previous cleaning)
+            let currentHtml = doc.body.innerHTML;
+            currentHtml = removeEmptyParagraphs(currentHtml);
+            doc.body.innerHTML = currentHtml; // Update the DOM with the result
+
+            return doc.body.innerHTML;
+        }
+
+
+        // Removed applyCleanWordLists function
 
         /**
          * Function to set the content of the HugeRTE editor.
          * This is called from the parent window.
          */
         window.setRichEditorContent = function(content) {
+            console.log("Parent: Attempting to set HugeRTE content.");
             if (richTextEditorInstance) {
                 richTextEditorInstance.setContent(cleanHtmlForRichTextDisplay(content));
                 richTextEditorInstance.focus(); // Re-focus the rich editor after content update
-                console.log('HugeRTE updated from HTML editor.');
+                console.log('Parent: HugeRTE updated from HTML editor.');
             } else {
-                console.warn('HugeRTE editor not yet initialized. Content will be set once ready.');
+                console.warn('Parent: HugeRTE editor not yet initialized. Content will be set once ready.');
             }
         };
 
@@ -1161,12 +1882,13 @@
          * This is called from the parent window.
          */
         window.getRichEditorContent = function() {
+            console.log("Parent: Attempting to get HugeRTE content.");
             if (richTextEditorInstance) {
                 const content = richTextEditorInstance.getContent();
-                console.log("Getting content from HugeRTE:", content);
+                console.log("Parent: HugeRTE content requested by parent.");
                 return content;
             } else {
-                console.warn('HugeRTE editor not yet initialized. Cannot get content.');
+                console.warn('Iframe: HugeRTE editor not yet initialized. Cannot get content.');
                 return '';
             }
         };
@@ -1176,14 +1898,16 @@
          * Includes automatic content synchronization.
          */
         function toggleEditorView() {
+            console.log("Toggle Editor View triggered. Current view:", currentView);
             if (currentView === 'richtext') {
                 // When switching from Rich-Text to Code:
                 // 1. Get content from Rich-Text editor.
                 if (default_ifr.contentWindow && default_ifr.contentWindow.getRichEditorContent) {
                     richTextContent = default_ifr.contentWindow.getRichEditorContent();
-                    console.log("Syncing from Rich Text to HTML. Rich Text Content:", richTextContent);
+                    console.log("Syncing from Rich Text to HTML. Rich Text Content length:", richTextContent.length);
                 } else {
-                    console.warn("Rich Text Editor not ready for content retrieval on toggle.");
+                    console.warn("Rich Text Editor not ready for content retrieval on toggle. Using empty string.");
+                    richTextContent = ''; // Ensure it's not undefined
                 }
 
                 // Apply French entity conversion (decode HTML entities)
@@ -1201,6 +1925,7 @@
                     monacoEditorInstance.setValue(htmlOutputContent);
                     monacoEditorInstance.focus(); // Focus the Monaco editor
                     applyEntityHighlighting(); // Apply highlighting after setting content
+                    console.log("Monaco editor updated with Rich Text content.");
                 } else {
                     console.warn('Monaco editor not yet initialized. Content will be set once ready.');
                 }
@@ -1223,20 +1948,23 @@
                 toggleEditorViewBtnCode.classList.add('bg-sky-700', 'hover:bg-sky-800');
                 
                 currentView = 'code';
+                console.log("Switched to Code View.");
             } else { // currentView === 'code'
                 // When switching from Code to Rich-Text:
                 // 1. Get content from Monaco editor.
                 if (monacoEditorInstance) {
                     htmlOutputContent = monacoEditorInstance.getValue();
-                    console.log("Syncing from HTML to Rich Text. HTML Output Content:", htmlOutputContent);
+                    console.log("Syncing from HTML to Rich Text. HTML Output Content length:", htmlOutputContent.length);
                 } else {
-                    console.warn("Monaco editor not ready for content retrieval on toggle.");
+                    console.warn("Monaco editor not ready for content retrieval on toggle. Using empty string.");
+                    htmlOutputContent = ''; // Ensure it's not undefined
                 }
 
                 // 2. Update Rich Text content and editor.
                 richTextContent = htmlOutputContent; // The Rich Text will now reflect the HTML output content
                 if (default_ifr.contentWindow && default_ifr.contentWindow.setRichEditorContent) {
                     default_ifr.contentWindow.setRichEditorContent(cleanHtmlForRichTextDisplay(richTextContent));
+                    console.log("HugeRTE editor updated with HTML content.");
                 } else {
                     console.warn("Rich Text Editor not ready for content setting on toggle.");
                 }
@@ -1254,6 +1982,7 @@
                 toggleEditorViewBtnRichText.classList.add('bg-sky-700', 'hover:bg-sky-800');
 
                 currentView = 'richtext';
+                console.log("Switched to Rich Text View.");
                 if (richTextEditorInstance) {
                     richTextEditorInstance.focus();
                 }
@@ -1308,9 +2037,23 @@
             }
         }
 
+        // Function to update the state of the "Run Selected Table" button
+        function updateRunTableButtonState() {
+            const anyTableToggleChecked = tableCleaningToggles.some(toggle => toggle.checked);
+            runSelectedTableBtn.disabled = !anyTableToggleChecked;
+            if (anyTableToggleChecked) {
+                runSelectedTableBtn.classList.remove('bg-gray-600', 'cursor-not-allowed', 'opacity-60');
+                runSelectedTableBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+            } else {
+                runSelectedTableBtn.classList.add('bg-gray-600', 'cursor-not-allowed', 'opacity-60');
+                runSelectedTableBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+            }
+        }
+
 
         // Initialize and set up event listeners on window load
         window.onload = function() {
+            console.log("Parent window.onload triggered.");
             // Initial setup: Ensure rich text panel is visible and code panel is hidden
             richtextOutputPanel.classList.add('panel-visible');
             codePanel.classList.add('panel-hidden');
@@ -1338,6 +2081,7 @@
                     wordWrap: 'on',
                     wrappingIndent: 'same',
                 });
+                console.log("Monaco editor initialized.");
 
                 // Update htmlOutputContent on Monaco content change
                 monacoEditorInstance.onDidChangeModelContent(() => {
@@ -1566,6 +2310,7 @@
                         <textarea id="richEditor"></textarea>
                     </form>
                     <script type="text/javascript">
+                        console.log("Iframe script started executing.");
                         // Global variable to hold the HugeRTE editor instance
                         let richTextEditorInstance;
                         // Flag to prevent infinite loop when updating HugeRTE from CodeMirror
@@ -1576,14 +2321,15 @@
                          * This is called from the parent window.
                          */
                         window.setRichEditorContent = function(content) {
+                            console.log("Iframe: setRichEditorContent called by parent.");
                             if (richTextEditorInstance && !isUpdatingFromCodeMirror) {
                                 isUpdatingFromCodeMirror = true;
                                 richTextEditorInstance.setContent(content);
                                 richTextEditorInstance.focus(); // Re-focus the rich editor after content update
-                                console.log('HugeRTE updated from parent:', content);
+                                console.log('Iframe: HugeRTE updated from parent.');
                                 isUpdatingFromCodeMirror = false;
                             } else {
-                                console.warn('HugeRTE editor not yet initialized. Content will be set once ready.');
+                                console.warn('Iframe: HugeRTE editor not yet initialized or isUpdatingFromCodeMirror is true. Content will be set once ready.');
                             }
                         };
 
@@ -1592,12 +2338,13 @@
                          * This is called from the parent window.
                          */
                         window.getRichEditorContent = function() {
+                            console.log("Iframe: getRichEditorContent called by parent.");
                             if (richTextEditorInstance) {
                                 const content = richTextEditorInstance.getContent();
-                                console.log("HugeRTE content requested by parent:", content);
+                                console.log("Iframe: HugeRTE content requested by parent.");
                                 return content;
                             } else {
-                                console.warn('HugeRTE editor not yet initialized. Cannot get content.');
+                                console.warn('Iframe: HugeRTE editor not yet initialized. Cannot get content.');
                                 return '';
                             }
                         };
@@ -1605,44 +2352,50 @@
                         /**
                          * HugeRTE init
                          */
-                        hugerte.init({
-                            selector: '#richEditor',
-                            content_css: 'https://www.canada.ca/etc/designs/canada/wet-boew/css/theme.min.css',
-                            toolbar: 'undo redo styles bold italic alignleft aligncenter alignright numlist bullist table',
-                            plugins: [ 'table', 'lists' ],
-                            height: '100%', // Explicitly set height for TinyMCE
-                            tab_focus: false, // Allow tab to indent instead of changing focus
-                            formats: { // Define custom formats for alignment to use classes
-                                alignleft: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img', classes: 'text-left', exact: true },
-                                aligncenter: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img', classes: 'text-center', exact: true },
-                                alignright: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img', classes: 'text-right', exact: true },
-                            },
-                            init_instance_callback: function(editorInstance) {
-                                console.log('HugeRTE editor initialized inside iframe.');
-                                richTextEditorInstance = editorInstance; // Store the instance globally
-                                // Expose the instance to the parent window
-                                if (window.parent) {
-                                    window.parent.richTextEditorInstanceFromIframe = editorInstance;
-                                }
-
-                                // Handle Tab key for indentation and outdentation, especially for lists
-                                editorInstance.on('keydown', (event) => {
-                                    if (event.key === 'Tab') {
-                                        event.preventDefault(); // Prevent default tab behavior (focus change)
-                                        // No content modification (no spaces, no styles)
-                                        editorInstance.focus(); // Explicitly refocus the editor after command
+                        if (typeof hugerte === 'undefined') {
+                            console.error("Iframe: HugeRTE library not loaded!");
+                        } else {
+                            console.log("Iframe: HugeRTE library loaded. Initializing editor.");
+                            hugerte.init({
+                                selector: '#richEditor',
+                                content_css: 'https://www.canada.ca/etc/designs/canada/wet-boew/css/theme.min.css',
+                                toolbar: 'undo redo styles bold italic alignleft aligncenter alignright numlist bullist table',
+                                plugins: [ 'table', 'lists' ],
+                                height: '100%', // Explicitly set height for TinyMCE
+                                tab_focus: false, // Allow tab to indent instead of changing focus
+                                formats: { // Define custom formats for alignment to use classes
+                                    alignleft: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img', classes: 'text-left', exact: true },
+                                    aligncenter: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img', classes: 'text-center', exact: true },
+                                    alignright: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img', classes: 'text-right', exact: true },
+                                },
+                                init_instance_callback: function(editorInstance) {
+                                    console.log('Iframe: HugeRTE editor initialized inside iframe.');
+                                    richTextEditorInstance = editorInstance; // Store the instance globally
+                                    // Expose the instance to the parent window
+                                    if (window.parent) {
+                                        window.parent.richTextEditorInstanceFromIframe = editorInstance;
+                                        console.log("Iframe: HugeRTE instance exposed to parent.");
                                     }
-                                });
 
-                                // Initial content sync when editor loads
-                                console.log('HugeRTE editor ready.');
-                                // Set initial content if parent already has some
-                                if (window.parent.richTextContent) {
-                                    editorInstance.setContent(window.parent.richTextContent);
-                                    console.log("Initial HugeRTE content set from parent:", window.parent.richTextContent);
+                                    // Handle Tab key for indentation and outdentation, especially for lists
+                                    editorInstance.on('keydown', (event) => {
+                                        if (event.key === 'Tab') {
+                                            event.preventDefault(); // Prevent default tab behavior (focus change)
+                                            // No content modification (no spaces, no styles)
+                                            editorInstance.focus(); // Explicitly refocus the editor after command
+                                        }
+                                    });
+
+                                    // Initial content sync when editor loads
+                                    console.log('Iframe: HugeRTE editor ready.');
+                                    // Set initial content if parent already has some
+                                    if (window.parent.richTextContent) {
+                                        editorInstance.setContent(window.parent.richTextContent);
+                                        console.log("Iframe: Initial HugeRTE content set from parent.");
+                                    }
                                 }
-                            }
-                        });
+                            });
+                        }
                     <\/script>
                 </body>
                 </html>
@@ -1653,11 +2406,12 @@
             // the iframe's script will assign its editor instance to window.parent.richTextEditorInstanceFromIframe
             // We can then pick it up here.
             default_ifr.onload = () => {
+                console.log("Parent: Iframe finished loading.");
                 if (default_ifr.contentWindow && default_ifr.contentWindow.richTextEditorInstanceFromIframe) {
                     richTextEditorInstanceFromIframe = default_ifr.contentWindow.richTextEditorInstanceFromIframe;
-                    console.log("HugeRTE instance captured by parent.");
+                    console.log("Parent: HugeRTE instance captured by parent.");
                 } else {
-                    console.warn("Could not capture HugeRTE instance from iframe.");
+                    console.warn("Parent: Could not capture HugeRTE instance from iframe. Is HugeRTE initializing correctly inside?");
                 }
             };
         };
@@ -1719,7 +2473,7 @@
             });
             
 
-            // Toggle switch logic
+            // Toggle switch logic for general cleaning toggles
             generalCleaningToggles.forEach(switchElement => {
                 // Set initial state based on checked attribute
                 if (switchElement.checked) {
@@ -1741,8 +2495,31 @@
                 });
             });
 
+            // Toggle switch logic for table cleaning toggles
+            tableCleaningToggles.forEach(switchElement => {
+                // Set initial state based on checked attribute
+                if (switchElement.checked) {
+                    switchElement.closest('.toggle-switch').classList.add('is-checked');
+                }
+
+                switchElement.addEventListener('change', (event) => {
+                    const switchId = event.target.id;
+                    const isChecked = event.target.checked;
+                    const parentLabel = event.target.closest('.toggle-switch');
+
+                    if (isChecked) {
+                        parentLabel.classList.add('is-checked');
+                    } else {
+                        parentLabel.classList.remove('is-checked');
+                    }
+                    console.log(`Table Toggle switch '${switchId}' is now: ${isChecked ? 'ON' : 'OFF'}`);
+                    updateRunTableButtonState(); // Update button state on toggle change
+                });
+            });
+
             // Call updateRunButtonState initially to set the correct state on load
             updateRunButtonState();
+            updateRunTableButtonState(); // Call for table button as well
 
             // Functionality for "Run Selected" button for General Cleaning
             runSelectedBtn.addEventListener('click', () => {
@@ -1750,6 +2527,7 @@
                 if (runSelectedBtn.disabled) {
                     return;
                 }
+                console.log("Run Selected button clicked.");
 
                 let contentToClean;
                 if (currentView === 'richtext') {
@@ -1764,15 +2542,7 @@
                 
                 let cleanedContent = contentToClean; // Start with current content
 
-                if (toggleMsOfficeJunk.checked) {
-                    cleanedContent = applyMsOfficeJunkCleaning(cleanedContent);
-                    console.log("MS Office Junk cleaning applied.");
-                }
-
-                if (toggleZeroBookmarks.checked) {
-                    cleanedContent = applyZeroBookmarksCleaning(cleanedContent);
-                    console.log("Clean Word Bookmarks cleaning applied.");
-                }
+                // Removed conditions for toggleMsOfficeJunk, toggleZeroBookmarks, toggleCleanWordLists
 
                 if (toggleUrlCleaning.checked) {
                     cleanedContent = applyUrlCleaning(cleanedContent);
@@ -1784,11 +2554,30 @@
                     console.log("Clean Spaces applied.");
                 }
 
+                // Apply Clean COMM/FN/EDN if checked
+                if (toggleCleanComments.checked) {
+                    cleanedContent = applyCleanCommFnEdn(cleanedContent);
+                    console.log("Clean COMM/FN/EDN applied.");
+                }
+
+                // Apply Clean MSO Code if checked
+                if (toggleCleanMsoCode.checked) {
+                    cleanedContent = applyCleanMsoCode(cleanedContent);
+                    console.log("Clean MSO Code applied.");
+                }
+
                 // New condition for Clean Single Breaks
                 if (toggleCleanSingleBreaks.checked) {
                     cleanedContent = applyCleanSingleBreaks(cleanedContent);
                     console.log("Clean Single Breaks applied.");
                 }
+
+                // New condition for Clean MSO Lists
+                if (toggleCleanMsoLists.checked) {
+                    cleanedContent = processMsoListParagraphs(cleanedContent);
+                    console.log("Clean MSO Lists applied.");
+                }
+
 
                 // Update the active editor with the final cleaned content
                 if (currentView === 'richtext') {
@@ -1822,6 +2611,85 @@
                 setTimeout(() => {
                     runSelectedBtn.textContent = originalText;
                     runSelectedBtn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+                    runSelectedBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                }, 1500);
+            });
+
+            // Functionality for "Run Selected" button for Table Cleaning
+            runSelectedTableBtn.addEventListener('click', () => {
+                // Prevent execution if button is disabled
+                if (runSelectedTableBtn.disabled) {
+                    return;
+                }
+                console.log("Run Selected Table button clicked.");
+
+                let contentToClean;
+                if (currentView === 'richtext') {
+                    contentToClean = window.getRichEditorContent();
+                    // When running from rich text, entities are already decoded
+                    // and empty paragraphs outside tables/lists are removed by toggleEditorView
+                } else { // currentView === 'code'
+                    contentToClean = monacoEditorInstance.getValue();
+                    // If running from code view, ensure entities are decoded before cleaning functions
+                    contentToClean = decodeHtmlEntities(contentToClean);
+                }
+                
+                let cleanedContent = contentToClean; // Start with current content
+
+                if (toggleResponsiveTables.checked) {
+                    // Assuming this function exists or will be added
+                    // cleanedContent = applyResponsiveTables(cleanedContent);
+                    console.log("Responsive Tables applied (placeholder).");
+                }
+
+                if (toggleWetAlignment.checked) {
+                    // Assuming this function exists or will be added
+                    // cleanedContent = applyWetAlignment(cleanedContent);
+                    console.log("WET Alignment applied (placeholder).");
+                }
+
+                if (toggleApplyBasicClasses.checked) {
+                    // You can add other table-specific basic class applications here if needed.
+                    console.log("Apply Basic Classes applied (placeholder).");
+                }
+
+                if (toggleRemovePTags.checked) {
+                    // Assuming this function exists or will be added
+                    // cleanedContent = removePTagsFromTables(cleanedContent);
+                    console.log("Remove <p> Tags applied (placeholder).");
+                }
+
+                // Update the active editor with the final cleaned content
+                if (currentView === 'richtext') {
+                    window.setRichEditorContent(cleanedContent);
+                } else { // currentView === 'code'
+                    monacoEditorInstance.setValue(cleanedContent);
+                    htmlOutputContent = cleanedContent; // Keep the main content variable updated
+                    applyEntityHighlighting(); // Re-apply highlighting after cleaning
+                }
+
+                // Always run Auto-Indent after any cleaning operation
+                autoFormatBtn.click();
+                console.log("Auto-Indent applied after table cleaning.");
+
+                // Turn off all table cleaning toggles after running
+                tableCleaningToggles.forEach(toggle => {
+                    if (toggle.checked) {
+                        toggle.checked = false;
+                        toggle.closest('.toggle-switch').classList.remove('is-checked');
+                    }
+                });
+                console.log("All table cleaning toggles turned off.");
+                updateRunTableButtonState(); // Update button state after toggles are turned off
+
+                // Provide visual feedback
+                const originalText = runSelectedTableBtn.textContent;
+                runSelectedTableBtn.textContent = 'Cleaned!';
+                runSelectedTableBtn.classList.add('bg-blue-500', 'hover:bg-blue-600');
+                runSelectedTableBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                setTimeout(() => {
+                    runSelectedTableBtn.textContent = originalText;
+                    runSelectedTableBtn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
                     runSelectedBtn.classList.add('bg-green-600', 'hover:bg-green-700');
                 }, 1500);
             });
