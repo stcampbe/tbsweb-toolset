@@ -436,17 +436,14 @@
 
     <figcaption class="text-center"><strong>Figure 1: Graph</strong></figcaption>
 
-   
 
     <img src="/content/dam/tbs-sct/images/reports/dr/24-25-dp-fig1-en.png" class="img-responsive center-block" alt="Just a graph. Text version below:" />
 
-   
 
     <details class="brdr-tp brdr-rght brdr-bttm brdr-lft">
 
                 <summary class="wb-toggle"  data-toggle='{"print":"on"}'>Figure 1 - Text version</summary>
 
-       
 
         <p>[Long Description content]</p>
 
@@ -564,8 +561,8 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 15l6-6m0 0l-6-6m6 6H9a6 6 0 000 12H6" />
                     </svg>
                 </button>
-                <button id="cleanEntitiesBtn" class="px-4 py-2 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 font-semibold">
-                    Clean Entities
+                <button id="autoEncodeBtn" class="px-4 py-2 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 font-semibold">
+                    Auto-Encode
                 </button>
                 <button id="autoFormatBtn" class="px-4 py-2 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 font-semibold">
                     Auto-Indent
@@ -712,7 +709,8 @@
         const customizeContent = document.getElementById('customizeContent');
         const customizeToggleIcon = document.getElementById('customizeToggleIcon');
         const toggleCssBtn = document.getElementById('toggleCssBtn');
-        const cleanEntitiesBtn = document.getElementById('cleanEntitiesBtn');
+        // Renamed from cleanEntitiesBtn to autoEncodeBtn
+        const autoEncodeBtn = document.getElementById('autoEncodeBtn');
         // New Undo/Redo buttons
         const undoBtn = document.getElementById('undoBtn');
         const redoBtn = document.getElementById('redoBtn');
@@ -1341,7 +1339,7 @@
             box-sizing: border-box;
         }
         .show-headings-outline h3,
-        .show-headings-outline gcds-heading[tag="h3"] {
+        .show-heading[tag="h3"] {
             border: 2px solid #FFFF00; /* Yellow */
             background-color: rgba(255, 255, 0, 0.1);
             padding: 5px;
@@ -1817,21 +1815,22 @@
             exitFullScreenPreviewBtn.addEventListener('click', toggleFullScreenPreview);
             toggleCssBtn.addEventListener('click', () => { enableCss = !enableCss; updateCssButtonState(); updatePreview(); });
 
-            cleanEntitiesBtn.addEventListener('click', () => {
+            // Renamed from cleanEntitiesBtn to autoEncodeBtn
+            autoEncodeBtn.addEventListener('click', () => {
                 if (editor) {
                     let htmlContent = editor.getValue();
                     let cleanedHtml = convertAllEntitiesToNumeric(htmlContent); // Use the new function
                     editor.setValue(cleanedHtml);
 
                     // Update button feedback
-                    const originalText = cleanEntitiesBtn.textContent;
-                    cleanEntitiesBtn.textContent = 'Cleaned!';
-                    cleanEntitiesBtn.classList.add('bg-green-500', 'hover:bg-green-600');
-                    cleanEntitiesBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                    const originalText = autoEncodeBtn.textContent;
+                    autoEncodeBtn.textContent = 'Encoded!';
+                    autoEncodeBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                    autoEncodeBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
                     setTimeout(() => {
-                        cleanEntitiesBtn.textContent = originalText;
-                        cleanEntitiesBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-                        cleanEntitiesBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+                        autoEncodeBtn.textContent = originalText;
+                        autoEncodeBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                        autoEncodeBtn.classList.add('bg-red-600', 'hover:bg-red-700');
                     }, 1500);
                 }
             });
@@ -1950,16 +1949,17 @@
                         let datetimeAttr = timeEl.getAttribute('datetime');
                         if (datetimeAttr) {
                             const cleanedDatetime = datetimeAttr.replace(/<[^>]*>/g, '').replace(/&nbsp;|&#160;/g, ' ').replace(/\s+/g, ' ').trim();
-                            const dateMatch = cleanedDatetime.match(/^(\d{4}-\d{2}-\d{2})|(\d{4}-\d{2})$/);
+                            // Only keep datetime if it's a valid YYYY-MM-DD or YYYY-MM format
+                            const dateMatch = cleanedDatetime.match(/^(\d{4}-\d{2}-\d{2})$|^(\d{4}-\d{2})$/);
                             if (dateMatch) {
                                 timeEl.setAttribute('datetime', dateMatch[0]);
                             } else {
-                                timeEl.removeAttribute('datetime');
+                                timeEl.removeAttribute('datetime'); // Remove if not a valid format
                             }
                         }
                     });
 
-// Month mapping for conversion to numeric format
+                    // Month mapping for conversion to numeric format
                     const monthMap = {
                         'january': '01', 'jan': '01', 'janvier': '01',
                         'february': '02', 'feb': '02', 'février': '02',
@@ -1983,7 +1983,12 @@
                     // Updated spaceOrNBSPChar to include placeholders
                     const spaceOrNBSPChar = `(?:\\s|\\u00A0|&nbsp;|&#160;|${NBSP_ENTITY_PLACEHOLDER}|${NUMERIC_NBSP_ENTITY_PLACEHOLDER}|${LITERAL_NBSP_CHAR_PLACEHOLDER})+`;
 
-// Collect all text nodes to process first, then iterate and modify.
+                    // Only include patterns for month (written) and year, and day, month (written) and year.
+                    const regexMonthDayYear = new RegExp(`(?<!\\d)(${monthPattern})${spaceOrNBSPChar}(\\d{1,2}),?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'i');
+                    const regexDayMonthYear = new RegExp(`(?<!\\d)(\\d{1,2})${spaceOrNBSPChar}(${monthPattern}),?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'i');
+                    const regexMonthYear = new RegExp(`(?<!\\d)(${monthPattern})${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'i');
+
+                    // Collect all text nodes to process first, then iterate and modify.
                     const textNodesToModify = [];
                     const walker = doc.createTreeWalker(
                         body,
@@ -2014,12 +2019,6 @@
                         let text = textNode.nodeValue;
                         let currentText = text;
 
-const regexYYYYMMDD_or_YYYYMM = /(\d{4}-\d{2}-\d{2})|(\d{4}-\d{2})/i;
-                        const regexMonthDayYear = new RegExp(`(${monthPattern})${spaceOrNBSPChar}(\\d{1,2}),?${spaceOrNBSPChar}(\\d{4})`, 'i');
-                        // Modified regexDayMonthYear to optionally include a comma after the month
-                        const regexDayMonthYear = new RegExp(`(\\d{1,2})${spaceOrNBSPChar}(${monthPattern}),?${spaceOrNBSPChar}(\\d{4})`, 'i');
-                        const regexMonthYear = new RegExp(`(${monthPattern})${spaceOrNBSPChar}(\\d{4})`, 'i');
-
                         let allMatches = [];
                         const patternsToTest = [
                             { name: 'DayMonthYear', regex: regexDayMonthYear, handler: (match) => {
@@ -2032,7 +2031,6 @@ const regexYYYYMMDD_or_YYYYMM = /(\d{4}-\d{2}-\d{2})|(\d{4}-\d{2})/i;
                                 const monthNum = getMonthNumber(month);
                                 return monthNum ? `${year}-${monthNum}-${String(day).padStart(2, '0')}` : null;
                             }},
-                            { name: 'YYYYMMDD_or_YYYYMM', regex: regexYYYYMMDD_or_YYYYMM, handler: (match) => match[1] || match[2] },
                             { name: 'MonthYear', regex: regexMonthYear, handler: (match) => {
                                 const [, month, year] = match;
                                 const monthNum = getMonthNumber(month);
@@ -2040,8 +2038,13 @@ const regexYYYYMMDD_or_YYYYMM = /(\d{4}-\d{2}-\d{2})|(\d{4}-\d{2})/i;
                             }}
                         ];
 
-patternsToTest.forEach(pattern => {
-                            let localRegex = new RegExp(pattern.regex.source, pattern.regex.flags + 'g');
+                        patternsToTest.forEach(pattern => {
+                            let localRegex = new RegExp(pattern.regex.source, pattern.regex.flags);
+                            // Ensure 'g' flag is always present for iterative matching
+                            if (!localRegex.flags.includes('g')) {
+                                localRegex = new RegExp(localRegex.source, localRegex.flags + 'g');
+                            }
+
                             let match;
                             while ((match = localRegex.exec(currentText)) !== null) {
                                 const datetimeValue = pattern.handler(match);
@@ -2051,7 +2054,8 @@ patternsToTest.forEach(pattern => {
                                         end: match.index + match[0].length,
                                         original: match[0],
                                         datetime: datetimeValue,
-                                        priority: (pattern.name === 'DayMonthYear' || pattern.name === 'MonthDayYear') ? 2 : (pattern.name === 'YYYYMMDD_or_YYYYMM' ? 1 : 0)
+                                        // Prioritize full dates over month-year
+                                        priority: (pattern.name === 'DayMonthYear' || pattern.name === 'MonthDayYear') ? 2 : 1
                                     });
                                 }
                             }
@@ -2061,7 +2065,7 @@ patternsToTest.forEach(pattern => {
                             if (a.start !== b.start) {
                                 return a.start - b.start;
                             }
-                            return b.priority - a.priority;
+                            return b.priority - a.priority; // Higher priority first for overlapping matches
                         });
 
                         let nonOverlappingMatches = [];
@@ -2073,7 +2077,7 @@ patternsToTest.forEach(pattern => {
                             }
                         });
 
-if (nonOverlappingMatches.length > 0) {
+                        if (nonOverlappingMatches.length > 0) {
                             let resultParts = [];
                             let currentIndex = 0;
                             nonOverlappingMatches.forEach(match => {
