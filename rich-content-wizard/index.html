@@ -1123,13 +1123,13 @@
                         // If it's an always-allowed tag, clone it (without children initially)
                         const clonedChild = child.cloneNode(false);
                         // Recursively populate its content
-                        clonedChild.innerHTML = filterAndPreserveContent(child, doc);
+                        clonedChild.innerHTML = filterAndPreserveContent(clonedChild, doc); // Pass clonedChild for recursion
                         tempContainer.appendChild(clonedChild);
                     } else if ((tagName === 'span' || tagName === 'div') && hasClassOrId) {
                         // If it's a span or div with class/ID, clone it (without children initially)
                         const clonedChild = child.cloneNode(false);
                         // Recursively populate its content
-                        clonedChild.innerHTML = filterAndPreserveContent(child, doc);
+                        clonedChild.innerHTML = filterAndPreserveContent(clonedChild, doc); // Pass clonedChild for recursion
                         tempContainer.appendChild(clonedChild);
                     } else {
                         // If the element is not explicitly allowed (e.g., a span without class/ID, or any other disallowed tag),
@@ -1148,6 +1148,57 @@
             });
             return tempContainer.innerHTML; // Return the HTML string of preserved content
         }
+
+        /**
+         * Filters and preserves content specifically for heading tags.
+         * Preserves regular text, char entities, <em>, <a>.
+         * Preserves <div> and <span> with a class or id, unless the span's class starts with "Heading".
+         * Unwraps all other elements.
+         * @param {HTMLElement} sourceNode - The heading element whose children are to be filtered.
+         * @param {Document} doc - The document object to create new elements.
+         * @returns {string} The HTML string containing only the preserved content for the heading.
+         */
+        function filterHeadingContent(sourceNode, doc) {
+            let tempContainer = doc.createElement('div');
+
+            Array.from(sourceNode.childNodes).forEach(child => {
+                if (child.nodeType === Node.TEXT_NODE) {
+                    tempContainer.appendChild(child.cloneNode(true));
+                } else if (child.nodeType === Node.ELEMENT_NODE) {
+                    const tagName = child.tagName.toLowerCase();
+                    const hasClassOrId = child.hasAttribute('class') || child.hasAttribute('id');
+
+                    if (tagName === 'em' || tagName === 'a') {
+                        const clonedChild = child.cloneNode(false);
+                        clonedChild.innerHTML = filterHeadingContent(child, doc); // Recurse for children
+                        tempContainer.appendChild(clonedChild);
+                    } else if (tagName === 'div' && hasClassOrId) {
+                        const clonedChild = child.cloneNode(false);
+                        clonedChild.innerHTML = filterHeadingContent(child, doc); // Recurse for children
+                        tempContainer.appendChild(clonedChild);
+                    } else if (tagName === 'span' && hasClassOrId) {
+                        const classAttr = child.getAttribute('class');
+                        if (classAttr && classAttr.startsWith('Heading')) {
+                            // Delete this span (do nothing, effectively skipping it and its content)
+                            return;
+                        }
+                        const clonedChild = child.cloneNode(false);
+                        clonedChild.innerHTML = filterHeadingContent(child, doc); // Recurse for children
+                        tempContainer.appendChild(clonedChild);
+                    } else {
+                        // Unwrap other elements
+                        const unwrappedContentHtml = filterHeadingContent(child, doc);
+                        const tempUnwrapDiv = doc.createElement('div');
+                        tempUnwrapDiv.innerHTML = unwrappedContentHtml;
+                        while (tempUnwrapDiv.firstChild) {
+                            tempContainer.appendChild(tempUnwrapDiv.firstChild);
+                        }
+                    }
+                }
+            });
+            return tempContainer.innerHTML;
+        }
+
 
         /**
          * Applies cleaning for Microsoft Office specific code.
@@ -1181,6 +1232,8 @@
          * 15. Unwraps <div> tags with "mso-element" in their style attribute, *unless* it's "mso-element: footnote-list", preserving their contents.
          * 16. Unwraps `<span>` tags within `<td>` elements that have a class starting with "xl".
          * 17. Removes all style attributes from heading tags (h1-h6).
+         * 18. New rule: Unwrap `<span>` tags with "font-weight" in their style attribute.
+         * 19. New rule: Clean content within heading tags (h1-h6) as per specific rules.
          * @param {string} htmlString - The HTML content to clean.
          * @returns {string} The cleaned HTML content.
          */
@@ -1220,7 +1273,7 @@
                         } else if ((tagName === 'span' || tagName === 'div') && hasClassOrId) {
                             // span/div are allowed only if they have a class or ID
                             const clonedChild = child.cloneNode(false);
-                            clonedChild.innerHTML = extractAllowedContentForLists(child); // Recursive call
+                            clonedChild.innerHTML = extractAllowedContentForLists(clonedChild); // Recursive call
                             contentHtml += clonedChild.outerHTML;
                         } else {
                             // For other elements (disallowed elements, or span/div without class/ID),
@@ -1265,11 +1318,13 @@
 
             // ORDER OF OPERATIONS within applyCleanMsoCode:
             // 1. Span lang's and mso-ansi-language (Step 5 from original applyCleanMsoCode)
-            // 2. Lists (Integrated processMsoListParagraphs logic)
-            // 3. Clean COMM/FN/EDN (Moved here)
-            // 4. Table related (Steps 8, 11, 12, 14, 16 from original applyCleanMsoCode)
-            // 5. The rest (other MSO cleaning)
-            // 6. Heading style removal (New)
+            // 2. Unwrap font-weight spans (NEW)
+            // 3. Lists (Integrated processMsoListParagraphs logic)
+            // 4. Clean COMM/FN/EDN (Moved here)
+            // 5. Table related (Steps 8, 11, 12, 14, 16 from original applyCleanMsoCode)
+            // 6. The rest (other MSO cleaning)
+            // 7. Heading style removal (Existing)
+            // 8. Heading content cleaning (NEW)
 
             // 1. Unwraps <span> tags with a 'lang' attribute ONLY if they are within an element
             //    that has "Mso" in its class or "mso-" in its style. Preserve content.
@@ -1313,8 +1368,20 @@
                 }
             }
 
+            // 2. NEW: Unwrap <span> tags with "font-weight" in their style attribute.
+            const fontWeightSpans = doc.querySelectorAll('span[style*="font-weight"]');
+            for (let i = fontWeightSpans.length - 1; i >= 0; i--) {
+                const span = fontWeightSpans[i];
+                if (span.parentNode) {
+                    while (span.firstChild) {
+                        span.parentNode.insertBefore(span.firstChild, span);
+                    }
+                    span.parentNode.removeChild(span);
+                }
+            }
 
-            // 2. Process <p> tags with "MsoListParagraph" class, converting them to <ul><li> structures
+
+            // 3. Process <p> tags with "MsoListParagraph" class, converting them to <ul><li> structures
             //    and preserving specific child elements/text while removing others.
             const paragraphs = Array.from(body.querySelectorAll('p'));
             const paragraphsToReplace = new Map(); // Map original P to new UL/LI structure
@@ -1516,7 +1583,7 @@
                 }
             });
 
-            // 3. Apply cleaning for comments, footnotes, and endnotes (Moved here from applyCleanCommFnEdn)
+            // 4. Apply cleaning for comments, footnotes, and endnotes (Moved here from applyCleanCommFnEdn)
             // 1. Unwrap <span> tags with class containing "MsoComment" (but not "MsoCommentReference")
             const spanCommentElements = doc.querySelectorAll('span[class*="MsoComment"]');
             // Iterate in reverse to avoid issues with DOM modification affecting the NodeList
@@ -1639,7 +1706,7 @@
             }
 
 
-            // 4. Table related cleaning
+            // 5. Table related cleaning
             // 7. Remove colgroup and col tags completely.
             const colgroupElements = doc.querySelectorAll('colgroup');
             for (let i = colgroupElements.length - 1; i >= 0; i--) {
@@ -1741,7 +1808,7 @@
                 }
             });
 
-            // 5. The rest of the cleaning operations
+            // 6. The rest of the cleaning operations
 
             // 1. Unwraps <span> tags with "mso-bookmark" in their style attribute
             const msoBookmarkSpans = doc.querySelectorAll('span[style*="mso-bookmark"]');
@@ -1898,12 +1965,19 @@
             currentHtml = removeEmptyParagraphs(currentHtml);
             doc.body.innerHTML = currentHtml; // Update the DOM with the result
 
-            // 17. New rule: Remove all style attributes from heading tags (h1-h6).
+            // 17. Remove all style attributes from heading tags (h1-h6).
             const headingTags = doc.querySelectorAll('h1, h2, h3, h4, h5, h6');
             headingTags.forEach(heading => {
                 if (heading.hasAttribute('style')) {
                     heading.removeAttribute('style');
                 }
+            });
+
+            // 19. NEW: Clean content within heading tags (h1-h6) as per specific rules.
+            const allHeadingElements = doc.querySelectorAll('h1, h2, h3, h4, h5, h6');
+            allHeadingElements.forEach(heading => {
+                const cleanedHeadingContent = filterHeadingContent(heading, doc);
+                heading.innerHTML = cleanedHeadingContent;
             });
 
             return doc.body.innerHTML;
