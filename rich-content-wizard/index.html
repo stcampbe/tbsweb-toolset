@@ -1157,6 +1157,7 @@
          * 4. Unwraps <div> tags with an 'align' attribute, preserving their contents.
          * 5. Unwraps <span> tags with a 'lang' attribute ONLY if they are within an element
          * that has "Mso" in its class or "mso-" in its style. The content within these spans is preserved.
+         * Also unwraps <span> tags with 'mso-ansi-language' in their style attribute, regardless of parent.
          * 6. Processes <p> tags with "MsoListParagraph" class, converting them to <ul><li> structures
          * and preserving specific child elements/text while removing others. This handles "MsoListParagraphCxSpFirst",
          * "MsoListParagraphCxSpMiddle", and "MsoListParagraphCxSpLast" classes, and uses "level#" from style attribute for nesting.
@@ -1179,6 +1180,7 @@
          * c. If `align` attribute exists, remove it and add `text-left`, `text-center`, or `text-right` to parent `<td>` or `<th>`.
          * 15. Unwraps <div> tags with "mso-element" in their style attribute, *unless* it's "mso-element: footnote-list", preserving their contents.
          * 16. Unwraps `<span>` tags within `<td>` elements that have a class starting with "xl".
+         * 17. Removes all style attributes from heading tags (h1-h6).
          * @param {string} htmlString - The HTML content to clean.
          * @returns {string} The cleaned HTML content.
          */
@@ -1262,14 +1264,16 @@
 
 
             // ORDER OF OPERATIONS within applyCleanMsoCode:
-            // 1. Span lang's (Step 5 from original applyCleanMsoCode)
+            // 1. Span lang's and mso-ansi-language (Step 5 from original applyCleanMsoCode)
             // 2. Lists (Integrated processMsoListParagraphs logic)
             // 3. Clean COMM/FN/EDN (Moved here)
             // 4. Table related (Steps 8, 11, 12, 14, 16 from original applyCleanMsoCode)
             // 5. The rest (other MSO cleaning)
+            // 6. Heading style removal (New)
 
-            // 1. Unwraps <span> tags with a 'lang' attribute ONLY if they're within an element
+            // 1. Unwraps <span> tags with a 'lang' attribute ONLY if they are within an element
             //    that has "Mso" in its class or "mso-" in its style. Preserve content.
+            //    Also unwraps <span> tags with 'mso-ansi-language' in style, regardless of parent.
             const spanLangElements = doc.querySelectorAll('span[lang]');
             // Iterate in reverse to avoid issues with DOM modification affecting the NodeList
             for (let i = spanLangElements.length - 1; i >= 0; i--) {
@@ -1296,6 +1300,19 @@
                     span.parentNode.removeChild(span);
                 }
             }
+
+            // Unwrap <span> tags with 'mso-ansi-language' in style, regardless of parent.
+            const spanAnsiLanguageElements = doc.querySelectorAll('span[style*="mso-ansi-language"]');
+            for (let i = spanAnsiLanguageElements.length - 1; i >= 0; i--) {
+                const span = spanAnsiLanguageElements[i];
+                if (span.parentNode) {
+                    while (span.firstChild) {
+                        span.parentNode.insertBefore(span.firstChild, span);
+                    }
+                    span.parentNode.removeChild(span);
+                }
+            }
+
 
             // 2. Process <p> tags with "MsoListParagraph" class, converting them to <ul><li> structures
             //    and preserving specific child elements/text while removing others.
@@ -1880,6 +1897,14 @@
             let currentHtml = doc.body.innerHTML;
             currentHtml = removeEmptyParagraphs(currentHtml);
             doc.body.innerHTML = currentHtml; // Update the DOM with the result
+
+            // 17. New rule: Remove all style attributes from heading tags (h1-h6).
+            const headingTags = doc.querySelectorAll('h1, h2, h3, h4, h5, h6');
+            headingTags.forEach(heading => {
+                if (heading.hasAttribute('style')) {
+                    heading.removeAttribute('style');
+                }
+            });
 
             return doc.body.innerHTML;
         }
