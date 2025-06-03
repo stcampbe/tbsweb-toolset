@@ -1123,13 +1123,13 @@
                         // If it's an always-allowed tag, clone it (without children initially)
                         const clonedChild = child.cloneNode(false);
                         // Recursively populate its content
-                        clonedChild.innerHTML = filterAndPreserveContent(clonedChild, doc); // Pass clonedChild for recursion
+                        clonedChild.innerHTML = filterAndPreserveContent(child, doc);
                         tempContainer.appendChild(clonedChild);
                     } else if ((tagName === 'span' || tagName === 'div') && hasClassOrId) {
                         // If it's a span or div with class/ID, clone it (without children initially)
                         const clonedChild = child.cloneNode(false);
                         // Recursively populate its content
-                        clonedChild.innerHTML = filterAndPreserveContent(clonedChild, doc); // Pass clonedChild for recursion
+                        clonedChild.innerHTML = filterAndPreserveContent(child, doc);
                         tempContainer.appendChild(clonedChild);
                     } else {
                         // If the element is not explicitly allowed (e.g., a span without class/ID, or any other disallowed tag),
@@ -1150,91 +1150,35 @@
         }
 
         /**
-         * Filters and preserves content specifically for heading tags.
-         * Preserves regular text, char entities, <em>, <a>.
-         * Preserves <div> and <span> with a class or id, unless the span's class starts with "Heading".
-         * Unwraps all other elements.
-         * @param {HTMLElement} sourceNode - The heading element whose children are to be filtered.
-         * @param {Document} doc - The document object to create new elements.
-         * @returns {string} The HTML string containing only the preserved content for the heading.
-         */
-        function filterHeadingContent(sourceNode, doc) {
-            let tempContainer = doc.createElement('div');
-
-            Array.from(sourceNode.childNodes).forEach(child => {
-                if (child.nodeType === Node.TEXT_NODE) {
-                    tempContainer.appendChild(child.cloneNode(true));
-                } else if (child.nodeType === Node.ELEMENT_NODE) {
-                    const tagName = child.tagName.toLowerCase();
-                    const hasClassOrId = child.hasAttribute('class') || child.hasAttribute('id');
-
-                    if (tagName === 'em' || tagName === 'a') {
-                        const clonedChild = child.cloneNode(false);
-                        clonedChild.innerHTML = filterHeadingContent(child, doc); // Recurse for children
-                        tempContainer.appendChild(clonedChild);
-                    } else if (tagName === 'div' && hasClassOrId) {
-                        const clonedChild = child.cloneNode(false);
-                        clonedChild.innerHTML = filterHeadingContent(child, doc); // Recurse for children
-                        tempContainer.appendChild(clonedChild);
-                    } else if (tagName === 'span' && hasClassOrId) {
-                        const classAttr = child.getAttribute('class');
-                        if (classAttr && classAttr.startsWith('Heading')) {
-                            // Delete this span (do nothing, effectively skipping it and its content)
-                            return;
-                        }
-                        const clonedChild = child.cloneNode(false);
-                        clonedChild.innerHTML = filterHeadingContent(child, doc); // Recurse for children
-                        tempContainer.appendChild(clonedChild);
-                    } else {
-                        // Unwrap other elements
-                        const unwrappedContentHtml = filterHeadingContent(child, doc);
-                        const tempUnwrapDiv = doc.createElement('div');
-                        tempUnwrapDiv.innerHTML = unwrappedContentHtml;
-                        while (tempUnwrapDiv.firstChild) {
-                            tempContainer.appendChild(tempUnwrapDiv.firstChild);
-                        }
-                    }
-                }
-            });
-            return tempContainer.innerHTML;
-        }
-
-
-        /**
          * Applies cleaning for Microsoft Office specific code.
-         * 1. Unwrap `<span>` tags with "font-weight" in their style attribute.
-         * 2. Clean content within heading tags (h1-h6) as per specific rules.
-         * 3. Removes all style attributes from heading tags (h1-h6).
-         * 4. Unwraps `<span>` tags with a 'lang' attribute ONLY if they are within an element
+         * 1. Unwraps <span> tags with "mso-bookmark" in their style attribute, preserving their contents.
+         * 2. Unwraps <span> tags whose class attribute starts with "Mso", preserving their contents.
+         * 3. Removes style attributes from <strong>, <a>, <em>, <u>, <sup>, <sub> tags.
+         * 4. Unwraps <div> tags with an 'align' attribute, preserving their contents.
+         * 5. Unwraps <span> tags with a 'lang' attribute ONLY if they are within an element
          * that has "Mso" in its class or "mso-" in its style. The content within these spans is preserved.
-         * Also unwraps `<span>` tags with 'mso-ansi-language' in their style attribute, regardless of parent.
-         * 5. Processes `<p>` tags with "MsoListParagraph" class, converting them to `<ul><li>` structures
+         * 6. Processes <p> tags with "MsoListParagraph" class, converting them to <ul><li> structures
          * and preserving specific child elements/text while removing others. This handles "MsoListParagraphCxSpFirst",
          * "MsoListParagraphCxSpMiddle", and "MsoListParagraphCxSpLast" classes, and uses "level#" from style attribute for nesting.
-         * 6. Applies cleaning for comments, footnotes, and endnotes.
-         * 7. Removes `colgroup` and `col` tags completely.
+         * 7. Removes colgroup and col tags completely.
          * 8. Removes all attributes except rowspan, colspan, class, id, headers, and scope
          * from table, thead, tbody, tfoot, tr, th, and td tags.
-         * 9. Removes the `class` attribute from `<table>` tags if the class contains "MsoTable".
-         * 10. Unwraps `<span>` tags within `<td>` elements that have a class starting with "xl".
-         * 11. Removes the `class` attribute from `<td>` tags if the class contains and starts with "xl".
-         * 12. For `<p>` tags within tables:
+         * 9. For <p> tags with "MsoToc" in the class:
+         * a. Strip all attributes from the <p> tag.
+         * b. Delete everything within them EXCEPT <a> tags with an href and all basic text content.
+         * c. Within those preserved <a> tags, remove EVERYTHING within them ONLY leaving basic text content.
+         * 10. Deletes any <img> tag with "file://" or "data:" at the start of the src
+         * and replaces it with "<div class="clearfix"><mark>IMAGE NOT IMPORTED</mark></div>".
+         * 11. Removes the `class` attribute from `<table>` tags if the class contains "MsoTable".
+         * 12. Removes the `class` attribute from `<td>` tags if the class contains and starts with "xl".
+         * 13. Processes <p> tags with a class starting with "Mso" (unless in tables or MsoList),
+         * deleting all attributes and content within, strictly EXCEPT for specified tags and their contents.
+         * 14. For <p> tags within tables:
          * a. Remove `class` attribute if it contains "Mso" or "Aligned".
          * b. Remove `style` attribute.
          * c. If `align` attribute exists, remove it and add `text-left`, `text-center`, or `text-right` to parent `<td>` or `<th>`.
-         * 13. Unwraps `<span>` tags with "mso-bookmark" in their style attribute, preserving their contents.
-         * 14. Unwraps `<span>` tags whose class attribute starts with "Mso", preserving their contents.
-         * 15. Removes style attributes from `<strong>`, `<a>`, `<em>`, `<u>`, `<sup>`, `<sub>` tags.
-         * 16. Unwraps `<div>` tags with an 'align' attribute, preserving their contents.
-         * 17. For `<p>` tags with "MsoToc" in the class:
-         * a. Strip all attributes from the `<p>` tag.
-         * b. Delete everything within them EXCEPT `<a>` tags with an href and all basic text content.
-         * c. Within those preserved `<a>` tags, remove EVERYTHING within them ONLY leaving basic text content.
-         * 18. Deletes any `<img>` tag with "file://" or "data:" at the start of the src
-         * and replaces it with "<div class="clearfix"><mark>IMAGE NOT IMPORTED</mark></div>".
-         * 19. Processes `<p>` tags with a class starting with "Mso" (unless in tables or MsoList),
-         * deleting all attributes and content within, strictly EXCEPT for specified tags and their contents.
-         * 20. Unwraps `<div>` tags with "mso-element" in their style attribute, *unless* it's "mso-element: footnote-list", preserving their contents.
+         * 15. Unwraps <div> tags with "mso-element" in their style attribute, *unless* it's "mso-element: footnote-list", preserving their contents.
+         * 16. Unwraps `<span>` tags within `<td>` elements that have a class starting with "xl".
          * @param {string} htmlString - The HTML content to clean.
          * @returns {string} The cleaned HTML content.
          */
@@ -1274,7 +1218,7 @@
                         } else if ((tagName === 'span' || tagName === 'div') && hasClassOrId) {
                             // span/div are allowed only if they have a class or ID
                             const clonedChild = child.cloneNode(false);
-                            clonedChild.innerHTML = extractAllowedContentForLists(clonedChild); // Recursive call
+                            clonedChild.innerHTML = extractAllowedContentForLists(child); // Recursive call
                             contentHtml += clonedChild.outerHTML;
                         } else {
                             // For other elements (disallowed elements, or span/div without class/ID),
@@ -1318,49 +1262,18 @@
 
 
             // ORDER OF OPERATIONS within applyCleanMsoCode:
-            // 1. Unwrap font-weight spans (NEW)
-            // 2. Heading content cleaning (NEW)
-            // 3. Heading style removal (Existing)
-            // 4. Span lang's and mso-ansi-language (Existing)
-            // 5. Lists (Existing)
-            // 6. Clean COMM/FN/EDN (Existing)
-            // 7. Table related (Existing)
-            // 8. The rest (other MSO cleaning) (Existing)
+            // 1. Span lang's (Step 5 from original applyCleanMsoCode)
+            // 2. Lists (Integrated processMsoListParagraphs logic)
+            // 3. Clean COMM/FN/EDN (Moved here)
+            // 4. Table related (Steps 8, 11, 12, 14, 16 from original applyCleanMsoCode)
+            // 5. The rest (other MSO cleaning)
 
-            // 1. Unwrap <span> tags with "font-weight" in their style attribute.
-            const fontWeightSpans = doc.querySelectorAll('span[style*="font-weight"]');
-            for (let i = fontWeightSpans.length - 1; i >= 0; i--) {
-                const span = fontWeightSpans[i];
-                if (span.parentNode) {
-                    while (span.firstChild) {
-                        span.parentNode.insertBefore(span.firstChild, span);
-                    }
-                    span.parentNode.removeChild(span);
-                }
-            }
-
-            // 2. Clean content within heading tags (h1-h6) as per specific rules.
-            const allHeadingElements = doc.querySelectorAll('h1, h2, h3, h4, h5, h6');
-            allHeadingElements.forEach(heading => {
-                const cleanedHeadingContent = filterHeadingContent(heading, doc);
-                heading.innerHTML = cleanedHeadingContent;
-            });
-
-            // 3. Remove all style attributes from heading tags (h1-h6).
-            const headingTags = doc.querySelectorAll('h1, h2, h3, h4, h5, h6');
-            headingTags.forEach(heading => {
-                if (heading.hasAttribute('style')) {
-                    heading.removeAttribute('style');
-                }
-            });
-
-            // 4. Unwraps <span> tags with a 'lang' attribute ONLY if they are within an element
-            //    that has "Mso" in its class or "mso-" in its style. Preserve content.
-            //    Also unwraps <span> tags with 'mso-ansi-language' in style, regardless of parent.
-            const spanLangElements = doc.querySelectorAll('span[lang]');
+            // 1. Unwraps <span> tags with a 'lang' attribute OR 'mso-ansi-language' in style,
+            //    ONLY if they're within an element that has "Mso" in its class or "mso-" in its style. Preserve content.
+            const spanLangOrAnsiElements = doc.querySelectorAll('span[lang], span[style*="mso-ansi-language"]');
             // Iterate in reverse to avoid issues with DOM modification affecting the NodeList
-            for (let i = spanLangElements.length - 1; i >= 0; i--) {
-                const span = spanLangElements[i];
+            for (let i = spanLangOrAnsiElements.length - 1; i >= 0; i--) {
+                const span = spanLangOrAnsiElements[i];
                 let parent = span.parentElement;
                 let shouldUnwrap = false;
                 while (parent && parent !== doc.body) {
@@ -1384,20 +1297,7 @@
                 }
             }
 
-            // Unwrap <span> tags with 'mso-ansi-language' in style, regardless of parent.
-            const spanAnsiLanguageElements = doc.querySelectorAll('span[style*="mso-ansi-language"]');
-            for (let i = spanAnsiLanguageElements.length - 1; i >= 0; i--) {
-                const span = spanAnsiLanguageElements[i];
-                if (span.parentNode) {
-                    while (span.firstChild) {
-                        span.parentNode.insertBefore(span.firstChild, span);
-                    }
-                    span.parentNode.removeChild(span);
-                }
-            }
-
-
-            // 5. Process <p> tags with "MsoListParagraph" class, converting them to <ul><li> structures
+            // 2. Process <p> tags with "MsoListParagraph" class, converting them to <ul><li> structures
             //    and preserving specific child elements/text while removing others.
             const paragraphs = Array.from(body.querySelectorAll('p'));
             const paragraphsToReplace = new Map(); // Map original P to new UL/LI structure
@@ -1599,7 +1499,7 @@
                 }
             });
 
-            // 6. Apply cleaning for comments, footnotes, and endnotes.
+            // 3. Apply cleaning for comments, footnotes, and endnotes (Moved here from applyCleanCommFnEdn)
             // 1. Unwrap <span> tags with class containing "MsoComment" (but not "MsoCommentReference")
             const spanCommentElements = doc.querySelectorAll('span[class*="MsoComment"]');
             // Iterate in reverse to avoid issues with DOM modification affecting the NodeList
@@ -1722,7 +1622,7 @@
             }
 
 
-            // 7. Table related cleaning
+            // 4. Table related cleaning
             // 7. Remove colgroup and col tags completely.
             const colgroupElements = doc.querySelectorAll('colgroup');
             for (let i = colgroupElements.length - 1; i >= 0; i--) {
@@ -1755,7 +1655,7 @@
                 });
             });
 
-            // 9. Removes the `class` attribute from `<table>` tags if the class contains "MsoTable".
+            // 11. Removes the `class` attribute from `<table>` tags if the class contains "MsoTable".
             doc.querySelectorAll('table').forEach(table => {
                 const classAttr = table.getAttribute('class');
                 if (classAttr && classAttr.includes('MsoTable')) {
@@ -1763,7 +1663,7 @@
                 }
             });
 
-            // 10. New rule: Unwrap `<span>` tags within `<td>` elements that have a class starting with "xl".
+            // 16. New rule: Unwrap `<span>` tags within `<td>` elements that have a class starting with "xl".
             // This now correctly targets spans whose parent td has the 'xl' class.
             doc.querySelectorAll('table td[class^="xl"] span').forEach(span => {
                 if (span.parentNode) {
@@ -1776,7 +1676,7 @@
                 }
             });
 
-            // 11. Removes the `class` attribute from `<td>` tags if the class contains and starts with "xl".
+            // 12. Removes the `class` attribute from `<td>` tags if the class contains and starts with "xl".
             doc.querySelectorAll('td').forEach(td => {
                 const classAttr = td.getAttribute('class');
                 if (classAttr && classAttr.startsWith('xl')) { // Checks if it starts with "xl"
@@ -1785,7 +1685,7 @@
                 }
             });
 
-            // 12. New rule: For <p> tags within tables
+            // 14. New rule: For <p> tags within tables
             doc.querySelectorAll('table p').forEach(p => {
                 const parentCell = p.closest('td, th'); // Find the closest parent td or th
 
@@ -1824,9 +1724,9 @@
                 }
             });
 
-            // 8. The rest of the cleaning operations
+            // 5. The rest of the cleaning operations
 
-            // 13. Unwraps <span> tags with "mso-bookmark" in their style attribute
+            // 1. Unwraps <span> tags with "mso-bookmark" in their style attribute
             const msoBookmarkSpans = doc.querySelectorAll('span[style*="mso-bookmark"]');
             // Iterate in reverse for safety when modifying the DOM
             for (let i = msoBookmarkSpans.length - 1; i >= 0; i--) {
@@ -1841,7 +1741,7 @@
                 }
             }
 
-            // 14. Unwraps <span> tags whose class attribute starts with "Mso"
+            // 2. Unwraps <span> tags whose class attribute starts with "Mso"
             const msoClassSpans = doc.querySelectorAll('span[class^="Mso"]');
             for (let i = msoClassSpans.length - 1; i >= 0; i--) {
                 const span = msoClassSpans[i];
@@ -1855,7 +1755,7 @@
                 }
             }
 
-            // 15. Remove style attributes from <strong>, <a>, <em>, u, sup, sub tags
+            // 3. Remove style attributes from <strong>, <a>, <em>, u, sup, sub tags
             const tagsToRemoveStyleFrom = doc.querySelectorAll('strong, a, em, u, sup, sub');
             tagsToRemoveStyleFrom.forEach(element => {
                 if (element.hasAttribute('style')) {
@@ -1863,7 +1763,7 @@
                 }
             });
 
-            // 16. Unwraps <div> tags with an 'align' attribute
+            // 4. Unwraps <div> tags with an 'align' attribute
             const divAlignElements = doc.querySelectorAll('div[align]');
             // Iterate in reverse to avoid issues with DOM modification affecting the NodeList
             for (let i = divAlignElements.length - 1; i >= 0; i--) {
@@ -1877,7 +1777,7 @@
                 }
             }
 
-            // 17. For <p> tags with "MsoToc" in the class: strip all attributes and delete everything within them
+            // 9. For <p> tags with "MsoToc" in the class: strip all attributes and delete everything within them
             //    EXCEPT <a> tags with an href and all basic text content.
             const msoTocParagraphs = doc.querySelectorAll('p[class*="MsoToc"]');
             msoTocParagraphs.forEach(p => {
@@ -1920,7 +1820,7 @@
                 }
             });
 
-            // 18. Deletes any <img> tag with "file://" or "data:" at the start of the src
+            // 10. Deletes any <img> tag with "file://" or "data:" at the start of the src
             //     and replaces it with "<div class="clearfix"><mark>IMAGE NOT IMPORTED</mark></div>".
             doc.querySelectorAll('img').forEach(img => {
                 const src = img.getAttribute('src');
@@ -1936,7 +1836,7 @@
                 }
             });
 
-            // 19. Processes <p> tags with a class starting with "Mso" (unless in tables or MsoList),
+            // 13. Processes <p> tags with a class starting with "Mso" (unless in tables or MsoList),
             //     deleting all attributes and content within, strictly EXCEPT for specified tags and their contents.
             const allParagraphs = doc.querySelectorAll('p');
             Array.from(allParagraphs).forEach(p => {
@@ -1955,7 +1855,7 @@
                 }
             });
 
-            // 20. Unwraps <div> tags with "mso-element" in their style attribute, *unless* it's "mso-element: footnote-list"
+            // 15. Unwraps <div> tags with "mso-element" in their style attribute, *unless* it's "mso-element: footnote-list"
             const msoElementDivs = doc.querySelectorAll('div[style*="mso-element"]');
             for (let i = msoElementDivs.length - 1; i >= 0; i--) {
                 const div = msoElementDivs[i];
