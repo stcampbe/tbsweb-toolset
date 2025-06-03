@@ -463,7 +463,10 @@
         }
 
         /* Styling for disabled button */
-        #runSelectedBtn:disabled {
+        #runSelectedBtn:disabled, #runSelectedTableBtn:disabled,
+        #autoEncodeBtn:disabled, #autoFormatBtn:disabled, #copyCodeBtn:disabled,
+        #exportHtmlBtn:disabled, #importHtmlBtn:disabled, #clearAllBtn:disabled,
+        #toggleEditorViewBtnCode:disabled { /* Added toggleEditorViewBtnCode here */
             background-color: #4a4a4a; /* Darker gray for disabled state */
             cursor: not-allowed;
             opacity: 0.6;
@@ -490,7 +493,6 @@
                         Go to Rich-Text
                     </button>
                     <div class="inline-flex space-x-2 ml-auto mt-2 sm:mt-0">
-                        <button id="clearAllBtn" class="px-3 py-1 text-sm bg-zinc-700 text-white rounded-md hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-opacity-50 font-bold">Clear All</button>
                         <button id="importHtmlBtn" class="px-3 py-1 text-sm bg-purple-700 text-white rounded-md hover:bg-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-opacity-50 font-bold">Import HTML</button>
                         <button id="exportHtmlBtn" class="px-3 py-1 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-bold">Export HTML</button>
                         <input type="file" id="htmlFileInput" accept=".html" style="display: none;">
@@ -532,14 +534,6 @@
                                 </div>
 
                                 <div class="toggle-switch-container">
-                                    <span class="toggle-switch-label">Clean COMM/FN/EDN</span>
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" id="toggleCleanComments" checked>
-                                        <span class="toggle-switch-slider"></span>
-                                    </label>
-                                </div>
-
-                                <div class="toggle-switch-container">
                                     <span class="toggle-switch-label">Clean MSO Code</span>
                                     <label class="toggle-switch">
                                         <input type="checkbox" id="toggleCleanMsoCode">
@@ -555,13 +549,11 @@
                                 </div>
 
                                 <div class="toggle-switch-container">
-                                    <span class="toggle-switch-label">Clean MSO Lists</span>
+                                    <span class="toggle-switch-label">Clean &lt;u&gt; | &lt;b&gt; | &lt;i&gt;</span>
                                     <label class="toggle-switch">
-                                        <input type="checkbox" id="toggleCleanMsoLists">
-                                        <span class="toggle-switch-slider"></span>
+                                        <input type="checkbox" id="toggleCleanFormattingTags"> <span class="toggle-switch-slider"></span>
                                     </label>
                                 </div>
-                                
                             </div>
                         </div>
 
@@ -629,6 +621,7 @@
                 </div>
 
                 <div class="mt-auto pt-4 flex justify-center space-x-2">
+                    <button id="clearAllBtn" class="px-4 py-2 text-sm bg-zinc-700 text-white rounded-md hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-opacity-50 font-semibold">Clear All</button>
                     <button id="autoEncodeBtn" class="px-4 py-2 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold">
                         Auto-Encode
                     </button>
@@ -653,7 +646,7 @@
         const copyCodeBtn = document.getElementById('copyCodeBtn');
         const autoFormatBtn = document.getElementById('autoFormatBtn');
         const autoEncodeBtn = document.getElementById('autoEncodeBtn'); // New button reference
-        const exportHtmlBtn = document = document.getElementById('exportHtmlBtn');
+        const exportHtmlBtn = document.getElementById('exportHtmlBtn');
         const importHtmlBtn = document.getElementById('importHtmlBtn');
         const htmlFileInput = document.getElementById('htmlFileInput');
         // Removed undoBtn and redoBtn as per user request
@@ -665,13 +658,13 @@
         const toggleUrlCleaning = document.getElementById('toggleUrlCleaning'); // Get reference to URL Cleaning toggle
         const toggleAutoSpacing = document.getElementById('toggleAutoSpacing'); // Get reference to Auto-Spacing toggle
         const toggleCleanSingleBreaks = document.getElementById('toggleCleanSingleBreaks'); // New toggle reference
-        const toggleCleanComments = document.getElementById('toggleCleanComments'); // New toggle reference for Clean Comments
+        // Removed toggleCleanComments as it's now integrated into MSO Code cleaning
         const toggleCleanMsoCode = document.getElementById('toggleCleanMsoCode'); // New toggle reference for Clean MSO Code
-        const toggleCleanMsoLists = document.getElementById('toggleCleanMsoLists'); // New toggle reference for Clean MSO Lists
+        const toggleCleanFormattingTags = document.getElementById('toggleCleanFormattingTags'); // New toggle for formatting tags
 
         // Table cleaning toggles
         const toggleResponsiveTables = document.getElementById('toggleResponsiveTables');
-        const toggleWetAlignment = document = document.getElementById('toggleWetAlignment');
+        const toggleWetAlignment = document.getElementById('toggleWetAlignment');
         const toggleApplyBasicClasses = document.getElementById('toggleApplyBasicClasses');
         const toggleRemovePTags = document.getElementById('toggleRemovePTags');
 
@@ -680,10 +673,10 @@
         const generalCleaningToggles = [
             toggleUrlCleaning,
             toggleAutoSpacing,
-            toggleCleanComments,
-            toggleCleanMsoCode, // Add the new toggle here
+            // Removed toggleCleanComments
+            toggleCleanMsoCode, 
             toggleCleanSingleBreaks,
-            toggleCleanMsoLists // Add the new toggle here
+            toggleCleanFormattingTags // Added new toggle here
         ];
 
         // Array of all table cleaning toggles for easy iteration
@@ -692,6 +685,18 @@
             toggleWetAlignment,
             toggleApplyBasicClasses,
             toggleRemovePTags
+        ];
+
+        // Array of all buttons that display temporary messages
+        const tempMessageButtons = [
+            copyCodeBtn,
+            autoFormatBtn,
+            autoEncodeBtn,
+            exportHtmlBtn,
+            importHtmlBtn,
+            clearAllBtn,
+            runSelectedBtn,
+            runSelectedTableBtn
         ];
 
 
@@ -729,8 +734,6 @@
             // Ensure content passed to rich text editor is also decoded
             return decodeHtmlEntities(content);
         }
-
-        // Removed applyMsOfficeJunkCleaning function
 
         /**
          * Applies URL cleaning to HTML content.
@@ -799,8 +802,6 @@
             return tempDiv.innerHTML;
         }
 
-        // Removed applyZeroBookmarksCleaning function
-
         /**
          * Applies auto-spacing and cleans multiple <br> tags in HTML content.
          * Replaces multiple spaces with a single space, and trims leading/trailing spaces
@@ -844,17 +845,6 @@
             cleanedHtml = cleanedHtml.replace(/<br\s+clear="all"\s*\/?>/gi, '');
 
             return cleanedHtml;
-        }
-
-        /**
-         * Helper function to check if a node is a block-level HTML element.
-         * @param {Node} node - The DOM node to check.
-         * @returns {boolean} True if the node is a block-level element, false otherwise.
-         */
-        function isBlockElement(node) {
-            if (node.nodeType !== Node.ELEMENT_NODE) return false;
-            const blockTags = ['address', 'article', 'aside', 'blockquote', 'details', 'dialog', 'dd', 'div', 'dl', 'dt', 'fieldset', 'figcaption', 'figure', 'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'hgroup', 'hr', 'li', 'main', 'nav', 'ol', 'p', 'pre', 'section', 'table', 'ul'];
-            return blockTags.includes(node.tagName.toLowerCase());
         }
 
         /**
@@ -1141,23 +1131,332 @@
         }
 
         /**
-         * Applies cleaning for comments, footnotes, and endnotes.
-         * 1. Unwraps <span> tags with a class containing "MsoComment" (but not "MsoCommentReference"), preserving their contents.
-         * 2. Removes <a> tags where the href contains "#_edn" AND the name attribute also contains "_edn".
-         * 3. Completely removes <div> tags with "mso-element: comment" or "mso-element: endnote-list" styles, including their contents.
-         * 4. Completely removes <div> tags with "mso-element: comment-list" style, including their contents.
-         * 5. Completely removes <span> tags with class "MsoCommentReference", including their contents.
-         * 6. Unwraps any other tag with a style attribute containing "mso-comment", preserving their contents.
-         * 7. For <a> tags with href starting with "#_ftn", delete the title and name attributes and wrap the entire a tag with <sup>.
-         * 8. Removes everything within "<div style="mso-element: footnote-list">" including the <div> itself,
-         * leaving only the regular text, char entities and specified tags, and replacing the removed div with an <aside>.
+         * Applies cleaning for Microsoft Office specific code.
+         * 1. Unwraps <span> tags with "mso-bookmark" in their style attribute, preserving their contents.
+         * 2. Unwraps <span> tags whose class attribute starts with "Mso", preserving their contents.
+         * 3. Removes style attributes from <strong>, <a>, <em>, <u>, <sup>, <sub> tags.
+         * 4. Unwraps <div> tags with an 'align' attribute, preserving their contents.
+         * 5. Unwraps <span> tags with a 'lang' attribute ONLY if they are within an element
+         * that has "Mso" in its class or "mso-" in its style. The content within these spans is preserved.
+         * 6. Processes <p> tags with "MsoListParagraph" class, converting them to <ul><li> structures
+         * and preserving specific child elements/text while removing others. This handles "MsoListParagraphCxSpFirst",
+         * "MsoListParagraphCxSpMiddle", and "MsoListParagraphCxSpLast" classes, and uses "level#" from style attribute for nesting.
+         * 7. Removes colgroup and col tags completely.
+         * 8. Removes all attributes except rowspan, colspan, class, id, headers, and scope
+         * from table, thead, tbody, tfoot, tr, th, and td tags.
+         * 9. For <p> tags with "MsoToc" in the class:
+         * a. Strip all attributes from the <p> tag.
+         * b. Delete everything within them EXCEPT <a> tags with an href and all basic text content.
+         * c. Within those preserved <a> tags, remove EVERYTHING within them ONLY leaving basic text content.
+         * 10. Deletes any <img> tag with "file://" or "data:" at the start of the src
+         * and replaces it with "<div class="clearfix"><mark>IMAGE NOT IMPORTED</mark></div>".
+         * 11. Removes the `class` attribute from `<table>` tags if the class contains "MsoTable".
+         * 12. Removes the `class` attribute from `<td>` tags if the class contains and starts with "xl".
+         * 13. Processes <p> tags with a class starting with "Mso" (unless in tables or MsoList),
+         * deleting all attributes and content within, strictly EXCEPT for specified tags and their contents.
+         * 14. For <p> tags within tables:
+         * a. Remove `class` attribute if it contains "Mso" or "Aligned".
+         * b. Remove `style` attribute.
+         * c. If `align` attribute exists, remove it and add `text-left`, `text-center`, or `text-right` to parent `<td>` or `<th>`.
+         * 15. Unwraps <div> tags with "mso-element" in their style attribute, *unless* it's "mso-element: footnote-list", preserving their contents.
          * @param {string} htmlString - The HTML content to clean.
          * @returns {string} The cleaned HTML content.
          */
-        function applyCleanCommFnEdn(htmlString) {
+        function applyCleanMsoCode(htmlString) {
             const parser = new DOMParser();
             const doc = parser.parseFromString(htmlString, 'text/html');
+            const body = doc.body;
 
+            // Helper to get the level from style attribute for lists
+            function getLevel(styleAttr) {
+                if (!styleAttr) return 1;
+                const match = styleAttr.match(/level(\d+)/);
+                return match ? parseInt(match[1], 10) : 1; // Default to level 1 if no level found
+            }
+
+            // Helper to extract allowed content for lists (reusing existing filterAndPreserveContent logic)
+            function extractAllowedContentForLists(sourceNode) {
+                let contentHtml = '';
+                const childrenToProcess = Array.from(sourceNode.childNodes);
+
+                childrenToProcess.forEach(child => {
+                    // The mso-list:Ignore span should be removed BEFORE this function is called if its content is to be used.
+                    // So, this check is now primarily for any *other* mso-list spans that should be ignored.
+                    if (child.nodeType === Node.ELEMENT_NODE && child.tagName.toLowerCase() === 'span' && child.hasAttribute('style') && child.getAttribute('style').includes('mso-list: Ignore')) {
+                        return; // Skip this node and its subtree
+                    }
+
+                    if (child.nodeType === Node.TEXT_NODE) {
+                        contentHtml += child.nodeValue;
+                    } else if (child.nodeType === Node.ELEMENT_NODE) {
+                        const tagName = child.tagName.toLowerCase();
+                        const hasClassOrId = child.hasAttribute('class') || child.hasAttribute('id');
+
+                        if (tagName === 'br' || tagName === 'strong' || tagName === 'a' || tagName === 'em' || tagName === 'u' || tagName === 'sup' || tagName === 'sub' || tagName === 'section') {
+                            // These tags are always allowed, clone them and get their outerHTML
+                            contentHtml += child.outerHTML;
+                        } else if ((tagName === 'span' || tagName === 'div') && hasClassOrId) {
+                            // span/div are allowed only if they have a class or ID
+                            contentHtml += child.outerHTML;
+                        } else {
+                            // For other elements (disallowed elements, or span/div without class/ID),
+                            // recursively process their children and concatenate the result.
+                            contentHtml += extractAllowedContentForLists(child); // Recursive call
+                        }
+                    }
+                });
+                return contentHtml;
+            }
+
+            /**
+             * Determines the type of list based on the content of the mso-list:Ignore span.
+             * @param {HTMLElement} pElement - The <p> element representing a list item.
+             * @returns {string} 'ordered-numeric', 'ordered-alpha', 'complex-bullet', or 'unordered'.
+             */
+            function detectListType(pElement) {
+                const msoListIgnoreSpan = pElement.querySelector('span[style*="mso-list: Ignore"]');
+                if (msoListIgnoreSpan) {
+                    const bulletText = msoListIgnoreSpan.textContent.trim();
+                    // Regex for multi-level numeric bullets (e.g., "1.1.", "1.1.1.", "1.1)")
+                    if (/^\d+(\.\d+)+[\.\)]*$/.test(bulletText)) {
+                        return 'complex-bullet';
+                    }
+                    // Regex for multi-level alpha-numeric bullets (e.g., "A.1.", "B.1.1.", "a.1)")
+                    if (/^[A-Za-z](\.\d+)+[\.\)]*$/.test(bulletText)) {
+                        return 'complex-bullet';
+                    }
+                    // Regex for single-level numeric bullets (e.g., "1.", "1)")
+                    if (/^\d+[\.\)]$/.test(bulletText)) {
+                        return 'ordered-numeric';
+                    }
+                    // Regex for single-level lowercase alphabetic bullets (e.g., "a.", "a)")
+                    if (/^[a-z][\.\)]$/.test(bulletText)) {
+                        return 'ordered-alpha';
+                    }
+                }
+                // Default to unordered if no specific ordered bullet or complex bullet is detected
+                return 'unordered';
+            }
+
+
+            // ORDER OF OPERATIONS within applyCleanMsoCode:
+            // 1. Span lang's (Step 5 from original applyCleanMsoCode)
+            // 2. Lists (Integrated processMsoListParagraphs logic)
+            // 3. Clean COMM/FN/EDN (Moved here)
+            // 4. Table related (Steps 8, 11, 12, 14 from original applyCleanMsoCode)
+            // 5. The rest (other MSO cleaning)
+
+            // 1. Unwraps <span> tags with a 'lang' attribute ONLY if they're within an element
+            //    that has "Mso" in its class or "mso-" in its style. Preserve content.
+            const spanLangElements = doc.querySelectorAll('span[lang]');
+            // Iterate in reverse to avoid issues with DOM modification affecting the NodeList
+            for (let i = spanLangElements.length - 1; i >= 0; i--) {
+                const span = spanLangElements[i];
+                let parent = span.parentElement;
+                let shouldUnwrap = false;
+                while (parent && parent !== doc.body) {
+                    const classAttr = parent.getAttribute('class');
+                    const styleAttr = parent.getAttribute('style');
+
+                    if ((classAttr && classAttr.includes('Mso')) || (styleAttr && styleAttr.includes('mso-'))) {
+                        shouldUnwrap = true;
+                        break;
+                    }
+                    parent = parent.parentElement;
+                }
+
+                if (shouldUnwrap && span.parentNode) {
+                    // Move all child nodes of the span directly before the span itself
+                    while (span.firstChild) {
+                        span.parentNode.insertBefore(span.firstChild, span);
+                    }
+                    // Remove the empty span tag
+                    span.parentNode.removeChild(span);
+                }
+            }
+
+            // 2. Process <p> tags with "MsoListParagraph" class, converting them to <ul><li> structures
+            //    and preserving specific child elements/text while removing others.
+            const paragraphs = Array.from(body.querySelectorAll('p'));
+            const paragraphsToReplace = new Map(); // Map original P to new UL/LI structure
+            const paragraphsToRemove = new Set(); // Set of P elements to remove
+
+            for (let i = 0; i < paragraphs.length; i++) {
+                const p = paragraphs[i];
+                const classList = Array.from(p.classList);
+                const isMsoListParagraph = classList.some(cls =>
+                    cls === 'MsoListParagraphCxSpFirst' ||
+                    cls === 'MsoListParagraphCxSpMiddle' ||
+                    cls === 'MsoListParagraphCxSpLast' ||
+                    cls === 'MsoListParagraph'
+                );
+
+                // If this paragraph is already marked for removal (part of a previous sequence), skip it
+                if (paragraphsToRemove.has(p)) {
+                    continue;
+                }
+
+                if (isMsoListParagraph) {
+                    const msoListIgnoreSpan = p.querySelector('span[style*="mso-list: Ignore"]');
+                    let bulletTextToPrepend = '';
+                    let listType = 'unordered'; // Default
+
+                    if (msoListIgnoreSpan) {
+                        bulletTextToPrepend = msoListIgnoreSpan.textContent.trim();
+                        listType = detectListType(p); // Use the p element to detect type
+
+                        // Temporarily remove the mso-list:Ignore span for content extraction
+                        // This ensures extractAllowedContentForLists doesn't filter it out if we need its text.
+                        msoListIgnoreSpan.parentNode.removeChild(msoListIgnoreSpan);
+                    }
+
+                    let newRootListElement; // This will actually be the root of the current list sequence (ol or ul)
+
+                    if (listType === 'ordered-numeric') {
+                        newRootListElement = doc.createElement('ol');
+                    } else if (listType === 'ordered-alpha') {
+                        newRootListElement = doc.createElement('ol');
+                        newRootListElement.classList.add('lst-lwr-alph');
+                    } else { // 'unordered' or 'complex-bullet'
+                        newRootListElement = doc.createElement('ul');
+                    }
+
+                    let currentListStack = [newRootListElement]; // Stack of ULs/OLs for nesting
+                    let currentParentList = newRootListElement;
+
+                    // Process the current paragraph (first in sequence)
+                    const currentLevel = getLevel(p.getAttribute('style') || '');
+                    const li = doc.createElement('li');
+                    let listItemContent = extractAllowedContentForLists(p); // Extract content AFTER removing mso-list:Ignore span
+
+                    if (listType === 'complex-bullet') {
+                        // Prepend the bullet text for complex bullets
+                        li.innerHTML = bulletTextToPrepend + ' ' + listItemContent;
+                    } else {
+                        li.innerHTML = listItemContent;
+                    }
+                    currentParentList.appendChild(li);
+                    paragraphsToReplace.set(p, newRootListElement); // Mark the first P for replacement
+
+                    // Look for contiguous list paragraphs
+                    let nextSibling = p.nextElementSibling;
+                    let currentSequenceIndex = i + 1;
+
+                    while (nextSibling && nextSibling.nodeType === Node.ELEMENT_NODE && nextSibling.tagName.toLowerCase() === 'p') {
+                        const nextP = nextSibling;
+                        const nextPClassList = Array.from(nextP.classList);
+                        const isNextPListParagraph = nextPClassList.some(cls =>
+                            cls === 'MsoListParagraphCxSpFirst' ||
+                            cls === 'MsoListParagraphCxSpMiddle' ||
+                            cls === 'MsoListParagraphCxSpLast' ||
+                            cls === 'MsoListParagraph'
+                        );
+
+                        if (isNextPListParagraph) {
+                            const nextLevel = getLevel(nextP.getAttribute('style') || '');
+                            let currentDepth = currentListStack.length;
+
+                            const nextMsoListIgnoreSpan = nextP.querySelector('span[style*="mso-list: Ignore"]');
+                            let nextBulletTextToPrepend = '';
+                            let nextListType = 'unordered';
+
+                            if (nextMsoListIgnoreSpan) {
+                                nextBulletTextToPrepend = nextMsoListIgnoreSpan.textContent.trim();
+                                nextListType = detectListType(nextP);
+                                nextMsoListIgnoreSpan.parentNode.removeChild(nextMsoListIgnoreSpan);
+                            }
+
+                            if (nextLevel > currentDepth) {
+                                // Deeper nesting: create new list and push to stack
+                                let nestedListElement;
+                                
+                                if (nextListType === 'ordered-numeric') {
+                                    nestedListElement = doc.createElement('ol');
+                                } else if (nextListType === 'ordered-alpha') {
+                                    nestedListElement = doc.createElement('ol');
+                                    nestedListElement.classList.add('lst-lwr-alph');
+                                } else { // 'unordered' or 'complex-bullet'
+                                    nestedListElement = doc.createElement('ul');
+                                }
+
+                                for (let k = currentDepth; k > nextLevel; k--) {
+                                    // Pop from stack if current level is shallower than expected
+                                    currentListStack.pop();
+                                    currentParentList = currentListStack[currentListStack.length - 1];
+                                }
+                                // If nextLevel is greater than currentDepth, we need to create nested lists.
+                                // The loop above handles popping. Now, ensure we have the correct parent for the new level.
+                                // If nextLevel > currentDepth, we need to create new lists and push them.
+                                // This loop ensures we create enough nested lists to reach the target level.
+                                while (currentListStack.length < nextLevel) {
+                                     let targetLi = currentParentList.lastElementChild;
+                                     if (!targetLi || targetLi.tagName.toLowerCase() !== 'li') {
+                                         targetLi = doc.createElement('li');
+                                         currentParentList.appendChild(targetLi);
+                                     }
+                                     let newNestedList;
+                                     if (currentListStack.length + 1 === nextLevel) { // Only apply type to the final nested list
+                                         if (nextListType === 'ordered-numeric') {
+                                             newNestedList = doc.createElement('ol');
+                                         } else if (nextListType === 'ordered-alpha') {
+                                             newNestedList = doc.createElement('ol');
+                                             newNestedList.classList.add('lst-lwr-alph');
+                                         } else {
+                                             newNestedList = doc.createElement('ul');
+                                         }
+                                     } else { // Intermediate levels are always unordered to just provide structure
+                                         newNestedList = doc.createElement('ul');
+                                     }
+                                     targetLi.appendChild(newNestedList);
+                                     currentListStack.push(newNestedList);
+                                     currentParentList = newNestedList;
+                                 }
+
+                            } else if (nextLevel < currentDepth) {
+                                // Shallower nesting: pop from stack
+                                for (let k = currentDepth; k > nextLevel; k--) {
+                                    currentListStack.pop();
+                                    currentParentList = currentListStack[currentListStack.length - 1];
+                                }
+                            }
+                            // At this point, currentParentList is the correct list element for the currentLevel
+
+                            const nextLi = doc.createElement('li');
+                            let nextListItemContent = extractAllowedContentForLists(nextP);
+                            if (nextListType === 'complex-bullet') {
+                                nextLi.innerHTML = nextBulletTextToPrepend + ' ' + nextListItemContent;
+                            } else {
+                                nextLi.innerHTML = nextListItemContent;
+                            }
+                            currentParentList.appendChild(nextLi);
+                            paragraphsToRemove.add(nextP); // Mark for removal
+
+                            nextSibling = nextP.nextElementSibling;
+                            currentSequenceIndex++; // Advance index for the static `paragraphs` array
+                        } else {
+                            // Not a contiguous list paragraph, end the sequence
+                            break;
+                        }
+                    }
+                    // Update the main loop index to skip paragraphs already processed in this sequence
+                    i = currentSequenceIndex - 1; 
+                }
+            }
+
+            // Perform list replacements and removals in a separate pass
+            paragraphs.forEach(p => {
+                if (paragraphsToReplace.has(p)) {
+                    if (p.parentNode) {
+                        p.parentNode.replaceChild(paragraphsToReplace.get(p), p);
+                    }
+                } else if (paragraphsToRemove.has(p)) {
+                    if (p.parentNode) {
+                        p.parentNode.removeChild(p);
+                    }
+                }
+            });
+
+            // 3. Apply cleaning for comments, footnotes, and endnotes (Moved here from applyCleanCommFnEdn)
             // 1. Unwrap <span> tags with class containing "MsoComment" (but not "MsoCommentReference")
             const spanCommentElements = doc.querySelectorAll('span[class*="MsoComment"]');
             // Iterate in reverse to avoid issues with DOM modification affecting the NodeList
@@ -1280,311 +1579,99 @@
                 }
             }
 
-            return doc.body.innerHTML;
-        }
 
-        /**
-         * Processes <p> tags with "MsoListParagraph" class, converting them to <ul><li> structures
-         * and preserving specific child elements/text while removing others.
-         * This function now handles "MsoListParagraphCxSpFirst", "MsoListParagraphCxSpMiddle", and "MsoListParagraphCxSpLast"
-         * classes, and uses "level#" from style attribute for nesting.
-         * @param {string} htmlString - The HTML content to modify.
-         * @returns {string} The modified HTML content.
-         */
-        function processMsoListParagraphs(htmlString) {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(htmlString, 'text/html');
-            const body = doc.body;
-
-            // Helper to get the level from style attribute
-            function getLevel(styleAttr) {
-                if (!styleAttr) return 1;
-                const match = styleAttr.match(/level(\d+)/);
-                return match ? parseInt(match[1], 10) : 1; // Default to level 1 if no level found
+            // 4. Table related cleaning
+            // 7. Remove colgroup and col tags completely.
+            const colgroupElements = doc.querySelectorAll('colgroup');
+            for (let i = colgroupElements.length - 1; i >= 0; i--) {
+                if (colgroupElements[i].parentNode) {
+                    colgroupElements[i].parentNode.removeChild(colgroupElements[i]);
+                }
             }
 
-            // Helper to extract allowed content (reusing existing logic)
-            // This function now assumes the mso-list:Ignore span has already been removed if its content is needed.
-            function extractAllowedContent(sourceNode) {
-                let contentHtml = '';
-                const childrenToProcess = Array.from(sourceNode.childNodes);
+            const colElements = doc.querySelectorAll('col');
+            for (let i = colElements.length - 1; i >= 0; i--) {
+                if (colElements[i].parentNode) {
+                    colElements[i].parentNode.removeChild(colElements[i]);
+                }
+            }
 
-                childrenToProcess.forEach(child => {
-                    // The mso-list:Ignore span should be removed BEFORE this function is called if its content is to be used.
-                    // So, this check is now primarily for any *other* mso-list spans that should be ignored.
-                    if (child.nodeType === Node.ELEMENT_NODE && child.tagName.toLowerCase() === 'span' && child.hasAttribute('style') && child.getAttribute('style').includes('mso-list: Ignore')) {
-                        return; // Skip this node and its subtree
+            // 8. Removes all attributes except rowspan, colspan, class, id, headers, and scope
+            //    from table, thead, tbody, tfoot, tr, th, and td tags.
+            const tableRelatedTags = doc.querySelectorAll('table, thead, tbody, tfoot, tr, th, td');
+            tableRelatedTags.forEach(element => {
+                const attributesToKeep = ['rowspan', 'colspan', 'class', 'id', 'headers', 'scope'];
+                const attributesToRemove = [];
+                for (let j = 0; j < element.attributes.length; j++) {
+                    const attr = element.attributes[j];
+                    if (!attributesToKeep.includes(attr.name.toLowerCase())) {
+                        attributesToRemove.push(attr.name);
                     }
-
-                    if (child.nodeType === Node.TEXT_NODE) {
-                        contentHtml += child.nodeValue;
-                    } else if (child.nodeType === Node.ELEMENT_NODE) {
-                        const tagName = child.tagName.toLowerCase();
-                        const hasClassOrId = child.hasAttribute('class') || child.hasAttribute('id');
-
-                        if (tagName === 'br' || tagName === 'strong' || tagName === 'a' || tagName === 'em' || tagName === 'u' || tagName === 'sup' || tagName === 'sub' || tagName === 'section') {
-                            // These tags are always allowed, clone them and get their outerHTML
-                            contentHtml += child.outerHTML;
-                        } else if ((tagName === 'span' || tagName === 'div') && hasClassOrId) {
-                            // span/div are allowed only if they have a class or ID
-                            contentHtml += child.outerHTML;
-                        } else {
-                            // For other elements (disallowed elements, or span/div without class/ID),
-                            // recursively process their children and concatenate the result.
-                            contentHtml += extractAllowedContent(child); // Recursive call
-                        }
-                    }
+                }
+                attributesToRemove.forEach(attrName => {
+                    element.removeAttribute(attrName);
                 });
-                return contentHtml;
-            }
+            });
 
-            /**
-             * Determines the type of list based on the content of the mso-list:Ignore span.
-             * @param {HTMLElement} pElement - The <p> element representing a list item.
-             * @returns {string} 'ordered-numeric', 'ordered-alpha', 'complex-bullet', or 'unordered'.
-             */
-            function detectListType(pElement) {
-                const msoListIgnoreSpan = pElement.querySelector('span[style*="mso-list: Ignore"]');
-                if (msoListIgnoreSpan) {
-                    const bulletText = msoListIgnoreSpan.textContent.trim();
-                    // Regex for multi-level numeric bullets (e.g., "1.1.", "1.1.1.", "1.1)")
-                    if (/^\d+(\.\d+)+[\.\)]*$/.test(bulletText)) {
-                        return 'complex-bullet';
-                    }
-                    // Regex for multi-level alpha-numeric bullets (e.g., "A.1.", "B.1.1.", "a.1)")
-                    if (/^[A-Za-z](\.\d+)+[\.\)]*$/.test(bulletText)) {
-                        return 'complex-bullet';
-                    }
-                    // Regex for single-level numeric bullets (e.g., "1.", "1)")
-                    if (/^\d+[\.\)]$/.test(bulletText)) {
-                        return 'ordered-numeric';
-                    }
-                    // Regex for single-level lowercase alphabetic bullets (e.g., "a.", "a)")
-                    if (/^[a-z][\.\)]$/.test(bulletText)) {
-                        return 'ordered-alpha';
-                    }
+            // 11. Removes the `class` attribute from `<table>` tags if the class contains "MsoTable".
+            doc.querySelectorAll('table').forEach(table => {
+                const classAttr = table.getAttribute('class');
+                if (classAttr && classAttr.includes('MsoTable')) {
+                    table.removeAttribute('class');
                 }
-                // Default to unordered if no specific ordered bullet or complex bullet is detected
-                return 'unordered';
-            }
+            });
 
-
-            const paragraphs = Array.from(body.querySelectorAll('p'));
-            const paragraphsToReplace = new Map(); // Map original P to new UL/LI structure
-            const paragraphsToRemove = new Set(); // Set of P elements to remove
-
-            for (let i = 0; i < paragraphs.length; i++) {
-                const p = paragraphs[i];
-                const classList = Array.from(p.classList);
-                const isMsoListParagraph = classList.some(cls =>
-                    cls === 'MsoListParagraphCxSpFirst' ||
-                    cls === 'MsoListParagraphCxSpMiddle' ||
-                    cls === 'MsoListParagraphCxSpLast' ||
-                    cls === 'MsoListParagraph'
-                );
-
-                // If this paragraph is already marked for removal (part of a previous sequence), skip it
-                if (paragraphsToRemove.has(p)) {
-                    continue;
+            // 12. Removes the `class` attribute from `<td>` tags if the class contains and starts with "xl".
+            doc.querySelectorAll('td').forEach(td => {
+                const classAttr = td.getAttribute('class');
+                if (classAttr && classAttr.startsWith('xl')) { // Checks if it starts with "xl"
+                    // No need to check if it contains "xl" because startsWith implies contains.
+                    td.removeAttribute('class');
                 }
+            });
 
-                if (isMsoListParagraph) {
-                    const msoListIgnoreSpan = p.querySelector('span[style*="mso-list: Ignore"]');
-                    let bulletTextToPrepend = '';
-                    let listType = 'unordered'; // Default
+            // 14. New rule: For <p> tags within tables
+            doc.querySelectorAll('table p').forEach(p => {
+                const parentCell = p.closest('td, th'); // Find the closest parent td or th
 
-                    if (msoListIgnoreSpan) {
-                        bulletTextToPrepend = msoListIgnoreSpan.textContent.trim();
-                        listType = detectListType(p); // Use the p element to detect type
-
-                        // Temporarily remove the mso-list:Ignore span for content extraction
-                        // This ensures extractAllowedContent doesn't filter it out if we need its text.
-                        msoListIgnoreSpan.parentNode.removeChild(msoListIgnoreSpan);
+                if (parentCell) {
+                    // a. Remove `class` attribute if it contains "Mso" or "Aligned".
+                    const classAttr = p.getAttribute('class');
+                    if (classAttr && (classAttr.includes('Mso') || classAttr.includes('Aligned'))) {
+                        p.removeAttribute('class');
                     }
 
-                    let newRootListElement; // This will actually be the root of the current list sequence (ol or ul)
-
-                    if (listType === 'ordered-numeric') {
-                        newRootListElement = doc.createElement('ol');
-                    } else if (listType === 'ordered-alpha') {
-                        newRootListElement = doc.createElement('ol');
-                        newRootListElement.classList.add('lst-lwr-alph');
-                    } else { // 'unordered' or 'complex-bullet'
-                        newRootListElement = doc.createElement('ul');
+                    // b. Remove `style` attribute.
+                    if (p.hasAttribute('style')) {
+                        p.removeAttribute('style');
                     }
 
-                    let currentListStack = [newRootListElement]; // Stack of ULs/OLs for nesting
-                    let currentParentList = newRootListElement;
-
-                    // Process the current paragraph (first in sequence)
-                    const currentLevel = getLevel(p.getAttribute('style') || '');
-                    const li = doc.createElement('li');
-                    let listItemContent = extractAllowedContent(p); // Extract content AFTER removing mso-list:Ignore span
-
-                    if (listType === 'complex-bullet') {
-                        // Prepend the bullet text for complex bullets
-                        li.innerHTML = bulletTextToPrepend + ' ' + listItemContent;
-                    } else {
-                        li.innerHTML = listItemContent;
-                    }
-                    currentParentList.appendChild(li);
-                    paragraphsToReplace.set(p, newRootListElement); // Mark the first P for replacement
-
-                    // Look for contiguous list paragraphs
-                    let nextSibling = p.nextElementSibling;
-                    let currentSequenceIndex = i + 1;
-
-                    while (nextSibling && nextSibling.nodeType === Node.ELEMENT_NODE && nextSibling.tagName.toLowerCase() === 'p') {
-                        const nextP = nextSibling;
-                        const nextPClassList = Array.from(nextP.classList);
-                        const isNextPListParagraph = nextPClassList.some(cls =>
-                            cls === 'MsoListParagraphCxSpFirst' ||
-                            cls === 'MsoListParagraphCxSpMiddle' ||
-                            cls === 'MsoListParagraphCxSpLast' ||
-                            cls === 'MsoListParagraph'
-                        );
-
-                        if (isNextPListParagraph) {
-                            const nextLevel = getLevel(nextP.getAttribute('style') || '');
-                            let currentDepth = currentListStack.length;
-
-                            const nextMsoListIgnoreSpan = nextP.querySelector('span[style*="mso-list: Ignore"]');
-                            let nextBulletTextToPrepend = '';
-                            let nextListType = 'unordered';
-
-                            if (nextMsoListIgnoreSpan) {
-                                nextBulletTextToPrepend = nextMsoListIgnoreSpan.textContent.trim();
-                                nextListType = detectListType(nextP);
-                                nextMsoListIgnoreSpan.parentNode.removeChild(nextMsoListIgnoreSpan);
-                            }
-
-                            if (nextLevel > currentDepth) {
-                                // Deeper nesting: create new list and push to stack
-                                let nestedListElement;
-                                
-                                if (nextListType === 'ordered-numeric') {
-                                    nestedListElement = doc.createElement('ol');
-                                } else if (nextListType === 'ordered-alpha') {
-                                    nestedListElement = doc.createElement('ol');
-                                    nestedListElement.classList.add('lst-lwr-alph');
-                                } else { // 'unordered' or 'complex-bullet'
-                                    nestedListElement = doc.createElement('ul');
-                                }
-
-                                for (let k = currentDepth; k > nextLevel; k--) {
-                                    // Pop from stack if current level is shallower than expected
-                                    currentListStack.pop();
-                                    currentParentList = currentListStack[currentListStack.length - 1];
-                                }
-                                // If nextLevel is greater than currentDepth, we need to create nested lists.
-                                // The loop above handles popping. Now, ensure we have the correct parent for the new level.
-                                // If nextLevel > currentDepth, we need to create new lists and push them.
-                                // This loop ensures we create enough nested lists to reach the target level.
-                                while (currentListStack.length < nextLevel) {
-                                     let targetLi = currentParentList.lastElementChild;
-                                     if (!targetLi || targetLi.tagName.toLowerCase() !== 'li') {
-                                         targetLi = doc.createElement('li');
-                                         currentParentList.appendChild(targetLi);
-                                     }
-                                     let newNestedList;
-                                     if (currentListStack.length + 1 === nextLevel) { // Only apply type to the final nested list
-                                         if (nextListType === 'ordered-numeric') {
-                                             newNestedList = doc.createElement('ol');
-                                         } else if (nextListType === 'ordered-alpha') {
-                                             newNestedList = doc.createElement('ol');
-                                             newNestedList.classList.add('lst-lwr-alph');
-                                         } else {
-                                             newNestedList = doc.createElement('ul');
-                                         }
-                                     } else { // Intermediate levels are always unordered to just provide structure
-                                         newNestedList = doc.createElement('ul');
-                                     }
-                                     targetLi.appendChild(newNestedList);
-                                     currentListStack.push(newNestedList);
-                                     currentParentList = newNestedList;
-                                 }
-
-                            } else if (nextLevel < currentDepth) {
-                                // Shallower nesting: pop from stack
-                                for (let k = currentDepth; k > nextLevel; k--) {
-                                    currentListStack.pop();
-                                    currentParentList = currentListStack[currentListStack.length - 1];
-                                }
-                            }
-                            // At this point, currentParentList is the correct list element for the currentLevel
-
-                            const nextLi = doc.createElement('li');
-                            let nextListItemContent = extractAllowedContent(nextP);
-                            if (nextListType === 'complex-bullet') {
-                                nextLi.innerHTML = nextBulletTextToPrepend + ' ' + nextListItemContent;
-                            } else {
-                                nextLi.innerHTML = nextListItemContent;
-                            }
-                            currentParentList.appendChild(nextLi);
-                            paragraphsToRemove.add(nextP); // Mark for removal
-
-                            nextSibling = nextP.nextElementSibling;
-                            currentSequenceIndex++; // Advance index for the static `paragraphs` array
-                        } else {
-                            // Not a contiguous list paragraph, end the sequence
-                            break;
+                    // c. If `align` attribute exists, remove it and add `text-left`, `text-center`, or `text-right` to parent `<td>` or `<th>`.
+                    const alignAttr = p.getAttribute('align');
+                    if (alignAttr) {
+                        p.removeAttribute('align');
+                        let tailwindAlignClass = '';
+                        switch (alignAttr.toLowerCase()) {
+                            case 'left':
+                                tailwindAlignClass = 'text-left';
+                                break;
+                            case 'center':
+                                tailwindAlignClass = 'text-center';
+                                break;
+                            case 'right':
+                                tailwindAlignClass = 'text-right';
+                                break;
                         }
-                    }
-                    // Update the main loop index to skip paragraphs already processed in this sequence
-                    i = currentSequenceIndex - 1; 
-                }
-            }
-
-            // Perform replacements and removals in a separate pass
-            paragraphs.forEach(p => {
-                if (paragraphsToReplace.has(p)) {
-                    if (p.parentNode) {
-                        p.parentNode.replaceChild(paragraphsToReplace.get(p), p);
-                    }
-                } else if (paragraphsToRemove.has(p)) {
-                    if (p.parentNode) {
-                        p.parentNode.removeChild(p);
+                        if (tailwindAlignClass) {
+                            parentCell.classList.add(tailwindAlignClass);
+                        }
                     }
                 }
             });
 
-            return body.innerHTML;
-        }
+            // 5. The rest of the cleaning operations
 
-        /**
-         * Applies cleaning for Microsoft Office specific code.
-         * 1. Unwraps <span> tags with "mso-bookmark" in their style attribute, preserving their contents.
-         * 2. Unwraps <span> tags whose class attribute starts with "Mso", preserving their contents.
-         * 3. Removes style attributes from <strong>, <a>, <em>, <u>, <sup>, <sub> tags.
-         * 4. Unwraps <div> tags with an 'align' attribute, preserving their contents.
-         * 5. Unwraps <span> tags with a 'lang' attribute ONLY if they are within an element
-         * that has "Mso" in its class or "mso-" in its style. The content within these spans is preserved.
-         * 6. Unwraps <div> tags with "mso-element" in their style attribute, *unless* it's "mso-element: footnote-list", preserving their contents.
-         * 7. Removes colgroup and col tags completely.
-         * 8. Removes all attributes except rowspan, colspan, class, id, headers, and scope
-         * from table, thead, tbody, tfoot, tr, th, and td tags.
-         * 9. For <p> tags with "MsoToc" in the class:
-         * a. Strip all attributes from the <p> tag.
-         * b. Delete everything within them EXCEPT <a> tags with an href and all basic text content.
-         * c. Within those preserved <a> tags, remove EVERYTHING within them ONLY leaving basic text content.
-         * 10. Deletes any <img> tag with "file://" or "data:" at the start of the src
-         * and replaces it with "<div class="clearfix"><mark>IMAGE NOT IMPORTED</mark></div>".
-         * 11. Removes the `class` attribute from `<table>` tags if the class contains "MsoTable".
-         * 12. Removes the `class` attribute from `<td>` tags if the class contains and starts with "xl".
-         * 13. Processes <p> tags with a class starting with "Mso" (unless in tables or MsoList),
-         * deleting all attributes and content within, strictly EXCEPT for specified tags and their contents.
-         * 14. For <p> tags within tables:
-         * a. Remove `class` attribute if it contains "Mso" or "Aligned".
-         * b. Remove `style` attribute.
-         * c. If `align` attribute exists, remove it and add `text-left`, `text-center`, or `text-right` to parent `<td>` or `<th>`.
-         * @param {string} htmlString - The HTML content to clean.
-         * @returns {string} The cleaned HTML content.
-         */
-        function applyCleanMsoCode(htmlString) {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(htmlString, 'text/html');
-
-            // 1. Unwrap <span> tags with "mso-bookmark" in their style attribute
+            // 1. Unwraps <span> tags with "mso-bookmark" in their style attribute
             const msoBookmarkSpans = doc.querySelectorAll('span[style*="mso-bookmark"]');
             // Iterate in reverse for safety when modifying the DOM
             for (let i = msoBookmarkSpans.length - 1; i >= 0; i--) {
@@ -1634,88 +1721,6 @@
                     div.parentNode.removeChild(div);
                 }
             }
-
-            // 5. Unwraps <span> tags with a 'lang' attribute ONLY if they're within an element
-            //    that has "Mso" in its class or "mso-" in its style. Preserve content.
-            const spanLangElements = doc.querySelectorAll('span[lang]');
-            // Iterate in reverse to avoid issues with DOM modification affecting the NodeList
-            for (let i = spanLangElements.length - 1; i >= 0; i--) {
-                const span = spanLangElements[i];
-                let parent = span.parentElement;
-                let shouldUnwrap = false;
-                while (parent && parent !== doc.body) {
-                    const classAttr = parent.getAttribute('class');
-                    const styleAttr = parent.getAttribute('style');
-
-                    if ((classAttr && classAttr.includes('Mso')) || (styleAttr && styleAttr.includes('mso-'))) {
-                        shouldUnwrap = true;
-                        break;
-                    }
-                    parent = parent.parentElement;
-                }
-
-                if (shouldUnwrap && span.parentNode) {
-                    // Move all child nodes of the span directly before the span itself
-                    while (span.firstChild) {
-                        span.parentNode.insertBefore(span.firstChild, span);
-                    }
-                    // Remove the empty span tag
-                    span.parentNode.removeChild(span);
-                }
-            }
-
-            // 6. Unwrap <div> tags with "mso-element" in their style attribute, *unless* it's "mso-element: footnote-list"
-            const msoElementDivs = doc.querySelectorAll('div[style*="mso-element"]');
-            for (let i = msoElementDivs.length - 1; i >= 0; i--) {
-                const div = msoElementDivs[i];
-                const style = div.getAttribute('style') || '';
-
-                // Skip if it's specifically "mso-element: footnote-list"
-                if (style.includes('mso-element: footnote-list')) {
-                    continue;
-                }
-
-                if (div.parentNode) {
-                    // Move children out of the div tag
-                    while (div.firstChild) {
-                        div.parentNode.insertBefore(div.firstChild, div);
-                    }
-                    // Remove the empty div tag
-                    div.parentNode.removeChild(div);
-                }
-            }
-
-            // 7. Remove colgroup and col tags completely.
-            const colgroupElements = doc.querySelectorAll('colgroup');
-            for (let i = colgroupElements.length - 1; i >= 0; i--) {
-                if (colgroupElements[i].parentNode) {
-                    colgroupElements[i].parentNode.removeChild(colgroupElements[i]);
-                }
-            }
-
-            const colElements = doc.querySelectorAll('col');
-            for (let i = colElements.length - 1; i >= 0; i--) {
-                if (colElements[i].parentNode) {
-                    colElements[i].parentNode.removeChild(colElements[i]);
-                }
-            }
-
-            // 8. Removes all attributes except rowspan, colspan, class, id, headers, and scope
-            //    from table, thead, tbody, tfoot, tr, th, and td tags.
-            const tableRelatedTags = doc.querySelectorAll('table, thead, tbody, tfoot, tr, th, td');
-            tableRelatedTags.forEach(element => {
-                const attributesToKeep = ['rowspan', 'colspan', 'class', 'id', 'headers', 'scope'];
-                const attributesToRemove = [];
-                for (let j = 0; j < element.attributes.length; j++) {
-                    const attr = element.attributes[j];
-                    if (!attributesToKeep.includes(attr.name.toLowerCase())) {
-                        attributesToRemove.push(attr.name);
-                    }
-                }
-                attributesToRemove.forEach(attrName => {
-                    element.removeAttribute(attrName);
-                });
-            });
 
             // 9. For <p> tags with "MsoToc" in the class: strip all attributes and delete everything within them
             //    EXCEPT <a> tags with an href and all basic text content.
@@ -1776,23 +1781,6 @@
                 }
             });
 
-            // 11. Removes the `class` attribute from `<table>` tags if the class contains "MsoTable".
-            doc.querySelectorAll('table').forEach(table => {
-                const classAttr = table.getAttribute('class');
-                if (classAttr && classAttr.includes('MsoTable')) {
-                    table.removeAttribute('class');
-                }
-            });
-
-            // 12. Removes the `class` attribute from `<td>` tags if the class contains and starts with "xl".
-            doc.querySelectorAll('td').forEach(td => {
-                const classAttr = td.getAttribute('class');
-                if (classAttr && classAttr.startsWith('xl')) { // Checks if it starts with "xl"
-                    // No need to check if it contains "xl" because startsWith implies contains.
-                    td.removeAttribute('class');
-                }
-            });
-
             // 13. Processes <p> tags with a class starting with "Mso" (unless in tables or MsoList),
             //     deleting all attributes and content within, strictly EXCEPT for specified tags and their contents.
             const allParagraphs = doc.querySelectorAll('p');
@@ -1812,44 +1800,26 @@
                 }
             });
 
-            // 14. New rule: For <p> tags within tables
-            doc.querySelectorAll('table p').forEach(p => {
-                const parentCell = p.closest('td, th'); // Find the closest parent td or th
+            // 15. Unwraps <div> tags with "mso-element" in their style attribute, *unless* it's "mso-element: footnote-list"
+            const msoElementDivs = doc.querySelectorAll('div[style*="mso-element"]');
+            for (let i = msoElementDivs.length - 1; i >= 0; i--) {
+                const div = msoElementDivs[i];
+                const style = div.getAttribute('style') || '';
 
-                if (parentCell) {
-                    // a. Remove `class` attribute if it contains "Mso" or "Aligned".
-                    const classAttr = p.getAttribute('class');
-                    if (classAttr && (classAttr.includes('Mso') || classAttr.includes('Aligned'))) {
-                        p.removeAttribute('class');
-                    }
-
-                    // b. Remove `style` attribute.
-                    if (p.hasAttribute('style')) {
-                        p.removeAttribute('style');
-                    }
-
-                    // c. If `align` attribute exists, remove it and add `text-left`, `text-center`, or `text-right` to parent `<td>` or `<th>`.
-                    const alignAttr = p.getAttribute('align');
-                    if (alignAttr) {
-                        p.removeAttribute('align');
-                        let tailwindAlignClass = '';
-                        switch (alignAttr.toLowerCase()) {
-                            case 'left':
-                                tailwindAlignClass = 'text-left';
-                                break;
-                            case 'center':
-                                tailwindAlignClass = 'text-center';
-                                break;
-                            case 'right':
-                                tailwindAlignClass = 'text-right';
-                                break;
-                        }
-                        if (tailwindAlignClass) {
-                            parentCell.classList.add(tailwindAlignClass);
-                        }
-                    }
+                // Skip if it's specifically "mso-element: footnote-list"
+                if (style.includes('mso-element: footnote-list')) {
+                    continue;
                 }
-            });
+
+                if (div.parentNode) {
+                    // Move children out of the div tag
+                    while (div.firstChild) {
+                        div.parentNode.insertBefore(div.firstChild, div);
+                    }
+                    // Remove the empty div tag
+                    div.parentNode.removeChild(div);
+                }
+            }
 
             // Final cleanup: Removes empty <p> tags with "Mso" class (if they became empty after previous cleaning)
             let currentHtml = doc.body.innerHTML;
@@ -1859,8 +1829,56 @@
             return doc.body.innerHTML;
         }
 
+        /**
+         * Cleans common formatting tags: removes <u>, converts <b> to <strong>, and <i> to <em>.
+         * @param {string} htmlString - The HTML content to clean.
+         * @returns {string} The cleaned HTML content.
+         */
+        function applyCleanFormattingTags(htmlString) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlString, 'text/html');
 
-        // Removed applyCleanWordLists function
+            // 1. Remove <u> tags (unwrap them)
+            const uElements = Array.from(doc.querySelectorAll('u'));
+            for (let i = uElements.length - 1; i >= 0; i--) {
+                const u = uElements[i];
+                if (u.parentNode) {
+                    while (u.firstChild) {
+                        u.parentNode.insertBefore(u.firstChild, u);
+                    }
+                    u.parentNode.removeChild(u);
+                }
+            }
+
+            // 2. Convert <b> to <strong>
+            const bElements = Array.from(doc.querySelectorAll('b'));
+            for (let i = bElements.length - 1; i >= 0; i--) {
+                const b = bElements[i];
+                if (b.parentNode) {
+                    const strong = doc.createElement('strong');
+                    while (b.firstChild) {
+                        strong.appendChild(b.firstChild);
+                    }
+                    b.parentNode.replaceChild(strong, b);
+                }
+            }
+
+            // 3. Convert <i> to <em>
+            const iElements = Array.from(doc.querySelectorAll('i'));
+            for (let i = iElements.length - 1; i >= 0; i--) {
+                const i = iElements[i];
+                if (i.parentNode) {
+                    const em = doc.createElement('em');
+                    while (i.firstChild) {
+                        em.appendChild(i.firstChild);
+                    }
+                    i.parentNode.replaceChild(em, i);
+                }
+            }
+
+            return doc.body.innerHTML;
+        }
+
 
         /**
          * Function to set the content of the HugeRTE editor.
@@ -1894,10 +1912,27 @@
         };
 
         /**
+         * Updates the disabled state of the "Go to Rich-Text" button.
+         * It is disabled if any other button that displays a temporary message is active.
+         */
+        function updateToggleEditorViewBtnCodeState() {
+            const anyTempMessageActive = tempMessageButtons.some(btn => btn.getAttribute('data-temp-active') === 'true');
+            toggleEditorViewBtnCode.disabled = anyTempMessageActive;
+        }
+
+        /**
          * Toggles the active editor view between 'richtext' and 'code'.
          * Includes automatic content synchronization.
          */
         function toggleEditorView() {
+            // Prevent toggling if the button is disabled
+            if (toggleEditorViewBtnCode.disabled && currentView === 'code') {
+                return;
+            }
+            if (toggleEditorViewBtnRichText.disabled && currentView === 'richtext') {
+                return;
+            }
+
             console.log("Toggle Editor View triggered. Current view:", currentView);
             if (currentView === 'richtext') {
                 // When switching from Rich-Text to Code:
@@ -2114,10 +2149,16 @@
                     copyCodeBtn.textContent = 'Copied!';
                     copyCodeBtn.classList.add('bg-green-500', 'hover:bg-green-600');
                     copyCodeBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
+                    copyCodeBtn.disabled = true; // Disable the button
+                    copyCodeBtn.setAttribute('data-temp-active', 'true'); // Mark as active
+                    updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
                     setTimeout(() => {
                         copyCodeBtn.textContent = originalText;
                         copyCodeBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
                         copyCodeBtn.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
+                        copyCodeBtn.disabled = false; // Re-enable the button
+                        copyCodeBtn.removeAttribute('data-temp-active'); // Unmark as active
+                        updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
                     }, 1500);
                 } catch (err) {
                     console.error('Failed to copy text: ', err);
@@ -2139,10 +2180,16 @@
                     autoFormatBtn.textContent = 'Formatted!';
                     autoFormatBtn.classList.add('bg-green-500', 'hover:bg-green-600');
                     autoFormatBtn.classList.remove('bg-red-700', 'hover:bg-red-800');
+                    autoFormatBtn.disabled = true; // Disable the button
+                    autoFormatBtn.setAttribute('data-temp-active', 'true'); // Mark as active
+                    updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
                     setTimeout(() => {
                         autoFormatBtn.textContent = originalText;
                         autoFormatBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
                         autoFormatBtn.classList.add('bg-red-700', 'hover:bg-red-800');
+                        autoFormatBtn.disabled = false; // Re-enable the button
+                        autoFormatBtn.removeAttribute('data-temp-active'); // Unmark as active
+                        updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
                     }, 1500);
                 }
             });
@@ -2160,10 +2207,16 @@
                     autoEncodeBtn.textContent = 'Encoded!';
                     autoEncodeBtn.classList.add('bg-green-500', 'hover:bg-green-600');
                     autoEncodeBtn.classList.remove('bg-red-700', 'hover:bg-red-800');
+                    autoEncodeBtn.disabled = true; // Disable the button
+                    autoEncodeBtn.setAttribute('data-temp-active', 'true'); // Mark as active
+                    updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
                     setTimeout(() => {
                         autoEncodeBtn.textContent = originalText;
                         autoEncodeBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
                         autoEncodeBtn.classList.add('bg-red-700', 'hover:bg-red-800');
+                        autoEncodeBtn.disabled = false; // Re-enable the button
+                        autoEncodeBtn.removeAttribute('data-temp-active'); // Unmark as active
+                        updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
                     }, 1500);
                 }
             });
@@ -2183,10 +2236,16 @@
                 exportHtmlBtn.textContent = 'Exported!';
                 exportHtmlBtn.classList.add('bg-green-500', 'hover:bg-green-600');
                 exportHtmlBtn.classList.remove('bg-red-700', 'hover:bg-red-800');
+                exportHtmlBtn.disabled = true; // Disable the button
+                exportHtmlBtn.setAttribute('data-temp-active', 'true'); // Mark as active
+                updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
                 setTimeout(() => {
                     exportHtmlBtn.textContent = originalText;
                     exportHtmlBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
                     exportHtmlBtn.classList.add('bg-red-700', 'hover:bg-red-800');
+                    exportHtmlBtn.disabled = false; // Re-enable the button
+                    exportHtmlBtn.removeAttribute('data-temp-active'); // Unmark as active
+                    updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
                 }, 1500);
             });
 
@@ -2206,10 +2265,16 @@
                         importHtmlBtn.textContent = 'Imported!';
                         importHtmlBtn.classList.add('bg-green-500', 'hover:bg-green-600');
                         importHtmlBtn.classList.remove('bg-purple-700', 'hover:bg-purple-800');
+                        importHtmlBtn.disabled = true; // Disable the button
+                        importHtmlBtn.setAttribute('data-temp-active', 'true'); // Mark as active
+                        updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
                         setTimeout(() => {
                             importHtmlBtn.textContent = originalText;
                             importHtmlBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
                             importHtmlBtn.classList.add('bg-purple-700', 'hover:bg-purple-800');
+                            importHtmlBtn.disabled = false; // Re-enable the button
+                            importHtmlBtn.removeAttribute('data-temp-active'); // Unmark as active
+                            updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
                         }, 1500);
                     };
                     reader.onerror = () => {
@@ -2234,10 +2299,16 @@
                 clearAllBtn.textContent = 'Cleared!';
                 clearAllBtn.classList.add('bg-green-500', 'hover:bg-green-600');
                 clearAllBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
+                clearAllBtn.disabled = true; // Disable the button
+                clearAllBtn.setAttribute('data-temp-active', 'true'); // Mark as active
+                updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
                 setTimeout(() => {
                     clearAllBtn.textContent = originalText;
                     clearAllBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
                     clearAllBtn.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
+                    clearAllBtn.disabled = false; // Re-enable the button
+                    clearAllBtn.removeAttribute('data-temp-active'); // Unmark as active
+                    updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
                 }, 1500);
             });
 
@@ -2303,7 +2374,6 @@
                             flex-grow: 1; /* Make the actual iframe within TinyMCE fill space */
                         }
                     </style>
-                     <link rel="stylesheet" href="https://www.canada.ca/etc/designs/canada/wet-boew/css/theme.min.css">
                 </head>
                 <body>
                     <form method="post">
@@ -2358,7 +2428,6 @@
                             console.log("Iframe: HugeRTE library loaded. Initializing editor.");
                             hugerte.init({
                                 selector: '#richEditor',
-                                content_css: 'https://www.canada.ca/etc/designs/canada/wet-boew/css/theme.min.css',
                                 toolbar: 'undo redo styles bold italic alignleft aligncenter alignright numlist bullist table',
                                 plugins: [ 'table', 'lists' ],
                                 height: '100%', // Explicitly set height for TinyMCE
@@ -2542,8 +2611,6 @@
                 
                 let cleanedContent = contentToClean; // Start with current content
 
-                // Removed conditions for toggleMsOfficeJunk, toggleZeroBookmarks, toggleCleanWordLists
-
                 if (toggleUrlCleaning.checked) {
                     cleanedContent = applyUrlCleaning(cleanedContent);
                     console.log("Clean URLs applied.");
@@ -2554,16 +2621,16 @@
                     console.log("Clean Spaces applied.");
                 }
 
-                // Apply Clean COMM/FN/EDN if checked
-                if (toggleCleanComments.checked) {
-                    cleanedContent = applyCleanCommFnEdn(cleanedContent);
-                    console.log("Clean COMM/FN/EDN applied.");
+                // Apply Clean Formatting Tags if checked
+                if (toggleCleanFormattingTags.checked) {
+                    cleanedContent = applyCleanFormattingTags(cleanedContent);
+                    console.log("Clean <u> | <b> | <i> applied.");
                 }
 
-                // Apply Clean MSO Code if checked
+                // Apply Clean MSO Code if checked (now includes COMM/FN/EDN)
                 if (toggleCleanMsoCode.checked) {
                     cleanedContent = applyCleanMsoCode(cleanedContent);
-                    console.log("Clean MSO Code applied.");
+                    console.log("Clean MSO Code (including COMM/FN/EDN) applied.");
                 }
 
                 // New condition for Clean Single Breaks
@@ -2571,13 +2638,6 @@
                     cleanedContent = applyCleanSingleBreaks(cleanedContent);
                     console.log("Clean Single Breaks applied.");
                 }
-
-                // New condition for Clean MSO Lists
-                if (toggleCleanMsoLists.checked) {
-                    cleanedContent = processMsoListParagraphs(cleanedContent);
-                    console.log("Clean MSO Lists applied.");
-                }
-
 
                 // Update the active editor with the final cleaned content
                 if (currentView === 'richtext') {
@@ -2608,10 +2668,16 @@
                 runSelectedBtn.textContent = 'Cleaned!';
                 runSelectedBtn.classList.add('bg-blue-500', 'hover:bg-blue-600');
                 runSelectedBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                runSelectedBtn.disabled = true; // Disable the button
+                runSelectedBtn.setAttribute('data-temp-active', 'true'); // Mark as active
+                updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
                 setTimeout(() => {
                     runSelectedBtn.textContent = originalText;
                     runSelectedBtn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
                     runSelectedBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                    runSelectedBtn.disabled = false; // Re-enable the button
+                    runSelectedBtn.removeAttribute('data-temp-active'); // Unmark as active
+                    updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
                 }, 1500);
             });
 
@@ -2687,10 +2753,16 @@
                 runSelectedTableBtn.textContent = 'Cleaned!';
                 runSelectedTableBtn.classList.add('bg-blue-500', 'hover:bg-blue-600');
                 runSelectedTableBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                runSelectedTableBtn.disabled = true; // Disable the button
+                runSelectedTableBtn.setAttribute('data-temp-active', 'true'); // Mark as active
+                updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
                 setTimeout(() => {
                     runSelectedTableBtn.textContent = originalText;
                     runSelectedTableBtn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
-                    runSelectedBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                    runSelectedTableBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                    runSelectedTableBtn.disabled = false; // Re-enable the button
+                    runSelectedTableBtn.removeAttribute('data-temp-active'); // Unmark as active
+                    updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
                 }, 1500);
             });
         });
