@@ -1150,6 +1150,63 @@
         }
 
         /**
+         * Cleans content within heading tags (h1-h6) based on specific rules.
+         * Preserves text nodes, 'div' tags with class/id, 'a' tags, 'em' tags,
+         * and 'span' tags with class/id (unless class starts with "Heading", then unwraps).
+         * Unwraps all other elements.
+         * @param {HTMLElement} node - The DOM node whose children are to be filtered (e.g., an h1 tag).
+         * @param {Document} doc - The document object to create new elements.
+         * @returns {string} The HTML string containing only the preserved content for the heading.
+         */
+        function cleanHeadingContent(node, doc) {
+            let tempContainer = doc.createElement('div');
+
+            Array.from(node.childNodes).forEach(child => {
+                if (child.nodeType === Node.TEXT_NODE) {
+                    tempContainer.appendChild(child.cloneNode(true));
+                } else if (child.nodeType === Node.ELEMENT_NODE) {
+                    const tagName = child.tagName.toLowerCase();
+                    const hasClass = child.hasAttribute('class');
+                    const hasId = child.hasAttribute('id');
+
+                    if (tagName === 'span' && hasClass && child.className.startsWith('Heading')) {
+                        // Unwrap span with class starting with "Heading"
+                        const unwrappedContentHtml = cleanHeadingContent(child, doc);
+                        const tempUnwrapDiv = doc.createElement('div');
+                        tempUnwrapDiv.innerHTML = unwrappedContentHtml;
+                        while (tempUnwrapDiv.firstChild) {
+                            tempContainer.appendChild(tempUnwrapDiv.firstChild);
+                        }
+                    } else if (tagName === 'div' && (hasClass || hasId)) {
+                        // Keep div with class or id
+                        const clonedChild = child.cloneNode(false);
+                        clonedChild.innerHTML = cleanHeadingContent(child, doc); // Recursively clean content
+                        tempContainer.appendChild(clonedChild);
+                    } else if (tagName === 'a' || tagName === 'em') {
+                        // Keep a and em tags
+                        const clonedChild = child.cloneNode(false);
+                        clonedChild.innerHTML = cleanHeadingContent(child, doc); // Recursively clean content
+                        tempContainer.appendChild(clonedChild);
+                    } else if (tagName === 'span' && (hasClass || hasId)) {
+                        // Keep span with class or id (not starting with "Heading")
+                        const clonedChild = child.cloneNode(false);
+                        clonedChild.innerHTML = cleanHeadingContent(child, doc); // Recursively clean content
+                        tempContainer.appendChild(clonedChild);
+                    } else {
+                        // Unwrap other disallowed elements
+                        const unwrappedContentHtml = cleanHeadingContent(child, doc);
+                        const tempUnwrapDiv = doc.createElement('div');
+                        tempUnwrapDiv.innerHTML = unwrappedContentHtml;
+                        while (tempUnwrapDiv.firstChild) {
+                            tempContainer.appendChild(tempUnwrapDiv.firstChild);
+                        }
+                    }
+                }
+            });
+            return tempContainer.innerHTML;
+        }
+
+        /**
          * Applies cleaning for Microsoft Office specific code.
          * 1. Unwraps <span> tags with "mso-bookmark" in their style attribute, preserving their contents.
          * 2. Unwraps <span> tags whose class attribute starts with "Mso", preserving their contents.
@@ -1263,10 +1320,11 @@
 
             // ORDER OF OPERATIONS within applyCleanMsoCode:
             // 1. Span lang's (Step 5 from original applyCleanMsoCode)
-            // 2. Lists (Integrated processMsoListParagraphs logic)
-            // 3. Clean COMM/FN/EDN (Moved here)
-            // 4. Table related (Steps 8, 11, 12, 14, 16 from original applyCleanMsoCode)
-            // 5. The rest (other MSO cleaning)
+            // 2. Headings (New rule)
+            // 3. Lists (Integrated processMsoListParagraphs logic)
+            // 4. Clean COMM/FN/EDN (Moved here)
+            // 5. Table related (Steps 8, 11, 12, 14, 16 from original applyCleanMsoCode)
+            // 6. The rest (other MSO cleaning)
 
             // 1. Unwraps <span> tags with a 'lang' attribute OR 'mso-ansi-language' in style,
             //    ONLY if they're within an element that has "Mso" in its class or "mso-" in its style. Preserve content.
@@ -1297,7 +1355,17 @@
                 }
             }
 
-            // 2. Process <p> tags with "MsoListParagraph" class, converting them to <ul><li> structures
+            // 2. Clean content within headings (h1-h6)
+            const headingTags = doc.querySelectorAll('h1, h2, h3, h4, h5, h6');
+            headingTags.forEach(heading => {
+                // Clean and replace the inner HTML of the heading
+                heading.innerHTML = cleanHeadingContent(heading, doc);
+                // Remove any remaining attributes from the heading tag itself
+                Array.from(heading.attributes).forEach(attr => heading.removeAttribute(attr.name));
+            });
+
+
+            // 3. Process <p> tags with "MsoListParagraph" class, converting them to <ul><li> structures
             //    and preserving specific child elements/text while removing others.
             const paragraphs = Array.from(body.querySelectorAll('p'));
             const paragraphsToReplace = new Map(); // Map original P to new UL/LI structure
@@ -1499,7 +1567,7 @@
                 }
             });
 
-            // 3. Apply cleaning for comments, footnotes, and endnotes (Moved here from applyCleanCommFnEdn)
+            // 4. Apply cleaning for comments, footnotes, and endnotes (Moved here from applyCleanCommFnEdn)
             // 1. Unwrap <span> tags with class containing "MsoComment" (but not "MsoCommentReference")
             const spanCommentElements = doc.querySelectorAll('span[class*="MsoComment"]');
             // Iterate in reverse to avoid issues with DOM modification affecting the NodeList
@@ -1622,7 +1690,7 @@
             }
 
 
-            // 4. Table related cleaning
+            // 5. Table related cleaning
             // 7. Remove colgroup and col tags completely.
             const colgroupElements = doc.querySelectorAll('colgroup');
             for (let i = colgroupElements.length - 1; i >= 0; i--) {
@@ -1724,7 +1792,7 @@
                 }
             });
 
-            // 5. The rest of the cleaning operations
+            // 6. The rest of the cleaning operations
 
             // 1. Unwraps <span> tags with "mso-bookmark" in their style attribute
             const msoBookmarkSpans = doc.querySelectorAll('span[style*="mso-bookmark"]');
