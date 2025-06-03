@@ -482,6 +482,14 @@
                     <button id="toggleEditorViewBtnRichText" class="ml-4 px-4 py-2 text-base font-semibold bg-sky-700 text-white rounded-md hover:bg-sky-800 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:ring-opacity-50 font-bold">
                         Go to HTML
                     </button>
+                    <!-- New toggle for Rich-Text panel -->
+                    <div class="toggle-switch-container ml-4">
+                        <span class="toggle-switch-label text-white text-sm mr-2">Auto-Clean MSO when switching</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="toggleAutoCleanMsoOnSwitchRichText">
+                            <span class="toggle-switch-slider"></span>
+                        </label>
+                    </div>
                 </div>
                 <iframe id="default_ifr"></iframe>
             </div>
@@ -492,6 +500,14 @@
                     <button id="toggleEditorViewBtnCode" class="ml-4 px-4 py-2 text-base font-semibold bg-zinc-700 text-white rounded-md hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-opacity-50 font-bold">
                         Go to Rich-Text
                     </button>
+                    <!-- New toggle for HTML panel -->
+                    <div class="toggle-switch-container ml-4">
+                        <span class="toggle-switch-label text-white text-sm mr-2">Auto-Clean MSO when switching</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="toggleAutoCleanMsoOnSwitchCode">
+                            <span class="toggle-switch-slider"></span>
+                        </label>
+                    </div>
                     <div class="inline-flex space-x-2 ml-auto mt-2 sm:mt-0">
                         <button id="importHtmlBtn" class="px-3 py-1 text-sm bg-purple-700 text-white rounded-md hover:bg-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-opacity-50 font-bold">Import HTML</button>
                         <button id="exportHtmlBtn" class="px-3 py-1 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-bold">Export HTML</button>
@@ -520,7 +536,7 @@
                                 <div class="toggle-switch-container">
                                     <span class="toggle-switch-label">Clean URLs</span>
                                     <label class="toggle-switch">
-                                        <input type="checkbox" id="toggleUrlCleaning" checked>
+                                        <input type="checkbox" id="toggleUrlCleaning">
                                         <span class="toggle-switch-slider"></span>
                                     </label>
                                 </div>
@@ -528,15 +544,7 @@
                                 <div class="toggle-switch-container">
                                     <span class="toggle-switch-label">Clean Spaces</span>
                                     <label class="toggle-switch">
-                                        <input type="checkbox" id="toggleAutoSpacing" checked>
-                                        <span class="toggle-switch-slider"></span>
-                                    </label>
-                                </div>
-
-                                <div class="toggle-switch-container">
-                                    <span class="toggle-switch-label">Clean MSO Code</span>
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" id="toggleCleanMsoCode">
+                                        <input type="checkbox" id="toggleAutoSpacing">
                                         <span class="toggle-switch-slider"></span>
                                     </label>
                                 </div>
@@ -552,6 +560,14 @@
                                     <span class="toggle-switch-label">Clean &lt;u&gt; | &lt;b&gt; | &lt;i&gt;</span>
                                     <label class="toggle-switch">
                                         <input type="checkbox" id="toggleCleanFormattingTags"> <span class="toggle-switch-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div class="toggle-switch-container">
+                                    <span class="toggle-switch-label">Clean MSO Code</span>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="toggleCleanMsoCode">
+                                        <span class="toggle-switch-slider"></span>
                                     </label>
                                 </div>
                             </div>
@@ -572,7 +588,7 @@
                                 <div class="toggle-switch-container">
                                     <span class="toggle-switch-label">Responsive Tables</span>
                                     <label class="toggle-switch">
-                                        <input type="checkbox" id="toggleResponsiveTables" checked>
+                                        <input type="checkbox" id="toggleResponsiveTables">
                                         <span class="toggle-switch-slider"></span>
                                     </label>
                                 </div>
@@ -580,7 +596,7 @@
                                 <div class="toggle-switch-container">
                                     <span class="toggle-switch-label">WET Alignment</span>
                                     <label class="toggle-switch">
-                                        <input type="checkbox" id="toggleWetAlignment" checked>
+                                        <input type="checkbox" id="toggleWetAlignment">
                                         <span class="toggle-switch-slider"></span>
                                     </label>
                                 </div>
@@ -588,7 +604,7 @@
                                 <div class="toggle-switch-container">
                                     <span class="toggle-switch-label">Apply Basic Classes</span>
                                     <label class="toggle-switch">
-                                        <input type="checkbox" id="toggleApplyBasicClasses" checked>
+                                        <input type="checkbox" id="toggleApplyBasicClasses">
                                         <span class="toggle-switch-slider"></span>
                                     </label>
                                 </div>
@@ -596,7 +612,7 @@
                                 <div class="toggle-switch-container">
                                     <span class="toggle-switch-label">Remove &lt;p&gt; Tags</span>
                                     <label class="toggle-switch">
-                                        <input type="checkbox" id="toggleRemovePTags" checked>
+                                        <input type="checkbox" id="toggleRemovePTags">
                                         <span class="toggle-switch-slider"></span>
                                     </label>
                                 </div>
@@ -668,15 +684,18 @@
         const toggleApplyBasicClasses = document.getElementById('toggleApplyBasicClasses');
         const toggleRemovePTags = document.getElementById('toggleRemovePTags');
 
+        // New Auto-Clean MSO when switching toggles
+        const toggleAutoCleanMsoOnSwitchRichText = document.getElementById('toggleAutoCleanMsoOnSwitchRichText');
+        const toggleAutoCleanMsoOnSwitchCode = document.getElementById('toggleAutoCleanMsoOnSwitchCode');
+
 
         // Array of all general cleaning toggles for easy iteration
         const generalCleaningToggles = [
             toggleUrlCleaning,
             toggleAutoSpacing,
-            // Removed toggleCleanComments
-            toggleCleanMsoCode, 
             toggleCleanSingleBreaks,
-            toggleCleanFormattingTags // Added new toggle here
+            toggleCleanFormattingTags,
+            toggleCleanMsoCode // Moved to last
         ];
 
         // Array of all table cleaning toggles for easy iteration
@@ -1159,7 +1178,7 @@
          * b. Remove `style` attribute.
          * c. If `align` attribute exists, remove it and add `text-left`, `text-center`, or `text-right` to parent `<td>` or `<th>`.
          * 15. Unwraps <div> tags with "mso-element" in their style attribute, *unless* it's "mso-element: footnote-list", preserving their contents.
-         * 16. Unwraps `<span>` tags within `<table>` elements that have a class starting with "xl".
+         * 16. Unwraps `<span>` tags within `<td>` elements that have a class starting with "xl".
          * @param {string} htmlString - The HTML content to clean.
          * @returns {string} The cleaned HTML content.
          */
@@ -1170,9 +1189,9 @@
 
             // Helper to get the level from style attribute for lists
             function getLevel(styleAttr) {
-                if (!styleAttr) return 1;
+                if (!styleAttr) return null; // Return null if no style attribute
                 const match = styleAttr.match(/level(\d+)/);
-                return match ? parseInt(match[1], 10) : 1; // Default to level 1 if no level found
+                return match ? parseInt(match[1], 10) : null; // Return null if no level found
             }
 
             // Helper to extract allowed content for lists (reusing existing filterAndPreserveContent logic)
@@ -1300,6 +1319,16 @@
                 }
 
                 if (isMsoListParagraph) {
+                    const pStyle = p.getAttribute('style') || '';
+                    const level = getLevel(pStyle);
+
+                    // NEW LOGIC: If MsoListParagraph but no level number, convert to MsoNormal and skip list processing
+                    if (isMsoListParagraph && level === null) {
+                        p.removeAttribute('class'); // Remove all classes
+                        p.classList.add('MsoNormal'); // Add MsoNormal class
+                        continue; // Skip further list processing for this paragraph
+                    }
+
                     const msoListIgnoreSpan = p.querySelector('span[style*="mso-list: Ignore"]');
                     let bulletTextToPrepend = '';
                     let listType = 'unordered'; // Default
@@ -1354,6 +1383,17 @@
                             cls === 'MsoListParagraphCxSpLast' ||
                             cls === 'MsoListParagraph'
                         );
+
+                        // NEW LOGIC: If next P is MsoListParagraph but no level number, convert to MsoNormal and break sequence
+                        const nextPStyle = nextP.getAttribute('style') || '';
+                        const nextLevelCheck = getLevel(nextPStyle);
+                        if (isNextPListParagraph && nextLevelCheck === null) {
+                            nextP.removeAttribute('class');
+                            nextP.classList.add('MsoNormal');
+                            paragraphsToRemove.add(nextP); // Mark for removal from original processing
+                            break; // End the current list sequence
+                        }
+
 
                         if (isNextPListParagraph) {
                             const nextLevel = getLevel(nextP.getAttribute('style') || '');
@@ -1526,10 +1566,9 @@
                 // And ensure it has a parent before trying to unwrap
                 if (element.parentNode && !element.hasAttribute('data-removed')) { // Use a data attribute to mark removed elements
                     // Mark elements for removal if they contain 'mso-element: comment' or 'mso-element: endnote-list'
-                    // This check is a safeguard, as these should have been removed by steps 3 and 4.
+                    // This case should ideally be handled by steps 3 and 4, but as a fallback:
                     const style = element.getAttribute('style') || '';
                     if (element.tagName.toLowerCase() === 'div' && (style.includes('mso-element: comment') || style.includes('mso-element: endnote-list') || style.includes('mso-element: comment-list'))) {
-                        // This case should ideally be handled by steps 3 and 4, but as a fallback:
                         element.parentNode.removeChild(element);
                         element.setAttribute('data-removed', 'true'); // Mark as removed
                     } else if (element.tagName.toLowerCase() === 'span' && element.classList.contains('MsoCommentReference')) {
@@ -1624,18 +1663,16 @@
                 }
             });
 
-            // 16. New rule: Unwrap `<span>` tags within `<table>` elements that have a class starting with "xl".
-            doc.querySelectorAll('table span').forEach(span => {
-                const classAttr = span.getAttribute('class');
-                if (classAttr && classAttr.startsWith('xl')) {
-                    if (span.parentNode) {
-                        // Move children out of the span tag
-                        while (span.firstChild) {
-                            span.parentNode.insertBefore(span.firstChild, span);
-                        }
-                        // Remove the empty span tag
-                        span.parentNode.removeChild(span);
+            // 16. New rule: Unwrap `<span>` tags within `<td>` elements that have a class starting with "xl".
+            // This now correctly targets spans whose parent td has the 'xl' class.
+            doc.querySelectorAll('table td[class^="xl"] span').forEach(span => {
+                if (span.parentNode) {
+                    // Move children out of the span tag
+                    while (span.firstChild) {
+                        span.parentNode.insertBefore(span.firstChild, span);
                     }
+                    // Remove the empty span tag
+                    span.parentNode.removeChild(span);
                 }
             });
 
@@ -2645,16 +2682,16 @@
                     console.log("Clean <u> | <b> | <i> applied.");
                 }
 
-                // Apply Clean MSO Code if checked (now includes COMM/FN/EDN)
-                if (toggleCleanMsoCode.checked) {
-                    cleanedContent = applyCleanMsoCode(cleanedContent);
-                    console.log("Clean MSO Code (including COMM/FN/EDN) applied.");
-                }
-
                 // New condition for Clean Single Breaks
                 if (toggleCleanSingleBreaks.checked) {
                     cleanedContent = applyCleanSingleBreaks(cleanedContent);
                     console.log("Clean Single Breaks applied.");
+                }
+
+                // Apply Clean MSO Code if checked (now includes COMM/FN/EDN)
+                if (toggleCleanMsoCode.checked) {
+                    cleanedContent = applyCleanMsoCode(cleanedContent);
+                    console.log("Clean MSO Code (including COMM/FN/EDN) applied.");
                 }
 
                 // Update the active editor with the final cleaned content
