@@ -1159,6 +1159,7 @@
          * b. Remove `style` attribute.
          * c. If `align` attribute exists, remove it and add `text-left`, `text-center`, or `text-right` to parent `<td>` or `<th>`.
          * 15. Unwraps <div> tags with "mso-element" in their style attribute, *unless* it's "mso-element: footnote-list", preserving their contents.
+         * 16. Unwraps `<span>` tags within `<table>` elements that have a class starting with "xl".
          * @param {string} htmlString - The HTML content to clean.
          * @returns {string} The cleaned HTML content.
          */
@@ -1197,7 +1198,9 @@
                             contentHtml += child.outerHTML;
                         } else if ((tagName === 'span' || tagName === 'div') && hasClassOrId) {
                             // span/div are allowed only if they have a class or ID
-                            contentHtml += child.outerHTML;
+                            const clonedChild = child.cloneNode(false);
+                            clonedChild.innerHTML = extractAllowedContentForLists(child); // Recursive call
+                            contentHtml += clonedChild.outerHTML;
                         } else {
                             // For other elements (disallowed elements, or span/div without class/ID),
                             // recursively process their children and concatenate the result.
@@ -1243,7 +1246,7 @@
             // 1. Span lang's (Step 5 from original applyCleanMsoCode)
             // 2. Lists (Integrated processMsoListParagraphs logic)
             // 3. Clean COMM/FN/EDN (Moved here)
-            // 4. Table related (Steps 8, 11, 12, 14 from original applyCleanMsoCode)
+            // 4. Table related (Steps 8, 11, 12, 14, 16 from original applyCleanMsoCode)
             // 5. The rest (other MSO cleaning)
 
             // 1. Unwraps <span> tags with a 'lang' attribute ONLY if they're within an element
@@ -1384,7 +1387,7 @@
                                     currentListStack.pop();
                                     currentParentList = currentListStack[currentListStack.length - 1];
                                 }
-                                // If nextLevel is greater than currentDepth, we need to create nested lists.
+                                // If nextLevel is greater than currentDepth, we need to create new lists.
                                 // The loop above handles popping. Now, ensure we have the correct parent for the new level.
                                 // If nextLevel > currentDepth, we need to create new lists and push them.
                                 // This loop ensures we create enough nested lists to reach the target level.
@@ -1618,6 +1621,21 @@
                 const classAttr = table.getAttribute('class');
                 if (classAttr && classAttr.includes('MsoTable')) {
                     table.removeAttribute('class');
+                }
+            });
+
+            // 16. New rule: Unwrap `<span>` tags within `<table>` elements that have a class starting with "xl".
+            doc.querySelectorAll('table span').forEach(span => {
+                const classAttr = span.getAttribute('class');
+                if (classAttr && classAttr.startsWith('xl')) {
+                    if (span.parentNode) {
+                        // Move children out of the span tag
+                        while (span.firstChild) {
+                            span.parentNode.insertBefore(span.firstChild, span);
+                        }
+                        // Remove the empty span tag
+                        span.parentNode.removeChild(span);
+                    }
                 }
             });
 
