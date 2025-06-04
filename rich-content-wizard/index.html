@@ -1233,9 +1233,9 @@
 
         /**
          * Cleans content within heading tags (h1-h6) based on specific rules.
-         * Preserves text nodes, 'div' tags with class/id, 'a' tags, 'em' tags,
-         * and 'span' tags with class/id (unless class starts with "Heading", then unwraps).
-         * Unwraps all other elements.
+         * Preserves text nodes, 'a' tags, 'em' tags.
+         * Unwraps specific MSO-related spans, font-related spans, and divs without class/id.
+         * Removes comments.
          * @param {HTMLElement} node - The DOM node whose children are to be filtered (e.g., an h1 tag).
          * @param {Document} doc - The document object to create new elements.
          * @returns {string} The HTML string containing only the preserved content for the heading.
@@ -1246,36 +1246,50 @@
             Array.from(node.childNodes).forEach(child => {
                 if (child.nodeType === Node.TEXT_NODE) {
                     tempContainer.appendChild(child.cloneNode(true));
+                } else if (child.nodeType === Node.COMMENT_NODE) {
+                    // Explicitly remove comment nodes
+                    // Do nothing, effectively removing the comment
                 } else if (child.nodeType === Node.ELEMENT_NODE) {
                     const tagName = child.tagName.toLowerCase();
-                    const hasClass = child.hasAttribute('class');
-                    const hasId = child.hasAttribute('id');
+                    const styleAttr = child.getAttribute('style') || '';
+                    const classAttr = child.getAttribute('class') || '';
 
-                    if (tagName === 'span' && hasClass && child.className.startsWith('Heading')) {
-                        // Unwrap span with class starting with "Heading"
+                    // Always preserve <a> and <em> tags
+                    if (tagName === 'a' || tagName === 'em') {
+                        const clonedChild = child.cloneNode(false);
+                        // Recursively clean content within the preserved tag
+                        clonedChild.innerHTML = cleanHeadingContent(child, doc);
+                        tempContainer.appendChild(clonedChild);
+                    }
+                    // Keep div with class or id (e.g., for structured content within headings)
+                    else if (tagName === 'div' && (child.hasAttribute('class') || child.hasAttribute('id'))) {
+                        const clonedChild = child.cloneNode(false);
+                        // Recursively clean content within the preserved div
+                        clonedChild.innerHTML = cleanHeadingContent(child, doc);
+                        tempContainer.appendChild(clonedChild);
+                    }
+                    // Unwrap specific MSO-related spans and other unwanted elements
+                    // This includes MsoListIgnore, Heading spans, font/font-family spans,
+                    // general Mso spans, and div without class/id.
+                    else if (
+                        (tagName === 'span' && styleAttr.includes('mso-list: Ignore')) ||
+                        (tagName === 'span' && classAttr.startsWith('Heading')) ||
+                        (tagName === 'span' && styleAttr.includes('font:')) ||
+                        (tagName === 'span' && styleAttr.includes('font-family:')) ||
+                        (tagName === 'span' && classAttr.startsWith('Mso')) || // Catch-all for other Mso spans
+                        (tagName === 'div' && !(child.hasAttribute('class') || child.hasAttribute('id'))) // Unwrap div without class/id
+                    ) {
+                        // Recursively clean content and then unwrap the current element
                         const unwrappedContentHtml = cleanHeadingContent(child, doc);
                         const tempUnwrapDiv = doc.createElement('div');
                         tempUnwrapDiv.innerHTML = unwrappedContentHtml;
                         while (tempUnwrapDiv.firstChild) {
                             tempContainer.appendChild(tempUnwrapDiv.firstChild);
                         }
-                    } else if (tagName === 'div' && (hasClass || hasId)) {
-                        // Keep div with class or id
-                        const clonedChild = child.cloneNode(false);
-                        clonedChild.innerHTML = cleanHeadingContent(clonedChild, doc); // Recursively clean content
-                        tempContainer.appendChild(clonedChild);
-                    } else if (tagName === 'a' || tagName === 'em') {
-                        // Keep a and em tags
-                        const clonedChild = child.cloneNode(false);
-                        clonedChild.innerHTML = cleanHeadingContent(clonedChild, doc); // Recursively clean content
-                        tempContainer.appendChild(clonedChild);
-                    } else if (tagName === 'span' && (hasClass || hasId)) {
-                        // Keep span with class or id (not starting with "Heading")
-                        const clonedChild = child.cloneNode(false);
-                        clonedChild.innerHTML = cleanHeadingContent(clonedChild, doc); // Recursively clean content
-                        tempContainer.appendChild(clonedChild);
-                    } else {
-                        // Unwrap other disallowed elements
+                    }
+                    // For any other element not explicitly handled above, unwrap its content.
+                    // This acts as a fallback to ensure only allowed content remains.
+                    else {
                         const unwrappedContentHtml = cleanHeadingContent(child, doc);
                         const tempUnwrapDiv = doc.createElement('div');
                         tempUnwrapDiv.innerHTML = unwrappedContentHtml;
