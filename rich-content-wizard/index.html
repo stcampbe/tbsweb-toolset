@@ -482,9 +482,9 @@
                     <button id="toggleEditorViewBtnRichText" class="ml-4 px-4 py-2 text-base font-semibold bg-sky-700 text-white rounded-md hover:bg-sky-800 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:ring-opacity-50 font-bold">
                         Go to HTML
                     </button>
-                    <!-- New toggle for Rich-Text panel -->
-                    <div class="toggle-switch-container ml-4">
-                        <span class="toggle-switch-label text-white text-sm mr-2">Auto-Clean MSO when switching</span>
+                    <!-- New toggle for Rich-Text panel, now in a container -->
+                    <div class="ml-4 p-2 bg-zinc-700 rounded-lg flex items-center">
+                        <span class="toggle-switch-label text-white text-sm mr-2">Auto-Clean MSO</span>
                         <label class="toggle-switch">
                             <input type="checkbox" id="toggleAutoCleanMsoOnSwitchRichText">
                             <span class="toggle-switch-slider"></span>
@@ -500,9 +500,9 @@
                     <button id="toggleEditorViewBtnCode" class="ml-4 px-4 py-2 text-base font-semibold bg-zinc-700 text-white rounded-md hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-opacity-50 font-bold">
                         Go to Rich-Text
                     </button>
-                    <!-- New toggle for HTML panel -->
-                    <div class="toggle-switch-container ml-4">
-                        <span class="toggle-switch-label text-white text-sm mr-2">Auto-Clean MSO when switching</span>
+                    <!-- New toggle for HTML panel, now in a container -->
+                    <div class="ml-4 p-2 bg-zinc-700 rounded-lg flex items-center">
+                        <span class="toggle-switch-label text-white text-sm mr-2">Auto-Clean MSO</span>
                         <label class="toggle-switch">
                             <input type="checkbox" id="toggleAutoCleanMsoOnSwitchCode">
                             <span class="toggle-switch-slider"></span>
@@ -1236,6 +1236,7 @@
          * c. If `align` attribute exists, remove it and add `text-left`, `text-center`, or `text-right` to parent `<td>` or `<th>`.
          * 15. Unwraps <div> tags with "mso-element" in their style attribute, *unless* it's "mso-element: footnote-list", preserving their contents.
          * 16. Unwraps `<span>` tags within `<td>` elements that have a class starting with "xl".
+         * 17. Unwraps `<span>` tags containing "font-weight: bold" in the style attribute that are within `<strong>` tags.
          * @param {string} htmlString - The HTML content to clean.
          * @returns {string} The cleaned HTML content.
          */
@@ -1275,7 +1276,7 @@
                         } else if ((tagName === 'span' || tagName === 'div') && hasClassOrId) {
                             // span/div are allowed only if they have a class or ID
                             const clonedChild = child.cloneNode(false);
-                            clonedChild.innerHTML = extractAllowedContentForLists(child); // Recursive call
+                            clonedChild.innerHTML = extractAllowedContentForLists(clonedChild); // Recursive call
                             contentHtml += clonedChild.outerHTML;
                         } else {
                             // For other elements (disallowed elements, or span/div without class/ID),
@@ -1943,6 +1944,18 @@
                 }
             }
 
+            // 17. Unwrap <span> tags containing "font-weight: bold" in the style attribute that are within <strong> tags.
+            doc.querySelectorAll('strong span[style*="font-weight: bold"]').forEach(span => {
+                if (span.parentNode) {
+                    // Move all child nodes of the span directly before the span itself
+                    while (span.firstChild) {
+                        span.parentNode.insertBefore(span.firstChild, span);
+                    }
+                    // Remove the empty span tag
+                    span.parentNode.removeChild(span);
+                }
+            });
+
             // Final cleanup: Removes empty <p> tags with "Mso" class (if they became empty after previous cleaning)
             let currentHtml = doc.body.innerHTML;
             currentHtml = removeEmptyParagraphs(currentHtml);
@@ -2057,31 +2070,29 @@
 
             console.log("Toggle Editor View triggered. Current view:", currentView);
             if (currentView === 'richtext') {
-                // When switching from Rich-Text to Code:
+                // --- Logic when switching FROM Rich-Text TO Code ---
                 // 1. Get content from Rich-Text editor.
                 if (default_ifr.contentWindow && default_ifr.contentWindow.getRichEditorContent) {
                     richTextContent = default_ifr.contentWindow.getRichEditorContent();
                     console.log("Syncing from Rich Text to HTML. Rich Text Content length:", richTextContent.length);
                 } else {
                     console.warn("Rich Text Editor not ready for content retrieval on toggle. Using empty string.");
-                    richTextContent = ''; // Ensure it's not undefined
+                    richTextContent = '';
                 }
 
-                // Apply French entity conversion (decode HTML entities)
-                let processedContent = decodeHtmlEntities(richTextContent);
-
-                // Apply removal of <p>&nbsp;</p> outside tables/lists
-                processedContent = removeEmptyParagraphsOutsideTablesAndLists(processedContent);
-
-                // Apply removal of inline width/height styles
-                processedContent = removeInlineWidthHeightStyles(processedContent);
+                // Apply Clean MSO Code if the toggle is ON
+                let processedContent = richTextContent;
+                if (toggleAutoCleanMsoOnSwitchRichText.checked) {
+                    processedContent = applyCleanMsoCode(processedContent);
+                    console.log("Auto-Clean MSO applied when switching to HTML editor.");
+                }
                 
                 // 2. Update HTML output content and Monaco editor.
-                htmlOutputContent = processedContent; // The HTML output will now reflect the rich text content
+                htmlOutputContent = processedContent;
                 if (monacoEditorInstance) {
                     monacoEditorInstance.setValue(htmlOutputContent);
-                    monacoEditorInstance.focus(); // Focus the Monaco editor
-                    applyEntityHighlighting(); // Apply highlighting after setting content
+                    monacoEditorInstance.focus();
+                    applyEntityHighlighting();
                     console.log("Monaco editor updated with Rich Text content.");
                 } else {
                     console.warn('Monaco editor not yet initialized. Content will be set once ready.');
@@ -2099,26 +2110,38 @@
                 codePanel.classList.add('panel-visible');
                 
                 // 4. Update button styles.
-                toggleEditorViewBtnRichText.classList.remove('bg-sky-700', 'hover:bg-sky-800');
+                // "Go to HTML" button (toggleEditorViewBtnRichText) is now inactive/hidden.
+                // Remove all color classes and set to default zinc.
+                toggleEditorViewBtnRichText.classList.remove('bg-green-600', 'hover:bg-green-700', 'bg-sky-700', 'hover:bg-sky-800');
                 toggleEditorViewBtnRichText.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
-                toggleEditorViewBtnCode.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
-                toggleEditorViewBtnCode.classList.add('bg-sky-700', 'hover:bg-sky-800');
+                
+                // "Go to Rich-Text" button (toggleEditorViewBtnCode) is now active/visible.
+                // It should always be zinc.
+                toggleEditorViewBtnCode.classList.remove('bg-green-600', 'hover:bg-green-700', 'bg-sky-700', 'hover:bg-sky-800');
+                toggleEditorViewBtnCode.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
                 
                 currentView = 'code';
                 console.log("Switched to Code View.");
             } else { // currentView === 'code'
-                // When switching from Code to Rich-Text:
+                // --- Logic when switching FROM Code TO Rich-Text ---
                 // 1. Get content from Monaco editor.
                 if (monacoEditorInstance) {
                     htmlOutputContent = monacoEditorInstance.getValue();
                     console.log("Syncing from HTML to Rich Text. HTML Output Content length:", htmlOutputContent.length);
                 } else {
                     console.warn("Monaco editor not ready for content retrieval on toggle. Using empty string.");
-                    htmlOutputContent = ''; // Ensure it's not undefined
+                    htmlOutputContent = '';
+                }
+
+                // Apply Clean MSO Code if the toggle is ON
+                let processedContent = htmlOutputContent;
+                if (toggleAutoCleanMsoOnSwitchCode.checked) {
+                    processedContent = applyCleanMsoCode(processedContent);
+                    console.log("Auto-Clean MSO applied when switching to Rich-Text editor.");
                 }
 
                 // 2. Update Rich Text content and editor.
-                richTextContent = htmlOutputContent; // The Rich Text will now reflect the HTML output content
+                richTextContent = processedContent;
                 if (default_ifr.contentWindow && default_ifr.contentWindow.setRichEditorContent) {
                     default_ifr.contentWindow.setRichEditorContent(cleanHtmlForRichTextDisplay(richTextContent));
                     console.log("HugeRTE editor updated with HTML content.");
@@ -2133,11 +2156,15 @@
                 richtextOutputPanel.classList.add('panel-visible');
 
                 // 4. Update button styles.
-                toggleEditorViewBtnCode.classList.remove('bg-sky-700', 'hover:bg-sky-800');
+                // "Go to Rich-Text" button (toggleEditorViewBtnCode) is now inactive/hidden.
+                // It should always be zinc.
+                toggleEditorViewBtnCode.classList.remove('bg-green-600', 'hover:bg-green-700', 'bg-sky-700', 'hover:bg-sky-800');
                 toggleEditorViewBtnCode.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
-                toggleEditorViewBtnRichText.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
-                toggleEditorViewBtnRichText.classList.add('bg-sky-700', 'hover:bg-sky-800');
-
+                
+                // "Go to HTML" button (toggleEditorViewBtnRichText) is now active/visible.
+                // Its color depends on the MSO toggle.
+                updateGoToHtmlButtonColor(); // This function handles its specific coloring.
+                
                 currentView = 'richtext';
                 console.log("Switched to Rich Text View.");
                 if (richTextEditorInstance) {
@@ -2207,6 +2234,23 @@
             }
         }
 
+        /**
+         * Updates the color of the "Go to HTML" button based on the "Auto-Clean MSO when switching" toggle state.
+         * This function is now responsible for setting the correct color for the "Go to HTML" button
+         * when the `currentView` is 'richtext' (meaning the "Go to HTML" button is visible and active).
+         */
+        function updateGoToHtmlButtonColor() {
+            // This function is called when the rich text panel is visible and the "Go to HTML" button is active.
+            // Its color should reflect the state of toggleAutoCleanMsoOnSwitchRichText.
+            if (toggleAutoCleanMsoOnSwitchRichText.checked) {
+                toggleEditorViewBtnRichText.classList.remove('bg-sky-700', 'hover:bg-sky-800', 'bg-zinc-700', 'hover:bg-zinc-600');
+                toggleEditorViewBtnRichText.classList.add('bg-green-600', 'hover:bg-green-700');
+            } else {
+                toggleEditorViewBtnRichText.classList.remove('bg-green-600', 'hover:bg-green-700', 'bg-zinc-700', 'hover:bg-zinc-600');
+                toggleEditorViewBtnRichText.classList.add('bg-sky-700', 'hover:bg-sky-800');
+            }
+        }
+
 
         // Initialize and set up event listeners on window load
         window.onload = function() {
@@ -2216,10 +2260,12 @@
             codePanel.classList.add('panel-hidden');
             
             // Set initial button styles based on default view (richtext)
-            toggleEditorViewBtnRichText.classList.add('bg-sky-700', 'hover:bg-sky-800');
-            toggleEditorViewBtnRichText.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
+            // The "Go to HTML" button is visible initially, so its color depends on the MSO toggle.
+            // The "Go to Rich-Text" button is hidden initially, so it should have its default zinc color.
             toggleEditorViewBtnCode.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
-            toggleEditorViewBtnCode.classList.remove('bg-sky-700', 'hover:bg-sky-800');
+            toggleEditorViewBtnCode.classList.remove('bg-sky-700', 'hover:bg-sky-800', 'bg-green-600', 'hover:bg-green-700');
+            updateGoToHtmlButtonColor(); // Call to set initial color for "Go to HTML" button
+
 
             // Initialize Monaco Editor
             require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.49.0/min/vs' } });
@@ -2605,10 +2651,8 @@
                     console.warn("Parent: Could not capture HugeRTE instance from iframe. Is HugeRTE initializing correctly inside?");
                 }
             };
-        };
 
-        // Collapsible section logic
-        document.addEventListener('DOMContentLoaded', () => {
+            // Collapsible section logic
             const collapsibleSections = document.querySelectorAll('.collapsible-section');
 
             function toggleCollapsible(header, content) {
@@ -2708,9 +2752,40 @@
                 });
             });
 
+            // Event listeners for Auto-Clean MSO when switching toggles
+            toggleAutoCleanMsoOnSwitchRichText.addEventListener('change', (event) => {
+                const isChecked = event.target.checked;
+                const parentLabel = event.target.closest('.toggle-switch');
+                if (isChecked) {
+                    parentLabel.classList.add('is-checked');
+                } else {
+                    parentLabel.classList.remove('is-checked');
+                }
+                toggleAutoCleanMsoOnSwitchCode.checked = isChecked; // Sync state
+                toggleAutoCleanMsoOnSwitchCode.closest('.toggle-switch').classList.toggle('is-checked', isChecked);
+                console.log(`Auto-Clean MSO on RichText switch is now: ${isChecked ? 'ON' : 'OFF'}`);
+                updateGoToHtmlButtonColor(); // Update button color
+            });
+
+            toggleAutoCleanMsoOnSwitchCode.addEventListener('change', (event) => {
+                const isChecked = event.target.checked;
+                const parentLabel = event.target.closest('.toggle-switch');
+                if (isChecked) {
+                    parentLabel.classList.add('is-checked');
+                } else {
+                    parentLabel.classList.remove('is-checked');
+                }
+                toggleAutoCleanMsoOnSwitchRichText.checked = isChecked; // Sync state
+                toggleAutoCleanMsoOnSwitchRichText.closest('.toggle-switch').classList.toggle('is-checked', isChecked);
+                console.log(`Auto-Clean MSO on Code switch is now: ${isChecked ? 'ON' : 'OFF'}`);
+                // No button color update needed here as it's the "Go to Rich-Text" button
+            });
+
+
             // Call updateRunButtonState initially to set the correct state on load
             updateRunButtonState();
             updateRunTableButtonState(); // Call for table button as well
+            // updateGoToHtmlButtonColor(); // Initial call is now handled directly in window.onload for better control
 
             // Functionality for "Run Selected" button for General Cleaning
             runSelectedBtn.addEventListener('click', () => {
@@ -2887,7 +2962,7 @@
                     updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
                 }, 1500);
             });
-        });
+        };
     </script>
 </body>
 </html>
