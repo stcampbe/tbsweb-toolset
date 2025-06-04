@@ -837,15 +837,18 @@
          * within block-level elements. Also replaces sequences of two or more <br> tags with </p><p>.
          * NEW: Also cleans `<br clear="all">` tags.
          * NEW: Also cleans `<span style="mso-spacerun: yes">` tags, preserving only normal spaces within them.
+         * NEW: Removes empty <p> tags (including &nbsp;) if they are outside of tables.
+         * NEW: Removes empty <li>, <div>, and <section> tags (including &nbsp;) anywhere.
          * @param {string} htmlString - The HTML content to clean.
          * @returns {string} The cleaned HTML content.
          */
         function applyAutoSpacing(htmlString) {
             const parser = new DOMParser();
             const doc = parser.parseFromString(htmlString, 'text/html');
+            const body = doc.body;
 
             // 1. Handle <span style="mso-spacerun: yes"> tags
-            const spacerunSpans = doc.querySelectorAll('span[style*="mso-spacerun: yes"]');
+            const spacerunSpans = body.querySelectorAll('span[style*="mso-spacerun: yes"]');
             spacerunSpans.forEach(span => {
                 const parent = span.parentNode;
                 if (parent) {
@@ -861,7 +864,7 @@
             });
 
             // Serialize the modified DOM back to a string for further processing
-            let cleanedHtml = doc.body.innerHTML;
+            let cleanedHtml = body.innerHTML;
 
             // 2. Replace multiple spaces with a single space and trim.
             cleanedHtml = cleanedHtml.replace(/\s+/g, ' ').trim();
@@ -873,7 +876,39 @@
             // 4. Remove <br clear="all"> tags
             cleanedHtml = cleanedHtml.replace(/<br\s+clear="all"\s*\/?>/gi, '');
 
-            return cleanedHtml;
+            // Re-parse to work with DOM for new rules
+            doc.body.innerHTML = cleanedHtml;
+
+            // 5. Remove empty <p> tags (including &nbsp;) if they are outside of tables.
+            const paragraphs = Array.from(body.querySelectorAll('p'));
+            for (let i = paragraphs.length - 1; i >= 0; i--) {
+                const p = paragraphs[i];
+                const trimmedContent = p.innerHTML.trim();
+                const isEmptyOrNBSP = trimmedContent === '' || trimmedContent === '&nbsp;' || trimmedContent === '\u00A0';
+                const isInsideTable = p.closest('table');
+
+                if (isEmptyOrNBSP && !isInsideTable) {
+                    if (p.parentNode) {
+                        p.parentNode.removeChild(p);
+                    }
+                }
+            }
+
+            // 6. Remove empty <li>, <div>, and <section> tags (including &nbsp;) anywhere.
+            const elementsToClean = Array.from(body.querySelectorAll('li, div, section'));
+            for (let i = elementsToClean.length - 1; i >= 0; i--) {
+                const element = elementsToClean[i];
+                const trimmedContent = element.innerHTML.trim();
+                const isEmptyOrNBSP = trimmedContent === '' || trimmedContent === '&nbsp;' || trimmedContent === '\u00A0';
+
+                if (isEmptyOrNBSP) {
+                    if (element.parentNode) {
+                        element.parentNode.removeChild(element);
+                    }
+                }
+            }
+
+            return body.innerHTML;
         }
 
         /**
