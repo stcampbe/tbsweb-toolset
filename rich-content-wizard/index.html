@@ -497,7 +497,7 @@
             <div id="codePanel" class="code-panel panel-hidden">
                 <div class="flex items-center mb-4 flex-wrap">
                     <h2 class="text-xl font-semibold text-white">HTML Editor</h2>
-                    <button id="toggleEditorViewBtnCode" class="ml-4 px-4 py-2 text-base font-semibold bg-zinc-700 text-white rounded-md hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-opacity-50 font-bold">
+                    <button id="toggleEditorViewBtnCode" class="ml-4 px-4 py-2 text-base font-semibold bg-sky-700 text-white rounded-md hover:bg-sky-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold">
                         Go to Rich-Text
                     </button>
                     <!-- New toggle for HTML panel, now in a container -->
@@ -797,12 +797,25 @@
 
                 // Case 2: Process <a> tags with href (existing logic)
                 if (href) {
-                    // Convert URLs
-                    for (const mapping of urlMappings) {
-                        if (href.startsWith(mapping.old)) {
-                            href = href.replace(mapping.old, mapping.new);
-                            a.setAttribute('href', href);
-                            break; // Stop after the first match
+                    // Specific handling for "/content/canadasite" links
+                    if (href.includes('/content/canadasite')) {
+                        // Remove any preceding "../.." or "https://"
+                        href = href.replace(/^(?:\.\.\/)+/, ''); // Remove ../../
+                        href = href.replace(/^https?:\/\/[^/]+/, ''); // Remove https://domain.com
+                        // Ensure it starts with /content/canadasite if it contains it
+                        const canadaSiteIndex = href.indexOf('/content/canadasite');
+                        if (canadaSiteIndex !== 0) {
+                            href = href.substring(canadaSiteIndex);
+                        }
+                        a.setAttribute('href', href);
+                    } else {
+                        // Convert other URLs
+                        for (const mapping of urlMappings) {
+                            if (href.startsWith(mapping.old)) {
+                                href = href.replace(mapping.old, mapping.new);
+                                a.setAttribute('href', href);
+                                break; // Stop after the first match
+                            }
                         }
                     }
                 }
@@ -856,7 +869,7 @@
             // 2. Replace multiple spaces with a single space and trim.
             cleanedHtml = cleanedHtml.replace(/\s+/g, ' ').trim();
 
-            // 3. Replace sequences of two or more <br> tags (with optional whitespace) with </p><p>.
+            // 3. Replace sequences of two or more <br> tags (with optional whitespace) with </p><p>');
             // This handles <br><br>, <br> <br>, <br/><br/>, etc.
             cleanedHtml = cleanedHtml.replace(/(<br\s*\/?>\s*){2,}/gi, '</p><p>');
 
@@ -1180,17 +1193,17 @@
                     } else if (tagName === 'div' && (hasClass || hasId)) {
                         // Keep div with class or id
                         const clonedChild = child.cloneNode(false);
-                        clonedChild.innerHTML = cleanHeadingContent(child, doc); // Recursively clean content
+                        clonedChild.innerHTML = cleanHeadingContent(clonedChild, doc); // Recursively clean content
                         tempContainer.appendChild(clonedChild);
                     } else if (tagName === 'a' || tagName === 'em') {
                         // Keep a and em tags
                         const clonedChild = child.cloneNode(false);
-                        clonedChild.innerHTML = cleanHeadingContent(child, doc); // Recursively clean content
+                        clonedChild.innerHTML = cleanHeadingContent(clonedChild, doc); // Recursively clean content
                         tempContainer.appendChild(clonedChild);
                     } else if (tagName === 'span' && (hasClass || hasId)) {
                         // Keep span with class or id (not starting with "Heading")
                         const clonedChild = child.cloneNode(false);
-                        clonedChild.innerHTML = cleanHeadingContent(child, doc); // Recursively clean content
+                        clonedChild.innerHTML = cleanHeadingContent(clonedChild, doc); // Recursively clean content
                         tempContainer.appendChild(clonedChild);
                     } else {
                         // Unwrap other disallowed elements
@@ -1221,9 +1234,9 @@
          * 8. Removes all attributes except rowspan, colspan, class, id, headers, and scope
          * from table, thead, tbody, tfoot, tr, th, and td tags.
          * 9. For <p> tags with "MsoToc" in the class:
-         * a. Strip all attributes from the <p> tag.
-         * b. Delete everything within them EXCEPT <a> tags with an href and all basic text content.
-         * c. Within those preserved <a> tags, remove EVERYTHING within them ONLY leaving basic text content.
+         * b. Strip all attributes from the <p> tag.
+         * c. Delete everything within them EXCEPT <a> tags with an href and all basic text content.
+         * d. Within those preserved <a> tags, remove EVERYTHING within them ONLY leaving basic text content.
          * 10. Deletes any <img> tag with "file://" or "data:" at the start of the src
          * and replaces it with "<div class="clearfix"><mark>IMAGE NOT IMPORTED</mark></div>".
          * 11. Removes the `class` attribute from `<table>` tags if the class contains "MsoTable".
@@ -2001,13 +2014,13 @@
             // 3. Convert <i> to <em>
             const iElements = Array.from(doc.querySelectorAll('i'));
             for (let i = iElements.length - 1; i >= 0; i--) {
-                const i = iElements[i];
-                if (i.parentNode) {
+                const i_tag = iElements[i]; // Renamed to avoid conflict with loop variable
+                if (i_tag.parentNode) {
                     const em = doc.createElement('em');
-                    while (i.firstChild) {
-                        em.appendChild(i.firstChild);
+                    while (i_tag.firstChild) {
+                        em.appendChild(i_tag.firstChild);
                     }
-                    i.parentNode.replaceChild(em, i);
+                    i_tag.parentNode.replaceChild(em, i_tag);
                 }
             }
 
@@ -2020,11 +2033,11 @@
          * This is called from the parent window.
          */
         window.setRichEditorContent = function(content) {
-            console.log("Parent: Attempting to set HugeRTE content.");
+            // console.log("Parent: Attempting to set HugeRTE content.");
             if (richTextEditorInstance) {
                 richTextEditorInstance.setContent(cleanHtmlForRichTextDisplay(content));
                 richTextEditorInstance.focus(); // Re-focus the rich editor after content update
-                console.log('Parent: HugeRTE updated from HTML editor.');
+                // console.log('Parent: HugeRTE updated from HTML editor.');
             } else {
                 console.warn('Parent: HugeRTE editor not yet initialized. Content will be set once ready.');
             }
@@ -2035,10 +2048,10 @@
          * This is called from the parent window.
          */
         window.getRichEditorContent = function() {
-            console.log("Parent: Attempting to get HugeRTE content.");
+            // console.log("Parent: Attempting to get HugeRTE content.");
             if (richTextEditorInstance) {
                 const content = richTextEditorInstance.getContent();
-                console.log("Parent: HugeRTE content requested by parent.");
+                // console.log("Parent: HugeRTE content requested by parent.");
                 return content;
             } else {
                 console.warn('Iframe: HugeRTE editor not yet initialized. Cannot get content.');
@@ -2074,7 +2087,7 @@
                 // 1. Get content from Rich-Text editor.
                 if (default_ifr.contentWindow && default_ifr.contentWindow.getRichEditorContent) {
                     richTextContent = default_ifr.contentWindow.getRichEditorContent();
-                    console.log("Syncing from Rich Text to HTML. Rich Text Content length:", richTextContent.length);
+                    // console.log("Syncing from Rich Text to HTML. Rich Text Content length:", richTextContent.length); // Line 1823
                 } else {
                     console.warn("Rich Text Editor not ready for content retrieval on toggle. Using empty string.");
                     richTextContent = '';
@@ -2101,7 +2114,7 @@
                 // Run Auto-Encode and Auto-Indent when switching to HTML editor
                 autoEncodeBtn.click();
                 autoFormatBtn.click();
-                console.log("Auto-Encode and Auto-Indent applied on switch to HTML editor.");
+                // console.log("Auto-Encode and Auto-Indent applied on switch to HTML editor."); // Line 1837
 
                 // 3. Switch panel visibility.
                 richtextOutputPanel.classList.remove('panel-visible');
@@ -2116,9 +2129,9 @@
                 toggleEditorViewBtnRichText.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
                 
                 // "Go to Rich-Text" button (toggleEditorViewBtnCode) is now active/visible.
-                // It should always be zinc.
-                toggleEditorViewBtnCode.classList.remove('bg-green-600', 'hover:bg-green-700', 'bg-sky-700', 'hover:bg-sky-800');
-                toggleEditorViewBtnCode.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
+                // It should be blue.
+                toggleEditorViewBtnCode.classList.remove('bg-green-600', 'hover:bg-green-700', 'bg-zinc-700', 'hover:bg-zinc-600');
+                toggleEditorViewBtnCode.classList.add('bg-sky-700', 'hover:bg-sky-800');
                 
                 currentView = 'code';
                 console.log("Switched to Code View.");
@@ -2137,7 +2150,7 @@
                 let processedContent = htmlOutputContent;
                 if (toggleAutoCleanMsoOnSwitchCode.checked) {
                     processedContent = applyCleanMsoCode(processedContent);
-                    console.log("Auto-Clean MSO applied when switching to Rich-Text editor.");
+                    // console.log("Auto-Clean MSO applied when switching to Rich-Text editor."); // Line 1859
                 }
 
                 // 2. Update Rich Text content and editor.
@@ -2157,9 +2170,9 @@
 
                 // 4. Update button styles.
                 // "Go to Rich-Text" button (toggleEditorViewBtnCode) is now inactive/hidden.
-                // It should always be zinc.
-                toggleEditorViewBtnCode.classList.remove('bg-green-600', 'hover:bg-green-700', 'bg-sky-700', 'hover:bg-sky-800');
-                toggleEditorViewBtnCode.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
+                // It should be blue.
+                toggleEditorViewBtnCode.classList.remove('bg-green-600', 'hover:bg-green-700', 'bg-zinc-700', 'hover:bg-zinc-600');
+                toggleEditorViewBtnCode.classList.add('bg-sky-700', 'hover:bg-sky-800');
                 
                 // "Go to HTML" button (toggleEditorViewBtnRichText) is now active/visible.
                 // Its color depends on the MSO toggle.
@@ -2261,9 +2274,9 @@
             
             // Set initial button styles based on default view (richtext)
             // The "Go to HTML" button is visible initially, so its color depends on the MSO toggle.
-            // The "Go to Rich-Text" button is hidden initially, so it should have its default zinc color.
-            toggleEditorViewBtnCode.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
-            toggleEditorViewBtnCode.classList.remove('bg-sky-700', 'hover:bg-sky-800', 'bg-green-600', 'hover:bg-green-700');
+            // The "Go to Rich-Text" button is hidden initially, so it should have its default blue color.
+            toggleEditorViewBtnCode.classList.add('bg-sky-700', 'hover:bg-sky-800');
+            toggleEditorViewBtnCode.classList.remove('bg-sky-700', 'hover:bg-sky-800', 'bg-zinc-700', 'hover:bg-zinc-600');
             updateGoToHtmlButtonColor(); // Call to set initial color for "Go to HTML" button
 
 
@@ -2302,7 +2315,6 @@
                     }
                 });
             });
-
 
             copyCodeBtn.addEventListener('click', async () => {
                 const codeContent = monacoEditorInstance ? monacoEditorInstance.getValue() : '';
@@ -2559,12 +2571,12 @@
                          * This is called from the parent window.
                          */
                         window.setRichEditorContent = function(content) {
-                            console.log("Iframe: setRichEditorContent called by parent.");
+                            // console.log("Iframe: setRichEditorContent called by parent.");
                             if (richTextEditorInstance && !isUpdatingFromCodeMirror) {
                                 isUpdatingFromCodeMirror = true;
                                 richTextEditorInstance.setContent(content);
                                 richTextEditorInstance.focus(); // Re-focus the rich editor after content update
-                                console.log('Iframe: HugeRTE updated from parent.');
+                                // console.log('Iframe: HugeRTE updated from parent.');
                                 isUpdatingFromCodeMirror = false;
                             } else {
                                 console.warn('Iframe: HugeRTE editor not yet initialized or isUpdatingFromCodeMirror is true. Content will be set once ready.');
@@ -2576,10 +2588,10 @@
                          * This is called from the parent window.
                          */
                         window.getRichEditorContent = function() {
-                            console.log("Iframe: getRichEditorContent called by parent.");
+                            // console.log("Iframe: getRichEditorContent called by parent.");
                             if (richTextEditorInstance) {
                                 const content = richTextEditorInstance.getContent();
-                                console.log("Iframe: HugeRTE content requested by parent.");
+                                // console.log("Iframe: HugeRTE content requested by parent.");
                                 return content;
                             } else {
                                 console.warn('Iframe: HugeRTE editor not yet initialized. Cannot get content.');
@@ -2863,14 +2875,14 @@
                 // Provide visual feedback
                 const originalText = runSelectedBtn.textContent;
                 runSelectedBtn.textContent = 'Cleaned!';
-                runSelectedBtn.classList.add('bg-blue-500', 'hover:bg-blue-600');
+                runSelectedBtn.classList.add('bg-sky-500', 'hover:bg-sky-600');
                 runSelectedBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
                 runSelectedBtn.disabled = true; // Disable the button
                 runSelectedBtn.setAttribute('data-temp-active', 'true'); // Mark as active
                 updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
                 setTimeout(() => {
                     runSelectedBtn.textContent = originalText;
-                    runSelectedBtn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+                    runSelectedBtn.classList.remove('bg-sky-500', 'hover:bg-sky-600');
                     runSelectedBtn.classList.add('bg-green-600', 'hover:bg-green-700');
                     runSelectedBtn.disabled = false; // Re-enable the button
                     runSelectedBtn.removeAttribute('data-temp-active'); // Unmark as active
@@ -2948,14 +2960,14 @@
                 // Provide visual feedback
                 const originalText = runSelectedTableBtn.textContent;
                 runSelectedTableBtn.textContent = 'Cleaned!';
-                runSelectedTableBtn.classList.add('bg-blue-500', 'hover:bg-blue-600');
+                runSelectedTableBtn.classList.add('bg-sky-500', 'hover:bg-sky-600');
                 runSelectedTableBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
                 runSelectedTableBtn.disabled = true; // Disable the button
                 runSelectedTableBtn.setAttribute('data-temp-active', 'true'); // Mark as active
                 updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
                 setTimeout(() => {
                     runSelectedTableBtn.textContent = originalText;
-                    runSelectedTableBtn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+                    runSelectedTableBtn.classList.remove('bg-sky-500', 'hover:bg-sky-600');
                     runSelectedTableBtn.classList.add('bg-green-600', 'hover:bg-green-700');
                     runSelectedTableBtn.disabled = false; // Re-enable the button
                     runSelectedTableBtn.removeAttribute('data-temp-active'); // Unmark as active
