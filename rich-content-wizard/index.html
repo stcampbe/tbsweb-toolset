@@ -1383,7 +1383,7 @@
 
                 for (const cls of classList) {
                     const match = cls.match(/^Heading(\d)$/);
-                    if (match && match[1] >= 1 && match[1] <= 6) {
+                    if (match && parseInt(match[1], 10) >= 1 && parseInt(match[1], 10) <= 6) {
                         headingLevel = parseInt(match[1], 10);
                         break;
                     }
@@ -1400,11 +1400,16 @@
                         }
                         
                         // Move all other children of the parentP (that are not the span) into the new heading tag
-                        Array.from(parentP.childNodes).forEach(node => {
-                            if (node !== span) {
-                                newHeadingTag.appendChild(node.cloneNode(true));
+                        // This ensures any text or other elements directly within the <p> but outside the <span>
+                        // are also moved to the new heading.
+                        // Iterate in reverse to avoid issues with childNodes changing during removal
+                        const pChildren = Array.from(parentP.childNodes);
+                        for (let i = pChildren.length - 1; i >= 0; i--) {
+                            const node = pChildren[i];
+                            if (node !== span) { // Only move nodes that are not the target span
+                                newHeadingTag.prepend(node); // Prepend to maintain order
                             }
-                        });
+                        }
 
                         if (parentP.parentNode) {
                             parentP.parentNode.replaceChild(newHeadingTag, parentP);
