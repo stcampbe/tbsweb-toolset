@@ -799,9 +799,6 @@
                 if (href) {
                     // Specific handling for "/content/canadasite" links
                     if (href.includes('/content/canadasite')) {
-                        // Remove any preceding "../.." or "https://"
-                        href = href.replace(/^(?:\.\.\/)+/, ''); // Remove ../../
-                        href = href.replace(/^https?:\/\/[^/]+/, ''); // Remove https://domain.com
                         // Ensure it starts with /content/canadasite if it contains it
                         const canadaSiteIndex = href.indexOf('/content/canadasite');
                         if (canadaSiteIndex !== 0) {
@@ -2099,6 +2096,10 @@
                     processedContent = applyCleanMsoCode(processedContent);
                     console.log("Auto-Clean MSO applied when switching to HTML editor.");
                 }
+
+                // Apply URL cleaning when switching TO the HTML editor
+                processedContent = applyUrlCleaning(processedContent);
+                console.log("URL cleaning applied when switching to HTML editor.");
                 
                 // 2. Update HTML output content and Monaco editor.
                 htmlOutputContent = processedContent;
