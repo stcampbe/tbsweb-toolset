@@ -35,6 +35,7 @@
             width: 100%; /* Full width */
             height: calc(100% - 2rem); /* Take full height minus padding */
             box-sizing: border-box; /* Include padding in total height */
+            overflow: hidden; /* Prevent container from scrolling */
         }
         .code-panel, .preview-panel {
             background-color: #2d3748; /* Slightly lighter dark background for panels */
@@ -417,7 +418,7 @@
     <section>
         <h3 id="toc1-1">Section Heading 1</h3>
 <p>Lorem ipsum dolor sit amet, <a href="https://www.canada.ca/en/treasury-board-secretariat/services/benefit-plans/health-care-plan/public-service-health-care-plan-glance.html">consectetur</a> adipiscing elit. Sed do eiusmod tempor incididunt ut  labore et dolore’s magna aliqua.   Ut enim ad minim veniam, quis nostrud exercitation ullamco’s laboris nisi ut aliquip ex ea commodo consequat.</p>
-<p><a href="/content/canadasite/en/government/system/government-wide-reporting-spending-operations.html">Duis aute irure dolor</a> in reprehenderit in &ldquo;voluptate&rdquo; velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint “occaeca” cupidatat non <a href="https://www.google.com/" target="_blank">proident</a>, sunt in culpa <a href="https://canada-preview.adobecqms.net/en/government/system/government-wide-reporting-spending-operations/government-spending.html">qui officia deserunt</a> mollit anim id est March 20, 2023 laborum.</p>
+<p><a href="/content/canadasite/en/government/system/government-wide-reporting-spending-operations.html">Duis aute irure dolor</a> in reprehenderit in &ldquo;voluptate&rdquo; velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint “occaeca” cupidatat non <a href="https://www.google.com/" target="_blank">proident</a>, sunt in culpa <a href="https://canada-preview.adobecqms.net/en/government/system/government-wide-reporting-spending-operations/government-spending.html">qui officia deserunt</a> mollit anim id est March 20, 2023 laborum. This document was created on 2023-02-24 and last updated on 2024-11-15.</p>
 <section>
 <h4 id="toc1-1-1">Subsection Heading A</h4>
 <ul>
@@ -1943,21 +1944,17 @@
                     const doc = parser.parseFromString(originalHtml, 'text/html');
                     const body = doc.body;
 
-                    // Step 1: Pre-clean existing <time> tags' datetime attributes
+                    // Step 1: Remove existing <time> tags and extract their text content
                     const existingTimeElements = doc.querySelectorAll('time');
                     existingTimeElements.forEach(timeEl => {
-                        let datetimeAttr = timeEl.getAttribute('datetime');
-                        if (datetimeAttr) {
-                            const cleanedDatetime = datetimeAttr.replace(/<[^>]*>/g, '').replace(/&nbsp;|&#160;/g, ' ').replace(/\s+/g, ' ').trim();
-                            // Only keep datetime if it's a valid YYYY-MM-DD or YYYY-MM format
-                            const dateMatch = cleanedDatetime.match(/^(\d{4}-\d{2}-\d{2})$|^(\d{4}-\d{2})$/);
-                            if (dateMatch) {
-                                timeEl.setAttribute('datetime', dateMatch[0]);
-                            } else {
-                                timeEl.removeAttribute('datetime'); // Remove if not a valid format
-                            }
-                        }
+                        // Replace the <time> element with its text content
+                        const textNode = doc.createTextNode(timeEl.textContent);
+                        timeEl.parentNode.replaceChild(textNode, timeEl);
                     });
+
+                    // Now, `body.innerHTML` contains the HTML with all <time> tags removed.
+                    // This is the content we will re-process for tagging.
+                    let contentToProcess = body.innerHTML;
 
                     // Month mapping for conversion to numeric format
                     const monthMap = {
@@ -1980,18 +1977,25 @@
                     }
 
                     const monthPattern = Object.keys(monthMap).map(m => m.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|');
-                    // Updated spaceOrNBSPChar to include placeholders
                     const spaceOrNBSPChar = `(?:\\s|\\u00A0|&nbsp;|&#160;|${NBSP_ENTITY_PLACEHOLDER}|${NUMERIC_NBSP_ENTITY_PLACEHOLDER}|${LITERAL_NBSP_CHAR_PLACEHOLDER})+`;
+
+                    // Regex for YYYY-MM-DD (prioritized) - ONLY this one, no YYYY-MM
+                    const regexIsoDateFull = /(?<!\d)(\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01]))(?!\d)/g;
 
                     // Only include patterns for month (written) and year, and day, month (written) and year.
                     const regexMonthDayYear = new RegExp(`(?<!\\d)(${monthPattern})${spaceOrNBSPChar}(\\d{1,2}),?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'i');
                     const regexDayMonthYear = new RegExp(`(?<!\\d)(\\d{1,2})${spaceOrNBSPChar}(${monthPattern}),?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'i');
                     const regexMonthYear = new RegExp(`(?<!\\d)(${monthPattern})${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'i');
 
+
+                    // Re-parse the content to allow traversal of the updated DOM
+                    const reParsedDoc = parser.parseFromString(contentToProcess, 'text/html');
+                    const reParsedBody = reParsedDoc.body;
+
                     // Collect all text nodes to process first, then iterate and modify.
                     const textNodesToModify = [];
-                    const walker = doc.createTreeWalker(
-                        body,
+                    const walker = reParsedDoc.createTreeWalker(
+                        reParsedBody,
                         NodeFilter.SHOW_TEXT,
                         {
                             acceptNode: function(node) {
@@ -2021,21 +2025,26 @@
 
                         let allMatches = [];
                         const patternsToTest = [
+                            { name: 'IsoDateFull', regex: regexIsoDateFull, handler: (match) => match[0], priority: 3 }, // Highest priority
                             { name: 'DayMonthYear', regex: regexDayMonthYear, handler: (match) => {
                                 const [, day, month, year] = match;
                                 const monthNum = getMonthNumber(month);
-                                return monthNum ? `${year}-${monthNum}-${String(day).padStart(2, '0')}` : null;
-                            }},
+                                // Validate day and month
+                                if (!monthNum || parseInt(day) < 1 || parseInt(day) > 31) return null;
+                                return `${year}-${monthNum}-${String(day).padStart(2, '0')}`;
+                            }, priority: 2 },
                             { name: 'MonthDayYear', regex: regexMonthDayYear, handler: (match) => {
                                 const [, month, day, year] = match;
                                 const monthNum = getMonthNumber(month);
+                                // Validate day and month
+                                if (!monthNum || parseInt(day) < 1 || parseInt(day) > 31) return null;
                                 return monthNum ? `${year}-${monthNum}-${String(day).padStart(2, '0')}` : null;
-                            }},
+                            }, priority: 2 },
                             { name: 'MonthYear', regex: regexMonthYear, handler: (match) => {
                                 const [, month, year] = match;
                                 const monthNum = getMonthNumber(month);
                                 return monthNum ? `${year}-${monthNum}` : null;
-                            }}
+                            }, priority: 1 }
                         ];
 
                         patternsToTest.forEach(pattern => {
@@ -2054,13 +2063,13 @@
                                         end: match.index + match[0].length,
                                         original: match[0],
                                         datetime: datetimeValue,
-                                        // Prioritize full dates over month-year
-                                        priority: (pattern.name === 'DayMonthYear' || pattern.name === 'MonthDayYear') ? 2 : 1
+                                        priority: pattern.priority
                                     });
                                 }
                             }
                         });
 
+                        // Sort by start position, then by priority (descending)
                         allMatches.sort((a, b) => {
                             if (a.start !== b.start) {
                                 return a.start - b.start;
@@ -2071,11 +2080,30 @@
                         let nonOverlappingMatches = [];
                         let lastEnd = -1;
                         allMatches.forEach(match => {
-                            if (match.start >= lastEnd) {
+                            // Check for overlap and length preference for ISO dates
+                            // If the current match overlaps with the last added non-overlapping match,
+                            // only add it if it's a higher priority or same priority but longer (for ISO dates)
+                            let shouldAdd = true;
+                            if (nonOverlappingMatches.length > 0) {
+                                const lastAdded = nonOverlappingMatches[nonOverlappingMatches.length - 1];
+                                if (!(match.start >= lastAdded.end)) { // If there's an overlap
+                                    // If the new match has lower or equal priority and is not longer, skip it
+                                    if (match.priority < lastAdded.priority ||
+                                        (match.priority === lastAdded.priority && match.original.length <= lastAdded.original.length)) {
+                                        shouldAdd = false;
+                                    } else {
+                                        // If higher priority or longer, replace the last one
+                                        nonOverlappingMatches.pop();
+                                    }
+                                }
+                            }
+
+                            if (shouldAdd) {
                                 nonOverlappingMatches.push(match);
                                 lastEnd = match.end;
                             }
                         });
+
 
                         if (nonOverlappingMatches.length > 0) {
                             let resultParts = [];
@@ -2088,12 +2116,12 @@
                             resultParts.push(currentText.substring(currentIndex));
                             const newHtmlContent = resultParts.join('');
 
-                            const fragment = doc.createRange().createContextualFragment(newHtmlContent);
+                            const fragment = reParsedDoc.createRange().createContextualFragment(newHtmlContent);
                             textNode.parentNode.replaceChild(fragment, textNode);
                         }
                     });
 
-                    let finalHtml = body.innerHTML;
+                    let finalHtml = reParsedBody.innerHTML;
                     finalHtml = revertNBSPPlaceholders(finalHtml); // Revert placeholders
 
                     editor.setValue(finalHtml);
