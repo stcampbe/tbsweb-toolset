@@ -1711,15 +1711,20 @@
 
             const ftnLinks = doc.querySelectorAll('a[href^="#_ftn"]');
             ftnLinks.forEach(a => {
+                // Remove title and name attributes regardless
                 if (a.hasAttribute('title')) {
                     a.removeAttribute('title');
                 }
                 if (a.hasAttribute('name')) {
                     a.removeAttribute('name');
                 }
-                const supElement = doc.createElement('sup');
-                if (a.parentNode) {
+
+                // Only wrap if it's not already inside a <sup> tag
+                if (a.parentNode && a.parentNode.tagName.toLowerCase() !== 'sup') {
+                    const supElement = doc.createElement('sup');
+                    // Insert the sup element before the a tag
                     a.parentNode.insertBefore(supElement, a);
+                    // Then append the a tag into the sup element
                     supElement.appendChild(a);
                 }
             });
