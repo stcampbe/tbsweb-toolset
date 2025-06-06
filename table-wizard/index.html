@@ -3,742 +3,682 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CodeMirror Table Editor with Multi-Table Support</title>
+    <title>CodeMirror HTML Table Formatter</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <!-- CodeMirror CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
-    <!-- CodeMirror Theme (Dracula for dark mode aesthetics) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css">
-
-    <!-- CodeMirror JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
-    <!-- CodeMirror Modes for HTML -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js"></script>
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
+    <!-- CodeMirror Theme CSS (explicitly loading default theme) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/default.min.css">
     <style>
-        /* Base styles for the main page (handles light and dark modes) */
+        /* Custom styles to ensure CodeMirror fits well and for general aesthetics */
         body {
-            font-family: sans-serif;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            overflow: hidden;
-            background-color: #f3f4f6; /* Light mode background */
-            color: #1f2937; /* Light mode text */
-            box-sizing: border-box; /* Ensure padding/border included in element's total width/height */
-        }
-        @media (prefers-color-scheme: dark) {
-            body {
-                background-color: #1f2937; /* Dark mode background */
-                color: #f9fafb; /* Dark mode text */
-            }
-        }
-
-        /* Container for editor and preview panes */
-        .container {
-            display: flex;
-            flex: 1; /* Occupy remaining vertical space */
-            overflow: hidden; /* Prevent content overflow */
-            padding: 10px;
-        }
-
-        /* Styles for individual panes (editor and preview) */
-        .editor-pane, .preview-pane {
-            flex: 1; /* Distribute horizontal space equally */
-            display: flex;
-            flex-direction: column;
-            border: 1px solid #d1d5db; /* Light mode border */
-            border-radius: 8px;
-            margin: 0 5px; /* Spacing between panes */
-            overflow: hidden;
-            background-color: #ffffff; /* Pane background in light mode */
-        }
-        @media (prefers-color-scheme: dark) {
-            .editor-pane, .preview-pane {
-                border-color: #4b5563; /* Dark mode border */
-                background-color: #374151; /* Pane background in dark mode */
-            }
-        }
-
-        h2 {
-            margin: 0;
-            padding: 10px;
-            font-size: 1.2em;
-            text-align: center;
-            border-bottom: 1px solid #d1d5db; /* Separator */
-            color: #333; /* Light mode heading color */
-        }
-        @media (prefers-color-scheme: dark) {
-            h2 {
-                border-color: #4b5563; /* Dark mode separator */
-                color: #f9fafb; /* Dark mode heading color */
-            }
-        }
-
-        /* CodeMirror editor specific styles */
-        .CodeMirror {
-            flex: 1; /* Occupy remaining vertical space */
-            height: auto; /* Allow CodeMirror to fill flex container */
-            font-size: 14px;
-            line-height: 1.5;
-            border-radius: 0 0 8px 8px; /* Match pane border-radius */
-        }
-
-        /* Styles for the iframe preview */
-        iframe {
-            flex: 1; /* Occupy remaining vertical space */
-            width: 100%;
-            border: none; /* Iframe itself has no border */
-            background-color: white; /* Default iframe background (will be overridden by inner body CSS) */
-        }
-
-        /* Styles for mode selection buttons */
-        .mode-selection {
+            font-family: 'Inter', sans-serif; /* Using Inter font */
             display: flex;
             justify-content: center;
-            padding: 10px;
-            background-color: #e0e7ee; /* Light mode background for controls */
-            border-bottom: 1px solid #d1d5db;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f4f8; /* Light background */
+            padding: 1rem;
         }
-        @media (prefers-color-scheme: dark) {
-            .mode-selection {
-                background-color: #2d3748; /* Dark mode background for controls */
-                border-bottom-color: #4b5563;
-            }
+        .container {
+            background-color: #ffffff;
+            border-radius: 1rem; /* Rounded corners */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            width: 100%;
+            max-width: 900px; /* Max width for larger screens */
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .CodeMirror {
+            border: 1px solid #cbd5e1; /* Light border */
+            border-radius: 0.5rem; /* Rounded corners for editor */
+            height: 400px; /* Fixed height for the editor */
+            font-size: 0.95rem; /* Slightly smaller font for code */
+        }
+        /* Responsive tables styling for horizontal scrolling */
+        .table-responsive {
+            overflow-x: auto; /* Enable horizontal scrolling */
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
         }
 
-        .mode-btn {
-            background-color: #cbd5e1; /* Light mode default button */
-            color: #1f2937;
-            border: 1px solid #9ca3af;
-            padding: 8px 15px;
-            margin: 0 5px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.9em;
-            transition: background-color 0.2s, border-color 0.2s, color 0.2s;
-        }
-        .mode-btn:hover {
-            background-color: #aeb9c6;
-        }
-        .mode-btn.active-mode {
-            background-color: #3b82f6; /* Blue active button */
-            color: white;
-            border-color: #2563eb;
-            pointer-events: none; /* Disable click on active button */
-        }
-        @media (prefers-color-scheme: dark) {
-            .mode-btn {
-                background-color: #4a5568; /* Dark mode default button */
-                color: #f9fafb;
-                border-color: #6b7280;
-            }
-            .mode-btn:hover {
-                background-color: #6b7280;
-            }
-            .mode-btn.active-mode {
-                background-color: #2563eb; /* Dark mode blue active button */
-                color: white;
-                border-color: #1d4ed8;
-            }
-        }
+        /* CodeMirror syntax highlighting colors */
+        .cm-s-default .cm-tag { color: #ef4444; } /* HTML tags */
+        .cm-s-default .cm-attribute { color: #059669; } /* HTML attributes */
+        .cm-s-default .cm-string { color: #3b82f6; } /* Attribute values, strings */
+        .cm-s-default .cm-keyword { color: #d946ef; } /* JS keywords (if JS is mixed) */
+        .cm-s-default .cm-comment { color: #6b7280; font-style: italic; } /* Comments */
+        .cm-s-default .cm-atom { color: #f97316; } /* Booleans, null */
+        .cm-s-default .cm-number { color: #10b981; } /* Numbers */
+        .cm-s-default .cm-variable { color: #007bff; } /* JS variables (if JS is mixed) */
+        .cm-s-default .cm-error { color: #ef4444; } /* Errors */
+        .cm-s-default .cm-builtin { color: #8a2be2; } /* Built-in functions/objects */
+        .cm-s-default .cm-property { color: #20b2aa; } /* Object properties */
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="editor-pane">
-            <h2>HTML Editor</h2>
-            <textarea id="code-editor"></textarea>
-        </div>
-        <div class="preview-pane">
-            <div class="mode-selection">
-                <button id="type-mode-btn" class="mode-btn active-mode" onclick="setMode('type')">Type Mode</button>
-                <button id="select-mode-btn" class="mode-btn" onclick="setMode('select')">Select Mode</button>
+        <h1 class="text-3xl font-bold text-center text-gray-800">HTML Table Formatter</h1>
+        <p class="text-gray-600 text-center">
+            Paste your HTML table code below. The formatter will clean up the table structure and apply chosen options.
+        </p>
+
+        <!-- Options Checkboxes and ID Prefix Input -->
+        <div class="flex flex-wrap items-center justify-center gap-4 p-4 bg-gray-50 rounded-lg shadow-inner">
+            <label class="inline-flex items-center">
+                <input type="checkbox" id="auto-id-checkbox" class="form-checkbox text-blue-600 h-5 w-5" checked>
+                <span class="ml-2 text-gray-700">Auto ID Tables</span>
+            </label>
+            <div class="flex items-center gap-2">
+                <label for="id-prefix-input" class="text-gray-700">ID Prefix:</label>
+                <input type="text" id="id-prefix-input" value="tbl" class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm w-24">
             </div>
-            <h2>Table Preview</h2>
-            <iframe id="table-preview"></iframe>
+            <label class="inline-flex items-center">
+                <input type="checkbox" id="auto-class-checkbox" class="form-checkbox text-blue-600 h-5 w-5" checked>
+                <span class="ml-2 text-gray-700">Auto Class Tables</span>
+            </label>
+            <label class="inline-flex items-center">
+                <input type="checkbox" id="auto-caption-checkbox" class="form-checkbox text-blue-600 h-5 w-5" checked>
+                <span class="ml-2 text-gray-700">Auto Caption Tables</span>
+            </label>
+            <label class="inline-flex items-center">
+                <input type="checkbox" id="auto-header-checkbox" class="form-checkbox text-blue-600 h-5 w-5" checked>
+                <span class="ml-2 text-gray-700">Auto Header Tables</span>
+            </label>
+            <label class="inline-flex items-center">
+                <input type="checkbox" id="auto-row-header-checkbox" class="form-checkbox text-blue-600 h-5 w-5" checked>
+                <span class="ml-2 text-gray-700">Auto Row Header</span>
+            </label>
+             <label class="inline-flex items-center">
+                <input type="checkbox" id="auto-finance-table-checkbox" class="form-checkbox text-blue-600 h-5 w-5">
+                <span class="ml-2 text-gray-700">Auto Finance Table</span>
+            </label>
+            <label class="inline-flex items-center">
+                <input type="checkbox" id="bold-totals-checkbox" class="form-checkbox text-blue-600 h-5 w-5">
+                <span class="ml-2 text-gray-700">Bold Totals</span>
+            </label>
+            <label class="inline-flex items-center">
+                <input type="checkbox" id="center-column-headers-checkbox" class="form-checkbox text-blue-600 h-5 w-5">
+                <span class="ml-2 text-gray-700">Center Column Headers</span>
+            </label>
+            <label class="inline-flex items-center">
+                <input type="checkbox" id="center-body-headers-checkbox" class="form-checkbox text-blue-600 h-5 w-5">
+                <span class="ml-2 text-gray-700">Center Body Headers</span>
+            </label>
+            <label class="inline-flex items-center">
+                <input type="checkbox" id="active-colspan-headers-checkbox" class="form-checkbox text-blue-600 h-5 w-5">
+                <span class="ml-2 text-gray-700">Active Colspan Headers</span>
+            </label>
+            <label class="inline-flex items-center">
+                <input type="checkbox" id="active-row-headers-checkbox" class="form-checkbox text-blue-600 h-5 w-5">
+                <span class="ml-2 text-gray-700">Active Row Headers</span>
+            </label>
+            <label class="inline-flex items-center">
+                <input type="checkbox" id="responsive-tables-checkbox" class="form-checkbox text-blue-600 h-5 w-5">
+                <span class="ml-2 text-gray-700">Responsive Tables</span>
+            </label>
+            <label class="inline-flex items-center">
+                <input type="checkbox" id="auto-scope-checkbox" class="form-checkbox text-blue-600 h-5 w-5" checked>
+                <span class="ml-2 text-gray-700">Auto Scope Tables</span>
+            </label>
         </div>
+
+        <!-- Textarea for CodeMirror -->
+        <textarea id="code-editor" class="hidden"></textarea>
+
+        <!-- Format Button -->
+        <button id="format-button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-300">
+            Format Tables
+        </button>
+
+        <!-- Message Box for alerts/errors -->
+        <div id="message-box" class="hidden p-4 rounded-lg text-sm text-center" role="alert"></div>
     </div>
 
+    <!-- CodeMirror JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/htmlmixed/htmlmixed.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/edit/matchbrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/edit/closebrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/selection/active-line.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/show-hint.min.js"></script>
+
     <script>
-        // Initial HTML content for the tables
-        const initialTableHtml = `
-<p>First Table (Complex)</p>
-<table>
-  <thead>
-    <tr>
-      <th>Category</th>
-      <th colspan="2">Details</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Fruits</td>
-      <td>Apple</td>
-      <td>Red</td>
-    </tr>
-    <tr>
-      <td rowspan="2">Vegetables</td>
-      <td>Carrot</td>
-      <td>Orange</td>
-    </tr>
-    <tr>
-      <td>Spinach</td>
-      <td>Green</td>
-    </tr>
-    <tr>
-      <td>Dairy</td>
-      <td colspan="2">Milk, Cheese</td>
-    </tr>
-  </tbody>
-</table>
-
-<br>
-
-<p>Second Table (Simple)</p>
-<table>
-  <thead>
-    <tr>
-      <th>ID</th>
-      <th>Item</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>101</td>
-      <td>Laptop</td>
-    </tr>
-    <tr>
-      <td>102</td>
-      <td>Mouse</td>
-    </tr>
-  </tbody>
-</table>
-        `;
-
-        // Initialize CodeMirror
-        const cm = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
-            mode: 'htmlmixed',
+        // Initialize CodeMirror editor
+        const editor = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
+            mode: 'htmlmixed', // Use htmlmixed mode for HTML
             lineNumbers: true,
-            theme: 'dracula', // Use the 'dracula' theme for a dark editor look
-            indentUnit: 2,
-            tabSize: 2,
-            lineWrapping: true
+            matchBrackets: true,
+            autoCloseBrackets: true,
+            styleActiveLine: true,
+            theme: 'default' // Default CodeMirror theme
         });
 
-        const iframe = document.getElementById('table-preview');
-        let updatingFromIframe = false; // Flag to prevent infinite sync loops
+        // Set initial example HTML content with tables to demonstrate auto-ID reordering
+        editor.setValue(`<table>
+      <tbody>
+        <tr>
+          <th rowspan="2">Category</th>
+          <th colspan="2">Q1 Sales</th>
+          <th colspan="2">Q2 Sales</th>
+        </tr>
+        <tr>
+          <th class="text-left">North</th>
+          <th>South</th>
+          <th>East</th>
+          <th class="text-right">West</th>
+        </tr>
+        <tr>
+          <td>Electronics</td>
+          <td>100</td>
+          <td>150,50</td>
+          <td>120 000</td>
+          <td>180.75</td>
+        </tr>
+        <tr>
+          <td>Apparel</td>
+          <td>80.00</td>
+          <td>-120</td>
+          <td>90 000.50</td>
+          <td>+110,25</td>
+        </tr>
+        <tr>
+          <th>Subtotal</th>
+          <td>1000</td>
+          <td>2000</td>
+          <td>3000</td>
+          <td>4000</td>
+        </tr>
+        <tr>
+          <td>Books</td>
+          <td>50</td>
+          <td rowspan="2">70 (merged)</td>
+          <td>60</td>
+          <td>90</td>
+        </tr>
+         <tr>
+          <td>Food</td>
+          <td>120</td>
+          <td>100</td>
+          <td>140</td>
+        </tr>
+        <tr>
+          <th colspan="2" class="text-right">Grand Total</th>
+          <td>3000</td>
+          <td>5000</td>
+          <td>8100</td>
+        </tr>
+        <tr>
+          <th>Total</th>
+          <td>1500</td>
+          <td>2500</td>
+          <td>3600</td>
+          <td>4500</td>
+        </tr>
+      </tbody>
+    </table>
 
-        // Debounce function to limit how often iframe updates trigger CodeMirror
-        function debounce(func, delay) {
-            let timeout;
-            return function(...args) {
-                const context = this;
-                clearTimeout(timeout);
-                timeout = setTimeout(() => func.apply(context, args), delay);
-            };
+    <p>Simple Table (no col/rowspan):</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Header 1</th>
+                <th>Header 2</th>
+                <th>Header 3</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <th>Row Header A</th>
+                <td>Data A1</td>
+                <td>Data A2</td>
+            </tr>
+            <tr>
+                <th>Row Header B</th>
+                <td>Data B1</td>
+                <td>Data B2</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p>Table with existing ID and caption:</p>
+    <table id="myExistingTable" class="some-custom-class">
+        <caption>Existing Caption with more info</caption>
+        <thead>
+            <tr><th colspan="2">Existing Header Group</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Data 1</td><td>Data 2</td></tr>
+        </tbody>
+    </table>
+    `);
+
+        const formatButton = document.getElementById('format-button');
+        const autoIdCheckbox = document.getElementById('auto-id-checkbox');
+        const idPrefixInput = document.getElementById('id-prefix-input');
+        const autoClassCheckbox = document.getElementById('auto-class-checkbox');
+        const autoCaptionCheckbox = document.getElementById('auto-caption-checkbox');
+        const autoHeaderCheckbox = document.getElementById('auto-header-checkbox');
+        const autoRowHeaderCheckbox = document.getElementById('auto-row-header-checkbox');
+        const autoFinanceTableCheckbox = document.getElementById('auto-finance-table-checkbox');
+        const boldTotalsCheckbox = document.getElementById('bold-totals-checkbox');
+        const centerColumnHeadersCheckbox = document.getElementById('center-column-headers-checkbox');
+        const centerBodyHeadersCheckbox = document.getElementById('center-body-headers-checkbox');
+        const activeColspanHeadersCheckbox = document.getElementById('active-colspan-headers-checkbox');
+        const activeRowHeadersCheckbox = document.getElementById('active-row-headers-checkbox');
+        const responsiveTablesCheckbox = document.getElementById('responsive-tables-checkbox');
+        const autoScopeCheckbox = document.getElementById('auto-scope-checkbox');
+        const messageBox = document.getElementById('message-box');
+
+        /**
+         * Displays a message in the message box.
+         * @param {string} message - The message to display.
+         * @param {string} type - 'success', 'error', or 'info' for styling.
+         */
+        function showMessage(message, type) {
+            messageBox.textContent = message;
+            messageBox.classList.remove('hidden', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800', 'bg-blue-100', 'text-blue-800');
+            if (type === 'success') {
+                messageBox.classList.add('bg-green-100', 'text-green-800');
+            } else if (type === 'error') {
+                messageBox.classList.add('bg-red-100', 'text-red-800');
+            } else { // info
+                messageBox.classList.add('bg-blue-100', 'text-blue-800');
+            }
+            setTimeout(() => {
+                messageBox.classList.add('hidden');
+            }, 5000); // Hide after 5 seconds
         }
 
-        // Function to strip contenteditable attributes from an HTML string
-        function stripContentEditable(htmlString) {
-            const parser = new DOMParser();
-            // Using a template element allows parsing arbitrary HTML fragments
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = htmlString;
-            const cells = tempDiv.querySelectorAll('td, th');
-            cells.forEach(cell => {
-                cell.removeAttribute('contenteditable');
-            });
-            return tempDiv.innerHTML;
+        /**
+         * This function simply returns the trimmed original string.
+         * @param {string} str - The string to trim.
+         * @returns {string} The original string, trimmed.
+         */
+        function padString(str) {
+            return str.trim(); // Just return the trimmed string
         }
 
-        // Debounced function to update CodeMirror from iframe changes (Type Mode)
-        const iframeToCmDebounced = debounce(() => {
-            if (iframe.contentDocument) {
-                // Get all tables' outer HTML and reconstruct the full content
+        /**
+         * Formats the HTML content, specifically targeting and cleaning up tables,
+         * and optionally applies various styling and structural enhancements.
+         */
+        function formatHtmlTables() {
+            const htmlText = editor.getValue();
+            if (!htmlText.trim()) {
+                showMessage('No HTML content to format.', 'info');
+                return;
+            }
+
+            try {
+                // We use a dummy div to parse the HTML snippet without needing full document structure.
                 const tempDiv = document.createElement('div');
-                Array.from(iframe.contentDocument.body.children).forEach(child => {
-                    tempDiv.appendChild(child.cloneNode(true)); // Clone to avoid modifying live DOM
-                });
-                const fullHtmlWithEditable = tempDiv.innerHTML;
-                const cleanedHtml = stripContentEditable(fullHtmlWithEditable);
+                tempDiv.innerHTML = htmlText;
 
-                updatingFromIframe = true;
-                cm.setValue(cleanedHtml);
-            }
-        }, 300); // 300ms delay
+                // Select all table elements within the parsed snippet
+                const tables = tempDiv.querySelectorAll('table');
 
-        // Global variables for mode and selection logic
-        let currentMode = 'type'; // 'type' or 'select'
-        let selectedCells = new Set(); // Stores references to ALL selected DOM cells across all tables
-        let lastClickedCellInfo = null; // Stores {tableElement: HTMLTableElement, logicalCoords: {rowIndex, colIndex}}
-        let isDragging = false;
-        let dragStartCellInfo = null; // Stores {tableElement: HTMLTableElement, logicalCoords: {rowIndex, colIndex}}
-
-        // Event handler variables to allow for removal/attachment to iframe document
-        let currentIframeMouseDownHandler = null;
-        let currentIframeMouseMoveHandler = null;
-        let currentIframeMouseUpHandler = null;
-        let currentIframeSelectStartHandler = null;
-
-        // Map to store virtual grid data for each table element
-        // Key: HTMLTableElement, Value: { grid: HTMLTableCellElement[][], domCellToLogicalCoords: Map<HTMLTableCellElement, {rowIndex, colIndex}> }
-        const allTablesVirtualGridData = new Map();
-
-        /**
-         * Builds a virtual grid representing the visual layout of an HTML table,
-         * accounting for colspan and rowspan.
-         * @param {HTMLTableElement} tableElement The table DOM element.
-         * @returns {{grid: HTMLTableCellElement[][], domCellToLogicalCoords: Map<HTMLTableCellElement, {rowIndex: number, colIndex: number}>}}
-         */
-        function buildVirtualGrid(tableElement) {
-            const grid = [];
-            const domCellToLogicalCoords = new Map();
-
-            if (!tableElement) return { grid, domCellToLogicalCoords };
-
-            // Determine an estimated maximum number of columns needed for the grid
-            // This is a rough estimate to pre-fill rows and prevent `undefined` issues
-            let maxRows = tableElement.rows.length;
-            let maxCols = 0;
-            Array.from(tableElement.rows).forEach(row => {
-                let currentRowCols = 0;
-                Array.from(row.cells).forEach(cell => {
-                    currentRowCols += parseInt(cell.getAttribute('colspan') || '1', 10);
-                });
-                if (currentRowCols > maxCols) maxCols = currentRowCols;
-            });
-            // Add some buffer for maxCols, as the actual logical grid might be larger due to rowspans
-            maxCols = maxCols * 2;
-
-            // Initialize grid with nulls to represent empty slots
-            for (let r = 0; r < maxRows + 5; r++) { // Add buffer for rows as well
-                grid[r] = [];
-                for (let c = 0; c < maxCols; c++) {
-                    grid[r][c] = null;
-                }
-            }
-
-            // Iterate through table rows and cells to populate the virtual grid
-            for (let r = 0; r < tableElement.rows.length; r++) {
-                const row = tableElement.rows[r];
-                let currentLogicalCol = 0;
-
-                for (let c = 0; c < row.cells.length; c++) {
-                    const cell = row.cells[c];
-                    const rowspan = parseInt(cell.getAttribute('rowspan') || '1', 10);
-                    const colspan = parseInt(cell.getAttribute('colspan') || '1', 10);
-
-                    // Find the next available slot in the current row of the virtual grid
-                    while (grid[r][currentLogicalCol] !== null) {
-                        currentLogicalCol++;
-                    }
-
-                    // Store the logical coordinates for this cell
-                    domCellToLogicalCoords.set(cell, { rowIndex: r, colIndex: currentLogicalCol });
-
-                    // Place the cell in the virtual grid and mark spanned slots
-                    for (let rs = 0; rs < rowspan; rs++) {
-                        for (let cs = 0; cs < colspan; cs++) {
-                            // Ensure the row exists and is correctly sized
-                            if (!grid[r + rs]) {
-                                grid[r + rs] = [];
-                                for(let i = 0; i < maxCols; i++) grid[r + rs][i] = null;
-                            }
-                            // Place the cell reference
-                            grid[r + rs][currentLogicalCol + cs] = cell;
-                        }
-                    }
-                    currentLogicalCol += colspan; // Move to the next logical column after placing the cell
-                }
-            }
-
-            // Trim the grid to its actual content bounds dynamically
-            let actualMaxRow = 0;
-            let actualMaxCol = 0;
-            grid.forEach((rowArr, rowIndex) => {
-                rowArr.forEach((cell, colIndex) => {
-                    if (cell) {
-                        if (rowIndex > actualMaxRow) actualMaxRow = rowIndex;
-                        if (colIndex > actualMaxCol) actualMaxCol = colIndex;
-                    }
-                });
-            });
-
-            const trimmedGrid = [];
-            for (let r = 0; r <= actualMaxRow; r++) {
-                trimmedGrid[r] = [];
-                for (let c = 0; c <= actualMaxCol; c++) {
-                    trimmedGrid[r][c] = grid[r]?.[c] || null; // Use optional chaining
-                }
-            }
-            return { grid: trimmedGrid, domCellToLogicalCoords: domCellToLogicalCoords };
-        }
-
-        /**
-         * Gets the logical (virtual grid) coordinates for a given DOM cell within its table's context.
-         * @param {HTMLTableCellElement} cell The DOM cell.
-         * @param {HTMLTableElement} tableElement The parent table of the cell.
-         * @returns {{rowIndex: number, colIndex: number}|null}
-         */
-        function getLogicalCoords(cell, tableElement) {
-            const tableGridData = allTablesVirtualGridData.get(tableElement);
-            return tableGridData ? tableGridData.domCellToLogicalCoords.get(cell) : null;
-        }
-
-        /**
-         * Clears the visual selection and the internal selectedCells set.
-         */
-        function clearSelection() {
-            selectedCells.forEach(cell => {
-                if (cell && cell.classList) { // Check if cell still exists in DOM
-                    cell.classList.remove('selected-cell');
-                }
-            });
-            selectedCells.clear();
-            lastClickedCellInfo = null;
-        }
-
-        /**
-         * Adds a DOM cell to the selection.
-         * @param {HTMLTableCellElement} cell
-         */
-        function addCellToSelection(cell) {
-            if (cell && !selectedCells.has(cell)) {
-                cell.classList.add('selected-cell');
-                selectedCells.add(cell);
-            }
-        }
-
-        /**
-         * Removes a DOM cell from the selection.
-         * @param {HTMLTableCellElement} cell
-         */
-        function removeCellFromSelection(cell) {
-            if (cell && selectedCells.has(cell)) {
-                cell.classList.remove('selected-cell');
-                selectedCells.delete(cell);
-            }
-        }
-
-        /**
-         * Toggles the selection of a single DOM cell.
-         * @param {HTMLTableCellElement} cell
-         */
-        function toggleCellSelection(cell) {
-            if (!cell) return;
-            if (selectedCells.has(cell)) {
-                removeCellFromSelection(cell);
-            } else {
-                addCellToSelection(cell);
-            }
-        }
-
-        /**
-         * Selects all unique DOM cells within a logical rectangular region defined by
-         * start and end logical coordinates *within a specific table's grid*.
-         * @param {{rowIndex: number, colIndex: number}} startCoords
-         * @param {{rowIndex: number, colIndex: number}} endCoords
-         * @param {HTMLTableCellElement[][]} targetGrid The specific virtual grid for the table.
-         */
-        function selectCellsInLogicalRect(startCoords, endCoords, targetGrid) {
-            const minRow = Math.min(startCoords.rowIndex, endCoords.rowIndex);
-            const maxRow = Math.max(startCoords.rowIndex, endCoords.rowIndex);
-            const minCol = Math.min(startCoords.colIndex, endCoords.colIndex);
-            const maxCol = Math.max(startCoords.colIndex, endCoords.colIndex);
-
-            // Use a temporary set to ensure only unique DOM cells are added
-            const cellsToAdd = new Set();
-            for (let r = minRow; r <= maxRow; r++) {
-                if (targetGrid[r]) { // Ensure the row exists in the virtual grid
-                    for (let c = minCol; c <= maxCol; c++) {
-                        if (targetGrid[r][c] !== undefined && targetGrid[r][c] !== null) {
-                            cellsToAdd.add(targetGrid[r][c]); // Add the actual DOM cell
-                        }
-                    }
-                }
-            }
-            cellsToAdd.forEach(cell => addCellToSelection(cell));
-        }
-
-        // --- Select Mode Event Listener Management ---
-
-        function attachSelectModeListeners(iframeDoc) {
-            // Detach any previous handlers first to prevent duplicates
-            detachSelectModeListeners(iframeDoc);
-
-            currentIframeMouseDownHandler = (e) => {
-                const targetCell = e.target.closest('td, th');
-                if (!targetCell) {
-                    clearSelection(); // Clicked outside a cell in the table
-                    isDragging = false;
-                    dragStartCellInfo = null;
+                if (tables.length === 0) {
+                    showMessage('No HTML tables found to format.', 'info');
                     return;
                 }
 
-                const targetTable = targetCell.closest('table');
-                if (!targetTable) { // Should not happen if targetCell is valid td/th
-                    clearSelection();
-                    isDragging = false;
-                    dragStartCellInfo = null;
-                    return;
-                }
+                const applyAutoId = autoIdCheckbox.checked;
+                const customIdPrefix = idPrefixInput.value.trim();
+                const currentIdRegex = new RegExp(`^${customIdPrefix}\\d+$`);
 
-                const currentLogicalCoords = getLogicalCoords(targetCell, targetTable);
-                if (!currentLogicalCoords) return;
+                const applyAutoClass = autoClassCheckbox.checked;
+                const applyAutoCaption = autoCaptionCheckbox.checked;
+                const applyAutoHeader = autoHeaderCheckbox.checked;
+                const applyAutoRowHeader = autoRowHeaderCheckbox.checked;
+                const applyAutoFinanceTable = autoFinanceTableCheckbox.checked;
+                const boldTotals = boldTotalsCheckbox.checked;
+                const centerColumnHeaders = centerColumnHeadersCheckbox.checked;
+                const centerBodyHeaders = centerBodyHeadersCheckbox.checked;
+                const activeColspanHeaders = activeColspanHeadersCheckbox.checked;
+                const activeRowHeaders = activeRowHeadersCheckbox.checked;
+                const responsiveTables = responsiveTablesCheckbox.checked;
+                const applyAutoScope = autoScopeCheckbox.checked;
 
-                if (e.shiftKey && lastClickedCellInfo && lastClickedCellInfo.tableElement === targetTable) {
-                    // Shift+click on the same table
-                    clearSelection(); // Shift+click usually implies a new range selection
-                    const tableGrid = allTablesVirtualGridData.get(targetTable).grid;
-                    selectCellsInLogicalRect(lastClickedCellInfo.logicalCoords, currentLogicalCoords, tableGrid);
-                } else if (e.ctrlKey || e.metaKey) { // Ctrl/Cmd + click
-                    toggleCellSelection(targetCell);
-                } else { // Single click or start of drag
-                    clearSelection(); // Clear existing selection for new single or drag selection
-                    addCellToSelection(targetCell);
-                    isDragging = true;
-                    dragStartCellInfo = { tableElement: targetTable, logicalCoords: currentLogicalCoords };
-                }
-                lastClickedCellInfo = { tableElement: targetTable, logicalCoords: currentLogicalCoords };
-                e.preventDefault(); // Prevent default browser drag/selection behavior
-            };
+                const defaultClasses = "table table-bordered table-condensed table-hover mrgn-tp-lg mrgn-bttm-lg small".split(' ');
+                const activeRowClass = 'active'; // Class for <tr> in <thead>
+                const financeClasses = ['text-right', 'nowrap'];
+                const centerClass = 'text-center';
+                const alignmentClasses = ['text-left', 'text-center', 'text-right'];
+                const financeRegex = /^\s*[-+]?(?:\d+|\d{1,3}(?:\s\d{3})*)(?:[.,]\d+)?\s*$/;
+                const responsiveDivClass = 'table-responsive';
 
-            currentIframeMouseMoveHandler = (e) => {
-                if (isDragging && dragStartCellInfo) {
-                    const targetCell = e.target.closest('td, th');
-                    // Only continue if still dragging within the initial table
-                    if (targetCell && targetCell.closest('table') === dragStartCellInfo.tableElement) {
-                        const currentLogicalCoords = getLogicalCoords(targetCell, dragStartCellInfo.tableElement);
-                        if (currentLogicalCoords) {
-                            // Clear all cells, then re-select based on the current drag rectangle
-                            clearSelection(); // Clear the current selection first
-                            const tableGrid = allTablesVirtualGridData.get(dragStartCellInfo.tableElement).grid;
-                            selectCellsInLogicalRect(dragStartCellInfo.logicalCoords, currentLogicalCoords, tableGrid);
+
+                let tableCounter = 1;
+
+                tables.forEach(table => {
+                    // --- Handle Responsive Tables Wrapping/Unwrapping FIRST ---
+                    const parentIsResponsiveDiv = table.parentNode && table.parentNode.classList.contains(responsiveDivClass);
+
+                    if (responsiveTables) {
+                        if (!parentIsResponsiveDiv) {
+                            const responsiveDiv = document.createElement('div');
+                            responsiveDiv.classList.add(responsiveDivClass);
+                            table.parentNode.insertBefore(responsiveDiv, table);
+                            responsiveDiv.appendChild(table);
+                        }
+                    } else {
+                        if (parentIsResponsiveDiv) {
+                            const parentDiv = table.parentNode;
+                            parentDiv.parentNode.insertBefore(table, parentDiv);
+                            parentDiv.remove();
                         }
                     }
-                }
-            };
 
-            currentIframeMouseUpHandler = () => {
-                isDragging = false;
-                dragStartCellInfo = null;
-            };
+                    const allRows = Array.from(table.querySelectorAll('tr'));
+                    table.querySelectorAll('thead, tbody, tfoot').forEach(el => el.remove());
 
-            currentIframeSelectStartHandler = (e) => {
-                if (currentMode === 'select') {
-                    e.preventDefault(); // Prevent native text selection when in select mode
-                }
-            };
+                    // --- Clean 'active' class from all TH elements before re-applying ---
+                    Array.from(table.querySelectorAll('th')).forEach(th => {
+                        th.classList.remove('active');
+                    });
 
-            iframeDoc.addEventListener('mousedown', currentIframeMouseDownHandler);
-            iframeDoc.addEventListener('mousemove', currentIframeMouseMoveHandler);
-            iframeDoc.addEventListener('mouseup', currentIframeMouseUpHandler);
-            iframeDoc.addEventListener('selectstart', currentIframeSelectStartHandler); // Prevent text selection
-        }
+                    // --- Clean up all auto-generated scope/id/headers attributes from previous runs ---
+                    Array.from(table.querySelectorAll('th, td')).forEach(cell => {
+                        if (cell.id && cell.id.startsWith(`${table.id}_th_`)) { // Check if ID was auto-generated
+                            cell.removeAttribute('id');
+                        }
+                        cell.removeAttribute('scope');
+                        cell.removeAttribute('headers');
+                    });
 
-        function detachSelectModeListeners(iframeDoc) {
-            if (currentIframeMouseDownHandler) {
-                iframeDoc.removeEventListener('mousedown', currentIframeMouseDownHandler);
-                iframeDoc.removeEventListener('mousemove', currentIframeMouseMoveHandler);
-                iframeDoc.removeEventListener('mouseup', currentIframeMouseUpHandler);
-                iframeDoc.removeEventListener('selectstart', currentIframeSelectStartHandler);
-            }
-            currentIframeMouseDownHandler = null;
-            currentIframeMouseMoveHandler = null;
-            currentIframeMouseUpHandler = null;
-            currentIframeSelectStartHandler = null;
-        }
 
-        // --- Core Functions ---
+                    if (applyAutoId) {
+                        const existingId = table.id;
+                        const isCurrentPrefixId = existingId && currentIdRegex.test(existingId);
 
-        // Function to update the iframe's content and configure cells
-        function updateIframeContent(htmlContent) {
-            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-            iframeDoc.open();
-            // Wrap the HTML content in a full document structure for proper rendering and styling
-            iframeDoc.write(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <style>
-                        /* Styles specific to the iframe content */
-                        body {
-                            font-family: sans-serif;
-                            margin: 0;
-                            padding: 10px;
-                            background-color: white; /* Default light background */
-                            color: #1f2937; /* Default light text */
-                            box-sizing: border-box;
+                        if (!existingId || isCurrentPrefixId) {
+                            table.removeAttribute('id');
+                            table.id = `${customIdPrefix}${tableCounter}`;
                         }
-                        @media (prefers-color-scheme: dark) {
-                            body {
-                                background-color: #374151; /* Dark mode background */
-                                color: #f9fafb; /* Dark mode text */
-                            }
+                    } else {
+                        if (table.id && currentIdRegex.test(table.id)) {
+                            table.removeAttribute('id');
                         }
-                        table {
-                            width: 100%;
-                            border-collapse: collapse;
-                            margin-bottom: 1em;
-                            background-color: #ffffff; /* Light mode table background */
-                            color: #1f2937; /* Light mode table text */
-                        }
-                        @media (prefers-color-scheme: dark) {
-                            table {
-                                background-color: #4b5563; /* Dark mode table background */
-                                color: #f9fafb; /* Dark mode table text */
-                            }
-                        }
-                        th, td {
-                            border: 1px solid #d1d5db; /* Light mode border */
-                            padding: 8px;
-                            text-align: left;
-                            user-select: none; /* Prevent browser text selection in cells */
-                        }
-                        @media (prefers-color-scheme: dark) {
-                            th, td {
-                                border-color: #6b7280; /* Dark mode border */
-                            }
-                        }
-                        th {
-                            background-color: #e5e7eb; /* Light mode header background */
-                        }
-                        @media (prefers-color-scheme: dark) {
-                            th {
-                                background-color: #6b7280; /* Dark mode header background */
-                            }
-                        }
-                        /* Style for contenteditable cells */
-                        td[contenteditable="true"]:focus, th[contenteditable="true"]:focus {
-                            outline: 2px solid #3b82f6; /* Blue outline on focus */
-                            outline-offset: -1px; /* Bring outline inside border */
-                        }
-                        td[contenteditable="true"]:hover, th[contenteditable="true"]:hover {
-                            background-color: #f0f4f8; /* Light hover background */
-                        }
-                        @media (prefers-color-scheme: dark) {
-                            td[contenteditable="true"]:hover, th[contenteditable="true"]:hover {
-                                background-color: #526071; /* Dark hover background */
-                            }
-                        }
-                        /* Style for selected cells in Select Mode */
-                        .selected-cell {
-                            background-color: #bfdbfe; /* Light blue selection */
-                            border-color: #3b82f6;
-                        }
-                        @media (prefers-color-scheme: dark) {
-                            .selected-cell {
-                                background-color: #1e3a8a; /* Darker blue selection */
-                                border-color: #3b82f6;
-                            }
-                        }
-                        p { /* Basic paragraph style for tables separation */
-                            margin-top: 1.5em;
-                            margin-bottom: 0.5em;
-                            color: inherit;
-                        }
-                    </style>
-                </head>
-                <body>
-                    ${htmlContent}
-                </body>
-                </html>
-            `);
-            iframeDoc.close();
+                    }
 
-            // Clear previous virtual grid data and rebuild for all tables
-            allTablesVirtualGridData.clear();
-            const tablesInIframe = iframeDoc.querySelectorAll('table');
-            tablesInIframe.forEach(tableElement => {
-                allTablesVirtualGridData.set(tableElement, buildVirtualGrid(tableElement));
-            });
+                    if (applyAutoClass) {
+                        const currentClasses = new Set(table.className.split(' ').filter(c => c.trim() !== ''));
+                        defaultClasses.forEach(c => currentClasses.add(c));
+                        table.className = Array.from(currentClasses).join(' ');
+                    } else {
+                        const currentClasses = table.className.split(' ').filter(c => c.trim() !== '');
+                        const filteredClasses = currentClasses.filter(c => !defaultClasses.includes(c));
+                        table.className = Array.from(new Set(filteredClasses)).join(' ');
+                    }
 
-            // If no tables, ensure select mode listeners are detached
-            if (tablesInIframe.length === 0) {
-                detachSelectModeListeners(iframeDoc);
-                return;
-            }
+                    let headerRowCount = 0;
+                    if (applyAutoHeader) {
+                        let maxRowSpanEnd = -1;
 
-            // Get all cells from all tables
-            const allCells = iframeDoc.querySelectorAll('td, th');
+                        for (let i = 0; i < allRows.length; i++) {
+                            const currentRow = allRows[i];
+                            headerRowCount = i + 1;
 
-            // Configure cells and attach/detach listeners based on current mode
-            if (currentMode === 'type') {
-                allCells.forEach(cell => {
-                    cell.contentEditable = 'true';
-                    cell.removeEventListener('input', iframeToCmDebounced); // Remove existing to prevent duplicates
-                    cell.removeEventListener('blur', iframeToCmDebounced); // Remove existing
-                    cell.addEventListener('input', iframeToCmDebounced);
-                    cell.addEventListener('blur', iframeToCmDebounced);
-                });
-                detachSelectModeListeners(iframeDoc); // Ensure select mode listeners are removed
-            } else { // currentMode === 'select'
-                allCells.forEach(cell => {
-                    cell.contentEditable = 'false'; // Disable direct editing
-                    cell.removeEventListener('input', iframeToCmDebounced); // Remove type mode listeners
-                    cell.removeEventListener('blur', iframeToCmDebounced); // Remove type mode listeners
-                });
-                attachSelectModeListeners(iframeDoc); // Re-attach select mode listeners
-            }
+                            const cellsInCurrentRow = Array.from(currentRow.querySelectorAll('th, td'));
+                            cellsInCurrentRow.forEach(cell => {
+                                const rowspan = parseInt(cell.getAttribute('rowspan') || '1', 10);
+                                maxRowSpanEnd = Math.max(maxRowSpanEnd, i + rowspan - 1);
+                            });
 
-            // Re-apply visual selection for the *new* DOM elements
-            // This is complex for multiple tables and re-renders. A simplified approach:
-            // If the last selected cell was in a table that still exists and has the same logical position,
-            // re-select it. Otherwise, clear. For robust re-selection, you'd need stable IDs.
-            const currentlySelectedElements = Array.from(selectedCells); // Preserve current selection references
-            clearSelection(); // Clear old references and visual classes
-
-            if (currentMode === 'select') {
-                currentlySelectedElements.forEach(oldCell => {
-                    // Try to find the new equivalent cell using its table and logical coords
-                    const oldCellTable = oldCell.closest('table');
-                    const oldLogicalCoords = getLogicalCoords(oldCell, oldCellTable);
-
-                    if (oldCellTable && oldLogicalCoords) {
-                        const newGridData = allTablesVirtualGridData.get(oldCellTable);
-                        if (newGridData && newGridData.grid[oldLogicalCoords.rowIndex]) {
-                            const newCell = newGridData.grid[oldLogicalCoords.rowIndex][oldLogicalCoords.colIndex];
-                            if (newCell) {
-                                addCellToSelection(newCell);
+                            if (i >= maxRowSpanEnd) {
+                                break;
                             }
                         }
                     }
+
+                    const newThead = document.createElement('thead');
+                    const newTbody = document.createElement('tbody');
+
+                    allRows.forEach((row, index) => {
+                        row.classList.remove(activeRowClass);
+
+                        if (index < headerRowCount) {
+                            newThead.appendChild(row);
+                            if (applyAutoHeader) {
+                                row.classList.add(activeRowClass);
+                            }
+                        } else {
+                            newTbody.appendChild(row);
+                        }
+                    });
+
+                    if (newThead.children.length > 0) {
+                        table.appendChild(newThead);
+                    }
+                    table.appendChild(newTbody);
+
+                    if (applyAutoCaption) {
+                        let captionElement = table.querySelector('caption');
+                        if (!captionElement) {
+                            captionElement = document.createElement('caption');
+                            if (table.firstChild) {
+                                table.insertBefore(captionElement, table.firstChild);
+                            } else {
+                                table.appendChild(captionElement);
+                            }
+                        }
+
+                        captionElement.className = 'text-left';
+
+                        const currentCaptionText = captionElement.textContent.trim();
+                        const regex = /^(Table\s+\d+\.)(\s.*)?$/i;
+
+                        if (regex.test(currentCaptionText)) {
+                            captionElement.textContent = currentCaptionText.replace(regex, `Table ${tableCounter}.$2`);
+                        } else {
+                            captionElement.textContent = `Table ${tableCounter}.`;
+                        }
+
+                    } else {
+                        const existingCaption = table.querySelector('caption');
+                        if (existingCaption) {
+                            existingCaption.remove();
+                        }
+                    }
+
+                    const tbodyRows = Array.from(newTbody.querySelectorAll('tr'));
+                    tbodyRows.forEach(row => {
+                        const firstCell = row.firstElementChild;
+                        if (firstCell) {
+                            if (applyAutoRowHeader) {
+                                if (firstCell.tagName.toLowerCase() === 'td') {
+                                    const newTh = document.createElement('th');
+                                    Array.from(firstCell.attributes).forEach(attr => {
+                                        newTh.setAttribute(attr.name, attr.value);
+                                    });
+                                    newTh.innerHTML = firstCell.innerHTML;
+                                    newTh.classList.add('text-left');
+                                    row.replaceChild(newTh, firstCell);
+                                }
+                            } else {
+                                if (firstCell.tagName.toLowerCase() === 'th') {
+                                    const newTd = document.createElement('td');
+                                    Array.from(firstCell.attributes).forEach(attr => {
+                                        newTd.setAttribute(attr.name, attr.value);
+                                    });
+                                    newTd.innerHTML = firstCell.innerHTML;
+                                    newTd.classList.remove('text-left');
+                                    row.replaceChild(newTd, firstCell);
+                                }
+                            }
+                        }
+                    });
+
+                    // Re-fetch all cells after potential td to th conversion
+                    const currentTableCells = Array.from(table.querySelectorAll('th, td'));
+
+                    // --- Auto Scope Logic (Revised based on new definitions) ---
+                    if (applyAutoScope) {
+                        let isComplexTable = false;
+                        // A table is 'complex' if it has colspan/rowspan *within tbody or tfoot*
+                        for (const cell of Array.from(table.querySelectorAll('tbody th, tbody td, tfoot th, tfoot td'))) {
+                            const colspanVal = parseInt(cell.getAttribute('colspan') || '1', 10);
+                            const rowspanVal = parseInt(cell.getAttribute('rowspan') || '1', 10);
+                            if (colspanVal > 1 || rowspanVal > 1) {
+                                isComplexTable = true;
+                                break;
+                            }
+                        }
+
+                        if (isComplexTable) {
+                            // Per new definition: if complex (spans in tbody/tfoot), do NOT add IDs or headers.
+                            // The cleanup at the top ensures no previous auto-generated attributes remain.
+                        } else {
+                            // This is a "simple" table (spans only in thead, or no spans at all)
+                            currentTableCells.forEach(cell => {
+                                if (cell.tagName.toLowerCase() === 'th') {
+                                    const colspan = parseInt(cell.getAttribute('colspan') || '1', 10);
+                                    const rowspan = parseInt(cell.getAttribute('rowspan') || '1', 10);
+
+                                    if (cell.closest('thead')) {
+                                        if (colspan > 1) {
+                                            cell.setAttribute('scope', 'colgroup');
+                                        } else if (rowspan > 1) {
+                                            cell.setAttribute('scope', 'col'); // As requested: rowspan in thead is 'col'
+                                        } else {
+                                            cell.setAttribute('scope', 'col'); // Single th in thead is 'col'
+                                        }
+                                    } else if (cell.closest('tbody') && cell.parentNode.firstElementChild === cell) {
+                                        // TH in tbody and it's the first cell of the row: row header
+                                        cell.setAttribute('scope', 'row');
+                                    }
+                                    // Other THs in tbody/tfoot (not first in row, no colspan) remain without scope
+                                    // if not covered by these rules, matching the WET-BOEW simplicity for simple tables.
+                                }
+                            });
+                        }
+                    } else {
+                        // If auto-scope is OFF, ensure all auto-generated scope attributes are removed
+                        currentTableCells.forEach(cell => {
+                            cell.removeAttribute('scope');
+                        });
+                    }
+                    // --- End Auto Scope Logic ---
+
+
+                    currentTableCells.forEach(cell => {
+                        if (cell.tagName.toLowerCase() === 'td') {
+                            if (applyAutoFinanceTable) {
+                                if (financeRegex.test(cell.textContent.trim())) {
+                                    financeClasses.forEach(cls => cell.classList.add(cls));
+                                } else {
+                                    financeClasses.forEach(cls => cell.classList.remove(cls));
+                                }
+                            }
+                        } else {
+                            financeClasses.forEach(cls => cell.classList.remove(cls));
+                        }
+                    });
+
+                    const boldableRows = Array.from(table.querySelectorAll('tbody tr'));
+                    boldableRows.forEach(row => {
+                        const thInRow = row.querySelector('th');
+                        let isTotalRow = false;
+
+                        if (thInRow && (thInRow.textContent.trim().toLowerCase() === 'total' || thInRow.textContent.trim().toLowerCase() === 'subtotal')) {
+                            isTotalRow = true;
+                        }
+
+                        const tdsInRow = Array.from(row.querySelectorAll('td'));
+                        tdsInRow.forEach(td => {
+                            if (boldTotals && isTotalRow) {
+                                if (td.firstElementChild && td.firstElementChild.tagName.toLowerCase() === 'strong') {
+                                    td.firstElementChild.innerHTML = td.textContent.trim();
+                                } else {
+                                    const strongElement = document.createElement('strong');
+                                    strongElement.innerHTML = td.innerHTML;
+                                    td.innerHTML = '';
+                                    td.appendChild(strongElement);
+                                }
+                            } else {
+                                if (td.firstElementChild && td.firstElementChild.tagName.toLowerCase() === 'strong') {
+                                    const originalContent = td.firstElementChild.innerHTML;
+                                    td.innerHTML = originalContent;
+                                }
+                            }
+                        });
+                    });
+
+                    // Apply 'active' class to tbody THs based on new options (moved after Auto Scope to ensure IDs are set)
+                    const currentTbodyThs = Array.from(newTbody.querySelectorAll('th'));
+                    currentTbodyThs.forEach(th => {
+                        // Apply active if colspan option is checked and it has colspan
+                        if (activeColspanHeaders && th.hasAttribute('colspan')) {
+                            th.classList.add('active');
+                        }
+                        // Apply active if row header option is checked and it's the first TH in its parent row
+                        if (activeRowHeaders && th.parentNode.firstElementChild === th) {
+                             th.classList.add('active');
+                        }
+                    });
+
+
+                    const theadThs = Array.from(newThead.querySelectorAll('th'));
+                    theadThs.forEach(th => {
+                        const hasExistingAlignment = alignmentClasses.some(cls => th.classList.contains(cls));
+
+                        if (centerColumnHeaders) {
+                            if (!hasExistingAlignment) {
+                                th.classList.add(centerClass);
+                            }
+                        } else {
+                            th.classList.remove(centerClass);
+                        }
+                    });
+
+                    const finalTbodyThsForCentering = Array.from(newTbody.querySelectorAll('th'));
+                    finalTbodyThsForCentering.forEach(th => {
+                        const hasExistingAlignment = alignmentClasses.some(cls => th.classList.contains(cls));
+
+                        if (th.hasAttribute('colspan')) {
+                            if (centerBodyHeaders) {
+                                if (!hasExistingAlignment) {
+                                    th.classList.add(centerClass);
+                                }
+                            } else {
+                                th.classList.remove(centerClass);
+                            }
+                        } else if (!centerBodyHeaders) {
+                            th.classList.remove(centerClass);
+                        }
+                    });
+
+                    const finalTableRows = Array.from(table.querySelectorAll('tr'));
+                    finalTableRows.forEach((row) => {
+                        const cells = Array.from(row.querySelectorAll('th, td'));
+                        cells.forEach((cell) => {
+                            if (cell.firstElementChild && cell.firstElementChild.tagName.toLowerCase() === 'strong') {
+                                cell.firstElementChild.textContent = cell.firstElementChild.textContent.trim();
+                            } else {
+                                cell.textContent = cell.textContent.trim();
+                            }
+                        });
+                    });
+
+                    tableCounter++;
                 });
+
+                editor.setValue(tempDiv.innerHTML);
+                showMessage('HTML tables formatted successfully!', 'success');
+
+            } catch (e) {
+                console.error("Error formatting HTML tables:", e);
+                showMessage('An error occurred during formatting. Please check your HTML.', 'error');
             }
         }
 
-        // Function to set the mode (Type or Select)
-        window.setMode = function(newMode) { // Made global to be accessible from inline onclick
-            if (currentMode === newMode) return;
-
-            currentMode = newMode;
-            clearSelection(); // Clear any existing selection when changing modes
-
-            // Update button styles
-            document.getElementById('type-mode-btn').classList.remove('active-mode');
-            document.getElementById('select-mode-btn').classList.remove('active-mode');
-            document.getElementById(`${newMode}-mode-btn`).classList.add('active-mode');
-
-            // Re-render iframe content to apply new contenteditable state and listeners
-            updateIframeContent(cm.getValue());
-        };
-
-        // Set initial content for CodeMirror and then update the iframe
-        cm.setValue(initialTableHtml);
-        updateIframeContent(initialTableHtml);
-
-        // CodeMirror change listener: updates iframe when CM content changes
-        cm.on('change', () => {
-            // If the change came from the iframe (Type Mode), don't update the iframe again
-            if (updatingFromIframe) {
-                updatingFromIframe = false; // Reset flag
-                return;
-            }
-            const newHtml = cm.getValue();
-            updateIframeContent(newHtml);
-        });
+        formatButton.addEventListener('click', formatHtmlTables);
     </script>
 </body>
 </html>
