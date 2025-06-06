@@ -418,7 +418,7 @@
     <section>
         <h3 id="toc1-1">Section Heading 1</h3>
 <p>Lorem ipsum dolor sit amet, <a href="https://www.canada.ca/en/treasury-board-secretariat/services/benefit-plans/health-care-plan/public-service-health-care-plan-glance.html">consectetur</a> adipiscing elit. Sed do eiusmod tempor incididunt ut  labore et dolore’s magna aliqua.   Ut enim ad minim veniam, quis nostrud exercitation ullamco’s laboris nisi ut aliquip ex ea commodo consequat.</p>
-<p><a href="/content/canadasite/en/government/system/government-wide-reporting-spending-operations.html">Duis aute irure dolor</a> in reprehenderit in &ldquo;voluptate&rdquo; velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint “occaeca” cupidatat non <a href="https://www.google.com/" target="_blank">proident</a>, sunt in culpa <a href="https://canada-preview.adobecqms.net/en/government/system/government-wide-reporting-spending-operations/government-spending.html">qui officia deserunt</a> mollit anim id est March 20, 2023 laborum. This document was created on 2023-02-24 and last updated on 2024-11-15.</p>
+<p><a href="/content/canadasite/en/government/system/government-wide-reporting-spending-operations.html">Duis aute irure dolor</a> in reprehenderit in &ldquo;voluptate&rdquo; velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint “occaeca” cupidatat non <a href="https://www.google.com/" target="_blank">proident</a>, sunt in culpa <a href="https://canada-preview.adobecqms.net/en/government/system/government-wide-reporting-spending-operations/government-spending.html">qui officia deserunt</a> mollit anim id est March 20, 2023 laborum. This document was created on 2023-02-24 and last updated on 2024-11-15. Another important date is February 12. Also, le 14 février. And finally, le 29 mars.</p>
 <section>
 <h4 id="toc1-1-1">Subsection Heading A</h4>
 <ul>
@@ -1976,16 +1976,28 @@
                         return monthMap[monthName.toLowerCase()] || null;
                     }
 
-                    const monthPattern = Object.keys(monthMap).map(m => m.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|');
+                    // Sort month keys by length in descending order to prioritize longer matches (e.g., 'mars' over 'mar')
+                    const sortedMonthKeys = Object.keys(monthMap).sort((a, b) => b.length - a.length);
+                    const monthPattern = sortedMonthKeys.map(m => m.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|');
                     const spaceOrNBSPChar = `(?:\\s|\\u00A0|&nbsp;|&#160;|${NBSP_ENTITY_PLACEHOLDER}|${NUMERIC_NBSP_ENTITY_PLACEHOLDER}|${LITERAL_NBSP_CHAR_PLACEHOLDER})+`;
 
-                    // Regex for YYYY-MM-DD (prioritized) - ONLY this one, no YYYY-MM
+                    // Regex for YYYY-MM-DD
                     const regexIsoDateFull = /(?<!\d)(\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01]))(?!\d)/g;
 
-                    // Only include patterns for month (written) and year, and day, month (written) and year.
+                    // Regex for Month Day, Year (e.g., March 20, 2023)
                     const regexMonthDayYear = new RegExp(`(?<!\\d)(${monthPattern})${spaceOrNBSPChar}(\\d{1,2}),?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'i');
-                    const regexDayMonthYear = new RegExp(`(?<!\\d)(\\d{1,2})${spaceOrNBSPChar}(${monthPattern}),?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'i');
-                    const regexMonthYear = new RegExp(`(?<!\\d)(${monthPattern})${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'i');
+                    // Regex for Day Month Year (e.g., 20 March 2023, le 20 mars 2023)
+                    const regexDayMonthYear = new RegExp(`(?<!\\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2})${spaceOrNBSPChar}(${monthPattern}),?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'i');
+
+                    // NEW: Regex for Month Day (no year) - e.g., March 31
+                    // Negative lookahead `(?!\\d|${spaceOrNBSPChar}\\d{4})` ensures no digit or 4-digit year follows.
+                    // `(?!-)` prevents tagging numeric dates like 03-31
+                    const regexMonthDayNoYear = new RegExp(`(?<!\\d)(${monthPattern})${spaceOrNBSPChar}(\\d{1,2})(?!\\d|${spaceOrNBSPChar}\\d{4})(?!-)`, 'i');
+
+                    // NEW: Regex for Day Month (no year) - e.g., 31 mars, le 31 mars
+                    // Negative lookahead `(?!\\d|${spaceOrNBSPChar}\\d{4})` ensures no digit or 4-digit year follows.
+                    // `(?!-)` prevents tagging numeric dates like 31-03
+                    const regexDayMonthNoYear = new RegExp(`(?<!\\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2})${spaceOrNBSPChar}(${monthPattern})(?!\\d|${spaceOrNBSPChar}\\d{4})(?!-)`, 'i');
 
 
                     // Re-parse the content to allow traversal of the updated DOM
@@ -2025,26 +2037,39 @@
 
                         let allMatches = [];
                         const patternsToTest = [
-                            { name: 'IsoDateFull', regex: regexIsoDateFull, handler: (match) => match[0], priority: 3 }, // Highest priority
+                            { name: 'IsoDateFull', regex: regexIsoDateFull, handler: (match) => {
+                                // Full ISO date: YYYY-MM-DD
+                                const [fullMatch, yearMonthDay] = match;
+                                return yearMonthDay;
+                            }, priority: 3 }, // Highest priority for full dates
                             { name: 'DayMonthYear', regex: regexDayMonthYear, handler: (match) => {
+                                // Day Month Year: e.g., 20 March 2023, le 20 mars 2023
                                 const [, day, month, year] = match;
                                 const monthNum = getMonthNumber(month);
-                                // Validate day and month
                                 if (!monthNum || parseInt(day) < 1 || parseInt(day) > 31) return null;
                                 return `${year}-${monthNum}-${String(day).padStart(2, '0')}`;
                             }, priority: 2 },
                             { name: 'MonthDayYear', regex: regexMonthDayYear, handler: (match) => {
+                                // Month Day Year: e.g., March 20, 2023
                                 const [, month, day, year] = match;
                                 const monthNum = getMonthNumber(month);
-                                // Validate day and month
                                 if (!monthNum || parseInt(day) < 1 || parseInt(day) > 31) return null;
-                                return monthNum ? `${year}-${monthNum}-${String(day).padStart(2, '0')}` : null;
+                                return `${year}-${monthNum}-${String(day).padStart(2, '0')}`;
                             }, priority: 2 },
-                            { name: 'MonthYear', regex: regexMonthYear, handler: (match) => {
-                                const [, month, year] = match;
+                            // NEW: Month Day (no year)
+                            { name: 'MonthDayNoYear', regex: regexMonthDayNoYear, handler: (match) => {
+                                const [, month, day] = match;
                                 const monthNum = getMonthNumber(month);
-                                return monthNum ? `${year}-${monthNum}` : null;
-                            }, priority: 1 }
+                                if (!monthNum || parseInt(day) < 1 || parseInt(day) > 31) return null;
+                                return `${monthNum}-${String(day).padStart(2, '0')}`;
+                            }, priority: 1 }, // Lower priority than full dates
+                            // NEW: Day Month (no year)
+                            { name: 'DayMonthNoYear', regex: regexDayMonthNoYear, handler: (match) => {
+                                const [, day, month] = match;
+                                const monthNum = getMonthNumber(month);
+                                if (!monthNum || parseInt(day) < 1 || parseInt(day) > 31) return null;
+                                return `${monthNum}-${String(day).padStart(2, '0')}`;
+                            }, priority: 1 } // Lower priority than full dates
                         ];
 
                         patternsToTest.forEach(pattern => {
@@ -2080,9 +2105,6 @@
                         let nonOverlappingMatches = [];
                         let lastEnd = -1;
                         allMatches.forEach(match => {
-                            // Check for overlap and length preference for ISO dates
-                            // If the current match overlaps with the last added non-overlapping match,
-                            // only add it if it's a higher priority or same priority but longer (for ISO dates)
                             let shouldAdd = true;
                             if (nonOverlappingMatches.length > 0) {
                                 const lastAdded = nonOverlappingMatches[nonOverlappingMatches.length - 1];
@@ -2110,7 +2132,8 @@
                             let currentIndex = 0;
                             nonOverlappingMatches.forEach(match => {
                                 resultParts.push(currentText.substring(currentIndex, match.start));
-                                resultParts.push(`<time datetime="${match.datetime}">${match.original}</time>`);
+                                // Add class="nowrap" here
+                                resultParts.push(`<time class="nowrap" datetime="${match.datetime}">${match.original}</time>`);
                                 currentIndex = match.end;
                             });
                             resultParts.push(currentText.substring(currentIndex));
