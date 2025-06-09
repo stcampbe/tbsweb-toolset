@@ -3,175 +3,330 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CodeMirror HTML Table Formatter</title>
+    <title>Monaco HTML Table Formatter</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- CodeMirror CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
-    <!-- CodeMirror Theme CSS (explicitly loading default theme) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/default.min.css">
     <style>
-        /* Custom styles to ensure CodeMirror fits well and for general aesthetics */
+        /* Custom styles for overall layout and aesthetics (Dark Theme) */
         body {
             font-family: 'Inter', sans-serif; /* Using Inter font */
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start; /* Align to top for better vertical flow */
             min-height: 100vh;
-            background-color: #f0f4f8; /* Light background */
-            padding: 1rem;
+            background-color: #0f172a; /* Very dark blue-gray background (slate-900) */
+            padding: 1.5rem 1rem; /* Reduced vertical padding */
+            box-sizing: border-box; /* Ensure padding doesn't cause overflow */
         }
-        .container {
-            background-color: #ffffff;
-            border-radius: 1rem; /* Rounded corners */
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            padding: 2rem;
+        .main-wrapper { /* New wrapper for sidebar and main content */
+            background-color: #1e293b; /* Dark blue-gray background (slate-800) */
+            border-radius: 1.25rem; /* Slightly less rounded corners */
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4); /* Slightly less strong shadow */
+            padding: 2rem; /* Reduced padding */
             width: 100%;
-            max-width: 900px; /* Max width for larger screens */
+            max-width: 1100px; /* Slightly reduced max width */
             display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
+            flex-direction: column; /* Default to column on small screens */
+            gap: 1.5rem; /* Reduced gap between sections */
         }
-        .CodeMirror {
-            border: 1px solid #cbd5e1; /* Light border */
-            border-radius: 0.5rem; /* Rounded corners for editor */
-            height: 400px; /* Fixed height for the editor */
-            font-size: 0.95rem; /* Slightly smaller font for code */
+
+        /* Responsive layout for desktop (sidebar on right, editor on left) */
+        @media (min-width: 1024px) { /* Apply on large screens and up (lg breakpoint) */
+            .main-wrapper {
+                flex-direction: row-reverse; /* Row-reverse direction for desktop to put sidebar on right */
+                align-items: flex-start; /* Align items to the top */
+                justify-content: space-between; /* Space between sidebar and main content */
+            }
+            #options-sidebar {
+                width: 300px; /* Reduced fixed width for the sidebar */
+                flex-shrink: 0; /* Prevent sidebar from shrinking */
+                padding-left: 1rem; /* Reduced space to the left of the sidebar */
+            }
+            #main-content {
+                flex-grow: 1; /* Allow main content to take remaining space */
+                max-width: calc(100% - 300px - 1.5rem); /* Calculate max width considering sidebar and gap */
+            }
         }
+
+        #editor-container { /* Container for Monaco Editor */
+            border: 1px solid #4a5568; /* Darker border for editor */
+            border-radius: 0.625rem; /* Slightly less rounded corners for editor */
+            height: 550px; /* Slightly reduced height for the editor */
+            overflow: hidden; /* Ensure rounded corners clip content */
+            margin-bottom: 1.5rem; /* Reduced space between editor and buttons */
+        }
+
         /* Responsive tables styling for horizontal scrolling */
         .table-responsive {
             overflow-x: auto; /* Enable horizontal scrolling */
             -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
         }
 
-        /* CodeMirror syntax highlighting colors */
-        .cm-s-default .cm-tag { color: #ef4444; } /* HTML tags */
-        .cm-s-default .cm-attribute { color: #059669; } /* HTML attributes */
-        .cm-s-default .cm-string { color: #3b82f6; } /* Attribute values, strings */
-        .cm-s-default .cm-keyword { color: #d946ef; } /* JS keywords (if JS is mixed) */
-        .cm-s-default .cm-comment { color: #6b7280; font-style: italic; } /* Comments */
-        .cm-s-default .cm-atom { color: #f97316; } /* Booleans, null */
-        .cm-s-default .cm-number { color: #10b981; } /* Numbers */
-        .cm-s-default .cm-variable { color: #007bff; } /* JS variables (if JS is mixed) */
-        .cm-s-default .cm-error { color: #ef4444; } /* Errors */
-        .cm-s-default .cm-builtin { color: #8a2be2; } /* Built-in functions/objects */
-        .cm-s-default .cm-property { color: #20b2aa; } /* Object properties */
+        /* Message box animation */
+        .message-box-fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        .message-box-fade-out {
+            animation: fadeOut 0.5s ease-in forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-10px); }
+        }
+
+        /* Fieldset specific styling */
+        fieldset {
+            border: none; /* Explicitly remove border */
+            border-radius: 0.625rem; /* Slightly less rounded */
+            padding: 0.75rem 1rem; /* Reduced vertical and horizontal padding for better spacing */
+            margin-bottom: 1rem; /* Reduced space between fieldsets */
+        }
+
+        /* Custom styles for Pill-style Toggle Switches */
+        .toggle-switch {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            font-size: 0.9375rem; /* Slightly smaller font size for label */
+        }
+
+        .toggle-switch input[type="checkbox"] {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-switch .slider {
+            background-color: #4a5568; /* Darker gray for default state (gray-700) */
+            border-radius: 9999px; /* Fully rounded */
+            width: 2.5rem; /* ~40px */
+            height: 1.25rem; /* ~20px */
+            transition: background-color 0.3s ease;
+            position: relative;
+            flex-shrink: 0; /* Prevent slider from shrinking */
+        }
+
+        .toggle-switch .slider:before {
+            content: '';
+            position: absolute;
+            height: 1rem; /* ~16px */
+            width: 1rem; /* ~16px */
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .toggle-switch input[type="checkbox"]:checked + .slider {
+            background-color: #3b82f6; /* Tailwind blue-500 on checked */
+        }
+
+        .toggle-switch input[type="checkbox"]:checked + .slider:before {
+            transform: translateX(1.25rem); /* Move slider to the right (40px - 16px - 2*2px = 20px move) */
+        }
+
+        .toggle-switch .toggle-label {
+            color: #e2e8f0; /* Light text for toggle labels (gray-200) */
+            font-size: 0.875rem; /* Reduced font size for labels (text-sm) */
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1 class="text-3xl font-bold text-center text-gray-800">HTML Table Formatter</h1>
-        <p class="text-gray-600 text-center">
-            Paste your HTML table code below. The formatter will clean up the table structure and apply chosen options.
-        </p>
+    <div class="main-wrapper">
+        <!-- Sidebar for Options -->
+        <div id="options-sidebar" class="p-6 bg-gray-800 rounded-xl shadow-inner border border-gray-700">
+            <h2 class="text-xl font-semibold text-gray-100 mb-4 text-left">Page Settings</h2> <!-- Reduced text size -->
 
-        <!-- Options Checkboxes and ID Prefix Input -->
-        <div class="flex flex-wrap items-center justify-center gap-4 p-4 bg-gray-50 rounded-lg shadow-inner">
-            <label class="inline-flex items-center">
-                <input type="checkbox" id="auto-id-checkbox" class="form-checkbox text-blue-600 h-5 w-5" checked>
-                <span class="ml-2 text-gray-700">Auto ID Tables</span>
-            </label>
-            <div class="flex items-center gap-2">
-                <label for="id-prefix-input" class="text-gray-700">ID Prefix:</label>
-                <input type="text" id="id-prefix-input" value="tbl" class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm w-24">
-            </div>
-            <label class="inline-flex items-center">
-                <input type="checkbox" id="auto-class-checkbox" class="form-checkbox text-blue-600 h-5 w-5" checked>
-                <span class="ml-2 text-gray-700">Auto Class Tables</span>
-            </label>
-            <label class="inline-flex items-center">
-                <input type="checkbox" id="auto-caption-checkbox" class="form-checkbox text-blue-600 h-5 w-5" checked>
-                <span class="ml-2 text-gray-700">Auto Caption Tables</span>
-            </label>
-            <label class="inline-flex items-center">
-                <input type="checkbox" id="auto-header-checkbox" class="form-checkbox text-blue-600 h-5 w-5" checked>
-                <span class="ml-2 text-gray-700">Auto Header Tables</span>
-            </label>
-            <label class="inline-flex items-center">
-                <input type="checkbox" id="auto-row-header-checkbox" class="form-checkbox text-blue-600 h-5 w-5" checked>
-                <span class="ml-2 text-gray-700">Auto Row Header</span>
-            </label>
-             <label class="inline-flex items-center">
-                <input type="checkbox" id="auto-finance-table-checkbox" class="form-checkbox text-blue-600 h-5 w-5">
-                <span class="ml-2 text-gray-700">Auto Finance Table</span>
-            </label>
-            <label class="inline-flex items-center">
-                <input type="checkbox" id="bold-totals-checkbox" class="form-checkbox text-blue-600 h-5 w-5">
-                <span class="ml-2 text-gray-700">Bold Totals</span>
-            </label>
-            <label class="inline-flex items-center">
-                <input type="checkbox" id="center-column-headers-checkbox" class="form-checkbox text-blue-600 h-5 w-5">
-                <span class="ml-2 text-gray-700">Center Column Headers</span>
-            </label>
-            <label class="inline-flex items-center">
-                <input type="checkbox" id="center-body-headers-checkbox" class="form-checkbox text-blue-600 h-5 w-5">
-                <span class="ml-2 text-gray-700">Center Body Headers</span>
-            </label>
-            <label class="inline-flex items-center">
-                <input type="checkbox" id="active-colspan-headers-checkbox" class="form-checkbox text-blue-600 h-5 w-5">
-                <span class="ml-2 text-gray-700">Active Colspan Headers</span>
-            </label>
-            <label class="inline-flex items-center">
-                <input type="checkbox" id="active-row-headers-checkbox" class="form-checkbox text-blue-600 h-5 w-5">
-                <span class="ml-2 text-gray-700">Active Row Headers</span>
-            </label>
-            <label class="inline-flex items-center">
-                <input type="checkbox" id="responsive-tables-checkbox" class="form-checkbox text-blue-600 h-5 w-5">
-                <span class="ml-2 text-gray-700">Responsive Tables</span>
-            </label>
-            <label class="inline-flex items-center">
-                <input type="checkbox" id="auto-scope-checkbox" class="form-checkbox text-blue-600 h-5 w-5" checked>
-                <span class="ml-2 text-gray-700">Auto Scope Tables</span>
-            </label>
+            <!-- Table Identification & Basic Settings -->
+            <fieldset>
+                <div class="grid grid-cols-1 gap-y-3 gap-x-6 mb-3"> <!-- Reduced gap-y and mb -->
+                    <!-- ID Prefix Input -->
+                    <div class="flex items-center gap-2"> <!-- Reduced gap -->
+                        <label for="id-prefix-input" class="text-gray-200 text-sm font-medium">ID Prefix:</label>
+                        <input type="text" id="id-prefix-input" value="tbl" class="w-24 px-2 py-1 border border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-sm bg-gray-700 text-white"> <!-- Reduced width, padding, and text size -->
+                    </div>
+                    <!-- ID Tables Checkbox -->
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="id-checkbox" class="hidden"> <!-- Unchecked by default -->
+                        <span class="slider"></span>
+                        <span class="toggle-label ml-2 text-gray-200">ID Tables</span> <!-- Reduced ml -->
+                    </label>
+                    <!-- Caption Tables Checkbox -->
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="caption-checkbox" class="hidden" checked>
+                        <span class="slider"></span>
+                        <span class="toggle-label ml-2 text-gray-200">Caption Tables</span>
+                    </label>
+                    <!-- Child option for Caption Tables, with indentation -->
+                    <div class="pl-6 grid grid-cols-1 gap-y-3 gap-x-6"> <!-- Reduced pl and gap-y -->
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="center-caption-checkbox" class="hidden">
+                            <span class="slider"></span>
+                            <span class="toggle-label ml-2 text-gray-200">Center Captions</span>
+                        </label>
+                    </div>
+
+                    <!-- Moved Column Headers + THEAD here -->
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="header-checkbox" class="hidden" checked>
+                        <span class="slider"></span>
+                        <span class="toggle-label ml-2 text-gray-200">Column Headers + THEAD</span>
+                    </label>
+                    <!-- Moved Row Headers in TBODY here -->
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="row-header-checkbox" class="hidden" checked>
+                        <span class="slider"></span>
+                        <span class="toggle-label ml-2 text-gray-200">Row Headers in TBODY</span>
+                    </label>
+
+                    <!-- Responsive Tables Checkbox -->
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="responsive-tables-checkbox" class="hidden" checked>
+                        <span class="slider"></span>
+                        <span class="toggle-label ml-2 text-gray-200">Responsive Tables</span>
+                    </label>
+                    <!-- Child option for Responsive Tables, with indentation -->
+                    <div class="pl-6 grid grid-cols-1 gap-y-3 gap-x-6"> <!-- Reduced pl and gap-y -->
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="responsive-small-checkbox" class="hidden">
+                            <span class="slider"></span>
+                            <span class="toggle-label ml-2 text-gray-200">Add Small</span>
+                        </label>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- Class & Structure Options -->
+            <fieldset>
+                <div class="grid grid-cols-1 gap-y-3 gap-x-6 mb-3"> <!-- Reduced gap-y and mb -->
+                    <!-- Class Tables Checkbox (Parent for new style options) -->
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="class-tables-checkbox" class="hidden" checked>
+                        <span class="slider"></span>
+                        <span class="toggle-label ml-2 text-gray-200">Class Tables</span>
+                    </label>
+                    <!-- Child options for Class Tables, with indentation -->
+                    <div class="pl-6 grid grid-cols-1 gap-y-3 gap-x-6"> <!-- Reduced pl and gap-y -->
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="bordered-checkbox" class="hidden" checked>
+                            <span class="slider"></span>
+                            <span class="toggle-label ml-2 text-gray-200">Bordered</span>
+                        </label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="striped-checkbox" class="hidden">
+                            <span class="slider"></span>
+                            <span class="toggle-label ml-2 text-gray-200">Striped</span>
+                        </label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="hover-checkbox" class="hidden">
+                            <span class="slider"></span>
+                            <span class="toggle-label ml-2 text-gray-200">Hover</span>
+                        </label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="active-col-headers-checkbox" class="hidden" checked>
+                            <span class="slider"></span>
+                            <span class="toggle-label ml-2 text-gray-200">Active Column Headers</span>
+                        </label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="active-row-headers-checkbox" class="hidden">
+                            <span class="slider"></span>
+                            <span class="toggle-label ml-2 text-gray-200">Active Row Headers</span>
+                        </label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="active-colspan-headers-checkbox" class="hidden" checked>
+                            <span class="slider"></span>
+                            <span class="toggle-label ml-2 text-gray-200">Active Colspan Headers</span>
+                        </label>
+                        <!-- Moved "Center Column Headers" here -->
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="center-column-headers-checkbox" class="hidden">
+                            <span class="slider"></span>
+                            <span class="toggle-label ml-2 text-gray-200">Center Column Headers</span>
+                        </label>
+                        <!-- Moved and renamed "Center Body Headers" here -->
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="center-colspan-headers-checkbox" class="hidden">
+                            <span class="slider"></span>
+                            <span class="toggle-label ml-2 text-gray-200">Center Colspan Headers</span>
+                        </label>
+                        <!-- New Center All Data Option -->
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="center-all-data-checkbox" class="hidden">
+                            <span class="slider"></span>
+                            <span class="toggle-label ml-2 text-gray-200">Center All Data</span>
+                        </label>
+                         <!-- Moved Finance Table here -->
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="finance-table-checkbox" class="hidden">
+                            <span class="slider"></span>
+                            <span class="toggle-label ml-2 text-gray-200">Finance Table</span>
+                        </label>
+                        <!-- Moved Bold Totals here -->
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="bold-totals-checkbox" class="hidden">
+                            <span class="slider"></span>
+                            <span class="toggle-label ml-2 text-gray-200">Bold Totals</span>
+                        </label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="class-small-checkbox" class="hidden">
+                            <span class="slider"></span>
+                            <span class="toggle-label ml-2 text-gray-200">Add Small</span>
+                        </label>
+                    </div>
+                </div>
+            </fieldset>
         </div>
 
-        <!-- Textarea for CodeMirror -->
-        <textarea id="code-editor" class="hidden"></textarea>
+        <!-- Main Content Area (Editor, Buttons, Message Box) -->
+        <div id="main-content" class="flex flex-col flex-grow">
+            <h1 class="text-4xl font-bold text-white mb-4 text-left">HTML Table Formatter</h1>
 
-        <!-- Format Button -->
-        <button id="format-button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-300">
-            Format Tables
-        </button>
+            <!-- Container for Monaco Editor -->
+            <div id="editor-container"></div>
 
-        <!-- Message Box for alerts/errors -->
-        <div id="message-box" class="hidden p-4 rounded-lg text-sm text-center" role="alert"></div>
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <button id="format-button" class="flex-1 bg-gradient-to-r from-blue-800 to-blue-950 hover:from-blue-700 hover:to-blue-900 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-500">
+                    Format Tables
+                </button>
+                <button id="clear-button" class="flex-1 bg-gradient-to-r from-gray-800 to-gray-950 hover:from-gray-700 hover:to-gray-900 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-gray-500">
+                    Clear Editor
+                </button>
+            </div>
+
+            <!-- Message Box for alerts/errors -->
+            <div id="message-box" class="hidden p-4 rounded-lg text-sm text-center transition-all duration-300 ease-in-out mt-6" role="alert"></div> <!-- Reduced mt -->
+        </div>
     </div>
 
-    <!-- CodeMirror JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/xml/xml.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/javascript/javascript.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/css/css.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/htmlmixed/htmlmixed.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/edit/matchbrackets.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/edit/closebrackets.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/selection/active-line.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/hint/show-hint.min.js"></script>
-
+    <!-- Monaco Editor Loader -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.29.1/min/vs/loader.min.js"></script>
     <script>
-        // Initialize CodeMirror editor
-        const editor = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
-            mode: 'htmlmixed', // Use htmlmixed mode for HTML
-            lineNumbers: true,
-            matchBrackets: true,
-            autoCloseBrackets: true,
-            styleActiveLine: true,
-            theme: 'default' // Default CodeMirror theme
-        });
+        let monacoEditor; // Declare editor variable globally
 
-        // Set initial example HTML content with tables to demonstrate auto-ID reordering
-        editor.setValue(`<table>
+        // Initialize Monaco Editor after the loader script is available
+        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.29.1/min/vs' }});
+        require(['vs/editor/editor.main'], function() {
+            monacoEditor = monaco.editor.create(document.getElementById('editor-container'), {
+                value: `<table>
       <tbody>
         <tr>
-          <th rowspan="2">Category</th>
-          <th colspan="2">Q1 Sales</th>
-          <th colspan="2">Q2 Sales</th>
-        </tr>
-        <tr>
-          <th class="text-left">North</th>
-          <th>South</th>
-          <th>East</th>
-          <th class="text-right">West</th>
+          <td>&nbsp;</td>
+          <td>North</td>
+          <td>South</td>
+          <td>East</td>
+          <td>West</td>
         </tr>
         <tr>
           <td>Electronics</td>
@@ -188,16 +343,9 @@
           <td>+110,25</td>
         </tr>
         <tr>
-          <th>Subtotal</th>
-          <td>1000</td>
-          <td>2000</td>
-          <td>3000</td>
-          <td>4000</td>
-        </tr>
-        <tr>
           <td>Books</td>
           <td>50</td>
-          <td rowspan="2">70 (merged)</td>
+          <td>70</td>
           <td>60</td>
           <td>90</td>
         </tr>
@@ -206,15 +354,10 @@
           <td>120</td>
           <td>100</td>
           <td>140</td>
+          <td>140</td>
         </tr>
         <tr>
-          <th colspan="2" class="text-right">Grand Total</th>
-          <td>3000</td>
-          <td>5000</td>
-          <td>8100</td>
-        </tr>
-        <tr>
-          <th>Total</th>
+          <td>Total</td>
           <td>1500</td>
           <td>2500</td>
           <td>3600</td>
@@ -222,8 +365,57 @@
         </tr>
       </tbody>
     </table>
-
-    <p>Simple Table (no col/rowspan):</p>
+<table id="tbl11">
+    <thead>
+        <tr>
+            <th rowspan="2">Category</th>
+            <th colspan="2">Q1 Sales</th>
+            <th colspan="2">Q2 Sales</th>
+        </tr>
+        <tr>
+            <th>Jan</th>
+            <th>Feb</th>
+            <th>Mar</th>
+            <th>Apr</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <th>Electronics</th>
+            <td>100</td>
+            <td>150</td>
+            <td>120</td>
+            <td>180</td>
+        </tr>
+        <tr>
+            <th>Apparel</th>
+            <td>80</td>
+            <td>-120</td>
+            <td>90</td>
+            <td>110</td>
+        </tr>
+        <tr>
+            <th>Books</th>
+            <td>50</td>
+            <td>70</td>
+            <td>60</td>
+            <td>90</td>
+        </tr>
+        <tr>
+            <th colspan="5">Summary by Region</th>
+        </tr>
+        <tr>
+            <th>North Region Total</th>
+            <td colspan="2">1500</td>
+            <td colspan="2">2500</td>
+        </tr>
+        <tr>
+            <th>South Region Total</th>
+            <td colspan="2">3600</td>
+            <td colspan="2">4500</td>
+        </tr>
+    </tbody>
+</table>
     <table>
         <thead>
             <tr>
@@ -256,43 +448,81 @@
             <tr><td>Data 1</td><td>Data 2</td></tr>
         </tbody>
     </table>
-    `);
+    `,
+                language: 'html',
+                theme: 'vs-dark', /* Changed to dark theme for Monaco */
+                automaticLayout: true, /* Resize editor when container resizes */
+                minimap: { enabled: false } /* Disable minimap for cleaner look */
+            });
+        });
 
         const formatButton = document.getElementById('format-button');
-        const autoIdCheckbox = document.getElementById('auto-id-checkbox');
+        const clearButton = document.getElementById('clear-button');
+
+        const idCheckbox = document.getElementById('id-checkbox');
         const idPrefixInput = document.getElementById('id-prefix-input');
-        const autoClassCheckbox = document.getElementById('auto-class-checkbox');
-        const autoCaptionCheckbox = document.getElementById('auto-caption-checkbox');
-        const autoHeaderCheckbox = document.getElementById('auto-header-checkbox');
-        const autoRowHeaderCheckbox = document.getElementById('auto-row-header-checkbox');
-        const autoFinanceTableCheckbox = document.getElementById('auto-finance-table-checkbox');
-        const boldTotalsCheckbox = document.getElementById('bold-totals-checkbox');
-        const centerColumnHeadersCheckbox = document.getElementById('center-column-headers-checkbox');
-        const centerBodyHeadersCheckbox = document.getElementById('center-body-headers-checkbox');
+        // Removed autoIdScopeCheckboxElement declaration and its corresponding HTML element
+        const classTablesCheckbox = document.getElementById('class-tables-checkbox');
+        const captionCheckbox = document.getElementById('caption-checkbox');
+        const centerCaptionCheckbox = document.getElementById('center-caption-checkbox');
+        const headerCheckbox = document.getElementById('header-checkbox');
+        const rowHeaderCheckbox = document.getElementById('row-header-checkbox');
+
+        const responsiveTablesCheckbox = document.getElementById('responsive-tables-checkbox');
+        const responsiveSmallCheckbox = document.getElementById('responsive-small-checkbox');
+
+        const borderedCheckbox = document.getElementById('bordered-checkbox');
+        const stripedCheckbox = document.getElementById('striped-checkbox');
+        const hoverCheckbox = document.getElementById('hover-checkbox');
+        const activeColHeadersCheckbox = document.getElementById('active-col-headers-checkbox');
         const activeColspanHeadersCheckbox = document.getElementById('active-colspan-headers-checkbox');
         const activeRowHeadersCheckbox = document.getElementById('active-row-headers-checkbox');
-        const responsiveTablesCheckbox = document.getElementById('responsive-tables-checkbox');
-        const autoScopeCheckbox = document.getElementById('auto-scope-checkbox');
+        const classSmallCheckboxElement = document.getElementById('class-small-checkbox');
+
+
+        const centerColumnHeadersCheckbox = document.getElementById('center-column-headers-checkbox');
+        const centerColspanHeadersCheckbox = document.getElementById('center-colspan-headers-checkbox');
+        const centerAllDataCheckbox = document.getElementById('center-all-data-checkbox');
+        const financeTableCheckbox = document.getElementById('finance-table-checkbox');
+
+        const boldTotalsCheckbox = document.getElementById('bold-totals-checkbox');
+
         const messageBox = document.getElementById('message-box');
 
+        let messageTimeoutId;
+
         /**
-         * Displays a message in the message box.
+         * Displays a message in the message box with animation.
          * @param {string} message - The message to display.
          * @param {string} type - 'success', 'error', or 'info' for styling.
          */
         function showMessage(message, type) {
-            messageBox.textContent = message;
-            messageBox.classList.remove('hidden', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800', 'bg-blue-100', 'text-blue-800');
-            if (type === 'success') {
-                messageBox.classList.add('bg-green-100', 'text-green-800');
-            } else if (type === 'error') {
-                messageBox.classList.add('bg-red-100', 'text-red-800');
-            } else { // info
-                messageBox.classList.add('bg-blue-100', 'text-blue-800');
+            if (messageTimeoutId) {
+                clearTimeout(messageTimeoutId);
+                messageBox.classList.remove('message-box-fade-in', 'message-box-fade-out');
             }
-            setTimeout(() => {
-                messageBox.classList.add('hidden');
-            }, 5000); // Hide after 5 seconds
+
+            messageBox.textContent = message;
+            messageBox.classList.remove('hidden', 'bg-green-700', 'text-white', 'bg-red-700', 'text-white', 'bg-blue-700', 'text-white');
+            messageBox.classList.add('message-box-fade-in');
+
+            if (type === 'success') {
+                messageBox.classList.add('bg-green-700', 'text-white');
+            } else if (type === 'error') {
+                messageBox.classList.add('bg-red-700', 'text-white');
+            } else { // info
+                messageBox.classList.add('bg-blue-700', 'text-white');
+            }
+
+            messageTimeoutId = setTimeout(() => {
+                messageBox.classList.remove('message-box-fade-in');
+                messageBox.classList.add('message-box-fade-out');
+                messageBox.addEventListener('animationend', function handler() {
+                    messageBox.classList.add('hidden');
+                    messageBox.classList.remove('message-box-fade-out');
+                    messageBox.removeEventListener('animationend', handler);
+                });
+            }, 4500);
         }
 
         /**
@@ -301,15 +531,35 @@
          * @returns {string} The original string, trimmed.
          */
         function padString(str) {
-            return str.trim(); // Just return the trimmed string
+            return str.trim();
         }
+
+        // Mutual exclusivity logic for Center All Data and Finance Table
+        centerAllDataCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                financeTableCheckbox.checked = false;
+            }
+        });
+
+        financeTableCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                centerAllDataCheckbox.checked = false;
+            }
+        });
+
 
         /**
          * Formats the HTML content, specifically targeting and cleaning up tables,
          * and optionally applies various styling and structural enhancements.
          */
         function formatHtmlTables() {
-            const htmlText = editor.getValue();
+            // Ensure monacoEditor is initialized before trying to get its value
+            if (!monacoEditor) {
+                showMessage('Editor is still loading, please wait.', 'info');
+                return;
+            }
+
+            const htmlText = monacoEditor.getValue();
             if (!htmlText.trim()) {
                 showMessage('No HTML content to format.', 'info');
                 return;
@@ -328,101 +578,126 @@
                     return;
                 }
 
-                const applyAutoId = autoIdCheckbox.checked;
+                const applyId = idCheckbox.checked;
                 const customIdPrefix = idPrefixInput.value.trim();
-                const currentIdRegex = new RegExp(`^${customIdPrefix}\\d+$`);
+                const currentIdRegex = new RegExp(`^(${customIdPrefix}\\d+(_r\\d+_c\\d+)?)$`);
 
-                const applyAutoClass = autoClassCheckbox.checked;
-                const applyAutoCaption = autoCaptionCheckbox.checked;
-                const applyAutoHeader = autoHeaderCheckbox.checked;
-                const applyAutoRowHeader = autoRowHeaderCheckbox.checked;
-                const applyAutoFinanceTable = autoFinanceTableCheckbox.checked;
-                const boldTotals = boldTotalsCheckbox.checked;
-                const centerColumnHeaders = centerColumnHeadersCheckbox.checked;
-                const centerBodyHeaders = centerBodyHeadersCheckbox.checked;
+                const applyClassTables = classTablesCheckbox.checked;
+                const applyCaption = captionCheckbox.checked;
+                const applyCenterCaption = centerCaptionCheckbox.checked;
+                const applyHeader = headerCheckbox.checked; // Column Headers + THEAD
+                const applyRowHeader = rowHeaderCheckbox.checked; // Row Headers in TBODY
+
+                const applyResponsiveTables = responsiveTablesCheckbox.checked;
+                const applyResponsiveSmall = responsiveSmallCheckbox.checked;
+
+                const borderedCheckbox = document.getElementById('bordered-checkbox');
+                const stripedCheckbox = document.getElementById('striped-checkbox');
+                const hoverCheckbox = document.getElementById('hover-checkbox');
+                const activeColHeaders = activeColHeadersCheckbox.checked;
                 const activeColspanHeaders = activeColspanHeadersCheckbox.checked;
                 const activeRowHeaders = activeRowHeadersCheckbox.checked;
-                const responsiveTables = responsiveTablesCheckbox.checked;
-                const applyAutoScope = autoScopeCheckbox.checked;
+                const applyClassSmall = classSmallCheckboxElement.checked;
 
-                const defaultClasses = "table table-bordered table-condensed table-hover mrgn-tp-lg mrgn-bttm-lg small".split(' ');
-                const activeRowClass = 'active'; // Class for <tr> in <thead>
+
+                const applyFinanceTable = financeTableCheckbox.checked;
+                const applyBoldTotals = boldTotalsCheckbox.checked;
+                const applyCenterColumnHeaders = centerColumnHeadersCheckbox.checked;
+                const applyCenterColspanHeaders = centerColspanHeadersCheckbox.checked;
+                const applyCenterAllData = centerAllDataCheckbox.checked;
+
                 const financeClasses = ['text-right', 'nowrap'];
                 const centerClass = 'text-center';
                 const alignmentClasses = ['text-left', 'text-center', 'text-right'];
                 const financeRegex = /^\s*[-+]?(?:\d+|\d{1,3}(?:\s\d{3})*)(?:[.,]\d+)?\s*$/;
                 const responsiveDivClass = 'table-responsive';
-
+                const smallClass = 'small';
 
                 let tableCounter = 1;
 
                 tables.forEach(table => {
-                    // --- Handle Responsive Tables Wrapping/Unwrapping FIRST ---
-                    const parentIsResponsiveDiv = table.parentNode && table.parentNode.classList.contains(responsiveDivClass);
+                    let responsiveDiv = table.parentNode;
+                    const parentIsResponsiveDiv = responsiveDiv && responsiveDiv.classList.contains(responsiveDivClass);
 
-                    if (responsiveTables) {
+                    if (applyResponsiveTables) {
                         if (!parentIsResponsiveDiv) {
-                            const responsiveDiv = document.createElement('div');
+                            responsiveDiv = document.createElement('div');
                             responsiveDiv.classList.add(responsiveDivClass);
                             table.parentNode.insertBefore(responsiveDiv, table);
                             responsiveDiv.appendChild(table);
                         }
+                        if (applyResponsiveSmall) {
+                            responsiveDiv.classList.add(smallClass);
+                        } else {
+                            responsiveDiv.classList.remove(smallClass);
+                        }
                     } else {
                         if (parentIsResponsiveDiv) {
-                            const parentDiv = table.parentNode;
-                            parentDiv.parentNode.insertBefore(table, parentDiv);
-                            parentDiv.remove();
+                            responsiveDiv.classList.remove(smallClass);
+                            responsiveDiv.parentNode.insertBefore(table, responsiveDiv);
+                            responsiveDiv.remove();
                         }
                     }
 
-                    const allRows = Array.from(table.querySelectorAll('tr'));
-                    table.querySelectorAll('thead, tbody, tfoot').forEach(el => el.remove());
-
-                    // --- Clean 'active' class from all TH elements before re-applying ---
-                    Array.from(table.querySelectorAll('th')).forEach(th => {
-                        th.classList.remove('active');
-                    });
-
-                    // --- Clean up all auto-generated scope/id/headers attributes from previous runs ---
+                    // --- UNCONDITIONALLY REMOVE ALL IDs, HEADERS, AND SCOPES AT THE START ---
+                    // This fulfills "get rid of the ID's and headers when clicking format"
+                    table.removeAttribute('id'); // Remove ID from the table itself
                     Array.from(table.querySelectorAll('th, td')).forEach(cell => {
-                        if (cell.id && cell.id.startsWith(`${table.id}_th_`)) { // Check if ID was auto-generated
-                            cell.removeAttribute('id');
-                        }
-                        cell.removeAttribute('scope');
+                        cell.removeAttribute('id');
                         cell.removeAttribute('headers');
+                        cell.removeAttribute('scope');
+                    });
+                    // --- END UNCONDITIONAL REMOVAL ---
+
+
+                    // --- Table Complexity Detection ---
+                    let isComplexTable = false;
+                    Array.from(table.querySelectorAll('th, td')).forEach(cell => {
+                        const colspan = parseInt(cell.getAttribute('colspan') || '1', 10);
+                        const rowspan = parseInt(cell.getAttribute('rowspan') || '1', 10);
+                        if (colspan > 1 || rowspan > 1) {
+                            isComplexTable = true;
+                        }
+                    });
+                    // --- END Table Complexity Detection ---
+
+
+                    // Clear existing active, centering, and alignment classes from all cells
+                    Array.from(table.querySelectorAll('th, tr, td')).forEach(el => {
+                        el.classList.remove('active');
+                        el.classList.remove(centerClass);
+                        alignmentClasses.forEach(cls => el.classList.remove(cls));
                     });
 
-
-                    if (applyAutoId) {
-                        const existingId = table.id;
-                        const isCurrentPrefixId = existingId && currentIdRegex.test(existingId);
-
-                        if (!existingId || isCurrentPrefixId) {
-                            table.removeAttribute('id');
-                            table.id = `${customIdPrefix}${tableCounter}`;
-                        }
-                    } else {
-                        if (table.id && currentIdRegex.test(table.id)) {
-                            table.removeAttribute('id');
-                        }
+                    // Conditional re-application of table ID based on applyId checkbox
+                    if (applyId) {
+                        table.id = `${customIdPrefix}${tableCounter}`;
                     }
 
-                    if (applyAutoClass) {
-                        const currentClasses = new Set(table.className.split(' ').filter(c => c.trim() !== ''));
-                        defaultClasses.forEach(c => currentClasses.add(c));
-                        table.className = Array.from(currentClasses).join(' ');
-                    } else {
-                        const currentClasses = table.className.split(' ').filter(c => c.trim() !== '');
-                        const filteredClasses = currentClasses.filter(c => !defaultClasses.includes(c));
-                        table.className = Array.from(new Set(filteredClasses)).join(' ');
+                    const controlledClasses = ['table', 'table-bordered', 'table-striped', 'table-hover', 'table-condensed', smallClass];
+                    let currentClasses = table.className.split(' ').filter(c => c.trim() !== '');
+                    const newClasses = new Set(currentClasses.filter(c => !controlledClasses.includes(c)));
+
+                    if (applyClassTables) {
+                        newClasses.add('table');
+                        newClasses.add('table-condensed');
+                        if (borderedCheckbox.checked) newClasses.add('table-bordered');
+                        if (stripedCheckbox.checked) newClasses.add('table-striped');
+                        if (hoverCheckbox.checked) newClasses.add('table-hover');
+                        if (applyClassSmall) newClasses.add(smallClass);
                     }
+                    table.className = Array.from(newClasses).join(' ');
+
+                    // Capture original rows here. This refers to the state before thead/tbody manipulations.
+                    const originalTableRows = Array.from(table.querySelectorAll('tr'));
 
                     let headerRowCount = 0;
-                    if (applyAutoHeader) {
+                    // Determine how many rows belong to the header (thead)
+                    if (applyHeader) { // "Column Headers + THEAD"
                         let maxRowSpanEnd = -1;
 
-                        for (let i = 0; i < allRows.length; i++) {
-                            const currentRow = allRows[i];
+                        for (let i = 0; i < originalTableRows.length; i++) {
+                            const currentRow = originalTableRows[i];
                             headerRowCount = i + 1;
 
                             const cellsInCurrentRow = Array.from(currentRow.querySelectorAll('th, td'));
@@ -437,28 +712,39 @@
                         }
                     }
 
+                    // Remove existing thead/tbody/tfoot elements to rebuild them
+                    table.querySelectorAll('thead, tbody, tfoot').forEach(el => el.remove());
+
                     const newThead = document.createElement('thead');
                     const newTbody = document.createElement('tbody');
 
-                    allRows.forEach((row, index) => {
-                        row.classList.remove(activeRowClass);
-
+                    // Distribute original rows into newThead and newTbody based on headerRowCount
+                    originalTableRows.forEach((row, index) => {
                         if (index < headerRowCount) {
-                            newThead.appendChild(row);
-                            if (applyAutoHeader) {
-                                row.classList.add(activeRowClass);
-                            }
+                            // If this row is part of the header, convert its <td> elements to <th>
+                            const clonedRow = row.cloneNode(true); // Clone to avoid modifying original array while iterating
+                            Array.from(clonedRow.querySelectorAll('td')).forEach(td => {
+                                const newTh = document.createElement('th');
+                                // Copy all attributes from td to th
+                                Array.from(td.attributes).forEach(attr => {
+                                    newTh.setAttribute(attr.name, attr.value);
+                                });
+                                newTh.innerHTML = td.innerHTML; // Copy content
+                                td.parentNode.replaceChild(newTh, td);
+                            });
+                            newThead.appendChild(clonedRow);
                         } else {
                             newTbody.appendChild(row);
                         }
                     });
 
+                    // Append the new thead and tbody to the table
                     if (newThead.children.length > 0) {
                         table.appendChild(newThead);
                     }
                     table.appendChild(newTbody);
 
-                    if (applyAutoCaption) {
+                    if (applyCaption) {
                         let captionElement = table.querySelector('caption');
                         if (!captionElement) {
                             captionElement = document.createElement('caption');
@@ -469,7 +755,15 @@
                             }
                         }
 
-                        captionElement.className = 'text-left';
+                        // Always remove existing text-left before applying
+                        captionElement.classList.remove('text-left', centerClass);
+
+                        if (applyCenterCaption) {
+                            captionElement.classList.add(centerClass);
+                        } else {
+                            captionElement.classList.add('text-left');
+                        }
+
 
                         const currentCaptionText = captionElement.textContent.trim();
                         const regex = /^(Table\s+\d+\.)(\s.*)?$/i;
@@ -487,11 +781,12 @@
                         }
                     }
 
+                    // Convert first TD in tbody rows to TH if applyRowHeader is true
                     const tbodyRows = Array.from(newTbody.querySelectorAll('tr'));
                     tbodyRows.forEach(row => {
                         const firstCell = row.firstElementChild;
                         if (firstCell) {
-                            if (applyAutoRowHeader) {
+                            if (applyRowHeader) { // "Row Headers in TBODY"
                                 if (firstCell.tagName.toLowerCase() === 'td') {
                                     const newTh = document.createElement('th');
                                     Array.from(firstCell.attributes).forEach(attr => {
@@ -515,69 +810,244 @@
                         }
                     });
 
-                    // Re-fetch all cells after potential td to th conversion
+                    // Re-query the table cells after all structural manipulations for accurate ID/headers application
                     const currentTableCells = Array.from(table.querySelectorAll('th, td'));
 
-                    // --- Auto Scope Logic (Revised based on new definitions) ---
-                    if (applyAutoScope) {
-                        let isComplexTable = false;
-                        // A table is 'complex' if it has colspan/rowspan *within tbody or tfoot*
-                        for (const cell of Array.from(table.querySelectorAll('tbody th, tbody td, tfoot th, tfoot td'))) {
-                            const colspanVal = parseInt(cell.getAttribute('colspan') || '1', 10);
-                            const rowspanVal = parseInt(cell.getAttribute('rowspan') || '1', 10);
-                            if (colspanVal > 1 || rowspanVal > 1) {
-                                isComplexTable = true;
-                                break;
-                            }
-                        }
+                    // --- Auto-ID/Headers Logic now wrapped in applyId condition ---
+                    // This will only run if the "ID Tables" checkbox is checked.
+                    const currentTableRows = Array.from(table.querySelectorAll('tr'));
+                    const grid = [];
+                    let currentTableThIdCounter = 0; // Reset counter for each table
 
+                    if (applyId) { // Only apply IDs and headers if 'ID Tables' is checked
                         if (isComplexTable) {
-                            // Per new definition: if complex (spans in tbody/tfoot), do NOT add IDs or headers.
-                            // The cleanup at the top ensures no previous auto-generated attributes remain.
-                        } else {
-                            // This is a "simple" table (spans only in thead, or no spans at all)
-                            currentTableCells.forEach(cell => {
-                                if (cell.tagName.toLowerCase() === 'th') {
+                            // Pass 1: Populate grid and assign sequential IDs to all THs.
+                            currentTableRows.forEach((row, rowIndex) => {
+                                grid[rowIndex] = grid[rowIndex] || [];
+                                let currentGridCol = 0;
+                                Array.from(row.children).forEach(cell => {
                                     const colspan = parseInt(cell.getAttribute('colspan') || '1', 10);
                                     const rowspan = parseInt(cell.getAttribute('rowspan') || '1', 10);
 
-                                    if (cell.closest('thead')) {
-                                        if (colspan > 1) {
-                                            cell.setAttribute('scope', 'colgroup');
-                                        } else if (rowspan > 1) {
-                                            cell.setAttribute('scope', 'col'); // As requested: rowspan in thead is 'col'
-                                        } else {
-                                            cell.setAttribute('scope', 'col'); // Single th in thead is 'col'
-                                        }
-                                    } else if (cell.closest('tbody') && cell.parentNode.firstElementChild === cell) {
-                                        // TH in tbody and it's the first cell of the row: row header
-                                        cell.setAttribute('scope', 'row');
+                                    // Find the next available column in the current grid row
+                                    while (grid[rowIndex][currentGridCol]) {
+                                        currentGridCol++;
                                     }
-                                    // Other THs in tbody/tfoot (not first in row, no colspan) remain without scope
-                                    // if not covered by these rules, matching the WET-BOEW simplicity for simple tables.
-                                }
+
+                                    let cellId = '';
+                                    if (cell.tagName.toLowerCase() === 'th') {
+                                        currentTableThIdCounter++;
+                                        cellId = `${table.id || customIdPrefix}${tableCounter}_${currentTableThIdCounter}`;
+                                        cell.id = cellId;
+                                    }
+
+                                    for (let r = 0; r < rowspan; r++) {
+                                        grid[rowIndex + r] = grid[rowIndex + r] || [];
+                                        for (let c = 0; c < colspan; c++) {
+                                            grid[rowIndex + r][currentGridCol + c] = {
+                                                cell: cell,
+                                                isHeader: cell.tagName.toLowerCase() === 'th',
+                                                id: cellId,
+                                                rowspan: rowspan,
+                                                colspan: colspan,
+                                                startGridRow: rowIndex,
+                                                startGridCol: currentGridCol
+                                            };
+                                        }
+                                    }
+                                    currentGridCol += colspan;
+                                });
+                            });
+
+                            // Pass 2: Apply 'headers' attributes to THs and TDs.
+                            currentTableRows.forEach((row, rowIndex) => {
+                                let currentGridCol = 0;
+                                Array.from(row.children).forEach(cell => {
+                                    const cellColspan = parseInt(cell.getAttribute('colspan') || '1', 10);
+
+                                    while (grid[rowIndex] && grid[rowIndex][currentGridCol] && grid[rowIndex][currentGridCol].cell !== cell) {
+                                        currentGridCol++;
+                                    }
+                                    
+                                    const cellInfo = grid[rowIndex][currentGridCol];
+                                    if (!cellInfo) {
+                                        currentGridCol += cellColspan;
+                                        return;
+                                    }
+
+                                    let headersToApply = new Set();
+
+                                    if (cell.tagName.toLowerCase() === 'th') {
+                                        // TH in THEAD (sub-headers like Jan, Feb, or main colspan headers)
+                                        if (cell.closest('thead')) {
+                                            if (rowIndex > 0) {
+                                                for (let c_above = 0; c_above < grid[rowIndex - 1].length; c_above++) {
+                                                    const parentCellInfo = grid[rowIndex - 1][c_above];
+                                                    if (parentCellInfo && parentCellInfo.isHeader && parentCellInfo.id && parentCellInfo.cell.closest('thead')) {
+                                                        const parentEndGridCol = parentCellInfo.startGridCol + parentCellInfo.colspan - 1;
+                                                        if (currentGridCol >= parentCellInfo.startGridCol && currentGridCol <= parentEndGridCol) {
+                                                            headersToApply.add(parentCellInfo.id);
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        // TH in TBODY (row headers or tbody colspan headers)
+                                        else if (cell.closest('tbody')) {
+                                            const topTheadRowspanCellInfo = grid[0][0];
+                                            if (topTheadRowspanCellInfo && topTheadRowspanCellInfo.isHeader && topTheadRowspanCellInfo.id &&
+                                                topTheadRowspanCellInfo.rowspan > 1 && topTheadRowspanCellInfo.startGridCol === 0) {
+                                                headersToApply.add(topTheadRowspanCellInfo.id);
+                                            }
+
+                                            for (let r_search = 0; r_search < rowIndex; r_search++) {
+                                                if (grid[r_search] && grid[r_search][0] && grid[r_search][0].isHeader && grid[r_search][0].id &&
+                                                    grid[r_search][0].cell.closest('tbody') && parseInt(grid[r_search][0].cell.getAttribute('colspan') || '1', 10) > 1) {
+                                                    const groupHeaderEndRow = grid[r_search][0].startGridRow + grid[r_search][0].rowspan - 1;
+                                                    if (rowIndex >= grid[r_search][0].startGridRow && rowIndex <= groupHeaderEndRow) {
+                                                        headersToApply.add(grid[r_search][0].id);
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        if (headersToApply.size > 0) {
+                                            cell.setAttribute('headers', Array.from(headersToApply).sort().join(' '));
+                                        } else {
+                                            cell.removeAttribute('headers');
+                                        }
+
+                                    } else if (cell.tagName.toLowerCase() === 'td') {
+                                        // 1. Column Headers from THEAD
+                                        Array.from(newThead.querySelectorAll('th')).forEach(theadTh => {
+                                            const theadThId = theadTh.id;
+                                            if (!theadThId) return;
+
+                                            let theadThGridInfo = null;
+                                            for(let r_g = 0; r_g < grid.length; r_g++) {
+                                                if(grid[r_g]) {
+                                                    for(let c_g = 0; c_g < grid[r_g].length; c_g++) {
+                                                        if(grid[r_g][c_g] && grid[r_g][c_g].cell === theadTh) {
+                                                            theadThGridInfo = grid[r_g][c_g];
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                                if(theadThGridInfo) break;
+                                            }
+
+                                            if (!theadThGridInfo) return;
+
+                                            const overlapsHorizontally = (currentGridCol <= (theadThGridInfo.startGridCol + theadThGridInfo.colspan - 1) &&
+                                                                        (currentGridCol + cellColspan - 1) >= theadThGridInfo.startGridCol);
+                                            const isVerticallyApplicable = (rowIndex >= theadThGridInfo.startGridRow);
+
+                                            if (overlapsHorizontally && isVerticallyApplicable) {
+                                                const isTheadTopLeftRowspan = theadThGridInfo.startGridRow === 0 && theadThGridInfo.startGridCol === 0 && theadThGridInfo.rowspan > 1;
+                                                if (isTheadTopLeftRowspan && currentGridCol !== 0) {
+                                                    return;
+                                                }
+                                                headersToApply.add(theadThId);
+                                            }
+                                        });
+
+                                        // 2. Row Header (from TBODY - TH in the same row, first column, colspan=1)
+                                        const rowHeaderInCurrentRow = grid[rowIndex][0] && grid[rowIndex][0].isHeader && grid[rowIndex][0].cell.closest('tbody') && parseInt(grid[rowIndex][0].cell.getAttribute('colspan') || '1', 10) === 1 ? grid[rowIndex][0].cell : null;
+                                        if (rowHeaderInCurrentRow && rowHeaderInCurrentRow.id) {
+                                            headersToApply.add(rowHeaderInCurrentRow.id);
+                                        }
+
+                                        // 3. TBODY Colspan Headers (row group headers like tbl11_8, tbl11_14) that apply to this TD
+                                        for (let r_group = 0; r_group < rowIndex; r_group++) {
+                                            if (grid[r_group] && grid[r_group][0] && grid[r_group][0].isHeader && grid[r_group][0].id &&
+                                                grid[r_group][0].cell.closest('tbody') && parseInt(grid[r_group][0].cell.getAttribute('colspan') || '1', 10) > 1) {
+                                                const groupHeaderEndRow = grid[r_group][0].startGridRow + grid[r_group][0].rowspan - 1;
+                                                if (rowIndex >= grid[r_group][0].startGridRow && rowIndex <= groupHeaderEndRow) {
+                                                    headersToApply.add(grid[r_group][0].id);
+                                                }
+                                            }
+                                        }
+
+                                        if (headersToApply.size > 0) {
+                                            cell.setAttribute('headers', Array.from(headersToApply).sort().join(' '));
+                                        } else {
+                                            cell.removeAttribute('headers');
+                                        }
+                                    }
+
+                                    currentGridCol += cellColspan;
+                                });
+                            });
+
+                        } else {
+                            // Simple table: Apply Scope attributes if not complex
+                            table.querySelectorAll('thead th').forEach(th => {
+                                th.setAttribute('scope', 'col');
+                                th.removeAttribute('id');
+                                th.removeAttribute('headers');
+                            });
+                            table.querySelectorAll('tbody th:first-child').forEach(th => {
+                                th.setAttribute('scope', 'row');
+                                th.removeAttribute('id');
+                                th.removeAttribute('headers');
+                            });
+                            table.querySelectorAll('td').forEach(td => {
+                                td.removeAttribute('headers');
+                                td.removeAttribute('id');
                             });
                         }
-                    } else {
-                        // If auto-scope is OFF, ensure all auto-generated scope attributes are removed
-                        currentTableCells.forEach(cell => {
-                            cell.removeAttribute('scope');
-                        });
+                    } // End of applyId condition
+                    // --- END Auto-ID/Headers Logic ---
+
+                    // Add <colgroup> and <col> tags based on the grid structure
+                    const existingColgroup = table.querySelector('colgroup');
+                    if (existingColgroup) {
+                        existingColgroup.remove(); // Remove existing to recreate
                     }
-                    // --- End Auto Scope Logic ---
+                    // Only add colgroup if IDs are being applied, as grid structure relies on it
+                    if (applyId && totalLogicalCols > 0) {
+                        const newColgroup = document.createElement('colgroup');
+                        // Always create a colgroup for the first column
+                        const firstColGroup = document.createElement('colgroup');
+                        firstColGroup.appendChild(document.createElement('col'));
+                        newColgroup.appendChild(firstColGroup);
+
+                        // Create a separate colgroup for the remaining columns (if any)
+                        if (totalLogicalCols > 1) {
+                            const remainingColGroup = document.createElement('colgroup');
+                            for (let i = 1; i < totalLogicalCols; i++) { // Start from second logical column
+                                remainingColGroup.appendChild(document.createElement('col'));
+                            }
+                            newColgroup.appendChild(remainingColGroup);
+                        }
+                        if (newColgroup.children.length > 0) {
+                           table.prepend(newColgroup); // Add colgroup at the beginning of the table
+                        }
+                    }
 
 
+                    // Apply finance classes or center all data, respecting mutual exclusivity
                     currentTableCells.forEach(cell => {
                         if (cell.tagName.toLowerCase() === 'td') {
-                            if (applyAutoFinanceTable) {
+                            if (applyFinanceTable) {
                                 if (financeRegex.test(cell.textContent.trim())) {
                                     financeClasses.forEach(cls => cell.classList.add(cls));
                                 } else {
                                     financeClasses.forEach(cls => cell.classList.remove(cls));
                                 }
+                            } else {
+                                financeClasses.forEach(cls => cell.classList.remove(cls)); // Ensure finance classes are removed if option is off
                             }
-                        } else {
-                            financeClasses.forEach(cls => cell.classList.remove(cls));
+
+                            if (applyCenterAllData) {
+                                cell.classList.add(centerClass);
+                            } else {
+                                // Only remove centerClass if financeTable is also off, to avoid conflict
+                                if (!applyFinanceTable) {
+                                    cell.classList.remove(centerClass);
+                                }
+                            }
                         }
                     });
 
@@ -592,8 +1062,9 @@
 
                         const tdsInRow = Array.from(row.querySelectorAll('td'));
                         tdsInRow.forEach(td => {
-                            if (boldTotals && isTotalRow) {
+                            if (applyBoldTotals && isTotalRow) {
                                 if (td.firstElementChild && td.firstElementChild.tagName.toLowerCase() === 'strong') {
+                                    // If strong tag already exists, just update its content
                                     td.firstElementChild.innerHTML = td.textContent.trim();
                                 } else {
                                     const strongElement = document.createElement('strong');
@@ -604,58 +1075,70 @@
                             } else {
                                 if (td.firstElementChild && td.firstElementChild.tagName.toLowerCase() === 'strong') {
                                     const originalContent = td.firstElementChild.innerHTML;
-                                    td.innerHTML = originalContent;
+                                    td.innerHTML = originalContent; // Remove strong tag, keep content
                                 }
                             }
                         });
                     });
 
-                    // Apply 'active' class to tbody THs based on new options (moved after Auto Scope to ensure IDs are set)
-                    const currentTbodyThs = Array.from(newTbody.querySelectorAll('th'));
-                    currentTbodyThs.forEach(th => {
-                        // Apply active if colspan option is checked and it has colspan
-                        if (activeColspanHeaders && th.hasAttribute('colspan')) {
-                            th.classList.add('active');
-                        }
-                        // Apply active if row header option is checked and it's the first TH in its parent row
-                        if (activeRowHeaders && th.parentNode.firstElementChild === th) {
-                             th.classList.add('active');
-                        }
-                    });
+                    Array.from(table.querySelectorAll('thead tr')).forEach(tr => tr.classList.remove('active'));
 
 
                     const theadThs = Array.from(newThead.querySelectorAll('th'));
+                    const tbodyThs = Array.from(newTbody.querySelectorAll('th'));
+
+                    if (activeColHeaders) {
+                        Array.from(newThead.querySelectorAll('tr')).forEach(tr => {
+                            tr.classList.add('active');
+                        });
+                    }
+
+                    if (activeColspanHeaders) {
+                        tbodyThs.forEach(th => {
+                            if (th.hasAttribute('colspan') && parseInt(th.getAttribute('colspan')) > 1) {
+                                th.classList.add('active');
+                            }
+                        });
+                    }
+
+                    if (activeRowHeaders) {
+                        tbodyThs.forEach(th => {
+                            if (th.parentNode.firstElementChild === th) {
+                                th.classList.add('active');
+                            }
+                        });
+                    }
+
+                    // Center Column Headers Logic (for thead th)
                     theadThs.forEach(th => {
                         const hasExistingAlignment = alignmentClasses.some(cls => th.classList.contains(cls));
-
-                        if (centerColumnHeaders) {
+                        if (applyCenterColumnHeaders) {
                             if (!hasExistingAlignment) {
                                 th.classList.add(centerClass);
                             }
                         } else {
-                            th.classList.remove(centerClass);
+                            // Already removed at the top, but ensure no accidental re-addition
                         }
                     });
 
-                    const finalTbodyThsForCentering = Array.from(newTbody.querySelectorAll('th'));
-                    finalTbodyThsForCentering.forEach(th => {
+                    // Center Colspan Headers Logic (for tbody th with colspan)
+                    tbodyThs.forEach(th => {
                         const hasExistingAlignment = alignmentClasses.some(cls => th.classList.contains(cls));
-
                         if (th.hasAttribute('colspan')) {
-                            if (centerBodyHeaders) {
+                            if (applyCenterColspanHeaders) {
                                 if (!hasExistingAlignment) {
                                     th.classList.add(centerClass);
                                 }
                             } else {
-                                th.classList.remove(centerClass);
+                                // Already removed at the top
                             }
-                        } else if (!centerBodyHeaders) {
-                            th.classList.remove(centerClass);
+                        } else {
+                            // Not a colspan header, alignment determined by other settings or default
                         }
                     });
 
-                    const finalTableRows = Array.from(table.querySelectorAll('tr'));
-                    finalTableRows.forEach((row) => {
+                    const finalTableRowsCleaned = Array.from(table.querySelectorAll('tr'));
+                    finalTableRowsCleaned.forEach((row) => {
                         const cells = Array.from(row.querySelectorAll('th, td'));
                         cells.forEach((cell) => {
                             if (cell.firstElementChild && cell.firstElementChild.tagName.toLowerCase() === 'strong') {
@@ -669,7 +1152,7 @@
                     tableCounter++;
                 });
 
-                editor.setValue(tempDiv.innerHTML);
+                monacoEditor.setValue(tempDiv.innerHTML);
                 showMessage('HTML tables formatted successfully!', 'success');
 
             } catch (e) {
@@ -679,6 +1162,12 @@
         }
 
         formatButton.addEventListener('click', formatHtmlTables);
+        clearButton.addEventListener('click', () => {
+            if (monacoEditor) {
+                monacoEditor.setValue('');
+                showMessage('Editor content cleared.', 'info');
+            }
+        });
     </script>
 </body>
 </html>
