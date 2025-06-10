@@ -65,7 +65,9 @@
         /* Monaco Editor specific styling */
         #monacoEditorContainer {
             min-height: 200px; /* Ensure it has a minimum height */
-            flex-grow: 1; /* Allow it to grow horizontally */
+            flex-basis: 75%; /* Initial basis: 75% */
+            flex-grow: 0;   /* Controlled by JS */
+            flex-shrink: 0; /* Controlled by JS */
             height: 100%; /* Make Monaco take full height of its flex parent */
             /* Monaco editor will handle its own internal scrolling due to automaticLayout: true */
         }
@@ -83,15 +85,14 @@
 
         /* Sidebar styling */
         #sidebar {
-            width: 1/4; /* Keep width */
-            flex-shrink: 0; /* Prevent horizontal shrinking */
+            flex-basis: 25%; /* Initial basis: 25% */
+            flex-grow: 0;   /* Controlled by JS */
             flex-grow: 1; /* Allow it to grow vertically to fill available space */
             overflow-y: auto; /* Enable vertical scrolling for sidebar content */
             overflow-x: hidden; /* Prevent horizontal scrolling on sidebar */
             min-height: 0; /* Crucial for flex items to scroll correctly if content overflows */
             background-color: #18181b; /* Darker zinc */
             border-radius: 0.75rem; /* rounded-xl */
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); /* Darker shadow */
             padding: 1rem;
             display: flex;
             flex-direction: column; /* Keep column for header, content area, and footer */
@@ -444,15 +445,21 @@
         .toggle-switch-container {
             display: flex;
             align-items: center;
-            justify-content: space-between; /* Space out label and switch */
             margin-bottom: 0.5rem; /* Space between switches */
             padding: 0.5rem 0; /* Vertical padding for each switch row */
+            /* Removed flex-direction: row-reverse; */
+            /* Removed justify-content: flex-end; */
+            gap: 0.5rem; /* Space between toggle and label */
+            margin-left: auto; /* Push the entire container to the right */
         }
 
         .toggle-switch-label {
             color: #d4d4d8; /* Light gray for label text */
             font-size: 0.9rem;
-            flex-grow: 1; /* Allow label to take available space */
+            /* Removed flex-grow: 1; */
+            flex-shrink: 1; /* Allow label to shrink */
+            min-width: 0; /* Allow text to wrap within the label */
+            /* Removed text-align: right; */
         }
 
         .toggle-switch {
@@ -464,6 +471,7 @@
             background-color: #71717a; /* Off state background - Zinc-600 */
             cursor: pointer;
             transition: background-color 0.3s ease;
+            flex-shrink: 0; /* Prevent the switch from shrinking */
         }
 
         .toggle-switch input {
@@ -517,12 +525,13 @@
                 <button id="toggleEditorViewBtnRichText" class="ml-4 px-4 py-2 text-base font-semibold bg-sky-700 text-white rounded-md hover:bg-sky-800 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:ring-opacity-50 font-bold">
                     Go to HTML
                 </button>
+                <!-- Auto-Clean MSO toggle for Rich-Text Editor -->
                 <div class="ml-4 p-2 bg-zinc-700 rounded-lg flex items-center">
-                    <span class="toggle-switch-label text-white text-sm mr-2">Auto-Clean MSO</span>
                     <label class="toggle-switch">
                         <input type="checkbox" id="toggleAutoCleanMsoOnSwitchRichText">
                         <span class="toggle-switch-slider"></span>
                     </label>
+                    <span class="toggle-switch-label text-white text-sm">Auto-Clean MSO</span>
                 </div>
             </div>
             <iframe id="default_ifr"></iframe>
@@ -534,12 +543,13 @@
                 <button id="toggleEditorViewBtnCode" class="ml-4 px-4 py-2 text-base font-semibold bg-sky-700 text-white rounded-md hover:bg-sky-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold">
                     Go to Rich-Text
                 </button>
+                <!-- Auto-Clean MSO toggle for HTML Editor -->
                 <div class="ml-4 p-2 bg-zinc-700 rounded-lg flex items-center">
-                    <span class="toggle-switch-label text-white text-sm mr-2">Auto-Clean MSO</span>
                     <label class="toggle-switch">
                         <input type="checkbox" id="toggleAutoCleanMsoOnSwitchCode">
                         <span class="toggle-switch-slider"></span>
                     </label>
+                    <span class="toggle-switch-label text-white text-sm">Auto-Clean MSO</span>
                 </div>
                 <div class="inline-flex space-x-2 ml-auto mt-2 sm:mt-0">
                     <button id="importHtmlBtn" class="px-3 py-1 text-sm bg-purple-700 text-white rounded-md hover:bg-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-opacity-50 font-bold">Import HTML</button>
@@ -554,110 +564,79 @@
                 <!-- Resizer for Monaco and Sidebar -->
                 <div id="monacoResizer" class="resizer"></div>
 
-                <div id="sidebar" class="w-1/4 bg-zinc-800 rounded-lg p-4 flex-shrink-0 flex flex-col overflow-y-auto overflow-x-hidden">
+                <div id="sidebar">
                     <h3 class="text-lg font-semibold text-white mb-4">Formatting</h3>
                     
-                    <div class="collapsible-section">
-                        <div class="collapsible-header" id="generalCleaningHeader">
-                            <h4 class="text-white">General Cleaning</h4>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-white">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                            </svg>
+                    <div>
+                        <button id="runSelectedBtn" class="w-full px-4 py-2 mb-4 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 font-semibold">
+                            Run Selected
+                        </button>
+
+                        <div class="toggle-switch-container">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="toggleCleanLists">
+                                <span class="toggle-switch-slider"></span>
+                            </label>
+                            <span class="toggle-switch-label">Clean MSO Lists</span>
                         </div>
-                        <div class="collapsible-content" id="generalCleaningContent">
-                            <button id="runSelectedBtn" class="w-full px-4 py-2 mb-4 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 font-semibold">
-                                Run Selected
-                            </button>
 
-                            <div class="toggle-switch-container">
-                                <span class="toggle-switch-label">Clean URLs</span>
-                                <label class="toggle-switch">
-                                    <input type="checkbox" id="toggleUrlCleaning">
-                                    <span class="toggle-switch-slider"></span>
-                                </label>
-                            </div>
+                        <div class="toggle-switch-container">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="toggleCleanTablesBasic">
+                                <span class="toggle-switch-slider"></span>
+                            </label>
+                            <span class="toggle-switch-label">Clean MSO Tables</span>
+                        </div>
 
-                            <div class="toggle-switch-container">
-                                <span class="toggle-switch-label">Clean Spaces</span>
-                                <label class="toggle-switch">
-                                    <input type="checkbox" id="toggleAutoSpacing">
-                                    <span class="toggle-switch-slider"></span>
-                                </label>
-                            </div>
-                            
-                            <div class="toggle-switch-container">
-                                <span class="toggle-switch-label">Clean Single Breaks</span>
-                                <label class="toggle-switch">
-                                    <input type="checkbox" id="toggleCleanSingleBreaks"> <span class="toggle-switch-slider"></span>
-                                </label>
-                            </div>
+                        <div class="toggle-switch-container">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="toggleUrlCleaning">
+                                <span class="toggle-switch-slider"></span>
+                            </label>
+                            <span class="toggle-switch-label">Clean URLs</span>
+                        </div>
 
-                            <div class="toggle-switch-container">
-                                <span class="toggle-switch-label">Clean &lt;u&gt; | &lt;b&gt; | &lt;i&gt;</span>
-                                <label class="toggle-switch">
-                                    <input type="checkbox" id="toggleCleanFormattingTags"> <span class="toggle-switch-slider"></span>
-                                </label>
-                            </div>
+                        <div class="toggle-switch-container">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="toggleAutoSpacing">
+                                <span class="toggle-switch-slider"></span>
+                            </label>
+                            <span class="toggle-switch-label">Clean Spaces</span>
+                        </div>
+                        
+                        <div class="toggle-switch-container">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="toggleCleanSingleBreaks"> 
+                                <span class="toggle-switch-slider"></span>
+                            </label>
+                            <span class="toggle-switch-label">Clean Single Breaks</span>
+                        </div>
 
-                            <div class="toggle-switch-container">
-                                <span class="toggle-switch-label">Clean MSO Code</span>
-                                <label class="toggle-switch">
-                                    <input type="checkbox" id="toggleCleanMsoCode">
-                                    <span class="toggle-switch-slider"></span>
-                                </label>
-                            </div>
+                        <div class="toggle-switch-container">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="toggleCleanFormattingTags"> 
+                                <span class="toggle-switch-slider"></span>
+                            </label>
+                            <span class="toggle-switch-label">Clean &lt;u&gt; | &lt;b&gt; | &lt;i&gt;</span>
+                        </div>
 
-                            <div class="toggle-switch-container">
-                                <span class="toggle-switch-label">Clean Lists</span>
-                                <label class="toggle-switch">
-                                    <input type="checkbox" id="toggleCleanLists">
-                                    <span class="toggle-switch-slider"></span>
-                                </label>
-                            </div>
+                        <div class="toggle-switch-container">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="toggleCleanMsoCode">
+                                <span class="toggle-switch-slider"></span>
+                            </label>
+                            <span class="toggle-switch-label">Clean MSO Code</span>
+                        </div>
 
-                            <div class="toggle-switch-container">
-                                <span class="toggle-switch-label">Clean COMM/FN/EDN</span>
-                                <label class="toggle-switch">
-                                    <input type="checkbox" id="toggleCleanCommFnEdn">
-                                    <span class="toggle-switch-slider"></span>
-                                </label>
-                            </div>
-
-                            <div class="toggle-switch-container">
-                                <span class="toggle-switch-label">Clean IMGs</span>
-                                <label class="toggle-switch">
-                                    <input type="checkbox" id="toggleCleanImgs">
-                                    <span class="toggle-switch-slider"></span>
-                                </label>
-                            </div>
-
-                            <div class="toggle-switch-container">
-                                <span class="toggle-switch-label">Clean Tables (Basic)</span>
-                                <label class="toggle-switch">
-                                    <input type="checkbox" id="toggleCleanTablesBasic">
-                                    <span class="toggle-switch-slider"></span>
-                                </label>
-                            </div>
+                        <div class="toggle-switch-container">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="toggleCleanImgs">
+                                <span class="toggle-switch-slider"></span>
+                            </label>
+                            <span class="toggle-switch-label">Clean IMGs</span>
                         </div>
                     </div>
 
-                    <div class="collapsible-section">
-                        <div class="collapsible-header" id="componentsHeader">
-                            <h4 class="text-white">Components</h4>
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-white">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                            </svg>
-                        </div>
-                        <div class="collapsible-content" id="componentsContent">
-                            <p class="text-zinc-300 text-sm mb-2">Content for components will go here. This is a very long paragraph to test if the scrollbar appears. We need to ensure that when the content inside this collapsible section becomes sufficiently long, it causes the parent sidebar to overflow and display a scrollbar. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-                            <p class="text-zinc-300 text-sm mb-2">Another paragraph to add even more content. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-                            <p class="text-zinc-300 text-sm mb-2">Yet another paragraph. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-                            <p class="text-zinc-300 text-sm mb-2">And one more for good measure. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-                            <p class="text-zinc-300 text-sm mb-2">Just to be absolutely sure. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-                            <button class="mt-2 px-3 py-1 text-xs bg-green-600 text-white rounded-md hover:bg-green-700">Button Comp</button>
-                            <button class="mt-2 ml-2 px-3 py-1 text-xs bg-green-600 text-white rounded-md hover:bg-green-700">Card Comp</button>
-                        </div>
-                    </div>
                 </div>
 
             </div>
@@ -690,42 +669,38 @@
         const exportHtmlBtn = document.getElementById('exportHtmlBtn');
         const importHtmlBtn = document.getElementById('importHtmlBtn');
         const htmlFileInput = document.getElementById('htmlFileInput');
-        // Removed undoBtn and redoBtn as per user request
         const clearAllBtn = document.getElementById('clearAllBtn');
         const runSelectedBtn = document.getElementById('runSelectedBtn'); // Get reference to Run Selected button
-        // Removed runSelectedTableBtn as it is no longer needed
 
         // Monaco Resizer elements
         const monacoEditorContainer = document.getElementById('monacoEditorContainer');
         const monacoResizer = document.getElementById('monacoResizer');
         const sidebar = document.getElementById('sidebar');
 
-        // Removed references to the removed toggles
-        const toggleUrlCleaning = document.getElementById('toggleUrlCleaning'); // Get reference to URL Cleaning toggle
-        const toggleAutoSpacing = document.getElementById('toggleAutoSpacing'); // Get reference to Auto-Spacing toggle
-        const toggleCleanSingleBreaks = document.getElementById('toggleCleanSingleBreaks'); // New toggle reference
-        const toggleCleanMsoCode = document.getElementById('toggleCleanMsoCode'); // New toggle reference for Clean MSO Code
-        const toggleCleanFormattingTags = document.getElementById('toggleCleanFormattingTags'); // New toggle for formatting tags
-        const toggleCleanLists = document.getElementById('toggleCleanLists'); // New toggle for Clean Lists
-        const toggleCleanCommFnEdn = document.getElementById('toggleCleanCommFnEdn'); // New toggle for Clean COMM/FN/EDN
-        const toggleCleanImgs = document.getElementById('toggleCleanImgs'); // New toggle for Clean IMGs
-        const toggleCleanTablesBasic = document.getElementById('toggleCleanTablesBasic'); // New toggle for Clean Tables (Basic)
+        // Toggle references
+        const toggleUrlCleaning = document.getElementById('toggleUrlCleaning');
+        const toggleAutoSpacing = document.getElementById('toggleAutoSpacing');
+        const toggleCleanSingleBreaks = document.getElementById('toggleCleanSingleBreaks');
+        const toggleCleanMsoCode = document.getElementById('toggleCleanMsoCode');
+        const toggleCleanFormattingTags = document.getElementById('toggleCleanFormattingTags');
+        const toggleCleanLists = document.getElementById('toggleCleanLists');
+        const toggleCleanImgs = document.getElementById('toggleCleanImgs');
+        const toggleCleanTablesBasic = document.getElementById('toggleCleanTablesBasic');
 
-        // New Auto-Clean MSO when switching toggles
+        // Auto-Clean MSO when switching toggles
         const toggleAutoCleanMsoOnSwitchRichText = document.getElementById('toggleAutoCleanMsoOnSwitchRichText');
         const toggleAutoCleanMsoOnSwitchCode = document.getElementById('toggleAutoCleanMsoOnSwitchCode');
 
         // Array of all general cleaning toggles for easy iteration
         const generalCleaningToggles = [
+            toggleCleanLists,
+            toggleCleanTablesBasic,
             toggleUrlCleaning,
             toggleAutoSpacing,
             toggleCleanSingleBreaks,
             toggleCleanFormattingTags,
             toggleCleanMsoCode,
-            toggleCleanLists,
-            toggleCleanCommFnEdn,
-            toggleCleanImgs,
-            toggleCleanTablesBasic // Added new toggle here
+            toggleCleanImgs
         ];
 
         // Array of all buttons that display temporary messages
@@ -749,6 +724,7 @@
 
         // Variable to hold the HugeRTE editor instance from the iframe
         let richTextEditorInstanceFromIframe;
+
 
         /**
          * Decodes HTML entities within a string to their actual Unicode characters.
@@ -825,6 +801,23 @@
 
                 // Case 2: Process <a> tags with href
                 if (href) {
+                    // Handle Outlook Safelinks
+                    if (href.startsWith('https://can01.safelinks.protection.outlook.com')) {
+                        try {
+                            const urlObj = new URL(href);
+                            const actualUrlParam = urlObj.searchParams.get('url');
+                            if (actualUrlParam) {
+                                // Decode the actual URL parameter to get the clean link
+                                href = decodeURIComponent(actualUrlParam);
+                                a.setAttribute('href', href);
+                            }
+                        } catch (e) {
+                            console.error("Error parsing Outlook Safelink URL:", e);
+                            // Fallback: If parsing fails, keep the original safelink or remove it
+                            // For now, we'll just keep the original href if parsing fails.
+                        }
+                    }
+
                     // Rule: Prepend /content/canadasite to specific relative links
                     let prepended = false;
                     for (const pattern of prependPatterns) {
@@ -890,21 +883,30 @@
 
         /**
          * Applies auto-spacing and cleans multiple <br> tags in HTML content.
-         * Replaces multiple spaces with a single space, and trims leading/trailing spaces
-         * within block-level elements. Also replaces sequences of two or more <br> tags with </p><p>.
-         * NEW: Also cleans `<br clear="all">` tags.
-         * NEW: Also cleans `<span style="mso-spacerun: yes">` tags, preserving only normal spaces within them.
-         * NEW: Removes empty <p> tags (including &nbsp;) if they are outside of tables.
-         * NEW: Removes empty <li>, <div>, and <section> tags (including &nbsp;) anywhere.
+         * Includes new rules for non-breaking spaces and empty tag removal/replacement.
          * @param {string} htmlString - The HTML content to clean.
          * @returns {string} The cleaned HTML content.
          */
         function applyAutoSpacing(htmlString) {
             const parser = new DOMParser();
-            const doc = parser.parseFromString(htmlString, 'text/html');
+            let doc = parser.parseFromString(htmlString, 'text/html');
             const body = doc.body;
 
-            // 1. Handle <span style="mso-spacerun: yes"> tags
+            // 1. Unwrap <div> and <span> elements if they have no attributes.
+            const elementsToUnwrap = Array.from(body.querySelectorAll('div, span'));
+            elementsToUnwrap.forEach(element => {
+                if (element.attributes.length === 0) {
+                    const parent = element.parentNode;
+                    if (parent) {
+                        while (element.firstChild) {
+                            parent.insertBefore(element.firstChild, element);
+                        }
+                        parent.removeChild(element);
+                    }
+                }
+            });
+
+            // 2. Handle <span style="mso-spacerun: yes"> tags (existing logic, still relevant)
             const spacerunSpans = body.querySelectorAll('span[style*="mso-spacerun: yes"]');
             spacerunSpans.forEach(span => {
                 const parent = span.parentNode;
@@ -920,52 +922,74 @@
                 }
             });
 
-            // Serialize the modified DOM back to a string for further processing
+            // Re-serialize and re-parse to handle previous DOM manipulations affecting string content for regex
             let cleanedHtml = body.innerHTML;
+            doc = parser.parseFromString(cleanedHtml, 'text/html'); // Re-parse after initial DOM changes
+            const currentBody = doc.body; // Use current body reference
 
-            // 2. Replace multiple spaces with a single space and trim.
-            cleanedHtml = cleanedHtml.replace(/\s+/g, ' ').trim();
+            // 3. Condense multiple non-breaking spaces (&#160; or its Unicode char)
+            // Replace multiple &#160; sequences (numeric or named entity)
+            cleanedHtml = cleanedHtml.replace(/(?:&#160;|\u00A0|&nbsp;){2,}/gi, '&#160;');
 
-            // 3. Replace sequences of two or more <br> tags (with optional whitespace) with </p><p>');
-            // This handles <br><br>, <br> <br>, <br/><br/>, etc.
+            // 4. Clean non-breaking spaces with normal spaces to their left/right
+            // Replace sequences like ' &#160;' with '&#160;'
+            cleanedHtml = cleanedHtml.replace(/\s+(&#160;|\u00A0|&nbsp;)/gi, '&#160;');
+            // Replace sequences like '&#160; ' with '&#160;'
+            cleanedHtml = cleanedHtml.replace(/(&#160;|\u00A0|&nbsp;)\s+/gi, '&#160;');
+
+
+            // 5. Replace sequences of two or more <br> tags (with optional whitespace) with </p><p> (existing logic)
             cleanedHtml = cleanedHtml.replace(/(<br\s*\/?>\s*){2,}/gi, '</p><p>');
 
-            // 4. Remove <br clear="all"> tags
-            cleanedHtml = cleanedHtml.replace(/<br\s+clear="all"\s*\/?>/gi, '');
+            // 6. Completely remove <br clear="all"> and <br clear="ALL">
+            cleanedHtml = cleanedHtml.replace(/<br\s+clear=["']?(all|ALL)["']?\s*\/?>/gi, '');
 
-            // Re-parse to work with DOM for new rules
+
+            // Re-parse to work with DOM for empty tag rules and other final cleanups
             doc.body.innerHTML = cleanedHtml;
 
-            // 5. Remove empty <p> tags (including &nbsp;) if they are outside of tables.
-            const paragraphs = Array.from(body.querySelectorAll('p'));
-            for (let i = paragraphs.length - 1; i >= 0; i--) {
-                const p = paragraphs[i];
-                const trimmedContent = p.innerHTML.trim();
-                const isEmptyOrNBSP = trimmedContent === '' || trimmedContent === '&nbsp;' || trimmedContent === '\u00A0';
-                const isInsideTable = p.closest('table');
+            // 7. Remove/Replace empty tags
+            const elementsToCheckForEmptiness = Array.from(currentBody.querySelectorAll('p, li, div, span, strong, em, u, b, i, section'));
 
-                if (isEmptyOrNBSP && !isInsideTable) {
-                    if (p.parentNode) {
-                        p.parentNode.removeChild(p);
-                    }
-                }
-            }
-
-            // 6. Remove empty <li>, <div>, and <section> tags (including &nbsp;) anywhere.
-            const elementsToClean = Array.from(body.querySelectorAll('li, div, section'));
-            for (let i = elementsToClean.length - 1; i >= 0; i--) {
-                const element = elementsToClean[i];
+            // Process in reverse to avoid issues with DOM changes affecting iteration
+            for (let i = elementsToCheckForEmptiness.length - 1; i >= 0; i--) {
+                const element = elementsToCheckForEmptiness[i];
+                const tagName = element.tagName.toLowerCase();
                 const trimmedContent = element.innerHTML.trim();
-                const isEmptyOrNBSP = trimmedContent === '' || trimmedContent === '&nbsp;' || trimmedContent === '\u00A0';
+                const hasChildren = element.children.length > 0;
+                const hasTextContent = element.textContent.trim().length > 0; // Check real text content
+                const containsOnlyNBSP = (trimmedContent === '&#160;' || trimmedContent === '&nbsp;' || trimmedContent === '\u00A0');
+                const containsOnlySpace = (trimmedContent === ' ');
 
-                if (isEmptyOrNBSP) {
-                    if (element.parentNode) {
-                        element.parentNode.removeChild(element);
+                // Rule for <p> tags: remove only if outside a table
+                if (tagName === 'p') {
+                    const isInsideTable = element.closest('table');
+                    if (!isInsideTable && (trimmedContent === '' || containsOnlyNBSP)) {
+                        if (element.parentNode) {
+                            element.parentNode.removeChild(element);
+                        }
+                    } else if (!isInsideTable && containsOnlySpace) {
+                        // For <p> with single space, replace with text node of space
+                        if (element.parentNode) {
+                             element.parentNode.replaceChild(doc.createTextNode(' '), element);
+                        }
+                    }
+                }
+                // Rules for other tags: remove if empty or contains only NBSP, replace with space if contains only space
+                else {
+                    if (trimmedContent === '' || containsOnlyNBSP) {
+                        if (element.parentNode) {
+                            element.parentNode.removeChild(element);
+                        }
+                    } else if (containsOnlySpace) {
+                        if (element.parentNode) {
+                            element.parentNode.replaceChild(doc.createTextNode(' '), element);
+                        }
                     }
                 }
             }
 
-            return body.innerHTML;
+            return currentBody.innerHTML;
         }
 
         /**
@@ -1201,14 +1225,15 @@
         }
 
         /**
-         * Filters and preserves only specified HTML tags and their contents, and text nodes,
-         * from a source DOM node. Disallowed tags are unwrapped, preserving their allowed children.
+         * Recursively cleans and preserves only specified HTML content from a source DOM node.
+         * Disallowed tags are unwrapped, preserving their allowed children.
+         * This function is used for both footnote content and general MSO problematic content.
          * @param {HTMLElement} sourceNode - The DOM node whose children are to be filtered.
          * @param {Document} doc - The document object to create new elements.
          * @returns {string} The HTML string containing only the preserved content.
          */
-        function filterAndPreserveContent(sourceNode, doc) {
-            let tempContainer = doc.createElement('div'); // Use a div as a temporary container
+        function cleanAndPreserveAllowedContent(sourceNode, doc) {
+            let tempContainer = doc.createElement('div');
 
             Array.from(sourceNode.childNodes).forEach(child => {
                 if (child.nodeType === Node.TEXT_NODE) {
@@ -1216,102 +1241,80 @@
                     tempContainer.appendChild(child.cloneNode(true));
                 } else if (child.nodeType === Node.ELEMENT_NODE) {
                     const tagName = child.tagName.toLowerCase();
-                    const hasClassOrId = child.hasAttribute('class') || child.hasAttribute('id');
 
-                    // List of always-allowed tags (no class/ID condition)
-                    const alwaysAllowedTags = ['p', 'br', 'br /', 'mark', 'strong', 'a', 'em', 'u', 'sup', 'sub', 'section'];
+                    // Function to check if class or id contains disallowed patterns (case-sensitive)
+                    const containsDisallowedPattern = (element) => {
+                        const elemClassAttr = element.getAttribute('class');
+                        if (elemClassAttr) {
+                            const classes = elemClassAttr.split(/\s+/);
+                            for (const cls of classes) {
+                                if (cls.includes('Mso') || cls.includes('Word') || cls.includes('BCX0')) {
+                                    return true;
+                                }
+                            }
+                        }
+                        const elemIdAttr = element.getAttribute('id');
+                        if (elemIdAttr) {
+                            if (elemIdAttr.includes('Mso') || elemIdAttr.includes('Word') || elemIdAttr.includes('BCX0')) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    };
 
-                    if (alwaysAllowedTags.includes(tagName)) {
-                        // If it's an always-allowed tag, clone it (without children initially)
+                    const alwaysPreservedTags = [
+                        'p', 'section', 'blockquote', 'article', 'ol', 'ul', 'li',
+                        'figure', 'caption', 'details', 'summary',
+                        'strong', 'u', 'em', 'i', 'b', 'br', 'mark', 'sup', 'sub', 'img',
+                        'h1', 'h2', 'h3', 'h4', 'h5', 'h6' // Added heading tags
+                    ];
+
+                    const tableTags = ['table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td'];
+
+                    if (alwaysPreservedTags.includes(tagName) || tableTags.includes(tagName)) {
+                        // These tags are always preserved, recursively clean their content
                         const clonedChild = child.cloneNode(false);
-                        // Recursively populate its content
-                        clonedChild.innerHTML = filterAndPreserveContent(child, doc);
+                        clonedChild.innerHTML = cleanAndPreserveAllowedContent(child, doc);
                         tempContainer.appendChild(clonedChild);
-                    } else if ((tagName === 'span' || tagName === 'div') && hasClassOrId) {
-                        // If it's a span or div with class/ID, clone it (without children initially)
+                    } else if (tagName === 'a' && child.hasAttribute('href')) {
+                        // <a> tags only if they have an href
                         const clonedChild = child.cloneNode(false);
-                        // Recursively populate its content
-                        clonedChild.innerHTML = filterAndPreserveContent(clonedChild, doc);
+                        clonedChild.innerHTML = cleanAndPreserveAllowedContent(child, doc); // Still clean content inside
                         tempContainer.appendChild(clonedChild);
+                    } else if (tagName === 'div') {
+                        // <div> ONLY if they have a class or ID that DON'T contain "Mso" or "Word" or "BCX0"
+                        if ((child.hasAttribute('class') || child.hasAttribute('id')) && !containsDisallowedPattern(child)) {
+                            const clonedChild = child.cloneNode(false);
+                            clonedChild.innerHTML = cleanAndPreserveAllowedContent(child, doc);
+                            tempContainer.appendChild(clonedChild);
+                        } else {
+                            // Unwrap if it doesn't meet the criteria
+                            const unwrappedContentHtml = cleanAndPreserveAllowedContent(child, doc);
+                            const tempUnwrapDiv = doc.createElement('div'); // Temporary div to parse HTML string
+                            tempUnwrapDiv.innerHTML = unwrappedContentHtml;
+                            while (tempUnwrapDiv.firstChild) {
+                                tempContainer.appendChild(tempUnwrapDiv.firstChild);
+                            }
+                        }
+                    } else if (tagName === 'span') {
+                        // <span> ONLY if they have a class or ID that DON'T match the ones mentioned (Mso/Word/BCX0)
+                        if ((child.hasAttribute('class') || child.hasAttribute('id')) && !containsDisallowedPattern(child)) {
+                            const clonedChild = child.cloneNode(false);
+                            clonedChild.innerHTML = cleanAndPreserveAllowedContent(child, doc);
+                            tempContainer.appendChild(clonedChild);
+                        } else {
+                            // Unwrap if it doesn't meet the criteria
+                            const unwrappedContentHtml = cleanAndPreserveAllowedContent(child, doc);
+                            const tempUnwrapDiv = doc.createElement('div'); // Temporary div to parse HTML string
+                            tempUnwrapDiv.innerHTML = unwrappedContentHtml;
+                            while (tempUnwrapDiv.firstChild) {
+                                tempContainer.appendChild(tempUnwrapDiv.firstChild);
+                            }
+                        }
                     } else {
-                        // If the element is not explicitly allowed (e.g., a span without class/ID, or any other disallowed tag),
-                        // unwrap it by recursively processing its children and appending them directly to the current container.
-                        const unwrappedContentHtml = filterAndPreserveContent(child, doc);
-                        // Create a temporary div to parse the HTML string back into nodes
-                        const tempUnwrapDiv = doc.createElement('div');
-                        tempUnwrapDiv.innerHTML = unwrappedContentHtml;
-                        // Append the children of the temporary div to the main tempContainer
-                        while (tempUnwrapDiv.firstChild) {
-                            tempContainer.appendChild(tempUnwrapDiv.firstChild);
-                        }
-                    }
-                }
-                // Other node types (comments, processing instructions) are implicitly ignored.
-            });
-            return tempContainer.innerHTML; // Return the HTML string of preserved content
-        }
-
-        /**
-         * Cleans content within heading tags (h1-h6) based on specific rules.
-         * Preserves text nodes, 'a' tags, 'em' tags.
-         * Unwraps specific MSO-related spans, font-related spans, and divs without class/id.
-         * Removes comments.
-         * @param {HTMLElement} node - The DOM node whose children are to be filtered (e.g., an h1 tag).
-         * @param {Document} doc - The document object to create new elements.
-         * @returns {string} The HTML string containing only the preserved content for the heading.
-         */
-        function cleanHeadingContent(node, doc) {
-            let tempContainer = doc.createElement('div');
-
-            Array.from(node.childNodes).forEach(child => {
-                if (child.nodeType === Node.TEXT_NODE) {
-                    tempContainer.appendChild(child.cloneNode(true));
-                } else if (child.nodeType === Node.COMMENT_NODE) {
-                    // Explicitly remove comment nodes
-                    // Do nothing, effectively removing the comment
-                } else if (child.nodeType === Node.ELEMENT_NODE) {
-                    const tagName = child.tagName.toLowerCase();
-                    const styleAttr = child.getAttribute('style') || '';
-                    const classAttr = child.getAttribute('class') || '';
-
-                    // Always preserve <a> and <em> tags
-                    if (tagName === 'a' || tagName === 'em') {
-                        const clonedChild = child.cloneNode(false);
-                        // Recursively clean content within the preserved tag
-                        clonedChild.innerHTML = cleanHeadingContent(clonedChild, doc);
-                        tempContainer.appendChild(clonedChild);
-                    }
-                    // Keep div with class or id (e.g., for structured content within headings)
-                    else if (tagName === 'div' && (child.hasAttribute('class') || child.hasAttribute('id'))) {
-                        const clonedChild = child.cloneNode(false);
-                        // Recursively clean content within the preserved div
-                        clonedChild.innerHTML = cleanHeadingContent(clonedChild, doc);
-                        tempContainer.appendChild(clonedChild);
-                    }
-                    // Unwrap specific MSO-related spans and other unwanted elements
-                    // This includes MsoListIgnore, Heading spans, font/font-family spans,
-                    // general Mso spans, and div without class/id.
-                    else if (
-                        (tagName === 'span' && styleAttr.includes('mso-list: Ignore')) ||
-                        (tagName === 'span' && classAttr.startsWith('Heading')) ||
-                        (tagName === 'span' && styleAttr.includes('font:')) ||
-                        (tagName === 'span' && styleAttr.includes('font-family:')) ||
-                        (tagName === 'span' && classAttr.startsWith('Mso')) || // Catch-all for other Mso spans
-                        (tagName === 'div' && !(child.hasAttribute('class') || child.hasAttribute('id'))) // Unwrap div without class/id
-                    ) {
-                        // Recursively clean content and then unwrap the current element
-                        const unwrappedContentHtml = cleanHeadingContent(child, doc);
-                        const tempUnwrapDiv = doc.createElement('div');
-                        tempUnwrapDiv.innerHTML = unwrappedContentHtml;
-                        while (tempUnwrapDiv.firstChild) {
-                            tempContainer.appendChild(tempUnwrapDiv.firstChild);
-                        }
-                    }
-                    // For any other element not explicitly handled above, unwrap its content.
-                    // This acts as a fallback to ensure only allowed content remains.
-                    else {
-                        const unwrappedContentHtml = cleanHeadingContent(child, doc);
-                        const tempUnwrapDiv = doc.createElement('div');
+                        // For any other element not explicitly allowed, unwrap its content
+                        const unwrappedContentHtml = cleanAndPreserveAllowedContent(child, doc);
+                        const tempUnwrapDiv = doc.createElement('div'); // Temporary div to parse HTML string
                         tempUnwrapDiv.innerHTML = unwrappedContentHtml;
                         while (tempUnwrapDiv.firstChild) {
                             tempContainer.appendChild(tempUnwrapDiv.firstChild);
@@ -1355,13 +1358,36 @@
                         const tagName = child.tagName.toLowerCase();
                         const hasClassOrId = child.hasAttribute('class') || child.hasAttribute('id');
 
+                        // Use the containsDisallowedPattern from cleanAndPreserveAllowedContent for consistent MSO/Word/BCX0 checks
+                        const containsDisallowedPattern = (element) => {
+                            const elemClassAttr = element.getAttribute('class');
+                            if (elemClassAttr) {
+                                const classes = elemClassAttr.split(/\s+/);
+                                for (const cls of classes) {
+                                    if (cls.includes('Mso') || cls.includes('Word') || cls.includes('BCX0')) {
+                                        return true;
+                                    }
+                                }
+                            }
+                            const elemIdAttr = element.getAttribute('id');
+                            if (elemIdAttr) {
+                                if (elemIdAttr.includes('Mso') || elemIdAttr.includes('Word') || elemIdAttr.includes('BCX0')) {
+                                    return true;
+                                }
+                            }
+                            return false;
+                        };
+
                         if (tagName === 'br' || tagName === 'strong' || tagName === 'a' || tagName === 'em' || tagName === 'u' || tagName === 'sup' || tagName === 'sub' || tagName === 'section') {
                             contentHtml += child.outerHTML;
-                        } else if ((tagName === 'span' || tagName === 'div') && hasClassOrId) {
+                        } else if ((tagName === 'span' || tagName === 'div') && hasClassOrId && !containsDisallowedPattern(child)) {
                             const clonedChild = child.cloneNode(false);
                             clonedChild.innerHTML = extractAllowedContentForLists(clonedChild);
                             contentHtml += clonedChild.outerHTML;
-                        } else {
+                        } else if (tagName === 'a' && child.hasAttribute('href')) { // Explicitly handle <a> with href
+                            contentHtml += child.outerHTML;
+                        }
+                        else {
                             contentHtml += extractAllowedContentForLists(child);
                         }
                     }
@@ -1571,116 +1597,6 @@
         }
 
         /**
-         * Applies cleaning for comments, footnotes, and endnotes.
-         * @param {string} htmlString - The HTML content to clean.
-         * @returns {string} The cleaned HTML content.
-         */
-        function applyCleanCommFnEdn(htmlString) {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(htmlString, 'text/html');
-            const body = doc.body;
-
-            // Cleaning for comments
-            const spanCommentElements = doc.querySelectorAll('span[class*="MsoComment"]');
-            for (let i = spanCommentElements.length - 1; i >= 0; i--) {
-                const span = spanCommentElements[i];
-                if (!span.classList.contains('MsoCommentReference') && span.parentNode) {
-                    while (span.firstChild) {
-                        span.parentNode.insertBefore(span.firstChild, span);
-                    }
-                    span.parentNode.removeChild(span);
-                }
-            }
-
-            const aElements = doc.querySelectorAll('a');
-            aElements.forEach(a => {
-                const href = a.getAttribute('href');
-                const name = a.getAttribute('name');
-                if (href && href.includes('#_edn') && name && name.includes('_edn')) {
-                    if (a.parentNode) {
-                        a.parentNode.removeChild(a);
-                    }
-                }
-            });
-
-            const divMsoElementsForRemoval = doc.querySelectorAll('div[style*="mso-element: comment"], div[style*="mso-element: endnote-list"]');
-            for (let i = divMsoElementsForRemoval.length - 1; i >= 0; i--) {
-                const div = divMsoElementsForRemoval[i];
-                if (div.parentNode) {
-                    div.parentNode.removeChild(div);
-                }
-            }
-
-            const divCommentListElements = doc.querySelectorAll('div[style*="mso-element: comment-list"]');
-            for (let i = divCommentListElements.length - 1; i >= 0; i--) {
-                const div = divCommentListElements[i];
-                if (div.parentNode) {
-                    div.parentNode.removeChild(div);
-                }
-            }
-
-            const spanCommentReferenceElements = doc.querySelectorAll('span.MsoCommentReference');
-            for (let i = spanCommentReferenceElements.length - 1; i >= 0; i--) {
-                const span = spanCommentReferenceElements[i];
-                if (span.parentNode) {
-                    span.parentNode.removeChild(span);
-                }
-            }
-
-            const msoCommentStyleElements = doc.querySelectorAll('[style*="mso-comment"]');
-            Array.from(msoCommentStyleElements).forEach(element => {
-                if (element.parentNode && !element.hasAttribute('data-removed')) {
-                    const style = element.getAttribute('style') || '';
-                    if (element.tagName.toLowerCase() === 'div' && (style.includes('mso-element: comment') || style.includes('mso-element: endnote-list') || style.includes('mso-element: comment-list'))) {
-                        element.parentNode.removeChild(element);
-                        element.setAttribute('data-removed', 'true');
-                    } else if (element.tagName.toLowerCase() === 'span' && element.classList.contains('MsoCommentReference')) {
-                        element.parentNode.removeChild(element);
-                        element.setAttribute('data-removed', 'true');
-                    } else {
-                        while (element.firstChild) {
-                            element.parentNode.insertBefore(element.firstChild, element);
-                        }
-                        element.parentNode.removeChild(element);
-                    }
-                }
-            });
-
-            // Footnote links and lists
-            const ftnLinks = doc.querySelectorAll('a[href^="#_ftn"]');
-            ftnLinks.forEach(a => {
-                // Remove title and name attributes regardless
-                if (a.hasAttribute('title')) {
-                    a.removeAttribute('title');
-                }
-                if (a.hasAttribute('name')) {
-                    a.removeAttribute('name');
-                }
-
-                // Only wrap if it's not already inside a <sup> tag
-                if (a.parentNode && a.parentNode.tagName.toLowerCase() !== 'sup') {
-                    const supElement = doc.createElement('sup');
-                    // Insert the sup element before the a tag
-                    a.parentNode.insertBefore(supElement, a);
-                    // Then append the a tag into the sup element
-                    supElement.appendChild(a);
-                }
-            });
-
-            const footnoteListDivs = doc.querySelectorAll('div[style*="mso-element: footnote-list"]');
-            for (let i = footnoteListDivs.length - 1; i >= 0; i--) {
-                const div = footnoteListDivs[i];
-                if (div.parentNode) {
-                    const asideElement = doc.createElement('aside');
-                    const preservedContentHtml = filterAndPreserveContent(div, doc);
-                    asideElement.innerHTML = preservedContentHtml;
-                    div.parentNode.replaceChild(asideElement, div);
-                }
-            }
-            return doc.body.innerHTML;
-        }
-
-        /**
          * Converts <img> tags with file:// or data: src attributes into placeholder <div><mark> elements.
          * @param {string} htmlString - The HTML content to process.
          * @returns {string} The processed HTML content.
@@ -1794,7 +1710,7 @@
                         let tailwindAlignClass = '';
                         switch (alignAttr.toLowerCase()) {
                             case 'left':
-                                tailwdAlignClass = 'text-left';
+                                tailwindAlignClass = 'text-left';
                                 break;
                             case 'center':
                                 tailwindAlignClass = 'text-center';
@@ -1814,238 +1730,233 @@
 
         /**
          * Applies cleaning for Microsoft Office specific code.
+         * This function removes tags and their entire content if they have specific MSO-related attributes or hrefs.
+         * Attributes targeted for removal: "mso-element: comment-list", "mso-element: endnote-list".
+         * Hrefs targeted for removal: containing "#_msocom", "#_edn", or "#_ftn".
+         * For "#_ftn" links, converts <a> to <sup><a> with only text content and href attribute.
+         * Also transforms elements with "mso-element: footnote-list" style into <aside> with cleaned content.
+         * Also removes content from and cleans attributes of elements with 'style' attribute or MSO/Word/BCX0 classes.
+         * Additionally handles specific heading class cleanup, and attribute removal for non-table elements,
+         * UL/OL tags, and LI tags with 'role' attributes.
          * @param {string} htmlString - The HTML content to clean.
          * @returns {string} The cleaned HTML content.
          */
         function applyCleanMsoCode(htmlString) {
             const parser = new DOMParser();
             const doc = parser.parseFromString(htmlString, 'text/html');
-            const body = doc.body;
 
-            // ORDER OF OPERATIONS within applyCleanMsoCode:
-            // 1. COMPLETELY REMOVE <a> tags with "msocomanchor" class
-            // 2. Transform <p> with HeadingX span to hX and unwrap span.
-            // 3. Span lang's
-            // 4. Headings (calls cleanHeadingContent)
-            // 5. The rest (other MSO cleaning, including new span unwrapping rules)
-            // Note: Table cleaning and image cleaning moved to separate functions/toggles.
+            // Select elements with style containing "mso-element: comment-list" or "mso-element: endnote-list"
+            const elementsToRemoveByStyle = doc.querySelectorAll('[style*="mso-element: comment-list"], [style*="mso-element: endnote-list"]');
+            elementsToRemoveByStyle.forEach(element => {
+                if (element.parentNode) {
+                    element.parentNode.removeChild(element);
+                }
+            });
 
-            // 1. COMPLETELY REMOVE <a> tags and the content within for <a> tags with "msocomanchor" in the class attribute.
-            const msoAnchorLinks = body.querySelectorAll('a[class*="msocomanchor"]');
-            msoAnchorLinks.forEach(link => {
+            // Select <a> elements with href containing "#_msocom" or "#_edn" and remove them completely
+            const commentEndnoteLinks = doc.querySelectorAll('a[href*="#_msocom"], a[href*="#_edn"]');
+            commentEndnoteLinks.forEach(link => {
                 if (link.parentNode) {
                     link.parentNode.removeChild(link);
                 }
             });
 
-            // 2. For spans that start with "Heading" in the class, check for a number from 1-6 beside it (Heading2),
-            // make the <p> that its a child of into the corresponding h tag (h1-h6) and UNWRAP (ONLY remove tag) the span preserving its content.
-            const headingSpans = body.querySelectorAll('span[class^="Heading"]');
-            headingSpans.forEach(span => {
-                const classList = Array.from(span.classList);
-                let headingLevel = null;
+            // Process <a> tags with href containing "#_ftn"
+            const footnoteLinks = doc.querySelectorAll('a[href*="#_ftn"]');
+            footnoteLinks.forEach(link => {
+                if (link.parentNode) {
+                    const originalHref = link.getAttribute('href');
+                    const textContent = link.textContent; // Get only the text content
 
-                for (const cls of classList) {
-                    const match = cls.match(/^Heading(\d)$/);
-                    if (match && parseInt(match[1], 10) >= 1 && parseInt(match[1], 10) <= 6) {
-                        headingLevel = parseInt(match[1], 10);
-                        break;
-                    }
+                    // Create a new <a> tag, keeping only href and text content
+                    const newLink = doc.createElement('a');
+                    newLink.setAttribute('href', originalHref);
+                    newLink.textContent = textContent;
+
+                    // Create a <sup> tag and append the new <a> tag to it
+                    const supElement = doc.createElement('sup');
+                    supElement.appendChild(newLink);
+
+                    // Replace the original <a> tag with the new <sup> containing the new <a>
+                    link.parentNode.replaceChild(supElement, link);
                 }
+            });
 
-                if (headingLevel !== null) {
-                    const parentP = span.closest('p');
-                    if (parentP) {
+            // Process elements with "mso-element: footnote-list" in their style attribute
+            const footnoteListElements = doc.querySelectorAll('[style*="mso-element: footnote-list"]');
+            footnoteListElements.forEach(element => {
+                if (element.parentNode) {
+                    // Clean the content of the current element first, based on the preservation rules
+                    const cleanedInnerHtml = cleanAndPreserveAllowedContent(element, doc);
+
+                    // Create a new <aside> element
+                    const asideElement = doc.createElement('aside');
+                    asideElement.innerHTML = cleanedInnerHtml;
+
+                    // Replace the original element with the new <aside>
+                    element.parentNode.replaceChild(asideElement, element);
+                }
+            });
+
+            // Process heading character tags
+            // Find all elements that have a class like "Heading#Char" where # is 1-6
+            const elementsWithHeadingClass = doc.querySelectorAll('[class*="Heading"]'); // Broad selection then filter
+
+            // Convert to array to avoid issues with live NodeList during modifications
+            Array.from(elementsWithHeadingClass).forEach(element => {
+                const classAttr = element.getAttribute('class');
+                if (!classAttr) return;
+
+                const classes = classAttr.split(/\s+/);
+                const headingCharClass = classes.find(cls => /^Heading[1-6]Char$/.test(cls));
+
+                if (headingCharClass) {
+                    const headingLevel = parseInt(headingCharClass.match(/\d/)[0], 10);
+                    const parent = element.parentNode;
+
+                    if (!parent) return;
+
+                    // Unwrap the current element: move its children to its parent
+                    while (element.firstChild) {
+                        parent.insertBefore(element.firstChild, element);
+                    }
+                    element.parentNode.removeChild(element); // Remove the now empty element
+
+                    const currentParent = parent; // This is the original parent after unwrapping
+
+                    // If the original parent is NOT already a heading (h1-h6)
+                    if (!/^H[1-6]$/i.test(currentParent.tagName)) {
                         const newHeadingTag = doc.createElement(`h${headingLevel}`);
                         
-                        // Move all children of the span into the new heading tag
+                        // Move *all* content of the original parent into the new heading tag
+                        while (currentParent.firstChild) {
+                            newHeadingTag.appendChild(currentParent.firstChild);
+                        }
+
+                        // Replace the original parent with the new heading tag
+                        if (currentParent.parentNode) {
+                            currentParent.parentNode.replaceChild(newHeadingTag, currentParent);
+                        }
+                    }
+                    // If the original parent *was* already a heading, we've already unwrapped the span, so no further action needed.
+                }
+            });
+
+            // NEW: Remove 'align' attribute from elements *outside* of tables
+            doc.querySelectorAll('[align]').forEach(element => {
+                if (!element.closest('table')) { // Check if the element is not inside a table
+                    element.removeAttribute('align');
+                }
+            });
+
+            // NEW: Remove 'type' and 'role' attributes from UL and OL tags
+            doc.querySelectorAll('ul, ol').forEach(list => {
+                list.removeAttribute('type');
+                list.removeAttribute('role');
+            });
+
+            // NEW: Remove all attributes from LI tags if they have a 'role' attribute
+            doc.querySelectorAll('li').forEach(li => {
+                if (li.hasAttribute('role')) {
+                    // Create an array of attribute names to remove
+                    const attributesToRemove = Array.from(li.attributes).map(attr => attr.name);
+                    attributesToRemove.forEach(attrName => {
+                        li.removeAttribute(attrName);
+                    });
+                }
+            });
+
+            // NEW: Remove span tags with 'lang' attribute unless lang is 'en' or 'fr'
+            doc.querySelectorAll('span[lang]').forEach(span => {
+                const langAttr = span.getAttribute('lang');
+                if (langAttr && langAttr.toLowerCase() !== 'en' && langAttr.toLowerCase() !== 'fr') {
+                    // Unwrap the span: move its children to its parent
+                    const parent = span.parentNode;
+                    if (parent) {
                         while (span.firstChild) {
-                            newHeadingTag.appendChild(span.firstChild);
+                            parent.insertBefore(span.firstChild, span);
                         }
-                        
-                        // Move all other children of the parentP (that are not the span) into the new heading tag
-                        // This ensures any text or other elements directly within the <p> but outside the <span>
-                        // are also moved to the new heading.
-                        // Iterate in reverse to avoid issues with childNodes changing during removal
-                        const pChildren = Array.from(parentP.childNodes);
-                        for (let i = pChildren.length - 1; i >= 0; i--) {
-                            const node = pChildren[i];
-                            if (node !== span) { // Only move nodes that are not the target span
-                                newHeadingTag.prepend(node); // Prepend to maintain order
-                            }
-                        }
-
-                        if (parentP.parentNode) {
-                            parentP.parentNode.replaceChild(newHeadingTag, parentP);
-                        }
+                        parent.removeChild(span); // Remove the now empty span
                     }
                 }
             });
 
-            // 3. Unwraps <span> tags with a 'lang' attribute OR 'mso-ansi-language' in style,
-            //    ONLY if they're within an element that has "Mso" in its class or "mso-" in its style. Preserve content.
-            const spanLangOrAnsiElements = doc.querySelectorAll('span[lang], span[style*="mso-ansi-language"]');
-            for (let i = spanLangOrAnsiElements.length - 1; i >= 0; i--) {
-                const span = spanLangOrAnsiElements[i];
-                let parent = span.parentElement;
-                let shouldUnwrap = false;
-                while (parent && parent !== doc.body) {
-                    const classAttr = parent.getAttribute('class');
-                    const styleAttr = parent.getAttribute('style');
 
-                    if ((classAttr && classAttr.includes('Mso')) || (styleAttr && styleAttr.includes('mso-'))) {
-                        shouldUnwrap = true;
-                        break;
-                    }
-                    parent = parent.parentElement;
-                }
+            // Process all elements that have a style attribute or MSO/Word/BCX0 classes
+            // Iterate in reverse to handle nested elements correctly without breaking the loop
+            const allElements = Array.from(doc.querySelectorAll('*'));
+            for (let i = allElements.length - 1; i >= 0; i--) {
+                const element = allElements[i];
 
-                if (shouldUnwrap && span.parentNode) {
-                    while (span.firstChild) {
-                        span.parentNode.insertBefore(span.firstChild, span);
-                    }
-                    span.parentNode.removeChild(span);
-                }
-            }
-
-            // 4. Clean content within headings (h1-h6)
-            const headingTags = doc.querySelectorAll('h1, h2, h3, h4, h5, h6');
-            headingTags.forEach(heading => {
-                heading.innerHTML = cleanHeadingContent(heading, doc);
-                Array.from(heading.attributes).forEach(attr => heading.removeAttribute(attr.name));
-            });
-            
-            // 5. The rest of the cleaning operations (excluding comments, footnotes, endnotes, images, tables)
-            const msoBookmarkSpans = doc.querySelectorAll('span[style*="mso-bookmark"]');
-            for (let i = msoBookmarkSpans.length - 1; i >= 0; i--) {
-                const span = msoBookmarkSpans[i];
-                if (span.parentNode) {
-                    while (span.firstChild) {
-                        span.parentNode.insertBefore(span.firstChild, span);
-                    }
-                    span.parentNode.removeChild(span);
-                }
-            }
-
-            const classUnwrapSpans = body.querySelectorAll('span.normaltextrun, span.eop, span.eoc, span.eocx');
-            for (let i = classUnwrapSpans.length - 1; i >= 0; i--) {
-                const span = classUnwrapSpans[i];
-                if (span.parentNode) {
-                    while (span.firstChild) {
-                        span.parentNode.insertBefore(span.firstChild, span);
-                    }
-                    span.parentNode.removeChild(span);
-                }
-            }
-
-            const styleUnwrapSpans = body.querySelectorAll('span[style*="font:"], span[style*="font-family:"]');
-            for (let i = styleUnwrapSpans.length - 1; i >= 0; i--) {
-                const span = styleUnwrapSpans[i];
-                if (span.parentNode) {
-                    while (span.firstChild) {
-                        span.parentNode.insertBefore(span.firstChild, span);
-                    }
-                    span.parentNode.removeChild(span);
-                }
-            }
-
-            const msoClassSpans = doc.querySelectorAll('span[class^="Mso"]');
-            for (let i = msoClassSpans.length - 1; i >= 0; i--) {
-                const span = msoClassSpans[i];
-                if (span.parentNode) {
-                    while (span.firstChild) {
-                        span.parentNode.insertBefore(span.firstChild, span);
-                    }
-                    span.parentNode.removeChild(span);
-                }
-            }
-
-            const tagsToRemoveStyleFrom = doc.querySelectorAll('strong, a, em, u, sup, sub');
-            tagsToRemoveStyleFrom.forEach(element => {
-                if (element.hasAttribute('style')) {
-                    element.removeAttribute('style');
-                }
-            });
-
-            const divAlignElements = doc.querySelectorAll('div[align]');
-            for (let i = divAlignElements.length - 1; i >= 0; i--) {
-                const div = divAlignElements[i];
-                if (div.parentNode) {
-                    while (div.firstChild) {
-                        div.parentNode.insertBefore(div.firstChild, div);
-                    }
-                    div.parentNode.removeChild(div);
-                }
-            }
-
-            const msoTocParagraphs = doc.querySelectorAll('p[class*="MsoToc"]');
-            msoTocParagraphs.forEach(p => {
-                Array.from(p.attributes).forEach(attr => p.removeAttribute(attr.name));
-                const tempDiv = doc.createElement('div');
-                Array.from(p.childNodes).forEach(node => {
-                    if (node.nodeType === Node.ELEMENT_NODE && node.tagName.toLowerCase() === 'a' && node.hasAttribute('href')) {
-                        const clonedA = node.cloneNode(true);
-                        const linkText = clonedA.textContent;
-                        while (clonedA.firstChild) {
-                            clonedA.removeChild(clonedA.firstChild);
-                        }
-                        clonedA.appendChild(doc.createTextNode(linkText));
-                        tempDiv.appendChild(clonedA);
-                    } else if (node.nodeType === Node.TEXT_NODE) {
-                        tempDiv.appendChild(node.cloneNode(true));
-                    }
-                });
-                while (p.firstChild) {
-                    p.removeChild(p.firstChild);
-                }
-                while (tempDiv.firstChild) {
-                    p.appendChild(tempDiv.firstChild);
-                }
-            });
-
-            const allParagraphs = doc.querySelectorAll('p');
-            Array.from(allParagraphs).forEach(p => {
-                const classAttr = p.getAttribute('class') || '';
-                const isMsoParagraph = classAttr.startsWith('Mso');
-                const isInsideTable = p.closest('table');
-                const isMsoListParagraph = classAttr.startsWith('MsoList');
-
-                if (isMsoParagraph && !isInsideTable && !isMsoListParagraph) {
-                    Array.from(p.attributes).forEach(attr => p.removeAttribute(attr.name));
-                    const preservedContentHtml = filterAndPreserveContent(p, doc);
-                    p.innerHTML = preservedContentHtml;
-                }
-            });
-
-            const msoElementDivs = doc.querySelectorAll('div[style*="mso-element"]');
-            for (let i = msoElementDivs.length - 1; i >= 0; i--) {
-                const div = msoElementDivs[i];
-                const style = div.getAttribute('style') || '';
-
-                if (style.includes('mso-element: footnote-list')) {
+                // Skip html, head, body, script, style tags, and the aside tags just created
+                const tagName = element.tagName.toLowerCase();
+                if (['html', 'head', 'body', 'script', 'style', 'aside'].includes(tagName)) {
                     continue;
                 }
 
-                if (div.parentNode) {
-                    while (div.firstChild) {
-                        div.parentNode.insertBefore(div.firstChild, div);
+                const hasStyle = element.hasAttribute('style');
+                const classAttr = element.getAttribute('class') || '';
+                const idAttr = element.getAttribute('id') || '';
+
+                // Check if any class contains "Mso", "Word", or "BCX0" (case-sensitive)
+                const hasMsoWordBcx0Class = classAttr.split(/\s+/).some(cls =>
+                    cls.includes('Mso') || cls.includes('Word') || cls.includes('BCX0')
+                );
+
+                // Check if ID contains "Mso", "Word", or "BCX0" (case-sensitive)
+                const hasMsoWordBcx0Id = idAttr.includes('Mso') || idAttr.includes('Word') || idAttr.includes('BCX0');
+
+                // NEW: Check for classes that trigger complete unwrapping (eop, eoc, eocx, textrun, or any class containing "mso")
+                const shouldUnwrapCompletely = classAttr.split(/\s+/).some(cls =>
+                    cls.includes('eop') ||
+                    cls.includes('eoc') ||
+                    cls.includes('eocx') ||
+                    cls.includes('mso') || // Broad check: any class containing "mso"
+                    cls.includes('textrun')
+                );
+
+                if (shouldUnwrapCompletely) {
+                    const parent = element.parentNode;
+                    if (parent) {
+                        // Move children out of the element
+                        while (element.firstChild) {
+                            parent.insertBefore(element.firstChild, element);
+                        }
+                        parent.removeChild(element); // Remove the now empty element
                     }
-                    div.parentNode.removeChild(div);
+                    continue; // Continue to the next element in the loop after unwrapping
+                }
+
+                // Existing logic for cleaning attributes and content if not completely unwrapped
+                if (hasStyle || hasMsoWordBcx0Class || hasMsoWordBcx0Id) {
+                    // Get the cleaned innerHTML based on the preservation rules
+                    const cleanedInnerHtml = cleanAndPreserveAllowedContent(element, doc);
+
+                    // Replace the original content with the cleaned content
+                    element.innerHTML = cleanedInnerHtml;
+
+                    // Remove the style attribute
+                    if (hasStyle) {
+                        element.removeAttribute('style');
+                    }
+
+                    // Clean the class attribute: remove the entire attribute if any class contains "Mso", "Word", or "BCX0"
+                    if (classAttr) {
+                        const hasDisallowedClass = classAttr.split(/\s+/).some(cls =>
+                            cls.includes('Mso') || cls.includes('Word') || cls.includes('BCX0')
+                        );
+                        if (hasDisallowedClass) {
+                            element.removeAttribute('class');
+                        }
+                        // If no disallowed class, the attribute remains as is.
+                    }
+
+                    // Clean the id attribute: remove id if it contains "Mso", "Word", or "BCX0"
+                    if (idAttr && (idAttr.includes('Mso') || idAttr.includes('Word') || idAttr.includes('BCX0'))) {
+                        element.removeAttribute('id');
+                    }
                 }
             }
-
-            doc.querySelectorAll('strong span[style*="font-weight: bold"]').forEach(span => {
-                if (span.parentNode) {
-                    while (span.firstChild) {
-                        span.parentNode.insertBefore(span.firstChild, span);
-                    }
-                    span.parentNode.removeChild(span);
-                }
-            });
-
-            let currentHtml = doc.body.innerHTML;
-            currentHtml = removeEmptyParagraphs(currentHtml);
-            doc.body.innerHTML = currentHtml;
 
             return doc.body.innerHTML;
         }
@@ -2227,7 +2138,7 @@
                 let processedContent = htmlOutputContent;
                 if (toggleAutoCleanMsoOnSwitchCode.checked) {
                     processedContent = applyCleanMsoCode(processedContent);
-                    // console.log("Auto-Clean MSO applied when switching to Rich-Text editor.");
+                    // console.log("Auto-Clean Mso applied when switching to Rich-Text editor.");
                 }
 
                 // 2. Update Rich Text content and editor.
@@ -2328,6 +2239,28 @@
             }
         }
 
+        /**
+         * Simple debounce function.
+         * @param {Function} func The function to debounce.
+         * @param {number} delay The delay in milliseconds.
+         * @returns {Function} The debounced function.
+         */
+        function debounce(func, delay) {
+            let timeout;
+            return function(...args) {
+                const context = this;
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(context, args), delay);
+            };
+        }
+
+        // Debounced version of monacoEditorInstance.layout() for window resize
+        const debouncedMonacoLayout = debounce(() => {
+            if (monacoEditorInstance) {
+                monacoEditorInstance.layout();
+            }
+        }, 200); // Debounce for window resize, not internal panel resize
+
 
         // Initialize and set up event listeners on window load
         window.onload = function() {
@@ -2373,15 +2306,11 @@
                 applyEntityHighlighting();
 
                 // Ensure Monaco refreshes layout on window resize
-                window.addEventListener('resize', () => {
-                    if (monacoEditorInstance) {
-                        monacoEditorInstance.layout();
-                    }
-                });
+                window.addEventListener('resize', debouncedMonacoLayout);
 
                 // Monaco Resizer Logic
                 let isResizing = false;
-                let initialMonacoWidth;
+                let initialMonacoWidth; // Keep track of pixel widths for calculations
                 let initialSidebarWidth;
                 let initialMouseX;
 
@@ -2392,33 +2321,36 @@
                     initialMouseX = e.clientX;
                     document.addEventListener('mousemove', onMouseMove);
                     document.addEventListener('mouseup', onMouseUp);
-                    // Add a class to body to change cursor globally during resize
                     document.body.style.cursor = 'ew-resize';
-                    document.body.style.userSelect = 'none'; // Prevent text selection during drag
+                    document.body.style.userSelect = 'none';
                 });
 
                 function onMouseMove(e) {
                     if (!isResizing) return;
                     const dx = e.clientX - initialMouseX;
 
-                    const newMonacoWidth = initialMonacoWidth + dx;
-                    const newSidebarWidth = initialSidebarWidth - dx;
+                    let newMonacoWidth = initialMonacoWidth + dx;
+                    let newSidebarWidth = initialSidebarWidth - dx;
 
-                    // Ensure minimum widths (e.g., 200px for each)
-                    const minWidth = 200;
-                    if (newMonacoWidth < minWidth || newSidebarWidth < minWidth) {
-                        return;
+                    const minWidth = 200; // Minimum size in pixels for each panel
+
+                    // Ensure minimum widths
+                    if (newMonacoWidth < minWidth) {
+                        newMonacoWidth = minWidth;
+                        // Adjust sidebar width to maintain total space if Monaco hits min
+                        newSidebarWidth = initialMonacoWidth + initialSidebarWidth - newMonacoWidth;
+                    }
+                    if (newSidebarWidth < minWidth) {
+                        newSidebarWidth = minWidth;
+                        // Adjust Monaco width to maintain total space if sidebar hits min
+                        newMonacoWidth = initialMonacoWidth + initialSidebarWidth - newSidebarWidth;
                     }
 
-                    // Calculate percentage widths
-                    const totalWidth = monacoEditorContainer.parentElement.offsetWidth;
-                    monacoEditorContainer.style.width = `${(newMonacoWidth / totalWidth) * 100}%`;
-                    sidebar.style.width = `${(newSidebarWidth / totalWidth) * 100}%`;
-
-                    // Trigger Monaco layout update
-                    if (monacoEditorInstance) {
-                        monacoEditorInstance.layout();
-                    }
+                    // Apply the new widths directly to flex-basis
+                    monacoEditorContainer.style.flexBasis = `${newMonacoWidth}px`;
+                    sidebar.style.flexBasis = `${newSidebarWidth}px`;
+                    
+                    // No explicit layout call needed here for Monaco, automaticLayout should handle it.
                 }
 
                 function onMouseUp() {
@@ -2426,7 +2358,11 @@
                     document.removeEventListener('mousemove', onMouseMove);
                     document.removeEventListener('mouseup', onMouseUp);
                     document.body.style.cursor = 'default';
-                    document.body.style.userSelect = ''; // Re-enable text selection
+                    document.body.style.userSelect = '';
+                    // After resizing stops, call layout once to ensure final state is correct and stable.
+                    if (monacoEditorInstance) {
+                        monacoEditorInstance.layout();
+                    }
                 }
             });
 
@@ -2777,82 +2713,6 @@
                     console.warn("Parent: Could not capture HugeRTE instance from iframe. Is HugeRTE initializing correctly inside?");
                 }
             };
-
-            // Collapsible section logic
-            const collapsibleSections = document.querySelectorAll('.collapsible-section');
-
-            function toggleCollapsible(header, content) {
-                const isExpanded = header.classList.contains('expanded');
-
-                // Collapse all other sections first
-                collapsibleSections.forEach(section => {
-                    const otherHeader = section.querySelector('.collapsible-header');
-                    const otherContent = section.querySelector('.collapsible-content');
-                    if (otherHeader !== header && otherHeader.classList.contains('expanded')) {
-                        otherHeader.classList.remove('expanded');
-                        otherHeader.classList.add('collapsed');
-                        // Collapse content by setting max-height to 0 and removing padding
-                        otherContent.style.maxHeight = '0';
-                        otherContent.style.paddingTop = '0';
-                        otherContent.style.paddingBottom = '0';
-                        // Remove the transitionend listener if it was set
-                        otherContent.removeEventListener('transitionend', otherContent.dataset.transitionEndHandler);
-                        delete otherContent.dataset.transitionEndHandler;
-                    }
-                });
-
-                // Then toggle the clicked section
-                if (isExpanded) {
-                    // Before collapsing, set max-height to its current scrollHeight to animate correctly
-                    content.style.maxHeight = content.scrollHeight + 'px'; 
-                    // Use requestAnimationFrame to ensure the browser has painted the above change
-                    // before animating to 0, preventing a "jump" effect.
-                    requestAnimationFrame(() => { 
-                        content.style.maxHeight = '0';
-                        content.style.paddingTop = '0';
-                        content.style.paddingBottom = '0';
-                        header.classList.remove('expanded');
-                        header.classList.add('collapsed');
-                    });
-                    // Remove the transitionend listener if it was set
-                    content.removeEventListener('transitionend', content.dataset.transitionEndHandler);
-                    delete content.dataset.transitionEndHandler;
-                } else {
-                    header.classList.add('expanded');
-                    header.classList.remove('collapsed');
-                    
-                    // Animate expansion
-                    content.style.maxHeight = content.scrollHeight + 'px'; // Animate to actual content height
-                    content.style.paddingTop = '0.75rem';
-                    content.style.paddingBottom = '0.75rem';
-
-                    // Use a named function for event listener so it can be removed
-                    const transitionEndHandler = function() {
-                        if (header.classList.contains('expanded')) { // Only set to 'none' if still expanded
-                            content.style.maxHeight = 'none'; // Allow natural height after animation
-                        }
-                        content.removeEventListener('transitionend', transitionEndHandler);
-                        delete content.dataset.transitionEndHandler; // Clean up reference
-                    };
-
-                    // Store the handler on the element itself for later removal
-                    content.dataset.transitionEndHandler = transitionEndHandler;
-                    content.addEventListener('transitionend', transitionEndHandler);
-                }
-            }
-
-            // Initialize all sections as collapsed and attach event listeners
-            collapsibleSections.forEach(section => {
-                const header = section.querySelector('.collapsible-header');
-                const content = section.querySelector('.collapsible-content');
-                header.classList.add('collapsed'); // Ensure all start collapsed
-                content.style.maxHeight = '0'; // Explicitly set to 0 initially
-                content.style.paddingTop = '0'; // Explicitly set padding to 0
-                content.style.paddingBottom = '0'; // Explicitly set padding to 0
-                header.addEventListener('click', () => {
-                    toggleCollapsible(header, content);
-                });
-            });
             
 
             // Toggle switch logic for general cleaning toggles
@@ -2928,7 +2788,9 @@
                 } else { // currentView === 'code'
                     contentToClean = monacoEditorInstance.getValue();
                     // If running from code view, ensure entities are decoded before cleaning functions
-                    contentToClean = decodeHtmlEntities(contentToClean);
+                    // This is important because cleaning functions operate on a DOM, and decoded entities
+                    // ensure they are treated as actual characters.
+                    contentToClean = decodeHtmlEntities(contentToClean); 
                 }
                 
                 let cleanedContent = contentToClean; // Start with current content
@@ -2955,22 +2817,16 @@
                     console.log("Clean Single Breaks applied.");
                 }
 
-                // Apply Clean MSO Code if checked (now excludes COMM/FN/EDN, IMGs, and Tables)
+                // Apply Clean MSO Code if checked (now includes COMM/FN/EDN, IMGs, and Tables)
                 if (toggleCleanMsoCode.checked) {
                     cleanedContent = applyCleanMsoCode(cleanedContent);
-                    console.log("Clean MSO Code (excluding COMM/FN/EDN, IMGs, and Tables) applied.");
+                    console.log("Clean MSO Code (including COMM/FN/EDN, IMGs, and Tables) applied.");
                 }
 
                 // Apply Clean Lists if checked
                 if (toggleCleanLists.checked) {
                     cleanedContent = applyCleanLists(cleanedContent);
-                    console.log("Clean Lists applied.");
-                }
-
-                // Apply Clean COMM/FN/EDN if checked
-                if (toggleCleanCommFnEdn.checked) {
-                    cleanedContent = applyCleanCommFnEdn(cleanedContent);
-                    console.log("Clean COMM/FN/EDN applied.");
+                    console.log("Clean MSO Lists applied.");
                 }
 
                 // Apply Clean IMGs if checked
@@ -2982,7 +2838,14 @@
                 // Apply Clean Tables (Basic) if checked
                 if (toggleCleanTablesBasic.checked) {
                     cleanedContent = applyCleanTablesBasic(cleanedContent);
-                    console.log("Clean Tables (Basic) applied.");
+                    console.log("Clean MSO Tables applied.");
+                }
+
+                // After all cleaning operations, if in code view, re-encode entities to numeric HTML entities
+                // before setting the value back to Monaco.
+                if (currentView === 'code') {
+                    cleanedContent = convertAllEntitiesToNumeric(cleanedContent);
+                    console.log("Entities re-encoded to numeric after cleaning for code view.");
                 }
 
                 // Update the active editor with the final cleaned content
