@@ -151,14 +151,9 @@
             <!-- Table Identification & Basic Settings -->
             <fieldset>
                 <div class="grid grid-cols-1 gap-y-3 gap-x-6 mb-3"> <!-- Reduced gap-y and mb -->
-                    <!-- ID Prefix Input -->
-                    <div class="flex items-center gap-2"> <!-- Reduced gap -->
-                        <label for="id-prefix-input" class="text-gray-200 text-sm font-medium">ID Prefix:</label>
-                        <input type="text" id="id-prefix-input" value="tbl" class="w-24 px-2 py-1 border border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 text-sm bg-gray-700 text-white"> <!-- Reduced width, padding, and text size -->
-                    </div>
                     <!-- ID Tables Checkbox -->
                     <label class="toggle-switch">
-                        <input type="checkbox" id="id-checkbox" class="hidden"> <!-- Unchecked by default -->
+                        <input type="checkbox" id="id-checkbox" class="hidden" checked> <!-- Checked by default -->
                         <span class="slider"></span>
                         <span class="toggle-label ml-2 text-gray-200">ID Tables</span> <!-- Reduced ml -->
                     </label>
@@ -460,8 +455,7 @@
         const clearButton = document.getElementById('clear-button');
 
         const idCheckbox = document.getElementById('id-checkbox');
-        const idPrefixInput = document.getElementById('id-prefix-input');
-        // Removed autoIdScopeCheckboxElement declaration and its corresponding HTML element
+        // Removed idPrefixInput and its corresponding HTML element
         const classTablesCheckbox = document.getElementById('class-tables-checkbox');
         const captionCheckbox = document.getElementById('caption-checkbox');
         const centerCaptionCheckbox = document.getElementById('center-caption-checkbox');
@@ -578,9 +572,8 @@
                     return;
                 }
 
-                const applyId = idCheckbox.checked;
-                const customIdPrefix = idPrefixInput.value.trim();
-                const currentIdRegex = new RegExp(`^(${customIdPrefix}\\d+(_r\\d+_c\\d+)?)$`);
+                const applyId = idCheckbox.checked; // This checkbox now only controls table ID, no other header/scope attributes
+                // Removed customIdPrefix and currentIdRegex declarations as they are no longer used
 
                 const applyClassTables = classTablesCheckbox.checked;
                 const applyCaption = captionCheckbox.checked;
@@ -619,6 +612,11 @@
                     let responsiveDiv = table.parentNode;
                     const parentIsResponsiveDiv = responsiveDiv && responsiveDiv.classList.contains(responsiveDivClass);
 
+                    // These variables are no longer used for ID/header/scope generation,
+                    // so they can be removed or left as unused if other future functionality might need them.
+                    // For now, they are removed to reflect the complete removal of auto-ID/scope logic.
+                    // Removed grid, currentTableThIdCounter, totalLogicalCols declarations
+
                     if (applyResponsiveTables) {
                         if (!parentIsResponsiveDiv) {
                             responsiveDiv = document.createElement('div');
@@ -640,7 +638,7 @@
                     }
 
                     // --- UNCONDITIONALLY REMOVE ALL IDs, HEADERS, AND SCOPES AT THE START ---
-                    // This fulfills "get rid of the ID's and headers when clicking format"
+                    // This section now ensures a full cleanup without any conditional re-application.
                     table.removeAttribute('id'); // Remove ID from the table itself
                     Array.from(table.querySelectorAll('th, td')).forEach(cell => {
                         cell.removeAttribute('id');
@@ -650,15 +648,16 @@
                     // --- END UNCONDITIONAL REMOVAL ---
 
 
-                    // --- Table Complexity Detection ---
-                    let isComplexTable = false;
-                    Array.from(table.querySelectorAll('th, td')).forEach(cell => {
-                        const colspan = parseInt(cell.getAttribute('colspan') || '1', 10);
-                        const rowspan = parseInt(cell.getAttribute('rowspan') || '1', 10);
-                        if (colspan > 1 || rowspan > 1) {
-                            isComplexTable = true;
-                        }
-                    });
+                    // --- Table Complexity Detection (No longer used for ID/Header generation) ---
+                    // Keeping it just in case for future use, but it doesn't affect current logic.
+                    // let isComplexTable = false;
+                    // Array.from(table.querySelectorAll('th, td')).forEach(cell => {
+                    //     const colspan = parseInt(cell.getAttribute('colspan') || '1', 10);
+                    //     const rowspan = parseInt(cell.getAttribute('rowspan') || '1', 10);
+                    //     if (colspan > 1 || rowspan > 1) {
+                    //         isComplexTable = true;
+                    //     }
+                    // });
                     // --- END Table Complexity Detection ---
 
 
@@ -670,8 +669,9 @@
                     });
 
                     // Conditional re-application of table ID based on applyId checkbox
+                    // Note: This only sets the table's ID, not IDs/headers/scopes for cells.
                     if (applyId) {
-                        table.id = `${customIdPrefix}${tableCounter}`;
+                        table.id = `tbl${tableCounter}`; // Simplified ID generation for table itself
                     }
 
                     const controlledClasses = ['table', 'table-bordered', 'table-striped', 'table-hover', 'table-condensed', smallClass];
@@ -813,218 +813,18 @@
                     // Re-query the table cells after all structural manipulations for accurate ID/headers application
                     const currentTableCells = Array.from(table.querySelectorAll('th, td'));
 
-                    // --- Auto-ID/Headers Logic now wrapped in applyId condition ---
-                    // This will only run if the "ID Tables" checkbox is checked.
-                    const currentTableRows = Array.from(table.querySelectorAll('tr'));
-                    const grid = [];
-                    let currentTableThIdCounter = 0; // Reset counter for each table
+                    // --- Removed Auto-ID/Headers Logic entirely ---
+                    // This section previously contained the complex logic for assigning IDs, headers, and scopes.
+                    // It has been removed as per the user's request.
+                    // The `colgroup` and `col` generation also depended on `totalLogicalCols` from this logic,
+                    // and will now also be removed or adjusted.
 
-                    if (applyId) { // Only apply IDs and headers if 'ID Tables' is checked
-                        if (isComplexTable) {
-                            // Pass 1: Populate grid and assign sequential IDs to all THs.
-                            currentTableRows.forEach((row, rowIndex) => {
-                                grid[rowIndex] = grid[rowIndex] || [];
-                                let currentGridCol = 0;
-                                Array.from(row.children).forEach(cell => {
-                                    const colspan = parseInt(cell.getAttribute('colspan') || '1', 10);
-                                    const rowspan = parseInt(cell.getAttribute('rowspan') || '1', 10);
-
-                                    // Find the next available column in the current grid row
-                                    while (grid[rowIndex][currentGridCol]) {
-                                        currentGridCol++;
-                                    }
-
-                                    let cellId = '';
-                                    if (cell.tagName.toLowerCase() === 'th') {
-                                        currentTableThIdCounter++;
-                                        cellId = `${table.id || customIdPrefix}${tableCounter}_${currentTableThIdCounter}`;
-                                        cell.id = cellId;
-                                    }
-
-                                    for (let r = 0; r < rowspan; r++) {
-                                        grid[rowIndex + r] = grid[rowIndex + r] || [];
-                                        for (let c = 0; c < colspan; c++) {
-                                            grid[rowIndex + r][currentGridCol + c] = {
-                                                cell: cell,
-                                                isHeader: cell.tagName.toLowerCase() === 'th',
-                                                id: cellId,
-                                                rowspan: rowspan,
-                                                colspan: colspan,
-                                                startGridRow: rowIndex,
-                                                startGridCol: currentGridCol
-                                            };
-                                        }
-                                    }
-                                    currentGridCol += colspan;
-                                });
-                            });
-
-                            // Pass 2: Apply 'headers' attributes to THs and TDs.
-                            currentTableRows.forEach((row, rowIndex) => {
-                                let currentGridCol = 0;
-                                Array.from(row.children).forEach(cell => {
-                                    const cellColspan = parseInt(cell.getAttribute('colspan') || '1', 10);
-
-                                    while (grid[rowIndex] && grid[rowIndex][currentGridCol] && grid[rowIndex][currentGridCol].cell !== cell) {
-                                        currentGridCol++;
-                                    }
-                                    
-                                    const cellInfo = grid[rowIndex][currentGridCol];
-                                    if (!cellInfo) {
-                                        currentGridCol += cellColspan;
-                                        return;
-                                    }
-
-                                    let headersToApply = new Set();
-
-                                    if (cell.tagName.toLowerCase() === 'th') {
-                                        // TH in THEAD (sub-headers like Jan, Feb, or main colspan headers)
-                                        if (cell.closest('thead')) {
-                                            if (rowIndex > 0) {
-                                                for (let c_above = 0; c_above < grid[rowIndex - 1].length; c_above++) {
-                                                    const parentCellInfo = grid[rowIndex - 1][c_above];
-                                                    if (parentCellInfo && parentCellInfo.isHeader && parentCellInfo.id && parentCellInfo.cell.closest('thead')) {
-                                                        const parentEndGridCol = parentCellInfo.startGridCol + parentCellInfo.colspan - 1;
-                                                        if (currentGridCol >= parentCellInfo.startGridCol && currentGridCol <= parentEndGridCol) {
-                                                            headersToApply.add(parentCellInfo.id);
-                                                            break;
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        // TH in TBODY (row headers or tbody colspan headers)
-                                        else if (cell.closest('tbody')) {
-                                            const topTheadRowspanCellInfo = grid[0][0];
-                                            if (topTheadRowspanCellInfo && topTheadRowspanCellInfo.isHeader && topTheadRowspanCellInfo.id &&
-                                                topTheadRowspanCellInfo.rowspan > 1 && topTheadRowspanCellInfo.startGridCol === 0) {
-                                                headersToApply.add(topTheadRowspanCellInfo.id);
-                                            }
-
-                                            for (let r_search = 0; r_search < rowIndex; r_search++) {
-                                                if (grid[r_search] && grid[r_search][0] && grid[r_search][0].isHeader && grid[r_search][0].id &&
-                                                    grid[r_search][0].cell.closest('tbody') && parseInt(grid[r_search][0].cell.getAttribute('colspan') || '1', 10) > 1) {
-                                                    const groupHeaderEndRow = grid[r_search][0].startGridRow + grid[r_search][0].rowspan - 1;
-                                                    if (rowIndex >= grid[r_search][0].startGridRow && rowIndex <= groupHeaderEndRow) {
-                                                        headersToApply.add(grid[r_search][0].id);
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                                        if (headersToApply.size > 0) {
-                                            cell.setAttribute('headers', Array.from(headersToApply).sort().join(' '));
-                                        } else {
-                                            cell.removeAttribute('headers');
-                                        }
-
-                                    } else if (cell.tagName.toLowerCase() === 'td') {
-                                        // 1. Column Headers from THEAD
-                                        Array.from(newThead.querySelectorAll('th')).forEach(theadTh => {
-                                            const theadThId = theadTh.id;
-                                            if (!theadThId) return;
-
-                                            let theadThGridInfo = null;
-                                            for(let r_g = 0; r_g < grid.length; r_g++) {
-                                                if(grid[r_g]) {
-                                                    for(let c_g = 0; c_g < grid[r_g].length; c_g++) {
-                                                        if(grid[r_g][c_g] && grid[r_g][c_g].cell === theadTh) {
-                                                            theadThGridInfo = grid[r_g][c_g];
-                                                            break;
-                                                        }
-                                                    }
-                                                }
-                                                if(theadThGridInfo) break;
-                                            }
-
-                                            if (!theadThGridInfo) return;
-
-                                            const overlapsHorizontally = (currentGridCol <= (theadThGridInfo.startGridCol + theadThGridInfo.colspan - 1) &&
-                                                                        (currentGridCol + cellColspan - 1) >= theadThGridInfo.startGridCol);
-                                            const isVerticallyApplicable = (rowIndex >= theadThGridInfo.startGridRow);
-
-                                            if (overlapsHorizontally && isVerticallyApplicable) {
-                                                const isTheadTopLeftRowspan = theadThGridInfo.startGridRow === 0 && theadThGridInfo.startGridCol === 0 && theadThGridInfo.rowspan > 1;
-                                                if (isTheadTopLeftRowspan && currentGridCol !== 0) {
-                                                    return;
-                                                }
-                                                headersToApply.add(theadThId);
-                                            }
-                                        });
-
-                                        // 2. Row Header (from TBODY - TH in the same row, first column, colspan=1)
-                                        const rowHeaderInCurrentRow = grid[rowIndex][0] && grid[rowIndex][0].isHeader && grid[rowIndex][0].cell.closest('tbody') && parseInt(grid[rowIndex][0].cell.getAttribute('colspan') || '1', 10) === 1 ? grid[rowIndex][0].cell : null;
-                                        if (rowHeaderInCurrentRow && rowHeaderInCurrentRow.id) {
-                                            headersToApply.add(rowHeaderInCurrentRow.id);
-                                        }
-
-                                        // 3. TBODY Colspan Headers (row group headers like tbl11_8, tbl11_14) that apply to this TD
-                                        for (let r_group = 0; r_group < rowIndex; r_group++) {
-                                            if (grid[r_group] && grid[r_group][0] && grid[r_group][0].isHeader && grid[r_group][0].id &&
-                                                grid[r_group][0].cell.closest('tbody') && parseInt(grid[r_group][0].cell.getAttribute('colspan') || '1', 10) > 1) {
-                                                const groupHeaderEndRow = grid[r_group][0].startGridRow + grid[r_group][0].rowspan - 1;
-                                                if (rowIndex >= grid[r_group][0].startGridRow && rowIndex <= groupHeaderEndRow) {
-                                                    headersToApply.add(grid[r_group][0].id);
-                                                }
-                                            }
-                                        }
-
-                                        if (headersToApply.size > 0) {
-                                            cell.setAttribute('headers', Array.from(headersToApply).sort().join(' '));
-                                        } else {
-                                            cell.removeAttribute('headers');
-                                        }
-                                    }
-
-                                    currentGridCol += cellColspan;
-                                });
-                            });
-
-                        } else {
-                            // Simple table: Apply Scope attributes if not complex
-                            table.querySelectorAll('thead th').forEach(th => {
-                                th.setAttribute('scope', 'col');
-                                th.removeAttribute('id');
-                                th.removeAttribute('headers');
-                            });
-                            table.querySelectorAll('tbody th:first-child').forEach(th => {
-                                th.setAttribute('scope', 'row');
-                                th.removeAttribute('id');
-                                th.removeAttribute('headers');
-                            });
-                            table.querySelectorAll('td').forEach(td => {
-                                td.removeAttribute('headers');
-                                td.removeAttribute('id');
-                            });
-                        }
-                    } // End of applyId condition
-                    // --- END Auto-ID/Headers Logic ---
-
-                    // Add <colgroup> and <col> tags based on the grid structure
+                    // Remove <colgroup> and <col> tags based on the grid structure
                     const existingColgroup = table.querySelector('colgroup');
                     if (existingColgroup) {
-                        existingColgroup.remove(); // Remove existing to recreate
+                        existingColgroup.remove(); // Remove existing to ensure no leftover colgroups
                     }
-                    // Only add colgroup if IDs are being applied, as grid structure relies on it
-                    if (applyId && totalLogicalCols > 0) {
-                        const newColgroup = document.createElement('colgroup');
-                        // Always create a colgroup for the first column
-                        const firstColGroup = document.createElement('colgroup');
-                        firstColGroup.appendChild(document.createElement('col'));
-                        newColgroup.appendChild(firstColGroup);
-
-                        // Create a separate colgroup for the remaining columns (if any)
-                        if (totalLogicalCols > 1) {
-                            const remainingColGroup = document.createElement('colgroup');
-                            for (let i = 1; i < totalLogicalCols; i++) { // Start from second logical column
-                                remainingColGroup.appendChild(document.createElement('col'));
-                            }
-                            newColgroup.appendChild(remainingColGroup);
-                        }
-                        if (newColgroup.children.length > 0) {
-                           table.prepend(newColgroup); // Add colgroup at the beginning of the table
-                        }
-                    }
+                    // No new colgroup/col elements are added if auto-ID/scope is removed.
 
 
                     // Apply finance classes or center all data, respecting mutual exclusivity
