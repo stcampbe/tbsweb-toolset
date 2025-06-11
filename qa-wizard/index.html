@@ -1627,6 +1627,138 @@
         }
 
 
+        /**
+         * Applies URL cleaning to HTML content.
+         * Converts specific absolute URLs to relative paths and removes target/rel attributes from <a> tags.
+         * Also removes <a> tags that ONLY contain a name attribute (i.e., no href).
+         * @param {string} htmlString - The HTML content to clean.
+         * @returns {string} The cleaned HTML content.
+         */
+        function applyUrlCleaning(htmlString) {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlString;
+
+            const urlMappings = [
+                { old: 'https://canada-preview.adobecqms.net/en/treasury-board-secretariat', new: '/content/canadasite/en/treasury-board-secretariat' },
+                { old: 'https://canada-preview.adobecqms.net/fr/secretariat-conseil-tresor', new: '/content/canadasite/fr/secretariat-conseil-tresor' },
+                { old: 'https://canada-preview.adobecqms.net/en/government', new: '/content/canadasite/en/government' },
+                { old: 'https://canada-preview.adobecqms.net/fr/gouvernement', new: '/content/canadasite/fr/gouvernement' },
+                { old: 'https://www.canada.ca/en/treasury-board-secretariat', new: '/content/canadasite/en/treasury-board-secretariat' },
+                { old: 'https://www.canada.ca/fr/secretariat-conseil-tresor', new: '/content/canadasite/fr/secretariat-conseil-tresor' },
+                { old: 'https://www.canada.ca/en/government', new: '/content/canadasite/en/government' },
+                { old: 'https://www.canada.ca/fr/gouvernement', new: '/content/canadasite/fr/gouvernement' }
+            ];
+
+            // Patterns to prepend with /content/canadasite
+            const prependPatterns = [
+                '/en/treasury-board-secretariat', 'en/treasury-board-secretariat',
+                '/fr/secretariat-conseil-tresor', 'fr/secretariat-conseil-tresor',
+                '/en/government', 'en/government',
+                '/fr/gouvernement', 'fr/gouvernement'
+            ];
+
+            const aElements = tempDiv.querySelectorAll('a');
+            aElements.forEach(a => {
+                let href = a.getAttribute('href');
+                const name = a.getAttribute('name');
+
+                // Case 1: Remove <a> tags that ONLY contain a name attribute (no href)
+                if (name && !href) {
+                    const parent = a.parentNode;
+                    if (parent) {
+                        // Move children out of the <a> tag
+                        while (a.firstChild) {
+                            parent.insertBefore(a.firstChild, a);
+                        }
+                        // Remove the <a> tag itself
+                        parent.removeChild(a);
+                    }
+                    return; // Skip further processing for this <a> tag
+                }
+
+                // Case 2: Process <a> tags with href
+                if (href) {
+                    // Handle Outlook Safelinks
+                    if (href.startsWith('https://can01.safelinks.protection.outlook.com')) {
+                        try {
+                            const urlObj = new URL(href);
+                            const actualUrlParam = urlObj.searchParams.get('url');
+                            if (actualUrlParam) {
+                                // Decode the actual URL parameter to get the clean link
+                                href = decodeURIComponent(actualUrlParam);
+                                a.setAttribute('href', href);
+                            }
+                        } catch (e) {
+                            console.error("Error parsing Outlook Safelink URL:", e);
+                            // Fallback: If parsing fails, keep the original safelink or remove it
+                            // For now, we'll just keep the original href if parsing fails.
+                        }
+                    }
+
+                    // Rule: Prepend /content/canadasite to specific relative links
+                    let prepended = false;
+                    for (const pattern of prependPatterns) {
+                        if (href.startsWith(pattern)) {
+                            if (href.startsWith('/')) {
+                                href = '/content/canadasite' + href;
+                            } else {
+                                href = '/content/canadasite/' + href;
+                            }
+                            a.setAttribute('href', href);
+                            prepended = true;
+                            break; // Stop after the first match
+                        }
+                    }
+
+                    // If already prepended, skip other URL conversions for this link
+                    if (prepended) {
+                        // Remove target attribute
+                        if (a.hasAttribute('target')) {
+                            a.removeAttribute('target');
+                        }
+
+                        // Remove rel attribute
+                        if (a.hasAttribute('rel')) {
+                            a.removeAttribute('rel');
+                        }
+                        return;
+                    }
+
+                    // Specific handling for "/content/canadasite" or "/content/dam" links
+                    if (href.includes('/content/canadasite') || href.includes('/content/dam')) {
+                        const contentPath = href.includes('/content/canadasite') ? '/content/canadasite' : '/content/dam';
+                        const contentIndex = href.indexOf(contentPath);
+                        if (contentIndex !== 0) {
+                            href = href.substring(contentIndex);
+                        }
+                        a.setAttribute('href', href);
+                    } else {
+                        // Convert other URLs using existing mappings
+                        for (const mapping of urlMappings) {
+                            if (href.startsWith(mapping.old)) {
+                                href = href.replace(mapping.old, mapping.new);
+                                a.setAttribute('href', href);
+                                break; // Stop after the first match
+                            }
+                        }
+                    }
+                }
+
+                // Remove target attribute
+                if (a.hasAttribute('target')) {
+                    a.removeAttribute('target');
+                }
+
+                // Remove rel attribute
+                if (a.hasAttribute('rel')) {
+                    a.removeAttribute('rel');
+                }
+            });
+
+            return tempDiv.innerHTML;
+        }
+
+
         // Initialize CodeMirror and set up event listeners on window load
         window.onload = function() {
             editor = CodeMirror.fromTextArea(htmlCodeTextarea, {
@@ -1888,38 +2020,11 @@
                 }
             });
 
-            // Event listener for Clean URLs button
+            // Event listener for Clean URLs button - REPLACED WITH NEW LOGIC
             cleanUrlsBtn.addEventListener('click', () => {
                 if (editor) {
                     let htmlContent = editor.getValue();
-                    htmlContent = applyNBSPPlaceholders(htmlContent); // Apply placeholders
-
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(htmlContent, 'text/html');
-
-                    const links = doc.querySelectorAll('a');
-                    links.forEach(link => {
-                        // Remove target="_blank"
-                        if (link.hasAttribute('target') && link.getAttribute('target') === '_blank') {
-                            link.removeAttribute('target');
-                        }
-
-                        // Convert specific URLs
-                        let href = link.getAttribute('href');
-                        if (href) {
-                            href = href.replace('https://www.canada.ca/en/treasury-board-secretariat/', '/content/canadasite/en/treasury-board-secretariat/');
-                            href = href.replace('https://www.canada.ca/en/government/', '/content/canadasite/en/government/');
-                            href = href.replace('https://www.canada.ca/fr/secretariat-conseil-tresor', '/content/canadasite/fr/secretariat-conseil-tresor');
-                            href = href.replace('https://www.canada.ca/fr/gouvernement/', '/content/canadasite/fr/gouvernement/');
-                            // New replacement rule
-                            href = href.replace('https://canada-preview.adobecqms.net', '/content/canadasite');
-                            link.setAttribute('href', href);
-                        }
-                    });
-
-                    let cleanedHtml = doc.body.innerHTML;
-                    cleanedHtml = revertNBSPPlaceholders(cleanedHtml); // Revert placeholders
-
+                    let cleanedHtml = applyUrlCleaning(htmlContent); // Use the new comprehensive function
                     editor.setValue(cleanedHtml);
 
                     const originalText = cleanUrlsBtn.textContent;
@@ -2061,14 +2166,14 @@
                                 const [, month, day] = match;
                                 const monthNum = getMonthNumber(month);
                                 if (!monthNum || parseInt(day) < 1 || parseInt(day) > 31) return null;
-                                return `${monthNum}-${String(day).padStart(2, '0')}`;
+                                return `${new Date().getFullYear()}-${monthNum}-${String(day).padStart(2, '0')}`; // Add current year
                             }, priority: 1 }, // Lower priority than full dates
                             // NEW: Day Month (no year)
                             { name: 'DayMonthNoYear', regex: regexDayMonthNoYear, handler: (match) => {
                                 const [, day, month] = match;
                                 const monthNum = getMonthNumber(month);
                                 if (!monthNum || parseInt(day) < 1 || parseInt(day) > 31) return null;
-                                return `${monthNum}-${String(day).padStart(2, '0')}`;
+                                return `${new Date().getFullYear()}-${monthNum}-${String(day).padStart(2, '0')}`; // Add current year
                             }, priority: 1 } // Lower priority than full dates
                         ];
 
