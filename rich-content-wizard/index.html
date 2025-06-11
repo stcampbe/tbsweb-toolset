@@ -526,7 +526,7 @@
                     Go to HTML
                 </button>
                 <!-- Auto-Clean MSO toggle for Rich-Text Editor -->
-                <div class="ml-4 p-2 bg-zinc-700 rounded-lg flex items-center">
+                <div class="ml-4 p-2 bg-zinc-700 rounded-lg flex items-center gap-2">
                     <label class="toggle-switch">
                         <input type="checkbox" id="toggleAutoCleanMsoOnSwitchRichText">
                         <span class="toggle-switch-slider"></span>
@@ -544,7 +544,7 @@
                     Go to Rich-Text
                 </button>
                 <!-- Auto-Clean MSO toggle for HTML Editor -->
-                <div class="ml-4 p-2 bg-zinc-700 rounded-lg flex items-center">
+                <div class="ml-4 p-2 bg-zinc-700 rounded-lg flex items-center gap-2">
                     <label class="toggle-switch">
                         <input type="checkbox" id="toggleAutoCleanMsoOnSwitchCode">
                         <span class="toggle-switch-slider"></span>
@@ -590,6 +590,14 @@
 
                         <div class="toggle-switch-container">
                             <label class="toggle-switch">
+                                <input type="checkbox" id="toggleCleanMsoCode">
+                                <span class="toggle-switch-slider"></span>
+                            </label>
+                            <span class="toggle-switch-label">Clean MSO Code</span>
+                        </div>
+
+                        <div class="toggle-switch-container">
+                            <label class="toggle-switch">
                                 <input type="checkbox" id="toggleUrlCleaning">
                                 <span class="toggle-switch-slider"></span>
                             </label>
@@ -618,22 +626,6 @@
                                 <span class="toggle-switch-slider"></span>
                             </label>
                             <span class="toggle-switch-label">Clean &lt;u&gt; | &lt;b&gt; | &lt;i&gt;</span>
-                        </div>
-
-                        <div class="toggle-switch-container">
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="toggleCleanMsoCode">
-                                <span class="toggle-switch-slider"></span>
-                            </label>
-                            <span class="toggle-switch-label">Clean MSO Code</span>
-                        </div>
-
-                        <div class="toggle-switch-container">
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="toggleCleanImgs">
-                                <span class="toggle-switch-slider"></span>
-                            </label>
-                            <span class="toggle-switch-label">Clean IMGs</span>
                         </div>
                     </div>
 
@@ -684,7 +676,7 @@
         const toggleCleanMsoCode = document.getElementById('toggleCleanMsoCode');
         const toggleCleanFormattingTags = document.getElementById('toggleCleanFormattingTags');
         const toggleCleanLists = document.getElementById('toggleCleanLists');
-        const toggleCleanImgs = document.getElementById('toggleCleanImgs');
+        // Removed toggleCleanImgs as it's merged
         const toggleCleanTablesBasic = document.getElementById('toggleCleanTablesBasic');
 
         // Auto-Clean MSO when switching toggles
@@ -699,8 +691,7 @@
             toggleAutoSpacing,
             toggleCleanSingleBreaks,
             toggleCleanFormattingTags,
-            toggleCleanMsoCode,
-            toggleCleanImgs
+            toggleCleanMsoCode // Clean IMGs is now part of MsoCode
         ];
 
         // Array of all buttons that display temporary messages
@@ -884,6 +875,7 @@
         /**
          * Applies auto-spacing and cleans multiple <br> tags in HTML content.
          * Includes new rules for non-breaking spaces and empty tag removal/replacement.
+         * Also trims leading/trailing spaces and non-breaking spaces within <p>, heading, and <li> tags.
          * @param {string} htmlString - The HTML content to clean.
          * @returns {string} The cleaned HTML content.
          */
@@ -947,9 +939,10 @@
 
             // Re-parse to work with DOM for empty tag rules and other final cleanups
             doc.body.innerHTML = cleanedHtml;
+            const finalBody = doc.body; // Use final body reference after re-parsing
 
             // 7. Remove/Replace empty tags
-            const elementsToCheckForEmptiness = Array.from(currentBody.querySelectorAll('p, li, div, span, strong, em, u, b, i, section'));
+            const elementsToCheckForEmptiness = Array.from(finalBody.querySelectorAll('p, li, div, span, strong, em, u, b, i, section'));
 
             // Process in reverse to avoid issues with DOM changes affecting iteration
             for (let i = elementsToCheckForEmptiness.length - 1; i >= 0; i--) {
@@ -989,7 +982,22 @@
                 }
             }
 
-            return currentBody.innerHTML;
+            // --- New: Trim leading/trailing spaces and non-breaking spaces for <p>, heading, and <li> tags ---
+            const elementsToTrim = finalBody.querySelectorAll('p, h1, h2, h3, h4, h5, h6, li');
+            elementsToTrim.forEach(element => {
+                let currentHtml = element.innerHTML;
+
+                // Regex to match leading/trailing spaces, tabs, newlines, and &nbsp; entities
+                // (?:&nbsp;|\s) ensures both &#160; and literal spaces are covered.
+                // It's important to use &nbsp; in regex for string manipulation, as innerHTML might return it as such.
+                currentHtml = currentHtml.replace(/^(?:&nbsp;|\s|&#160;|\u00A0)+/, ''); // Remove leading
+                currentHtml = currentHtml.replace(/(?:&nbsp;|\s|&#160;|\u00A0)+$/, ''); // Remove trailing
+
+                element.innerHTML = currentHtml;
+            });
+            // --- End of New Trim Logic ---
+
+            return finalBody.innerHTML;
         }
 
         /**
@@ -1597,31 +1605,6 @@
         }
 
         /**
-         * Converts <img> tags with file:// or data: src attributes into placeholder <div><mark> elements.
-         * @param {string} htmlString - The HTML content to process.
-         * @returns {string} The processed HTML content.
-         */
-        function applyCleanImgs(htmlString) {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(htmlString, 'text/html');
-
-            doc.querySelectorAll('img').forEach(img => {
-                const src = img.getAttribute('src');
-                if (src && (src.startsWith('file://') || src.startsWith('data:'))) {
-                    const replacementDiv = doc.createElement('div');
-                    replacementDiv.classList.add('clearfix');
-                    const replacementMark = doc.createElement('mark');
-                    replacementMark.textContent = 'IMAGE NOT IMPORTED';
-                    replacementDiv.appendChild(replacementMark);
-                    if (img.parentNode) {
-                        img.parentNode.replaceChild(replacementDiv, img);
-                    }
-                }
-            });
-            return doc.body.innerHTML;
-        }
-
-        /**
          * Applies basic cleaning to tables and their elements.
          * This includes removing colgroup/col tags, cleaning table/td/th attributes,
          * and handling paragraphs within table cells.
@@ -1738,12 +1721,29 @@
          * Also removes content from and cleans attributes of elements with 'style' attribute or MSO/Word/BCX0 classes.
          * Additionally handles specific heading class cleanup, and attribute removal for non-table elements,
          * UL/OL tags, and LI tags with 'role' attributes.
+         * Also now handles cleaning of file:// or data: img src attributes.
          * @param {string} htmlString - The HTML content to clean.
          * @returns {string} The cleaned HTML content.
          */
         function applyCleanMsoCode(htmlString) {
             const parser = new DOMParser();
             const doc = parser.parseFromString(htmlString, 'text/html');
+
+            // --- Start of Clean IMGs Logic (Moved from applyCleanImgs) ---
+            doc.querySelectorAll('img').forEach(img => {
+                const src = img.getAttribute('src');
+                if (src && (src.startsWith('file://') || src.startsWith('data:'))) {
+                    const replacementDiv = doc.createElement('div');
+                    replacementDiv.classList.add('clearfix');
+                    const replacementMark = doc.createElement('mark');
+                    replacementMark.textContent = 'IMAGE NOT IMPORTED';
+                    replacementDiv.appendChild(replacementMark);
+                    if (img.parentNode) {
+                        img.parentNode.replaceChild(replacementDiv, img);
+                    }
+                }
+            });
+            // --- End of Clean IMGs Logic ---
 
             // Select elements with style containing "mso-element: comment-list" or "mso-element: endnote-list"
             const elementsToRemoveByStyle = doc.querySelectorAll('[style*="mso-element: comment-list"], [style*="mso-element: endnote-list"]');
@@ -1761,24 +1761,46 @@
                 }
             });
 
-            // Process <a> tags with href containing "#_ftn"
-            const footnoteLinks = doc.querySelectorAll('a[href*="#_ftn"]');
+            // Process <a> tags with href containing "#_ftn" to ensure only one <sup> wrapper
+            const footnoteLinks = Array.from(doc.querySelectorAll('a[href*="#_ftn"]')); // Convert to array to avoid live NodeList issues
             footnoteLinks.forEach(link => {
-                if (link.parentNode) {
-                    const originalHref = link.getAttribute('href');
-                    const textContent = link.textContent; // Get only the text content
+                const originalHref = link.getAttribute('href');
+                const textContent = link.textContent;
 
-                    // Create a new <a> tag, keeping only href and text content
-                    const newLink = doc.createElement('a');
-                    newLink.setAttribute('href', originalHref);
-                    newLink.textContent = textContent;
+                // Create the ideal new <a> tag, copying only necessary attributes
+                const newCleanLink = doc.createElement('a');
+                newCleanLink.setAttribute('href', originalHref);
+                newCleanLink.textContent = textContent;
 
-                    // Create a <sup> tag and append the new <a> tag to it
-                    const supElement = doc.createElement('sup');
-                    supElement.appendChild(newLink);
+                // Create the ideal new <sup> tag
+                const idealSupElement = doc.createElement('sup');
+                idealSupElement.appendChild(newCleanLink);
 
-                    // Replace the original <a> tag with the new <sup> containing the new <a>
-                    link.parentNode.replaceChild(supElement, link);
+                // Find the target element to replace. This could be the link itself
+                // or an existing <sup> parent that solely contains the link (or other <sup>s leading to it).
+                let elementToReplace = link;
+                let currentParent = link.parentNode;
+
+                while (currentParent && currentParent !== doc.body && currentParent.tagName.toLowerCase() === 'sup') {
+                    // Check if this <sup> only contains the elementToReplace (which is the link or another sup)
+                    // and no other significant content (like additional text nodes or other elements).
+                    const children = Array.from(currentParent.childNodes).filter(n => n.nodeType === Node.ELEMENT_NODE || (n.nodeType === Node.TEXT_NODE && n.nodeValue.trim() !== ''));
+                    
+                    // If the <sup> has only one child and that child is our current elementToReplace (or nested <sup>),
+                    // then this <sup> is an exclusive wrapper and we can move up.
+                    if (children.length === 1 && children[0] === elementToReplace) {
+                        elementToReplace = currentParent; // Move up to replace this <sup>
+                        currentParent = elementToReplace.parentNode;
+                    } else {
+                        break; // This <sup> contains other content, stop here.
+                    }
+                }
+                
+                // Perform the replacement:
+                // Replace the determined 'elementToReplace' (which could be the original <a>
+                // or the outermost exclusively wrapping <sup>) with the 'idealSupElement'.
+                if (elementToReplace.parentNode) {
+                    elementToReplace.parentNode.replaceChild(idealSupElement, elementToReplace);
                 }
             });
 
@@ -2077,16 +2099,31 @@
                     richTextContent = '';
                 }
 
-                // Apply Clean MSO Code if the toggle is ON
+                // Apply Auto-Clean MSO in the specified order when switching to HTML editor
                 let processedContent = richTextContent;
                 if (toggleAutoCleanMsoOnSwitchRichText.checked) {
-                    processedContent = applyCleanMsoCode(processedContent);
                     console.log("Auto-Clean MSO applied when switching to HTML editor.");
+                    // Apply Clean MSO Lists
+                    processedContent = applyCleanLists(processedContent);
+                    console.log("Clean MSO Lists applied.");
+                    // Apply Clean MSO Tables
+                    processedContent = applyCleanTablesBasic(processedContent);
+                    console.log("Clean MSO Tables applied.");
+                    // Apply Clean MSO Code (includes IMGs now)
+                    processedContent = applyCleanMsoCode(processedContent);
+                    console.log("Clean MSO Code (including IMGs) applied.");
+                    // Apply URL cleaning
+                    processedContent = applyUrlCleaning(processedContent);
+                    console.log("Clean URLs applied.");
+                    // Apply Clean Spaces
+                    processedContent = applyAutoSpacing(processedContent);
+                    console.log("Clean Spaces applied.");
+                } else {
+                     // If auto-clean MSO is not checked, still apply URL cleaning on switch.
+                     // URL cleaning is always applied when switching to HTML.
+                    processedContent = applyUrlCleaning(processedContent);
+                    console.log("URL cleaning applied (not part of Auto-Clean MSO, but always on switch).");
                 }
-
-                // Apply URL cleaning when switching TO the HTML editor
-                processedContent = applyUrlCleaning(processedContent);
-                console.log("URL cleaning applied when switching to HTML editor.");
                 
                 // 2. Update HTML output content and Monaco editor.
                 htmlOutputContent = processedContent;
@@ -2125,6 +2162,7 @@
                 console.log("Switched to Code View.");
             } else { // currentView === 'code'
                 // --- Logic when switching FROM Code TO Rich-Text ---
+                // No auto-clean MSO should happen when switching TO the Rich-Text editor.
                 // 1. Get content from Monaco editor.
                 if (monacoEditorInstance) {
                     htmlOutputContent = monacoEditorInstance.getValue();
@@ -2134,15 +2172,8 @@
                     htmlOutputContent = '';
                 }
 
-                // Apply Clean Mso Code if the toggle is ON
-                let processedContent = htmlOutputContent;
-                if (toggleAutoCleanMsoOnSwitchCode.checked) {
-                    processedContent = applyCleanMsoCode(processedContent);
-                    // console.log("Auto-Clean Mso applied when switching to Rich-Text editor.");
-                }
-
                 // 2. Update Rich Text content and editor.
-                richTextContent = processedContent;
+                richTextContent = htmlOutputContent; // No cleaning applied here
                 if (default_ifr.contentWindow && default_ifr.contentWindow.setRichEditorContent) {
                     default_ifr.contentWindow.setRichEditorContent(cleanHtmlForRichTextDisplay(richTextContent));
                     console.log("HugeRTE editor updated with HTML content.");
@@ -2795,6 +2826,22 @@
                 
                 let cleanedContent = contentToClean; // Start with current content
 
+                // Apply cleaning in the specified order for Run Selected
+                if (toggleCleanLists.checked) {
+                    cleanedContent = applyCleanLists(cleanedContent);
+                    console.log("Clean MSO Lists applied.");
+                }
+
+                if (toggleCleanTablesBasic.checked) {
+                    cleanedContent = applyCleanTablesBasic(cleanedContent);
+                    console.log("Clean MSO Tables applied.");
+                }
+
+                if (toggleCleanMsoCode.checked) { // This now includes Clean IMGs
+                    cleanedContent = applyCleanMsoCode(cleanedContent);
+                    console.log("Clean MSO Code (including IMGs) applied.");
+                }
+
                 if (toggleUrlCleaning.checked) {
                     cleanedContent = applyUrlCleaning(cleanedContent);
                     console.log("Clean URLs applied.");
@@ -2805,40 +2852,15 @@
                     console.log("Clean Spaces applied.");
                 }
 
-                // Apply Clean Formatting Tags if checked
-                if (toggleCleanFormattingTags.checked) {
-                    cleanedContent = applyCleanFormattingTags(cleanedContent);
-                    console.log("Clean <u> | <b> | <i> applied.");
-                }
-
-                // New condition for Clean Single Breaks
+                // Remaining toggles (order doesn't matter for these)
                 if (toggleCleanSingleBreaks.checked) {
                     cleanedContent = applyCleanSingleBreaks(cleanedContent);
                     console.log("Clean Single Breaks applied.");
                 }
 
-                // Apply Clean MSO Code if checked (now includes COMM/FN/EDN, IMGs, and Tables)
-                if (toggleCleanMsoCode.checked) {
-                    cleanedContent = applyCleanMsoCode(cleanedContent);
-                    console.log("Clean MSO Code (including COMM/FN/EDN, IMGs, and Tables) applied.");
-                }
-
-                // Apply Clean Lists if checked
-                if (toggleCleanLists.checked) {
-                    cleanedContent = applyCleanLists(cleanedContent);
-                    console.log("Clean MSO Lists applied.");
-                }
-
-                // Apply Clean IMGs if checked
-                if (toggleCleanImgs.checked) {
-                    cleanedContent = applyCleanImgs(cleanedContent);
-                    console.log("Clean IMGs applied.");
-                }
-
-                // Apply Clean Tables (Basic) if checked
-                if (toggleCleanTablesBasic.checked) {
-                    cleanedContent = applyCleanTablesBasic(cleanedContent);
-                    console.log("Clean MSO Tables applied.");
+                if (toggleCleanFormattingTags.checked) {
+                    cleanedContent = applyCleanFormattingTags(cleanedContent);
+                    console.log("Clean <u> | <b> | <i> applied.");
                 }
 
                 // After all cleaning operations, if in code view, re-encode entities to numeric HTML entities
