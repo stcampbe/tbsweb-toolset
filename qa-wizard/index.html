@@ -2166,14 +2166,14 @@
                                 const [, month, day] = match;
                                 const monthNum = getMonthNumber(month);
                                 if (!monthNum || parseInt(day) < 1 || parseInt(day) > 31) return null;
-                                return `${new Date().getFullYear()}-${monthNum}-${String(day).padStart(2, '0')}`; // Add current year
+                                return `${monthNum}-${String(day).padStart(2, '0')}`; // Modified to MM-DD
                             }, priority: 1 }, // Lower priority than full dates
                             // NEW: Day Month (no year)
                             { name: 'DayMonthNoYear', regex: regexDayMonthNoYear, handler: (match) => {
                                 const [, day, month] = match;
                                 const monthNum = getMonthNumber(month);
                                 if (!monthNum || parseInt(day) < 1 || parseInt(day) > 31) return null;
-                                return `${new Date().getFullYear()}-${monthNum}-${String(day).padStart(2, '0')}`; // Add current year
+                                return `${monthNum}-${String(day).padStart(2, '0')}`; // Modified to MM-DD
                             }, priority: 1 } // Lower priority than full dates
                         ];
 
