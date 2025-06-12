@@ -32,6 +32,7 @@
             height: 100%; /* Explicitly make editor-container take full height of flex parent (body) */
             box-sizing: border-box; /* Include padding in total height */
             overflow-y: hidden; /* Prevent editor container from scrolling its children */
+            overflow-x: hidden; /* Prevent horizontal scrolling */
         }
         .code-panel, .richtext-output-panel {
             background-color: #18181b; /* Darker zinc */
@@ -107,6 +108,12 @@
         h2 {
             color: #ffffff; /* White text for H2 in panel headers */
         }
+        h3 {
+            color: #ffffff; /* White text for H3 in panel headers */
+            font-size: 1.125rem; /* text-lg */
+            font-weight: 600; /* semi-bold */
+            margin-bottom: 1rem;
+        }
         label {
             color: #d4d4d8; /* Zinc-300 for labels */
         }
@@ -116,6 +123,14 @@
             border-color: #3f3f46; /* Medium zinc border for input */
         }
         input[type="text"]::placeholder {
+            color: #a1a1aa; /* Zinc-400 for placeholder text */
+        }
+        input[type="number"] { /* New style for number input */
+            background-color: #27272a; /* Darker zinc for input */
+            color: #ffffff; /* White text for input */
+            border-color: #3f3f46; /* Medium zinc border for input */
+        }
+        input[type="number"]::placeholder { /* New style for number input placeholder */
             color: #a1a1aa; /* Zinc-400 for placeholder text */
         }
 
@@ -511,7 +526,8 @@
         #exportHtmlBtn:disabled, #importHtmlBtn:disabled, #clearAllBtn:disabled,
         #toggleEditorViewBtnCode:disabled, #timeTagsBtn:disabled, #fixFnIdsBtn:disabled,
         #cleanMsoBtn:disabled, #cleanUrlsBtn:disabled, #cleanSpacesBtn:disabled,
-        #cleanSingleBreaksBtn:disabled, #cleanFormattingTagsBtn:disabled, #autoSectionBtn:disabled { /* Added for the new buttons */
+        #cleanSingleBreaksBtn:disabled, #cleanFormattingTagsBtn:disabled, #autoSectionBtn:disabled,
+        #colophonBtn:disabled, #footnoteListBtn:disabled { /* Added for the new Footnote List button */
             background-color: #4a4a4a; /* Darker gray for disabled state */
             cursor: not-allowed;
             opacity: 0.6;
@@ -525,6 +541,7 @@
             border: 1px solid #3f3f46; /* Border for the entire list */
             border-radius: 0.5rem; /* Rounded corners for the list container */
             overflow: hidden; /* Ensures child borders don't exceed parent radius */
+            margin-bottom: 1rem; /* Space below button list */
         }
 
         .button-list button {
@@ -587,50 +604,62 @@
                     <input type="file" id="htmlFileInput" accept=".html" style="display: none;">
                 </div>
             </div>
-            
+
             <div class="flex flex-grow gap-4">
                 <div id="monacoEditorContainer" class="flex-grow border border-zinc-700 rounded-lg overflow-hidden"></div>
-                
+
                 <!-- Resizer for Monaco and Sidebar -->
                 <div id="monacoResizer" class="resizer"></div>
 
                 <div id="sidebar">
                     <h3 class="text-lg font-semibold text-white mb-4">Quick Formatting</h3>
-                    
-                    <div class="button-list">
-                        <!-- New Clean URLs Button -->
-                        <button id="cleanUrlsBtn" class="px-4 py-2 text-sm bg-blue-700 text-white hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
-                            Clean URLs
-                        </button>
 
-                        <!-- New Clean Spaces Button -->
-                        <button id="cleanSpacesBtn" class="px-4 py-2 text-sm bg-blue-700 text-white hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                    <div class="button-list">
+						<!-- New Clean Spaces Button -->
+                        <button id="cleanSpacesBtn" class="px-4 py-2 text-sm bg-zinc-700 text-white hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
                             Clean Spaces
                         </button>
-                        
-                        <!-- New Clean Single Breaks Button -->
-                        <button id="cleanSingleBreaksBtn" class="px-4 py-2 text-sm bg-blue-700 text-white hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
-                            Clean Single Breaks
-                        </button>
 
-                        <!-- New Clean <u> | <b> | <i> Button -->
-                        <button id="cleanFormattingTagsBtn" class="px-4 py-2 text-sm bg-blue-700 text-white hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
-                            Clean &lt;u&gt; | &lt;b&gt; | &lt;i&gt;
-                        </button>
-
-                        <!-- Set Time Tags Button -->
-                        <button id="timeTagsBtn" class="px-4 py-2 text-sm bg-blue-700 text-white hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                        <!-- New Clean URLs Button -->
+                        <button id="cleanUrlsBtn" class="px-4 py-2 text-sm bg-zinc-700 text-white hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                            Clean URLs
+                        </button>                        
+						
+						<!-- Set Time Tags Button -->
+                        <button id="timeTagsBtn" class="px-4 py-2 text-sm bg-zinc-700 text-white hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
                             Set Time Tags
                         </button>
 
                         <!-- Fix FN ID's Button -->
-                        <button id="fixFnIdsBtn" class="px-4 py-2 text-sm bg-blue-700 text-white hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                        <button id="fixFnIdsBtn" class="px-4 py-2 text-sm bg-zinc-700 text-white hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
                             Fix FN ID's
+                        </button>
+						
+						<!-- New Clean Single Breaks Button -->
+                        <button id="cleanSingleBreaksBtn" class="px-4 py-2 text-sm bg-zinc-700 text-white hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                            Clean Single Breaks
+                        </button>
+
+                        <!-- New Clean <u> | <b> | <i> Button -->
+                        <button id="cleanFormattingTagsBtn" class="px-4 py-2 text-sm bg-zinc-700 text-white hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                            Clean &lt;u&gt; | &lt;b&gt; | &lt;i&gt;
                         </button>
 
                         <!-- New Auto-Section Button -->
-                        <button id="autoSectionBtn" class="px-4 py-2 text-sm bg-blue-700 text-white hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                        <button id="autoSectionBtn" class="px-4 py-2 text-sm bg-zinc-700 text-white hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
                             Auto-Section
+                        </button>
+                    </div>
+
+                    <h3 class="text-lg font-semibold text-white mb-4">Quick Insert</h3>
+                    <div class="button-list">
+                        <!-- New Footnote List Button -->
+                        <button id="footnoteListBtn" class="px-4 py-2 text-sm bg-zinc-700 text-white hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                            Footnote List
+                        </button>
+                        <!-- New Colophon Button -->
+                        <button id="colophonBtn" class="px-4 py-2 text-sm bg-zinc-700 text-white hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                            Colophon
                         </button>
                     </div>
 
@@ -658,8 +687,8 @@
         const default_ifr = document.getElementById('default_ifr');
         const codePanel = document.getElementById('codePanel');
         const richtextOutputPanel = document.getElementById('richtextOutputPanel');
-        const toggleEditorViewBtnRichText = document.getElementById('toggleEditorViewBtnRichText'); 
-        const toggleEditorViewBtnCode = document.getElementById('toggleEditorViewBtnCode'); 
+        const toggleEditorViewBtnRichText = document.getElementById('toggleEditorViewBtnRichText');
+        const toggleEditorViewBtnCode = document.getElementById('toggleEditorViewBtnCode');
         const copyCodeBtn = document.getElementById('copyCodeBtn');
         const autoFormatBtn = document.getElementById('autoFormatBtn');
         const autoEncodeBtn = document.getElementById('autoEncodeBtn'); // New button reference
@@ -676,6 +705,8 @@
         const cleanSingleBreaksBtn = document.getElementById('cleanSingleBreaksBtn');
         const cleanFormattingTagsBtn = document.getElementById('cleanFormattingTagsBtn');
         const autoSectionBtn = document.getElementById('autoSectionBtn'); // New: Auto-Section button
+        const colophonBtn = document.getElementById('colophonBtn'); // New: Colophon button
+        const footnoteListBtn = document.getElementById('footnoteListBtn'); // New: Footnote List button
 
         // Monaco Resizer elements
         const monacoEditorContainer = document.getElementById('monacoEditorContainer');
@@ -701,7 +732,9 @@
             cleanSpacesBtn,
             cleanSingleBreaksBtn,
             cleanFormattingTagsBtn,
-            autoSectionBtn // Add the new button here
+            autoSectionBtn,
+            colophonBtn,
+            footnoteListBtn // Add the new Footnote List button here
         ];
 
         let richTextEditorInstance; // HugeRTE editor instance
@@ -759,49 +792,52 @@
         }
 
         /**
-         * Protects data-toggle attributes by Base64 encoding their values and replacing them with a temporary attribute.
+         * Protects all data- attributes by Base64 encoding their values and replacing them with a temporary attribute.
          * This function operates purely on the HTML string using regex to avoid DOM parsing issues with complex attribute values.
          * @param {string} htmlString - The HTML content to process.
-         * @returns {string} The HTML with protected data-toggle attributes.
+         * @returns {string} The HTML with protected data- attributes.
          */
         function protectDataAttributes(htmlString) {
-            // Regex to find data-toggle attributes. It needs to be non-greedy (`*?`)
-            // and handle potential multiple attributes on one tag, and various whitespace.
-            const regex = /data-toggle="([^"]*)"/g;
-            return htmlString.replace(regex, (match, value) => {
+            // Regex to find any data- attribute.
+            // Captures the full attribute name (e.g., "data-toggle") in group 1, and the value in group 2.
+            const regex = /(data-[a-zA-Z0-9-]+)="([^"]*)"/g;
+            return htmlString.replace(regex, (match, attrName, value) => {
                 const encodedValue = encodeBase64(value);
-                // Return the temporary attribute with the encoded value.
-                // We use a different, very distinct attribute name to avoid any conflicts.
-                return `data-temp-toggle-protected="${encodedValue}"`;
+                // Return a temporary attribute that stores the original attribute name and the encoded value.
+                // We use a distinct prefix and include the original attribute name for later restoration.
+                return `data-temp-protected-${attrName}="${encodedValue}"`;
             });
         }
 
         /**
-         * Restores protected data-toggle attributes by Base64 decoding their values and replacing them back.
-         * The decoded value's internal double quotes are escaped as &quot; to prevent corruption during later DOM operations.
+         * Restores protected data- attributes by Base64 decoding their values and replacing them back.
+         * The decoded value's internal double quotes are explicitly re-escaped as &quot; to prevent corruption during later DOM operations.
          * This function operates purely on the HTML string using regex.
          * @param {string} htmlString - The HTML content to process.
-         * @returns {string} The HTML with original data-toggle attributes restored.
+         * @returns {string} The HTML with original data- attributes restored.
          */
         function restoreDataAttributes(htmlString) {
-            const regex = /data-temp-toggle-protected="([^"]*)"/g;
-            return htmlString.replace(regex, (match, encodedValue) => {
+            // Regex to find the temporary protected data- attributes.
+            // Captures the original attribute name (e.g., "data-toggle") in group 1, and the encoded value in group 2.
+            const regex = /data-temp-protected-(data-[a-zA-Z0-9-]+)="([^"]*)"/g;
+            return htmlString.replace(regex, (match, originalAttrName, encodedValue) => {
                 try {
                     let decodedValue = decodeBase64(encodedValue);
-                    // Crucially: Escape internal double quotes (") to &quot; and other special HTML chars
-                    // This is done by setting textContent of a temporary div and reading innerHTML
-                    const tempDiv = document.createElement('div');
-                    tempDiv.textContent = decodedValue;
-                    const escapedValue = tempDiv.innerHTML;
+                    // Ensure literal double quotes and numeric double quote entities are converted to &quot;
+                    // This is crucial to prevent re-escaping of the ampersand in &quot;
+                    let safeValue = decodedValue.replace(/"/g, '&quot;');
+                    safeValue = safeValue.replace(/&#34;/g, '&quot;');
 
-                    // Return the original data-toggle attribute with the re-escaped value
-                    return `data-toggle="${escapedValue}"`;
+                    // Restore the original data attribute with the safely escaped value.
+                    return `${originalAttrName}="${safeValue}"`;
                 } catch (e) {
-                    console.error("Error decoding or re-escaping Base64 data-toggle attribute:", e);
-                    return ''; // Remove the attribute if decoding/re-escaping fails
+                    console.error("Error decoding or re-escaping Base64 data-attribute:", e);
+                    // If decoding/re-escaping fails, remove the attribute to prevent malformed HTML.
+                    return '';
                 }
             });
         }
+
 
         /**
          * Decodes HTML entities within a string to their actual Unicode characters.
@@ -954,6 +990,26 @@
                 }
             });
 
+            // NEW: Handle <img> tags with src attributes containing "/content/dam"
+            const imgElements = tempDiv.querySelectorAll('img');
+            imgElements.forEach(img => {
+                let src = img.getAttribute('src');
+                if (src && src.includes('/content/dam')) {
+                    const contentDamIndex = src.indexOf('/content/dam');
+                    if (contentDamIndex !== 0) { // If it doesn't start with /content/dam
+                        src = src.substring(contentDamIndex); // Adjust to start from /content/dam
+                        img.setAttribute('src', src);
+                    }
+                }
+                // Also remove target and rel attributes from img tags for consistency, though less common
+                if (img.hasAttribute('target')) {
+                    img.removeAttribute('target');
+                }
+                if (img.hasAttribute('rel')) {
+                    img.removeAttribute('rel');
+                }
+            });
+
             return tempDiv.innerHTML;
         }
 
@@ -1094,7 +1150,7 @@
         function applyCleanSingleBreaks(htmlString) {
             const parser = new DOMParser();
             const doc = parser.parseFromString(htmlString, 'text/html');
-            const brElements = Array.from(doc.querySelectorAll('br')); 
+            const brElements = Array.from(doc.querySelectorAll('br'));
 
             // Process elements in reverse order to avoid issues with DOM manipulation affecting iteration
             for (let i = brElements.length - 1; i >= 0; i--) {
@@ -1102,7 +1158,7 @@
 
                 // Check if br still exists in the DOM and has a parent
                 if (!br || !br.parentNode) {
-                    continue; 
+                    continue;
                 }
 
                 let currentParent = br.parentNode;
@@ -1122,7 +1178,7 @@
 
                 // Create a new paragraph element
                 const newParagraph = doc.createElement('p');
-                
+
                 // Move all siblings after the <br> into the new paragraph
                 while (br.nextSibling) {
                     newParagraph.appendChild(br.nextSibling);
@@ -1136,7 +1192,7 @@
                     // Fallback for very unusual structures where parentNode.parentNode is null
                     doc.body.appendChild(newParagraph);
                 }
-                
+
                 // Remove the <br> itself
                 br.parentNode.removeChild(br);
             }
@@ -1193,7 +1249,7 @@
 
             for (let i = paragraphs.length - 1; i >= 0; i--) {
                 const p = paragraphs[i];
-                
+
                 // Condition 1: Check if the paragraph is empty or contains only a non-breaking space
                 const trimmedContent = p.innerHTML.trim();
                 const isEmptyOrNBSP = trimmedContent === '' || trimmedContent === '&nbsp;' || trimmedContent === '\u00A0';
@@ -1610,7 +1666,7 @@
 
                             if (nextLevel > currentDepth) {
                                 let nestedListElement;
-                                
+
                                 if (nextListType === 'ordered-numeric') {
                                     nestedListElement = doc.createElement('ol');
                                 } else if (nextListType === 'ordered-alpha') {
@@ -1871,17 +1927,17 @@
                     // Check if this <sup> only contains the elementToReplace (which is the link or another sup)
                     // and no other significant content (like additional text nodes or other elements).
                     const children = Array.from(currentParent.childNodes).filter(n => n.nodeType === Node.ELEMENT_NODE || (n.nodeType === Node.TEXT_NODE && n.nodeValue.trim() !== ''));
-                    
+
                     // If the <sup> has only one child and that child is our current elementToReplace (or nested <sup>),
                     // then this <sup> is an exclusive wrapper and we can move up.
                     if (children.length === 1 && children[0] === elementToReplace) {
                         elementToReplace = currentParent; // Move up to replace this <sup>
-                        currentParent = element.FparentNode;
+                        currentParent = element.parentNode;
                     } else {
                         break; // This <sup> contains other content, stop here.
                     }
                 }
-                
+
                 // Perform the replacement:
                 // Replace the determined 'elementToReplace' (which could be the original <a>
                 // or the outermost exclusively wrapping <sup>) with the 'idealSupElement'.
@@ -1935,7 +1991,7 @@
                     // If the original parent is NOT already a heading (h1-h6)
                     if (!/^H[1-6]$/i.test(currentParent.tagName)) {
                         const newHeadingTag = doc.createElement(`h${headingLevel}`);
-                        
+
                         // Move *all* content of the original parent into the new headingTag
                         while (currentParent.firstChild) {
                             newHeadingTag.appendChild(currentParent.firstChild);
@@ -2292,7 +2348,7 @@
                     processedContent = applyUrlCleaning(processedContent);
                     console.log("URL cleaning applied (not part of Auto-Clean MSO, but always on switch).");
                 }
-                
+
                 // 2. Update HTML output content and Monaco editor.
                 htmlOutputContent = processedContent;
                 if (monacoEditorInstance) {
@@ -2314,18 +2370,18 @@
                 richtextOutputPanel.classList.add('panel-hidden');
                 codePanel.classList.remove('panel-hidden');
                 codePanel.classList.add('panel-visible');
-                
+
                 // 4. Update button styles.
                 // "Go to HTML" button (toggleEditorViewBtnRichText) is now inactive/hidden.
                 // Remove all color classes and set to default zinc.
                 toggleEditorViewBtnRichText.classList.remove('bg-green-600', 'hover:bg-green-700', 'bg-sky-700', 'hover:bg-sky-800');
                 toggleEditorViewBtnRichText.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
-                
+
                 // "Go to Rich-Text" button (toggleEditorViewBtnCode) is now active/visible.
                 // It should be blue.
                 toggleEditorViewBtnCode.classList.remove('bg-green-600', 'hover:bg-green-700', 'bg-zinc-700', 'hover:bg-zinc-600');
                 toggleEditorViewBtnCode.classList.add('bg-sky-700', 'hover:bg-sky-800');
-                
+
                 currentView = 'code';
                 console.log("Switched to Code View.");
             } else { // currentView === 'code'
@@ -2352,7 +2408,7 @@
                 } else {
                     console.warn("Rich Text Editor not ready for content setting on toggle.");
                 }
-                
+
                 // 3. Switch panel visibility.
                 codePanel.classList.remove('panel-visible');
                 codePanel.classList.add('panel-hidden');
@@ -2364,11 +2420,11 @@
                 // It should be blue.
                 toggleEditorViewBtnCode.classList.remove('bg-green-600', 'hover:bg-green-700', 'bg-zinc-700', 'hover:bg-zinc-600');
                 toggleEditorViewBtnCode.classList.add('bg-sky-700', 'hover:bg-sky-800');
-                
+
                 // "Go to HTML" button (toggleEditorViewBtnRichText) is now active/visible.
                 // Its color depends on the MSO toggle.
                 updateGoToHtmlButtonColor(); // This function handles its specific coloring.
-                
+
                 currentView = 'richtext';
                 console.log("Switched to Rich Text View.");
                 if (richTextEditorInstance) {
@@ -2392,7 +2448,7 @@
             const newDecorations = [];
             const text = model.getValue();
             // Regex to find HTML entities like &nbsp; &#160; &amp;
-            const regex = /&[a-zA-Z0-9#]+;/g; 
+            const regex = /&[a-zA-Z0-9#]+;/g;
 
             let match;
             while ((match = regex.exec(text)) !== null) {
@@ -2467,6 +2523,308 @@
             }
         }, 200); // Debounce for window resize, not internal panel resize
 
+        /**
+         * Displays a modal dialog with a given title and HTML content.
+         * Note: This `showModal` function is specifically for the Colophon, and is distinct from `showFootnoteModal`.
+         * @param {string} title - The title of the modal.
+         * @param {string} contentHtml - The HTML content for the modal body.
+         */
+        function showModal(title, contentHtml) {
+            const modalOverlay = document.createElement('div');
+            modalOverlay.className = 'modal-overlay';
+            modalOverlay.innerHTML = `
+                <div class="modal-content">
+                    <h3>${title}</h3>
+                    <div id="modalBody">${contentHtml}</div>
+                    <div class="flex justify-end mt-4 space-x-2">
+                        <button id="modalCancelBtn" class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">Cancel</button>
+                        <button id="modalInsertBtn" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Insert</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modalOverlay);
+
+            document.getElementById('modalCancelBtn').addEventListener('click', () => {
+                modalOverlay.remove();
+            });
+
+            // Get references to elements within the newly created modal
+            const langEnglishBtn = document.getElementById('langEnglishBtn');
+            const langFrenchBtn = document.getElementById('langFrenchBtn');
+            const monarchKingBtn = document.getElementById('monarchKingBtn');
+            const monarchQueenBtn = document.getElementById('monarchQueenBtn');
+            const idISBNBtn = document.getElementById('idISBNBtn');
+            const idISSNBtn = document.getElementById('idISSNBtn');
+            const colophonYearInput = document.getElementById('colophonYear');
+            const colophonNumberInput = document.getElementById('colophonNumber'); // Reference for the number input
+            const modalInsertBtn = document.getElementById('modalInsertBtn');
+
+            let selectedLanguage = 'English'; // Default to English
+            let selectedMonarch = 'King'; // Default
+            let selectedIdentifier = 'ISBN'; // Default
+
+            // Function to update button active state
+            function updateButtonActiveState(buttons, activeBtn) {
+                buttons.forEach(btn => {
+                    btn.classList.remove('active', 'bg-indigo-600');
+                    btn.classList.add('bg-gray-700', 'hover:bg-gray-600');
+                });
+                activeBtn.classList.add('active', 'bg-indigo-600');
+                activeBtn.classList.remove('bg-gray-700', 'hover:bg-gray-600');
+            }
+
+            // Initial active states
+            updateButtonActiveState([langEnglishBtn, langFrenchBtn], langEnglishBtn);
+            updateButtonActiveState([monarchKingBtn, monarchQueenBtn], monarchKingBtn);
+            updateButtonActiveState([idISBNBtn, idISSNBtn], idISBNBtn);
+
+            // Event listeners for language buttons
+            langEnglishBtn.addEventListener('click', () => {
+                selectedLanguage = 'English';
+                updateButtonActiveState([langEnglishBtn, langFrenchBtn], langEnglishBtn);
+            });
+
+            langFrenchBtn.addEventListener('click', () => {
+                selectedLanguage = 'French';
+                updateButtonActiveState([langEnglishBtn, langFrenchBtn], langFrenchBtn);
+            });
+
+            // Event listeners for Monarch toggle
+            monarchKingBtn.addEventListener('click', () => {
+                selectedMonarch = 'King';
+                updateButtonActiveState([monarchKingBtn, monarchQueenBtn], monarchKingBtn);
+            });
+
+            monarchQueenBtn.addEventListener('click', () => {
+                selectedMonarch = 'Queen';
+                updateButtonActiveState([monarchKingBtn, monarchQueenBtn], monarchQueenBtn);
+            });
+
+            // Event listeners for ISBN/ISSN toggle
+            idISBNBtn.addEventListener('click', () => {
+                selectedIdentifier = 'ISBN';
+                updateButtonActiveState([idISBNBtn, idISSNBtn], idISBNBtn);
+            });
+
+            idISSNBtn.addEventListener('click', () => {
+                selectedIdentifier = 'ISSN';
+                updateButtonActiveState([idISBNBtn, idISSNBtn], idISSNBtn);
+            });
+
+            // Year input validation
+            colophonYearInput.addEventListener('input', (event) => {
+                const input = event.target;
+                // Remove any non-digit characters
+                input.value = input.value.replace(/\D/g, '');
+                // Truncate to 4 digits if longer
+                if (input.value.length > 4) {
+                    input.value = input.value.substring(0, 4);
+                }
+            });
+
+            // Insert button logic
+            modalInsertBtn.addEventListener('click', () => {
+                const currentYear = new Date().getFullYear();
+                const year = colophonYearInput.value || currentYear;
+                const number = colophonNumberInput.value || '###';
+                let colophonHtml = `<section id="colophon">\n<p class="mrgn-tp-lg text-center small">© `;
+
+                if (selectedLanguage === 'English') {
+                    if (selectedMonarch === 'King') {
+                        colophonHtml += `His Majesty the King in Right of Canada, represented by the President of the Treasury Board, ${year},<br>${selectedIdentifier}:&#160;${number}</p>\n</section>`;
+                    } else { // Queen
+                        colophonHtml += `Her Majesty the Queen in Right of Canada, represented by the President of the Treasury Board, ${year},<br>${selectedIdentifier}:&#160;${number}</p>\n</section>`;
+                    }
+                } else { // French
+                    if (selectedMonarch === 'King') {
+                        colophonHtml += `Sa Majesté le Roi du chef du Canada, représenté par le président du Conseil du Trésor, ${year},<br>${selectedIdentifier}&#160;:&#160;${number}</p>\n</section>`;
+                    } else { // Queen
+                        colophonHtml += `Sa Majesté la Reine du chef du Canada, représentée par le président du Conseil du Trésor, ${year},<br>${selectedIdentifier}&#160;:&#160;${number}</p>\n</section>`;
+                    }
+                }
+
+                // Insert the generated HTML into the Monaco editor
+                if (monacoEditorInstance) {
+                    let currentContent = monacoEditorInstance.getValue();
+                    currentContent = protectDataAttributes(currentContent); // Protect attributes before string manipulation
+
+                    // Append the new colophon HTML
+                    currentContent += colophonHtml;
+
+                    currentContent = restoreDataAttributes(currentContent); // Restore attributes
+                    currentContent = convertAllEntitiesToNumeric(currentContent); // Ensure entities are correct after all operations
+
+                    monacoEditorInstance.setValue(currentContent);
+                    htmlOutputContent = currentContent; // Update main content variable
+                    applyEntityHighlighting(); // Re-apply highlighting
+                }
+                modalOverlay.remove(); // Close the modal
+            });
+        }
+
+        /**
+         * Displays a modal dialog for configuring and inserting footnote lists.
+         */
+        function showFootnoteModal() {
+            const footnoteContentHtml = `
+                <div class="flex flex-col space-y-4">
+				<div>
+				<p>NOTE: This only creates an empty list of footnotes, you must populate it on your own. It also does not add/change anchors. 
+				</div>
+                    <div>
+                        <span class="text-sm font-medium text-gray-200 mr-2">Language:</span>
+                        <div class="button-group inline-flex">
+                            <button id="fnLangEnglishBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">English</button>
+                            <button id="fnLangFrenchBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">French</button>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="fnCount" class="block text-sm font-medium text-gray-200">How many?</label>
+                        <input type="number" id="fnCount" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="1" min="1" value="1">
+                    </div>
+					<div>
+                        <label for="fnIdPrefix" class="block text-sm font-medium text-gray-200">ID Prefix (optional):</label>
+                        <input type="text" id="fnIdPrefix" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., mydoc-">
+                    </div>
+                </div>
+            `;
+
+            const modalOverlay = document.createElement('div');
+            modalOverlay.className = 'modal-overlay';
+            modalOverlay.innerHTML = `
+                <div class="modal-content">
+                    <h3>Insert Footnote List</h3>
+                    <div id="modalBody">${footnoteContentHtml}</div>
+                    <div class="flex justify-end mt-4 space-x-2">
+                        <button id="modalCancelFnBtn" class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">Cancel</button>
+                        <button id="modalInsertFnBtn" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Insert</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modalOverlay);
+
+            document.getElementById('modalCancelFnBtn').addEventListener('click', () => {
+                modalOverlay.remove();
+            });
+
+            const fnLangEnglishBtn = document.getElementById('fnLangEnglishBtn');
+            const fnLangFrenchBtn = document.getElementById('fnLangFrenchBtn');
+            const fnIdPrefixInput = document.getElementById('fnIdPrefix');
+            const fnCountInput = document.getElementById('fnCount');
+            const modalInsertFnBtn = document.getElementById('modalInsertFnBtn');
+
+            let selectedFnLanguage = 'English';
+
+            // Helper for button active state in modal
+            function updateFnButtonActiveState(buttons, activeBtn) {
+                buttons.forEach(btn => {
+                    btn.classList.remove('active', 'bg-indigo-600');
+                    btn.classList.add('bg-gray-700', 'hover:bg-gray-600');
+                });
+                activeBtn.classList.add('active', 'bg-indigo-600');
+                activeBtn.classList.remove('bg-gray-700', 'hover:bg-gray-600');
+            }
+
+            updateFnButtonActiveState([fnLangEnglishBtn, fnLangFrenchBtn], fnLangEnglishBtn);
+
+            fnLangEnglishBtn.addEventListener('click', () => {
+                selectedFnLanguage = 'English';
+                updateFnButtonActiveState([fnLangEnglishBtn, fnLangFrenchBtn], fnLangEnglishBtn);
+            });
+
+            fnLangFrenchBtn.addEventListener('click', () => {
+                selectedFnLanguage = 'French';
+                updateFnButtonActiveState([fnLangEnglishBtn, fnLangFrenchBtn], fnLangFrenchBtn);
+            });
+
+            // Ensure number input only accepts digits
+            fnCountInput.addEventListener('input', (event) => {
+                const input = event.target;
+                input.value = input.value.replace(/\D/g, ''); // Remove non-digits
+                if (input.value === '') {
+                    input.value = '1'; // Default to 1 if cleared
+                }
+            });
+
+            modalInsertFnBtn.addEventListener('click', () => {
+                const idPrefix = fnIdPrefixInput.value.trim();
+                const footnoteCount = parseInt(fnCountInput.value) || 1; // Default to 1
+
+                let footnoteHtml = `<aside class="wb-fnote" role="note">\n`;
+                footnoteHtml += `\t<h2 id="${idPrefix}fn">${selectedFnLanguage === 'English' ? 'Footnotes' : 'Notes en bas de page'}</h2>\n`;
+                footnoteHtml += `\t<dl>\n`;
+
+                for (let i = 1; i <= footnoteCount; i++) {
+                    const dtText = selectedFnLanguage === 'English' ? `Footnote ${i}` : `Note en bas de page ${i}`;
+                    const ddContent = selectedFnLanguage === 'English' ? `ENG footnote ${i} content.` : `FRA footnote ${i} content.`;
+                    const returnTextInv = selectedFnLanguage === 'English' ? `Return to footnote ` : `Retour à la référence de la note en bas de page `;
+                    const returnTextRef = selectedFnLanguage === 'English' ? ` referrer` : ``;
+
+                    footnoteHtml += `\t\t<dt>${dtText}</dt>\n`;
+                    footnoteHtml += `\t\t<dd id="${idPrefix}fn${i}">\n`;
+                    footnoteHtml += `\t\t\t<p>${ddContent}</p>\n`;
+                    footnoteHtml += `\t\t\t<p class="fn-rtn"> <a href="#${idPrefix}fn${i}-rf"><span class="wb-inv">${returnTextInv}</span>${i}<span class="wb-inv">${returnTextRef}</span></a> </p>\n`;
+                    footnoteHtml += `\t\t</dd>\n`;
+                }
+
+                footnoteHtml += `\t</dl>\n`;
+                footnoteHtml += `</aside>\n`;
+
+                if (monacoEditorInstance) {
+                    let currentContent = monacoEditorInstance.getValue();
+                    currentContent = protectDataAttributes(currentContent); // Protect attributes
+
+                    // Find the insertion point: before any section with 'colophon' in its ID
+                    const colophonSectionMatch = currentContent.match(/<section[^>]*id=["'][^"']*colophon[^"']*["'][^>]*>/i);
+                    let insertionIndex = -1;
+
+                    if (colophonSectionMatch) {
+                        insertionIndex = currentContent.indexOf(colophonSectionMatch[0]);
+                    }
+
+                    if (insertionIndex !== -1) {
+                        // Insert the footnote HTML before the colophon section
+                        currentContent = currentContent.substring(0, insertionIndex) + footnoteHtml + currentContent.substring(insertionIndex);
+                    } else {
+                        // If no colophon section, append to the end of the body just before </body>
+                        const bodyEndTagIndex = currentContent.lastIndexOf('</body>');
+                        if (bodyEndTagIndex !== -1) {
+                            currentContent = currentContent.substring(0, bodyEndTagIndex) + footnoteHtml + '\n' + currentContent.substring(bodyEndTagIndex);
+                        } else {
+                            currentContent += footnoteHtml; // Fallback to simply appending
+                        }
+                    }
+
+                    currentContent = restoreDataAttributes(currentContent); // Restore attributes
+                    currentContent = convertAllEntitiesToNumeric(currentContent); // Ensure entities are correct after all operations
+
+                    monacoEditorInstance.setValue(currentContent);
+                    htmlOutputContent = currentContent;
+                    applyEntityHighlighting();
+                }
+
+                modalOverlay.remove(); // Close the modal
+
+                // Provide visual feedback for the button
+                const originalText = footnoteListBtn.textContent;
+                footnoteListBtn.textContent = 'Inserted!';
+                footnoteListBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                footnoteListBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
+                footnoteListBtn.disabled = true;
+                footnoteListBtn.setAttribute('data-temp-active', 'true');
+                updateToggleEditorViewBtnCodeState();
+                setTimeout(() => {
+                    footnoteListBtn.textContent = originalText;
+                    footnoteListBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                    footnoteListBtn.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
+                    footnoteListBtn.disabled = false;
+                    footnoteListBtn.removeAttribute('data-temp-active');
+                    updateToggleEditorViewBtnCodeState();
+                }, 1500);
+            });
+        }
+
 
         // Initialize and set up event listeners on window load
         window.onload = function() {
@@ -2474,7 +2832,7 @@
             // Initial setup: Ensure rich text panel is visible and code panel is hidden
             richtextOutputPanel.classList.add('panel-visible');
             codePanel.classList.add('panel-hidden');
-            
+
             // Set initial button styles based on default view (richtext)
             // The "Go to HTML" button is visible initially, so its color depends on the MSO toggle.
             // The "Go to Rich-Text" button is hidden initially, so it should have its default blue color.
@@ -2555,7 +2913,7 @@
                     // Apply the new widths directly to flex-basis
                     monacoEditorContainer.style.flexBasis = `${newMonacoWidth}px`;
                     sidebar.style.flexBasis = `${newSidebarWidth}px`;
-                    
+
                     // No explicit layout call needed here for Monaco, automaticLayout should handle it.
                 }
 
@@ -2604,7 +2962,7 @@
             autoFormatBtn.addEventListener('click', () => {
                 if (monacoEditorInstance) {
                     let currentContent = monacoEditorInstance.getValue();
-                    currentContent = decodeHtmlEntities(currentContent); // Decode before processing
+                    // Do NOT decodeHtmlEntities here. Protect attributes directly from Monaco's value.
                     currentContent = protectDataAttributes(currentContent); // Protect attributes (string replacement)
 
                     // Use js_beautify to format the HTML content
@@ -2641,7 +2999,7 @@
             autoEncodeBtn.addEventListener('click', () => {
                 if (monacoEditorInstance) {
                     let currentContent = monacoEditorInstance.getValue();
-                    currentContent = decodeHtmlEntities(currentContent); // Decode before processing
+                    // Do NOT decodeHtmlEntities here. Protect attributes directly from Monaco's value.
                     currentContent = protectDataAttributes(currentContent); // Protect attributes (string replacement)
 
                     let encodedContent = convertAllEntitiesToNumeric(currentContent); // Apply the encoding
@@ -2883,8 +3241,8 @@
                             console.log("Iframe: HugeRTE library loaded. Initializing editor.");
                             hugerte.init({
                                 selector: '#richEditor',
-                                toolbar: 'undo redo styles bold italic alignleft aligncenter alignright numlist bullist table',
-                                plugins: [ 'table', 'lists' ],
+                                toolbar: 'undo redo styles bold italic alignleft aligncenter alignright numlist bullist link table',
+                                plugins: [ 'table', 'lists', 'link' ],
                                 height: '100%', // Explicitly set height for TinyMCE
                                 tab_focus: false, // Allow tab to indent instead of changing focus
                                 formats: { // Define custom formats for alignment to use classes
@@ -2938,7 +3296,7 @@
                     console.warn("Parent: Could not capture HugeRTE instance from iframe. Is HugeRTE initializing correctly inside?");
                 }
             };
-            
+
             // Event listeners for Auto-Clean MSO when switching toggles
             toggleAutoCleanMsoOnSwitchRichText.addEventListener('change', (event) => {
                 const isChecked = event.target.checked;
@@ -2972,251 +3330,251 @@
 
 
             // Set Time Tags button functionality
-            timeTagsBtn.addEventListener('click', () => {
-                if (monacoEditorInstance) {
-                    let content = monacoEditorInstance.getValue();
-                    content = decodeHtmlEntities(content); // Decode before processing
-                    content = protectDataAttributes(content); // Protect attributes (string replacement)
+                timeTagsBtn.addEventListener('click', () => {
+                    if (monacoEditorInstance) {
+                        let content = monacoEditorInstance.getValue();
+                        // Do NOT decodeHtmlEntities here. Protect attributes directly from Monaco's value.
+                        content = protectDataAttributes(content); // Protect attributes (string replacement)
 
-                    // Apply NBSP placeholders before any regex/DOM operations that might affect spaces
-                    content = applyNBSPPlaceholders(content);
+                        // Apply NBSP placeholders before any regex/DOM operations that might affect spaces
+                        content = applyNBSPPlaceholders(content);
 
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(content, 'text/html');
-                    const body = doc.body;
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(content, 'text/html');
+                        const body = doc.body;
 
-                    // Step 1: Remove existing <time> tags and extract their text content
-                    const existingTimeElements = doc.querySelectorAll('time');
-                    existingTimeElements.forEach(timeEl => {
-                        // Replace the <time> element with its text content
-                        const textNode = doc.createTextNode(timeEl.textContent);
-                        timeEl.parentNode.replaceChild(textNode, timeEl);
-                    });
-
-                    // Now, `body.innerHTML` contains the HTML with all <time> tags removed.
-                    // This is the content we will re-process for tagging.
-                    let contentToProcess = body.innerHTML;
-
-                    // Month mapping for conversion to numeric format
-                    const monthMap = {
-                        'january': '01', 'jan': '01', 'janvier': '01',
-                        'february': '02', 'feb': '02', 'février': '02',
-                        'march': '03', 'mar': '03', 'mars': '03',
-                        'april': '04', 'apr': '04', 'avril': '04',
-                        'may': '05', 'mai': '05',
-                        'june': '06', 'jun': '06', 'juin': '06',
-                        'july': '07', 'jul': '07', 'juillet': '07',
-                        'august': '08', 'aug': '08', 'août': '08',
-                        'september': '09', 'sep': '09', 'septembre': '09',
-                        'october': '10', 'oct': '10', 'octobre': '10',
-                        'november': '11', 'nov': '11', 'novembre': '11',
-                        'december': '12', 'dec': '12', 'décembre': '12'
-                    };
-
-                    function getMonthNumber(monthName) {
-                        return monthMap[monthName.toLowerCase()] || null;
-                    }
-
-                    // Sort month keys by length in descending order to prioritize longer matches (e.g., 'mars' over 'mar')
-                    const sortedMonthKeys = Object.keys(monthMap).sort((a, b) => b.length - a.length);
-                    const monthPattern = sortedMonthKeys.map(m => m.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|');
-                    // Use the simplified NBSP placeholder in the regex
-                    const spaceOrNBSPChar = `(?:\\s|${NBSP_PLACEHOLDER})+`;
-
-                    // Regex for ISO-MM-DD
-                    const regexIsoDateFull = /(?<!\d)(\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01]))(?!\d)/g;
-
-                    // Regex for Month Day, Year (e.g., March 20, 2023)
-                    const regexMonthDayYear = new RegExp(`(?<!\\d)(${monthPattern})${spaceOrNBSPChar}(\\d{1,2}),?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'i');
-                    // Regex for Day Month Year (e.g., 20 March 2023, le 20 mars 2023)
-                    const regexDayMonthYear = new RegExp(`(?<!\\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2})${spaceOrNBSPChar}(${monthPattern}),?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'i');
-
-                    // NEW: Regex for Month Day (no year) - e.g., March 31
-                    // Negative lookahead `(?!\\d|${spaceOrNBSPChar}\\d{4})` ensures no digit or 4-digit year follows.
-                    // `(?!-)` prevents tagging numeric dates like 03-31
-                    const regexMonthDayNoYear = new RegExp(`(?<!\d)(${monthPattern})${spaceOrNBSPChar}(\\d{1,2})(?!\\d|${spaceOrNBSPChar}\\d{4})(?!-)`, 'i');
-
-                    // NEW: Regex for Day Month (no year) - e.g., 31 mars, le 31 mars
-                    // Negative lookahead `(?!\\d|${spaceOrNBSPChar}\\d{4})` ensures no digit or 4-digit year follows.
-                    // `(?!-)` prevents tagging numeric dates like 31-03
-                    const regexDayMonthNoYear = new RegExp(`(?<!\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2})${spaceOrNBSPChar}(${monthPattern})(?!\\d|${spaceOrNBSPChar}\\d{4})(?!-)`, 'i');
-
-
-                    // Re-parse the content to allow traversal of the updated DOM
-                    const reParsedDoc = parser.parseFromString(contentToProcess, 'text/html');
-                    const reParsedBody = reParsedDoc.body;
-
-                    // Collect all text nodes to process first, then iterate and modify.
-                    const textNodesToModify = [];
-                    const walker = reParsedDoc.createTreeWalker(
-                        reParsedBody,
-                        NodeFilter.SHOW_TEXT,
-                        {
-                            acceptNode: function(node) {
-                                let parent = node.parentNode;
-                                while (parent) {
-                                    const tagName = parent.tagName ? parent.tagName.toLowerCase() : '';
-                                    if (tagName === 'script' || tagName === 'style' || tagName === 'time') {
-                                        return NodeFilter.FILTER_REJECT; // Reject if inside these tags
-                                    }
-                                    parent = parent.parentNode;
-                                }
-                                return NodeFilter.FILTER_ACCEPT; // Accept other text nodes
-                            }
-                        },
-                        false
-                    );
-
-                    let currentNode;
-                    while (currentNode = walker.nextNode()) {
-                        textNodesToModify.push(currentNode);
-                    }
-
-                    // Now iterate through the collected nodes and apply modifications
-                    textNodesToModify.forEach(textNode => {
-                        let text = textNode.nodeValue;
-                        let currentText = text;
-
-                        let allMatches = [];
-                        const patternsToTest = [
-                            { name: 'IsoDateFull', regex: regexIsoDateFull, handler: (match) => {
-                                // Full ISO date: Bamber-MM-DD
-                                const [fullMatch, yearMonthDay] = match;
-                                return yearMonthDay;
-                            }, priority: 3 }, // Highest priority for full dates
-                            { name: 'DayMonthYear', regex: regexDayMonthYear, handler: (match) => {
-                                // Day Month Year: e.g., 20 March 2023, le 20 mars 2023
-                                const [, day, month, year] = match;
-                                const monthNum = getMonthNumber(month);
-                                if (!monthNum || parseInt(day) < 1 || parseInt(day) > 31) return null;
-                                return `${year}-${monthNum}-${String(day).padStart(2, '0')}`;
-                            }, priority: 2 },
-                            { name: 'MonthDayYear', regex: regexMonthDayYear, handler: (match) => {
-                                // Month Day Year: e.g., March 20, 2023
-                                const [, month, day, year] = match;
-                                const monthNum = getMonthNumber(month);
-                                if (!monthNum || parseInt(day) < 1 || parseInt(day) > 31) return null;
-                                return `${year}-${monthNum}-${String(day).padStart(2, '0')}`;
-                            }, priority: 2 },
-                            // NEW: Month Day (no year)
-                            { name: 'MonthDayNoYear', regex: regexMonthDayNoYear, handler: (match) => {
-                                const [, month, day] = match;
-                                const monthNum = getMonthNumber(month);
-                                if (!monthNum || parseInt(day) < 1 || parseInt(day) > 31) return null;
-                                return `${new Date().getFullYear()}-${monthNum}-${String(day).padStart(2, '0')}`; // Add current year
-                            }, priority: 1 }, // Lower priority than full dates
-                            // NEW: Day Month (no year)
-                            { name: 'DayMonthNoYear', regex: regexDayMonthNoYear, handler: (match) => {
-                                const [, day, month] = match;
-                                const monthNum = getMonthNumber(month);
-                                if (!monthNum || parseInt(day) < 1 || parseInt(day) > 31) return null;
-                                return `${new Date().getFullYear()}-${monthNum}-${String(day).padStart(2, '0')}`; // Add current year
-                            }, priority: 1 } // Lower priority than full dates
-                        ];
-
-                        patternsToTest.forEach(pattern => {
-                            let localRegex = new RegExp(pattern.regex.source, pattern.regex.flags);
-                            // Ensure 'g' flag is always present for iterative matching
-                            if (!localRegex.flags.includes('g')) {
-                                localRegex = new RegExp(localRegex.source, localRegex.flags + 'g');
-                            }
-
-                            let match;
-                            while ((match = localRegex.exec(currentText)) !== null) {
-                                const datetimeValue = pattern.handler(match);
-                                if (datetimeValue) {
-                                    allMatches.push({
-                                        start: match.index,
-                                        end: match.index + match[0].length,
-                                        original: match[0],
-                                        datetime: datetimeValue,
-                                        priority: pattern.priority
-                                    });
-                                }
-                            }
+                        // Step 1: Remove existing <time> tags and extract their text content
+                        const existingTimeElements = doc.querySelectorAll('time');
+                        existingTimeElements.forEach(timeEl => {
+                            // Replace the <time> element with its text content
+                            const textNode = doc.createTextNode(timeEl.textContent);
+                            timeEl.parentNode.replaceChild(textNode, timeEl);
                         });
 
-                        // Sort by start position, then by priority (descending)
-                        allMatches.sort((a, b) => {
-                            if (a.start !== b.start) {
-                                return a.start - b.start;
-                            }
-                            return b.priority - a.priority; // Higher priority first for overlapping matches
-                        });
+                        // Now, `body.innerHTML` contains the HTML with all <time> tags removed.
+                        // This is the content we will re-process for tagging.
+                        let contentToProcess = body.innerHTML;
 
-                        let nonOverlappingMatches = [];
-                        // Process the sorted matches to remove overlaps, prioritizing higher priority matches
-                        if (allMatches.length > 0) {
-                            nonOverlappingMatches.push(allMatches[0]);
-                            for (let i = 1; i < allMatches.length; i++) {
-                                const currentMatch = allMatches[i];
-                                const lastAddedMatch = nonOverlappingMatches[nonOverlappingMatches.length - 1];
+                        // Month mapping for conversion to numeric format
+                        const monthMap = {
+                            'january': '01', 'jan': '01', 'janvier': '01',
+                            'february': '02', 'feb': '02', 'février': '02',
+                            'march': '03', 'mar': '03', 'mars': '03',
+                            'april': '04', 'apr': '04', 'avril': '04',
+                            'may': '05', 'mai': '05',
+                            'june': '06', 'jun': '06', 'juin': '06',
+                            'july': '07', 'jul': '07', 'juillet': '07',
+                            'august': '08', 'aug': '08', 'août': '08',
+                            'september': '09', 'sep': '09', 'septembre': '09',
+                            'october': '10', 'oct': '10', 'octobre': '10',
+                            'november': '11', 'nov': '11', 'novembre': '11',
+                            'december': '12', 'dec': '12', 'décembre': '12'
+                        };
 
-                                // Check for overlap
-                                if (currentMatch.start >= lastAddedMatch.end) {
-                                    // No overlap, add the current match
-                                    nonOverlappingMatches.push(currentMatch);
-                                } else {
-                                    // Overlap detected. Keep the higher priority match.
-                                    // If priorities are equal, keep the longer match.
-                                    if (currentMatch.priority > lastAddedMatch.priority ||
-                                        (currentMatch.priority === lastAddedMatch.priority && currentMatch.original.length > lastAddedMatch.original.length)) {
-                                        nonOverlappingMatches[nonOverlappingMatches.length - 1] = currentMatch;
-                                    }
-                                }
-                            }
+                        function getMonthNumber(monthName) {
+                            return monthMap[monthName.toLowerCase()] || null;
                         }
 
+                        // Sort month keys by length in descending order to prioritize longer matches (e.g., 'mars' over 'mar')
+                        const sortedMonthKeys = Object.keys(monthMap).sort((a, b) => b.length - a.length);
+                        const monthPattern = sortedMonthKeys.map(m => m.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|');
+                        // Use the simplified NBSP placeholder in the regex
+                        const spaceOrNBSPChar = `(?:\\s|${NBSP_PLACEHOLDER})+`;
 
-                        if (nonOverlappingMatches.length > 0) {
-                            let resultParts = [];
-                            let currentIndex = 0;
-                            nonOverlappingMatches.forEach(match => {
-                                resultParts.push(currentText.substring(currentIndex, match.start));
-                                // Add class="nowrap" here
-                                resultParts.push(`<time class="nowrap" datetime="${match.datetime}">${match.original}</time>`);
-                                currentIndex = match.end;
+                        // Regex for ISO-MM-DD
+                        const regexIsoDateFull = /(?<!\d)(\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01]))(?!\d)/g;
+
+                        // Regex for Month Day, Year (e.g., March 20, 2023)
+                        const regexMonthDayYear = new RegExp(`(?<!\\d)(${monthPattern})${spaceOrNBSPChar}(\\d{1,2}),?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'i');
+                        // Regex for Day Month Year (e.g., 20 March 2023, le 20 mars 2023)
+                        const regexDayMonthYear = new RegExp(`(?<!\\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2})${spaceOrNBSPChar}(${monthPattern}),?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'i');
+
+                        // NEW: Regex for Month Day (no year) - e.g., March 31
+                        // Negative lookahead `(?!\\d|${spaceOrNBSPChar}\\d{4})` ensures no digit or 4-digit year follows.
+                        // `(?!-)` prevents tagging numeric dates like 03-31
+                        const regexMonthDayNoYear = new RegExp(`(?<!\\d)(${monthPattern})${spaceOrNBSPChar}(\\d{1,2})(?!\\d|${spaceOrNBSPChar}\\d{4})(?!-)`, 'i');
+
+                        // NEW: Regex for Day Month (no year) - e.g., 31 mars, le 31 mars
+                        // Negative lookahead `(?!\\d|${spaceOrNBSPChar}\\d{4})` ensures no digit or 4-digit year follows.
+                        // `(?!-)` prevents tagging numeric dates like 31-03
+                        const regexDayMonthNoYear = new RegExp(`(?<!\\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2})${spaceOrNBSPChar}(${monthPattern})(?!\\d|${spaceOrNBSPChar}\\d{4})(?!-)`, 'i');
+
+
+                        // Re-parse the content to allow traversal of the updated DOM
+                        const reParsedDoc = parser.parseFromString(contentToProcess, 'text/html');
+                        const reParsedBody = reParsedDoc.body;
+
+                        // Collect all text nodes to process first, then iterate and modify.
+                        const textNodesToModify = [];
+                        const walker = reParsedDoc.createTreeWalker(
+                            reParsedBody,
+                            NodeFilter.SHOW_TEXT,
+                            {
+                                acceptNode: function(node) {
+                                    let parent = node.parentNode;
+                                    while (parent) {
+                                        const tagName = parent.tagName ? parent.tagName.toLowerCase() : '';
+                                        if (tagName === 'script' || tagName === 'style' || tagName === 'time') {
+                                            return NodeFilter.FILTER_REJECT; // Reject if inside these tags
+                                        }
+                                        parent = parent.parentNode;
+                                    }
+                                    return NodeFilter.FILTER_ACCEPT; // Accept other text nodes
+                                }
+                            },
+                            false
+                        );
+
+                        let currentNode;
+                        while (currentNode = walker.nextNode()) {
+                            textNodesToModify.push(currentNode);
+                        }
+
+                        // Now iterate through the collected nodes and apply modifications
+                        textNodesToModify.forEach(textNode => {
+                            let text = textNode.nodeValue;
+                            let currentText = text;
+
+                            let allMatches = [];
+                            const patternsToTest = [
+                                { name: 'IsoDateFull', regex: regexIsoDateFull, handler: (match) => {
+                                    // Full ISO date: Bamber-MM-DD
+                                    const [fullMatch, yearMonthDay] = match;
+                                    return yearMonthDay;
+                                }, priority: 3 }, // Highest priority for full dates
+                                { name: 'DayMonthYear', regex: regexDayMonthYear, handler: (match) => {
+                                    // Day Month Year: e.g., 20 March 2023, le 20 mars 2023
+                                    const [, day, month, year] = match;
+                                    const monthNum = getMonthNumber(month);
+                                    if (!monthNum || parseInt(day) < 1 || parseInt(day) > 31) return null;
+                                    return `${year}-${monthNum}-${String(day).padStart(2, '0')}`;
+                                }, priority: 2 },
+                                { name: 'MonthDayYear', regex: regexMonthDayYear, handler: (match) => {
+                                    // Month Day Year: e.g., March 20, 2023
+                                    const [, month, day, year] = match;
+                                    const monthNum = getMonthNumber(month);
+                                    if (!monthNum || parseInt(day) < 1 || parseInt(day) > 31) return null;
+                                    return `${year}-${monthNum}-${String(day).padStart(2, '0')}`;
+                                }, priority: 2 },
+                                // NEW: Month Day (no year)
+                                { name: 'MonthDayNoYear', regex: regexMonthDayNoYear, handler: (match) => {
+                                    const [, month, day] = match;
+                                    const monthNum = getMonthNumber(month);
+                                    if (!monthNum || parseInt(day) < 1 || parseInt(day) > 31) return null;
+                                    return `${monthNum}-${String(day).padStart(2, '0')}`; // Modified to MM-DD
+                                }, priority: 1 }, // Lower priority than full dates
+                                // NEW: Day Month (no year)
+                                { name: 'DayMonthNoYear', regex: regexDayMonthNoYear, handler: (match) => {
+                                    const [, day, month] = match;
+                                    const monthNum = getMonthNumber(month);
+                                    if (!monthNum || parseInt(day) < 1 || parseInt(day) > 31) return null;
+                                    return `${monthNum}-${String(day).padStart(2, '0')}`; // Modified to MM-DD
+                                }, priority: 1 } // Lower priority than full dates
+                            ];
+
+                            patternsToTest.forEach(pattern => {
+                                let localRegex = new RegExp(pattern.regex.source, pattern.regex.flags);
+                                // Ensure 'g' flag is always present for iterative matching
+                                if (!localRegex.flags.includes('g')) {
+                                    localRegex = new RegExp(localRegex.source, localRegex.flags + 'g');
+                                }
+
+                                let match;
+                                while ((match = localRegex.exec(currentText)) !== null) {
+                                    const datetimeValue = pattern.handler(match);
+                                    if (datetimeValue) {
+                                        allMatches.push({
+                                            start: match.index,
+                                            end: match.index + match[0].length,
+                                            original: match[0],
+                                            datetime: datetimeValue,
+                                            priority: pattern.priority
+                                        });
+                                    }
+                                }
                             });
-                            resultParts.push(currentText.substring(currentIndex));
-                            const newHtmlContent = resultParts.join('');
 
-                            const fragment = reParsedDoc.createRange().createContextualFragment(newHtmlContent);
-                            textNode.parentNode.replaceChild(fragment, textNode);
-                        }
-                    });
+                            // Sort by start position, then by priority (descending)
+                            allMatches.sort((a, b) => {
+                                if (a.start !== b.start) {
+                                    return a.start - b.start;
+                                }
+                                return b.priority - a.priority; // Higher priority first for overlapping matches
+                            });
 
-                    let finalHtml = reParsedBody.innerHTML;
-                    finalHtml = revertNBSPPlaceholders(finalHtml); // Revert placeholders
+                            let nonOverlappingMatches = [];
+                            // Process the sorted matches to remove overlaps, prioritizing higher priority matches
+                            if (allMatches.length > 0) {
+                                nonOverlappingMatches.push(allMatches[0]);
+                                for (let i = 1; i < allMatches.length; i++) {
+                                    const currentMatch = allMatches[i];
+                                    const lastAddedMatch = nonOverlappingMatches[nonOverlappingMatches.length - 1];
 
-                    finalHtml = restoreDataAttributes(finalHtml); // Restore attributes (string replacement)
-                    finalHtml = convertAllEntitiesToNumeric(finalHtml); // Re-encode after processing
+                                    // Check for overlap
+                                    if (currentMatch.start >= lastAddedMatch.end) {
+                                        // No overlap, add the current match
+                                        nonOverlappingMatches.push(currentMatch);
+                                    } else {
+                                        // Overlap detected. Keep the higher priority match.
+                                        // If priorities are equal, keep the longer match.
+                                        if (currentMatch.priority > lastAddedMatch.priority ||
+                                            (currentMatch.priority === lastAddedMatch.priority && currentMatch.original.length > lastAddedMatch.original.length)) {
+                                            nonOverlappingMatches[nonOverlappingMatches.length - 1] = currentMatch;
+                                        }
+                                    }
+                                }
+                            }
 
-                    monacoEditorInstance.setValue(finalHtml);
 
-                    // Update button feedback
-                    const originalText = timeTagsBtn.textContent;
-                    timeTagsBtn.textContent = 'Tagged!';
-                    timeTagsBtn.classList.add('bg-green-500', 'hover:bg-green-600');
-                    timeTagsBtn.classList.remove('bg-blue-700', 'hover:bg-blue-800'); // Changed from bg-gray-700
-                    timeTagsBtn.disabled = true; // Disable the button
-                    timeTagsBtn.setAttribute('data-temp-active', 'true'); // Mark as active
-                    updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
-                    setTimeout(() => {
-                        timeTagsBtn.textContent = originalText;
-                        timeTagsBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-                        timeTagsBtn.classList.add('bg-blue-700', 'hover:bg-blue-800'); // Changed from bg-gray-700
-                        timeTagsBtn.disabled = false; // Re-enable the button
-                        timeTagsBtn.removeAttribute('data-temp-active'); // Unmark as active
+                            if (nonOverlappingMatches.length > 0) {
+                                let resultParts = [];
+                                let currentIndex = 0;
+                                nonOverlappingMatches.forEach(match => {
+                                    resultParts.push(currentText.substring(currentIndex, match.start));
+                                    // Add class="nowrap" here
+                                    resultParts.push(`<time class="nowrap" datetime="${match.datetime}">${match.original}</time>`);
+                                    currentIndex = match.end;
+                                });
+                                resultParts.push(currentText.substring(currentIndex));
+                                const newHtmlContent = resultParts.join('');
+
+                                const fragment = reParsedDoc.createRange().createContextualFragment(newHtmlContent);
+                                textNode.parentNode.replaceChild(fragment, textNode);
+                            }
+                        });
+
+                        let finalHtml = reParsedBody.innerHTML;
+                        finalHtml = revertNBSPPlaceholders(finalHtml); // Revert placeholders
+
+                        finalHtml = restoreDataAttributes(finalHtml); // Restore attributes (string replacement)
+                        finalHtml = convertAllEntitiesToNumeric(finalHtml); // Re-encode after processing
+
+                        monacoEditorInstance.setValue(finalHtml);
+
+                        // Update button feedback
+                        const originalText = timeTagsBtn.textContent;
+                        timeTagsBtn.textContent = 'Tagged!';
+                        timeTagsBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                        timeTagsBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600'); // Changed from bg-gray-700
+                        timeTagsBtn.disabled = true; // Disable the button
+                        timeTagsBtn.setAttribute('data-temp-active', 'true'); // Mark as active
                         updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
-                    }, 1500);
-                }
-            });
+                        setTimeout(() => {
+                            timeTagsBtn.textContent = originalText;
+                            timeTagsBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                            timeTagsBtn.classList.add('bg-zinc-700', 'hover:bg-zinc-600'); // Changed from bg-gray-700
+                            timeTagsBtn.disabled = false; // Re-enable the button
+                            timeTagsBtn.removeAttribute('data-temp-active'); // Unmark as active
+                            updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
+                        }, 1500);
+                    }
+                });
 
             // Fix FN ID's button event listener
             fixFnIdsBtn.addEventListener('click', () => {
                 if (monacoEditorInstance) {
                     let content = monacoEditorInstance.getValue();
-                    content = decodeHtmlEntities(content); // Decode before processing
+                    // Do NOT decodeHtmlEntities here. Protect attributes directly from Monaco's value.
                     content = protectDataAttributes(content); // Protect attributes (string replacement)
 
                     content = applyNBSPPlaceholders(content); // Apply placeholders
@@ -3292,14 +3650,14 @@
                     const originalText = fixFnIdsBtn.textContent;
                     fixFnIdsBtn.textContent = 'Fixed!';
                     fixFnIdsBtn.classList.add('bg-green-500', 'hover:bg-green-600');
-                    fixFnIdsBtn.classList.remove('bg-blue-700', 'hover:bg-blue-800'); // Changed from bg-gray-700
+                    fixFnIdsBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600'); // Changed from bg-gray-700
                     fixFnIdsBtn.disabled = true; // Disable the button
                     fixFnIdsBtn.setAttribute('data-temp-active', 'true'); // Mark as active
                     updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
                     setTimeout(() => {
                         fixFnIdsBtn.textContent = originalText;
                         fixFnIdsBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-                        fixFnIdsBtn.classList.add('bg-blue-700', 'hover:bg-blue-800'); // Changed from bg-gray-700
+                        fixFnIdsBtn.classList.add('bg-zinc-700', 'hover:bg-zinc-600'); // Changed from bg-gray-700
                         fixFnIdsBtn.disabled = false; // Re-enable the button
                         fixFnIdsBtn.removeAttribute('data-temp-active'); // Unmark as active
                         updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
@@ -3311,7 +3669,7 @@
             cleanMsoBtn.addEventListener('click', () => {
                 if (monacoEditorInstance) {
                     let contentToClean = monacoEditorInstance.getValue();
-                    contentToClean = decodeHtmlEntities(contentToClean); // Decode before processing
+                    // Do NOT decodeHtmlEntities here. Protect attributes directly from Monaco's value.
                     contentToClean = protectDataAttributes(contentToClean); // Protect attributes once at the start (string replacement)
 
                     console.log("Clean MSO button clicked. Applying all cleaning functions.");
@@ -3327,7 +3685,6 @@
                     contentToClean = applyCleanSingleBreaks(contentToClean);
                     console.log("Clean Single Breaks applied.");
                     contentToClean = applyCleanFormattingTags(contentToClean);
-                    console.log("Clean <u> | <b> | <i> applied.");
                     contentToClean = applyCleanMsoCode(contentToClean); // This also handles images now
 
                     contentToClean = restoreDataAttributes(contentToClean); // Restore attributes once at the end (string replacement)
@@ -3365,7 +3722,7 @@
             cleanUrlsBtn.addEventListener('click', () => {
                 if (monacoEditorInstance) {
                     let content = monacoEditorInstance.getValue();
-                    content = decodeHtmlEntities(content);
+                    // Do NOT decodeHtmlEntities here. Protect attributes directly from Monaco's value.
                     content = protectDataAttributes(content); // Protect attributes (string replacement)
 
                     content = applyUrlCleaning(content);
@@ -3382,14 +3739,14 @@
                     const originalText = cleanUrlsBtn.textContent;
                     cleanUrlsBtn.textContent = 'Cleaned!';
                     cleanUrlsBtn.classList.add('bg-green-500', 'hover:bg-green-600');
-                    cleanUrlsBtn.classList.remove('bg-blue-700', 'hover:bg-blue-800');
+                    cleanUrlsBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
                     cleanUrlsBtn.disabled = true;
                     cleanUrlsBtn.setAttribute('data-temp-active', 'true');
                     updateToggleEditorViewBtnCodeState();
                     setTimeout(() => {
                         cleanUrlsBtn.textContent = originalText;
                         cleanUrlsBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-                        cleanUrlsBtn.classList.add('bg-blue-700', 'hover:bg-blue-800');
+                        cleanUrlsBtn.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
                         cleanUrlsBtn.disabled = false;
                         cleanUrlsBtn.removeAttribute('data-temp-active');
                         updateToggleEditorViewBtnCodeState();
@@ -3401,7 +3758,7 @@
             cleanSpacesBtn.addEventListener('click', () => {
                 if (monacoEditorInstance) {
                     let content = monacoEditorInstance.getValue();
-                    content = decodeHtmlEntities(content);
+                    // Do NOT decodeHtmlEntities here. Protect attributes directly from Monaco's value.
                     content = protectDataAttributes(content); // Protect attributes (string replacement)
 
                     content = applyAutoSpacing(content);
@@ -3418,14 +3775,14 @@
                     const originalText = cleanSpacesBtn.textContent;
                     cleanSpacesBtn.textContent = 'Cleaned!';
                     cleanSpacesBtn.classList.add('bg-green-500', 'hover:bg-green-600');
-                    cleanSpacesBtn.classList.remove('bg-blue-700', 'hover:bg-blue-800');
+                    cleanSpacesBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
                     cleanSpacesBtn.disabled = true;
                     cleanSpacesBtn.setAttribute('data-temp-active', 'true');
                     updateToggleEditorViewBtnCodeState();
                     setTimeout(() => {
                         cleanSpacesBtn.textContent = originalText;
                         cleanSpacesBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-                        cleanSpacesBtn.classList.add('bg-blue-700', 'hover:bg-blue-800');
+                        cleanSpacesBtn.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
                         cleanSpacesBtn.disabled = false;
                         cleanSpacesBtn.removeAttribute('data-temp-active');
                         updateToggleEditorViewBtnCodeState();
@@ -3437,7 +3794,7 @@
             cleanSingleBreaksBtn.addEventListener('click', () => {
                 if (monacoEditorInstance) {
                     let content = monacoEditorInstance.getValue();
-                    content = decodeHtmlEntities(content);
+                    // Do NOT decodeHtmlEntities here. Protect attributes directly from Monaco's value.
                     content = protectDataAttributes(content); // Protect attributes (string replacement)
 
                     content = applyCleanSingleBreaks(content);
@@ -3454,14 +3811,14 @@
                     const originalText = cleanSingleBreaksBtn.textContent;
                     cleanSingleBreaksBtn.textContent = 'Cleaned!';
                     cleanSingleBreaksBtn.classList.add('bg-green-500', 'hover:bg-green-600');
-                    cleanSingleBreaksBtn.classList.remove('bg-blue-700', 'hover:bg-blue-800');
+                    cleanSingleBreaksBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
                     cleanSingleBreaksBtn.disabled = true;
                     cleanSingleBreaksBtn.setAttribute('data-temp-active', 'true');
                     updateToggleEditorViewBtnCodeState();
                     setTimeout(() => {
                         cleanSingleBreaksBtn.textContent = originalText;
                         cleanSingleBreaksBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-                        cleanSingleBreaksBtn.classList.add('bg-blue-700', 'hover:bg-blue-800');
+                        cleanSingleBreaksBtn.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
                         cleanSingleBreaksBtn.disabled = false;
                         cleanSingleBreaksBtn.removeAttribute('data-temp-active');
                         updateToggleEditorViewBtnCodeState();
@@ -3473,7 +3830,7 @@
             cleanFormattingTagsBtn.addEventListener('click', () => {
                 if (monacoEditorInstance) {
                     let content = monacoEditorInstance.getValue();
-                    content = decodeHtmlEntities(content);
+                    // Do NOT decodeHtmlEntities here. Protect attributes directly from Monaco's value.
                     content = protectDataAttributes(content); // Protect attributes (string replacement)
 
                     content = applyCleanFormattingTags(content);
@@ -3490,14 +3847,14 @@
                     const originalText = cleanFormattingTagsBtn.textContent;
                     cleanFormattingTagsBtn.textContent = 'Cleaned!';
                     cleanFormattingTagsBtn.classList.add('bg-green-500', 'hover:bg-green-600');
-                    cleanFormattingTagsBtn.classList.remove('bg-blue-700', 'hover:bg-blue-800');
+                    cleanFormattingTagsBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
                     cleanFormattingTagsBtn.disabled = true;
                     cleanFormattingTagsBtn.setAttribute('data-temp-active', 'true');
                     updateToggleEditorViewBtnCodeState();
                     setTimeout(() => {
                         cleanFormattingTagsBtn.textContent = originalText;
                         cleanFormattingTagsBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-                        cleanFormattingTagsBtn.classList.add('bg-blue-700', 'hover:bg-blue-800');
+                        cleanFormattingTagsBtn.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
                         cleanFormattingTagsBtn.disabled = false;
                         cleanFormattingTagsBtn.removeAttribute('data-temp-active');
                         updateToggleEditorViewBtnCodeState();
@@ -3509,7 +3866,7 @@
             autoSectionBtn.addEventListener('click', () => {
                 if (monacoEditorInstance) {
                     let content = monacoEditorInstance.getValue();
-                    content = decodeHtmlEntities(content); // Decode before processing
+                    // Do NOT decodeHtmlEntities here. Protect attributes directly from Monaco's value.
                     content = protectDataAttributes(content); // Protect attributes (string replacement)
 
                     content = applyAutoSectioning(content);
@@ -3527,19 +3884,103 @@
                     const originalText = autoSectionBtn.textContent;
                     autoSectionBtn.textContent = 'Sectioned!';
                     autoSectionBtn.classList.add('bg-green-500', 'hover:bg-green-600');
-                    autoSectionBtn.classList.remove('bg-blue-700', 'hover:bg-blue-800');
+                    autoSectionBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
                     autoSectionBtn.disabled = true;
                     autoSectionBtn.setAttribute('data-temp-active', 'true');
                     updateToggleEditorViewBtnCodeState();
                     setTimeout(() => {
                         autoSectionBtn.textContent = originalText;
                         autoSectionBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-                        autoSectionBtn.classList.add('bg-blue-700', 'hover:bg-blue-800');
+                        autoSectionBtn.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
                         autoSectionBtn.disabled = false;
                         autoSectionBtn.removeAttribute('data-temp-active');
                         updateToggleEditorViewBtnCodeState();
                     }, 1500);
                 }
+            });
+
+            // New: Colophon button event listener
+            colophonBtn.addEventListener('click', () => {
+                const currentYear = new Date().getFullYear();
+                const colophonContentHtml = `
+                    <div class="flex flex-col space-y-4">
+                        <div class="flex flex-col space-y-4">
+                            <div>
+                                <span class="text-sm font-medium text-gray-200 mr-2">Language:</span>
+                                <div class="button-group inline-flex">
+                                    <button id="langEnglishBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">English</button>
+                                    <button id="langFrenchBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">French</button>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="text-sm font-medium text-gray-200 mr-2">Monarch:</span>
+                                <div class="button-group inline-flex">
+                                    <button id="monarchKingBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">King</button>
+                                    <button id="monarchQueenBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">Queen</button>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="text-sm font-medium text-gray-200 mr-2">Identifier:</span>
+                                <div class="button-group inline-flex">
+                                    <button id="idISBNBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">ISBN</button>
+                                    <button id="idISSNBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">ISSN</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="colophonYear" class="block text-sm font-medium text-gray-200">Year:</label>
+                                <input type="text" id="colophonYear" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="YYYY" maxlength="4" pattern="\\d{4}" value="${currentYear}">
+                            </div>
+                            <div>
+                                <label for="colophonNumber" class="block text-sm font-medium text-gray-200">ISBN/ISSN #:</label>
+                                <input type="text" id="colophonNumber" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter number">
+                            </div>
+                        </div>
+                    </div>
+                `;
+                showModal('Insert Colophon', colophonContentHtml);
+
+                const originalText = colophonBtn.textContent;
+                colophonBtn.textContent = 'Inserting...';
+                colophonBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                colophonBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
+                colophonBtn.disabled = true;
+                colophonBtn.setAttribute('data-temp-active', 'true');
+                updateToggleEditorViewBtnCodeState();
+
+                // The modal has its own insert/cancel logic, so we don't set a direct timeout here
+                // We'll reset the button state once the modal is closed via its own event listener.
+                // However, for the purpose of the temporary active state, we can add a short timeout
+                // that resets the button, assuming the modal interaction will follow.
+                setTimeout(() => {
+                    colophonBtn.textContent = originalText;
+                    colophonBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                    colophonBtn.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
+                    colophonBtn.disabled = false;
+                    colophonBtn.removeAttribute('data-temp-active');
+                    updateToggleEditorViewBtnCodeState();
+                }, 2000); // Reset after 2 seconds, assuming modal interaction starts
+            });
+
+            // New: Footnote List button event listener
+            footnoteListBtn.addEventListener('click', () => {
+                showFootnoteModal();
+
+                const originalText = footnoteListBtn.textContent;
+                footnoteListBtn.textContent = 'Opening...';
+                footnoteListBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                footnoteListBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
+                footnoteListBtn.disabled = true;
+                footnoteListBtn.setAttribute('data-temp-active', 'true');
+                updateToggleEditorViewBtnCodeState();
+
+                setTimeout(() => {
+                    footnoteListBtn.textContent = originalText;
+                    footnoteListBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                    footnoteListBtn.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
+                    footnoteListBtn.disabled = false;
+                    footnoteListBtn.removeAttribute('data-temp-active');
+                    updateToggleEditorViewBtnCodeState();
+                }, 2000); // Reset after 2 seconds, assuming modal interaction starts
             });
 
 
