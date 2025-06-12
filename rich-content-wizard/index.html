@@ -507,13 +507,39 @@
         }
 
         /* Styling for disabled button */
-        #runSelectedBtn:disabled, #runSelectedTableBtn:disabled,
         #autoEncodeBtn:disabled, #autoFormatBtn:disabled, #copyCodeBtn:disabled,
         #exportHtmlBtn:disabled, #importHtmlBtn:disabled, #clearAllBtn:disabled,
-        #toggleEditorViewBtnCode:disabled {
+        #toggleEditorViewBtnCode:disabled, #timeTagsBtn:disabled, #fixFnIdsBtn:disabled,
+        #cleanMsoBtn:disabled, #cleanUrlsBtn:disabled, #cleanSpacesBtn:disabled,
+        #cleanSingleBreaksBtn:disabled, #cleanFormattingTagsBtn:disabled, #autoSectionBtn:disabled { /* Added for the new buttons */
             background-color: #4a4a4a; /* Darker gray for disabled state */
             cursor: not-allowed;
             opacity: 0.6;
+        }
+
+        /* New styles for the button list */
+        .button-list {
+            display: flex;
+            flex-direction: column; /* Stack buttons vertically */
+            width: 100%;
+            border: 1px solid #3f3f46; /* Border for the entire list */
+            border-radius: 0.5rem; /* Rounded corners for the list container */
+            overflow: hidden; /* Ensures child borders don't exceed parent radius */
+        }
+
+        .button-list button {
+            width: 100%; /* Full width within the list */
+            border-radius: 0; /* No individual button rounded corners */
+            margin: 0; /* No individual button margins */
+            border: none; /* No individual button borders */
+            border-bottom: 1px solid rgba(63, 63, 70, 0.5); /* Separator between buttons */
+            padding: 0.5rem 0.75rem; /* Consistent padding */
+            text-align: center; /* Center text */
+            font-weight: 600; /* semi-bold */
+        }
+
+        .button-list button:last-child {
+            border-bottom: none; /* No border after the last button */
         }
     </style>
 </head>
@@ -551,6 +577,10 @@
                     </label>
                     <span class="toggle-switch-label text-white text-sm">Auto-Clean MSO</span>
                 </div>
+                <!-- New Clean MSO Button -->
+                <button id="cleanMsoBtn" class="ml-4 px-4 py-2 text-base bg-blue-700 text-white rounded-md hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold">
+                    Clean MSO
+                </button>
                 <div class="inline-flex space-x-2 ml-auto mt-2 sm:mt-0">
                     <button id="importHtmlBtn" class="px-3 py-1 text-sm bg-purple-700 text-white rounded-md hover:bg-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-opacity-50 font-bold">Import HTML</button>
                     <button id="exportHtmlBtn" class="px-3 py-1 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-bold">Export HTML</button>
@@ -565,68 +595,43 @@
                 <div id="monacoResizer" class="resizer"></div>
 
                 <div id="sidebar">
-                    <h3 class="text-lg font-semibold text-white mb-4">Formatting</h3>
+                    <h3 class="text-lg font-semibold text-white mb-4">Quick Formatting</h3>
                     
-                    <div>
-                        <button id="runSelectedBtn" class="w-full px-4 py-2 mb-4 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 font-semibold">
-                            Run Selected
+                    <div class="button-list">
+                        <!-- New Clean URLs Button -->
+                        <button id="cleanUrlsBtn" class="px-4 py-2 text-sm bg-blue-700 text-white hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                            Clean URLs
                         </button>
 
-                        <div class="toggle-switch-container">
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="toggleCleanLists">
-                                <span class="toggle-switch-slider"></span>
-                            </label>
-                            <span class="toggle-switch-label">Clean MSO Lists</span>
-                        </div>
-
-                        <div class="toggle-switch-container">
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="toggleCleanTablesBasic">
-                                <span class="toggle-switch-slider"></span>
-                            </label>
-                            <span class="toggle-switch-label">Clean MSO Tables</span>
-                        </div>
-
-                        <div class="toggle-switch-container">
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="toggleCleanMsoCode">
-                                <span class="toggle-switch-slider"></span>
-                            </label>
-                            <span class="toggle-switch-label">Clean MSO Code</span>
-                        </div>
-
-                        <div class="toggle-switch-container">
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="toggleUrlCleaning">
-                                <span class="toggle-switch-slider"></span>
-                            </label>
-                            <span class="toggle-switch-label">Clean URLs</span>
-                        </div>
-
-                        <div class="toggle-switch-container">
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="toggleAutoSpacing">
-                                <span class="toggle-switch-slider"></span>
-                            </label>
-                            <span class="toggle-switch-label">Clean Spaces</span>
-                        </div>
+                        <!-- New Clean Spaces Button -->
+                        <button id="cleanSpacesBtn" class="px-4 py-2 text-sm bg-blue-700 text-white hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                            Clean Spaces
+                        </button>
                         
-                        <div class="toggle-switch-container">
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="toggleCleanSingleBreaks"> 
-                                <span class="toggle-switch-slider"></span>
-                            </label>
-                            <span class="toggle-switch-label">Clean Single Breaks</span>
-                        </div>
+                        <!-- New Clean Single Breaks Button -->
+                        <button id="cleanSingleBreaksBtn" class="px-4 py-2 text-sm bg-blue-700 text-white hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                            Clean Single Breaks
+                        </button>
 
-                        <div class="toggle-switch-container">
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="toggleCleanFormattingTags"> 
-                                <span class="toggle-switch-slider"></span>
-                            </label>
-                            <span class="toggle-switch-label">Clean &lt;u&gt; | &lt;b&gt; | &lt;i&gt;</span>
-                        </div>
+                        <!-- New Clean <u> | <b> | <i> Button -->
+                        <button id="cleanFormattingTagsBtn" class="px-4 py-2 text-sm bg-blue-700 text-white hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                            Clean &lt;u&gt; | &lt;b&gt; | &lt;i&gt;
+                        </button>
+
+                        <!-- Set Time Tags Button -->
+                        <button id="timeTagsBtn" class="px-4 py-2 text-sm bg-blue-700 text-white hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                            Set Time Tags
+                        </button>
+
+                        <!-- Fix FN ID's Button -->
+                        <button id="fixFnIdsBtn" class="px-4 py-2 text-sm bg-blue-700 text-white hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                            Fix FN ID's
+                        </button>
+
+                        <!-- New Auto-Section Button -->
+                        <button id="autoSectionBtn" class="px-4 py-2 text-sm bg-blue-700 text-white hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                            Auto-Section
+                        </button>
                     </div>
 
                 </div>
@@ -662,37 +667,24 @@
         const importHtmlBtn = document.getElementById('importHtmlBtn');
         const htmlFileInput = document.getElementById('htmlFileInput');
         const clearAllBtn = document.getElementById('clearAllBtn');
-        const runSelectedBtn = document.getElementById('runSelectedBtn'); // Get reference to Run Selected button
+        const timeTagsBtn = document.getElementById('timeTagsBtn'); // New: Get reference to Set Time Tags button
+        const fixFnIdsBtn = document.getElementById('fixFnIdsBtn'); // New: Get reference to Fix FN ID's button
+        const cleanMsoBtn = document.getElementById('cleanMsoBtn'); // New: Get reference to Clean MSO button
+        // New button references for former toggles
+        const cleanUrlsBtn = document.getElementById('cleanUrlsBtn');
+        const cleanSpacesBtn = document.getElementById('cleanSpacesBtn');
+        const cleanSingleBreaksBtn = document.getElementById('cleanSingleBreaksBtn');
+        const cleanFormattingTagsBtn = document.getElementById('cleanFormattingTagsBtn');
+        const autoSectionBtn = document.getElementById('autoSectionBtn'); // New: Auto-Section button
 
         // Monaco Resizer elements
         const monacoEditorContainer = document.getElementById('monacoEditorContainer');
         const monacoResizer = document.getElementById('monacoResizer');
         const sidebar = document.getElementById('sidebar');
 
-        // Toggle references
-        const toggleUrlCleaning = document.getElementById('toggleUrlCleaning');
-        const toggleAutoSpacing = document.getElementById('toggleAutoSpacing');
-        const toggleCleanSingleBreaks = document.getElementById('toggleCleanSingleBreaks');
-        const toggleCleanMsoCode = document.getElementById('toggleCleanMsoCode');
-        const toggleCleanFormattingTags = document.getElementById('toggleCleanFormattingTags');
-        const toggleCleanLists = document.getElementById('toggleCleanLists');
-        // Removed toggleCleanImgs as it's merged
-        const toggleCleanTablesBasic = document.getElementById('toggleCleanTablesBasic');
-
         // Auto-Clean MSO when switching toggles
         const toggleAutoCleanMsoOnSwitchRichText = document.getElementById('toggleAutoCleanMsoOnSwitchRichText');
         const toggleAutoCleanMsoOnSwitchCode = document.getElementById('toggleAutoCleanMsoOnSwitchCode');
-
-        // Array of all general cleaning toggles for easy iteration
-        const generalCleaningToggles = [
-            toggleCleanLists,
-            toggleCleanTablesBasic,
-            toggleUrlCleaning,
-            toggleAutoSpacing,
-            toggleCleanSingleBreaks,
-            toggleCleanFormattingTags,
-            toggleCleanMsoCode // Clean IMGs is now part of MsoCode
-        ];
 
         // Array of all buttons that display temporary messages
         const tempMessageButtons = [
@@ -702,7 +694,14 @@
             exportHtmlBtn,
             importHtmlBtn,
             clearAllBtn,
-            runSelectedBtn
+            timeTagsBtn,
+            fixFnIdsBtn,
+            cleanMsoBtn,
+            cleanUrlsBtn,
+            cleanSpacesBtn,
+            cleanSingleBreaksBtn,
+            cleanFormattingTagsBtn,
+            autoSectionBtn // Add the new button here
         ];
 
         let richTextEditorInstance; // HugeRTE editor instance
@@ -716,6 +715,93 @@
         // Variable to hold the HugeRTE editor instance from the iframe
         let richTextEditorInstanceFromIframe;
 
+        // NEW: Simplified NBSP Placeholder
+        const NBSP_PLACEHOLDER = '__NBSP_PLACEHOLDER__'; // A unique string that won't conflict with content
+
+        /**
+         * Replaces all forms of non-breaking spaces with a single, unique placeholder.
+         * @param {string} htmlString - The HTML string to process.
+         * @returns {string} The HTML string with NBSP replaced by placeholders.
+         */
+        function applyNBSPPlaceholders(htmlString) {
+            let processedString = htmlString;
+            processedString = processedString.replace(/&nbsp;|&#160;|\u00A0/g, NBSP_PLACEHOLDER);
+            return processedString;
+        }
+
+        /**
+         * Reverts the unique placeholder back to the numeric HTML entity for non-breaking space.
+         * @param {string} htmlString - The HTML string with NBSP placeholders.
+         * @returns {string} The HTML string with original NBSP entities restored.
+         */
+        function revertNBSPPlaceholders(htmlString) {
+            let processedString = htmlString;
+            processedString = processedString.replace(new RegExp(NBSP_PLACEHOLDER, 'g'), '&#160;');
+            return processedString;
+        }
+
+        /**
+         * Encodes a string to Base64.
+         * @param {string} str The string to encode.
+         * @returns {string} The Base64 encoded string.
+         */
+        function encodeBase64(str) {
+            return btoa(unescape(encodeURIComponent(str)));
+        }
+
+        /**
+         * Decodes a Base64 string.
+         * @param {string} str The Base64 string to decode.
+         * @returns {string} The decoded string.
+         */
+        function decodeBase64(str) {
+            return decodeURIComponent(escape(atob(str)));
+        }
+
+        /**
+         * Protects data-toggle attributes by Base64 encoding their values and replacing them with a temporary attribute.
+         * This function operates purely on the HTML string using regex to avoid DOM parsing issues with complex attribute values.
+         * @param {string} htmlString - The HTML content to process.
+         * @returns {string} The HTML with protected data-toggle attributes.
+         */
+        function protectDataAttributes(htmlString) {
+            // Regex to find data-toggle attributes. It needs to be non-greedy (`*?`)
+            // and handle potential multiple attributes on one tag, and various whitespace.
+            const regex = /data-toggle="([^"]*)"/g;
+            return htmlString.replace(regex, (match, value) => {
+                const encodedValue = encodeBase64(value);
+                // Return the temporary attribute with the encoded value.
+                // We use a different, very distinct attribute name to avoid any conflicts.
+                return `data-temp-toggle-protected="${encodedValue}"`;
+            });
+        }
+
+        /**
+         * Restores protected data-toggle attributes by Base64 decoding their values and replacing them back.
+         * The decoded value's internal double quotes are escaped as &quot; to prevent corruption during later DOM operations.
+         * This function operates purely on the HTML string using regex.
+         * @param {string} htmlString - The HTML content to process.
+         * @returns {string} The HTML with original data-toggle attributes restored.
+         */
+        function restoreDataAttributes(htmlString) {
+            const regex = /data-temp-toggle-protected="([^"]*)"/g;
+            return htmlString.replace(regex, (match, encodedValue) => {
+                try {
+                    let decodedValue = decodeBase64(encodedValue);
+                    // Crucially: Escape internal double quotes (") to &quot; and other special HTML chars
+                    // This is done by setting textContent of a temporary div and reading innerHTML
+                    const tempDiv = document.createElement('div');
+                    tempDiv.textContent = decodedValue;
+                    const escapedValue = tempDiv.innerHTML;
+
+                    // Return the original data-toggle attribute with the re-escaped value
+                    return `data-toggle="${escapedValue}"`;
+                } catch (e) {
+                    console.error("Error decoding or re-escaping Base64 data-toggle attribute:", e);
+                    return ''; // Remove the attribute if decoding/re-escaping fails
+                }
+            });
+        }
 
         /**
          * Decodes HTML entities within a string to their actual Unicode characters.
@@ -749,8 +835,8 @@
          * @returns {string} The cleaned HTML content.
          */
         function applyUrlCleaning(htmlString) {
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = htmlString;
+            const parser = new DOMParser(); // Create a new parser instance
+            const tempDiv = parser.parseFromString(htmlString, 'text/html').body; // Parse string into a temporary DOM body
 
             const urlMappings = [
                 { old: 'https://canada-preview.adobecqms.net/en/treasury-board-secretariat', new: '/content/canadasite/en/treasury-board-secretariat' },
@@ -784,7 +870,6 @@
                         while (a.firstChild) {
                             parent.insertBefore(a.firstChild, a);
                         }
-                        // Remove the <a> tag itself
                         parent.removeChild(a);
                     }
                     return; // Skip further processing for this <a> tag
@@ -1164,7 +1249,7 @@
          * Converts common character entities and named entities to their numeric HTML entity equivalents.
          * This function operates on an HTML string, parsing it to a temporary DOM, modifying text nodes,
          * and then serializing it back to a string, ensuring numeric entities are preserved.
-         * @param {string} htmlString - The HTML string to process.
+         * @param {string} htmlString - The HTML content to process.
          * @returns {string} The processed HTML string with numeric entities.
          */
         function convertAllEntitiesToNumeric(htmlString) {
@@ -1188,6 +1273,7 @@
                     }
                 },
                 false
+
             );
 
             let currentNode;
@@ -1308,7 +1394,7 @@
                         // <span> ONLY if they have a class or ID that DON'T match the ones mentioned (Mso/Word/BCX0)
                         if ((child.hasAttribute('class') || child.hasAttribute('id')) && !containsDisallowedPattern(child)) {
                             const clonedChild = child.cloneNode(false);
-                            clonedChild.innerHTML = cleanAndPreserveAllowedContent(child, doc);
+                            clonedChild.innerHTML = cleanAndPreserveAllowedContent(clonedChild, doc);
                             tempContainer.appendChild(clonedChild);
                         } else {
                             // Unwrap if it doesn't meet the criteria
@@ -1690,7 +1776,7 @@
                     const alignAttr = p.getAttribute('align');
                     if (alignAttr) {
                         p.removeAttribute('align');
-                        let tailwindAlignClass = '';
+                        let tailwclassName = '';
                         switch (alignAttr.toLowerCase()) {
                             case 'left':
                                 tailwindAlignClass = 'text-left';
@@ -1790,7 +1876,7 @@
                     // then this <sup> is an exclusive wrapper and we can move up.
                     if (children.length === 1 && children[0] === elementToReplace) {
                         elementToReplace = currentParent; // Move up to replace this <sup>
-                        currentParent = elementToReplace.parentNode;
+                        currentParent = element.FparentNode;
                     } else {
                         break; // This <sup> contains other content, stop here.
                     }
@@ -1850,7 +1936,7 @@
                     if (!/^H[1-6]$/i.test(currentParent.tagName)) {
                         const newHeadingTag = doc.createElement(`h${headingLevel}`);
                         
-                        // Move *all* content of the original parent into the new heading tag
+                        // Move *all* content of the original parent into the new headingTag
                         while (currentParent.firstChild) {
                             newHeadingTag.appendChild(currentParent.firstChild);
                         }
@@ -2033,6 +2119,85 @@
             return doc.body.innerHTML;
         }
 
+        /**
+         * Wraps <section> tags around heading tags and their content, nesting based on heading level.
+         * Treats <aside> tags as H2 for sectioning purposes but does not wrap them.
+         * @param {string} htmlString - The HTML content to section.
+         * @returns {string} The sectioned HTML content.
+         */
+        function applyAutoSectioning(htmlString) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlString, 'text/html');
+            const originalBody = doc.body;
+
+            // Step 1: Flatten the existing structure by unwrapping all <section> elements.
+            // This ensures we start with a clean slate for re-sectioning.
+            // Iterate in reverse to avoid issues with modifying live NodeLists.
+            const existingSections = Array.from(originalBody.querySelectorAll('section'));
+            for (let i = existingSections.length - 1; i >= 0; i--) {
+                const section = existingSections[i];
+                const parent = section.parentNode;
+                if (parent) {
+                    while (section.firstChild) {
+                        parent.insertBefore(section.firstChild, section);
+                    }
+                    parent.removeChild(section);
+                }
+            }
+
+            // At this point, originalBody's children are the flattened content.
+            const nodesToProcess = Array.from(originalBody.childNodes); // Get a static copy of nodes after flattening
+
+            const newBody = doc.createElement('body');
+            // Stack stores { domElement: Node, level: number }
+            let currentSectionStack = [{ domElement: newBody, level: 0 }]; // Level 0 for body
+
+            nodesToProcess.forEach(node => {
+                if (node.nodeType === Node.ELEMENT_NODE) {
+                    const tagName = node.tagName.toLowerCase();
+                    let nodeLevel = null; // Conceptual level of the current node (e.g., 1 for h1, 2 for h2 or aside)
+                    let shouldCreateNewSectionForNode = true; // Does this specific node warrant a new <section>?
+
+                    const headingLevelMatch = tagName.match(/^h([1-6])$/);
+                    if (headingLevelMatch) {
+                        nodeLevel = parseInt(headingLevelMatch[1], 10);
+                    } else if (tagName === 'aside') {
+                        nodeLevel = 2; // Treat <aside> as H2 for sectioning logic
+                        shouldCreateNewSectionForNode = false; // Do NOT wrap <aside> in its own section
+                    }
+
+                    if (nodeLevel !== null) { // It's either a heading (h1-h6) or an <aside>
+                        // Pop sections from stack if current node's level is equal to or higher than the top section's level
+                        // This handles both closing higher-level sections and moving to a sibling section.
+                        while (currentSectionStack.length > 1 && nodeLevel <= currentSectionStack[currentSectionStack.length - 1].level) {
+                            currentSectionStack.pop();
+                        }
+
+                        let currentParentDomElement = currentSectionStack[currentSectionStack.length - 1].domElement;
+
+                        if (shouldCreateNewSectionForNode) { // It's a heading, create a new section
+                            const newSection = doc.createElement('section');
+                            currentParentDomElement.appendChild(newSection);
+                            // Push the new section onto the stack, updating the current parent for next elements
+                            currentSectionStack.push({ domElement: newSection, level: nodeLevel });
+                            currentSectionStack[currentSectionStack.length - 1].domElement.appendChild(node.cloneNode(true));
+                        } else { // It's an <aside>, append it directly to the current effective parent
+                            currentParentDomElement.appendChild(node.cloneNode(true));
+                            // IMPORTANT: <aside> does NOT create a new section for itself and is not pushed onto the stack.
+                            // This means subsequent content will be appended relative to the section that *contains* the <aside>.
+                            // This ensures the <aside> is not wrapped, and nesting for following content works as per heading levels.
+                        }
+                    } else { // Not a heading or an aside, append to the current open section
+                        currentSectionStack[currentSectionStack.length - 1].domElement.appendChild(node.cloneNode(true));
+                    }
+                } else { // Text node or comment node, append to the current open section
+                    currentSectionStack[currentSectionStack.length - 1].domElement.appendChild(node.cloneNode(true));
+                }
+            });
+
+            return newBody.innerHTML;
+        }
+
 
         /**
          * Function to set the content of the HugeRTE editor.
@@ -2093,14 +2258,17 @@
                 // 1. Get content from Rich-Text editor.
                 if (default_ifr.contentWindow && default_ifr.contentWindow.getRichEditorContent) {
                     richTextContent = default_ifr.contentWindow.getRichEditorContent();
-                    // console.log("Syncing from Rich Text to HTML. Rich Text Content length:", richTextContent.length);
+                    console.log("Syncing from Rich Text to HTML. Rich Text Content length:", richTextContent.length);
                 } else {
                     console.warn("Rich Text Editor not ready for content retrieval on toggle. Using empty string.");
                     richTextContent = '';
                 }
 
+                // Restore protected data attributes FIRST, as other cleaning might remove elements
+                let processedContent = restoreDataAttributes(richTextContent);
+                console.log("Data attributes restored after Rich Text editor roundtrip.");
+
                 // Apply Auto-Clean MSO in the specified order when switching to HTML editor
-                let processedContent = richTextContent;
                 if (toggleAutoCleanMsoOnSwitchRichText.checked) {
                     console.log("Auto-Clean MSO applied when switching to HTML editor.");
                     // Apply Clean MSO Lists
@@ -2109,7 +2277,7 @@
                     // Apply Clean MSO Tables
                     processedContent = applyCleanTablesBasic(processedContent);
                     console.log("Clean MSO Tables applied.");
-                    // Apply Clean MSO Code (includes IMGs now)
+                    // Apply Clean Mso Code (includes IMGs now)
                     processedContent = applyCleanMsoCode(processedContent);
                     console.log("Clean MSO Code (including IMGs) applied.");
                     // Apply URL cleaning
@@ -2172,8 +2340,12 @@
                     htmlOutputContent = '';
                 }
 
+                // Protect data attributes BEFORE sending to TinyMCE
+                let contentToSendToRichText = protectDataAttributes(htmlOutputContent);
+                console.log("Data attributes protected before sending to Rich Text editor.");
+
                 // 2. Update Rich Text content and editor.
-                richTextContent = htmlOutputContent; // No cleaning applied here
+                richTextContent = contentToSendToRichText; // Use the protected content
                 if (default_ifr.contentWindow && default_ifr.contentWindow.setRichEditorContent) {
                     default_ifr.contentWindow.setRichEditorContent(cleanHtmlForRichTextDisplay(richTextContent));
                     console.log("HugeRTE editor updated with HTML content.");
@@ -2240,19 +2412,6 @@
             entityDecorations = monacoEditorInstance.deltaDecorations(entityDecorations, newDecorations);
         }
 
-        // Function to update the state of the "Run Selected" button
-        function updateRunButtonState() {
-            const anyToggleChecked = generalCleaningToggles.some(toggle => toggle.checked);
-            runSelectedBtn.disabled = !anyToggleChecked;
-            if (anyToggleChecked) {
-                runSelectedBtn.classList.remove('bg-gray-600', 'cursor-not-allowed', 'opacity-60');
-                runSelectedBtn.classList.add('bg-green-600', 'hover:bg-green-700');
-            } else {
-                runSelectedBtn.classList.add('bg-gray-600', 'cursor-not-allowed', 'opacity-60');
-                runSelectedBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
-            }
-        }
-
         /**
          * Updates the color of the "Go to HTML" button based on the "Auto-Clean MSO when switching" toggle state.
          * This function is now responsible for setting the correct color for the "Go to HTML" button
@@ -2267,6 +2426,22 @@
             } else {
                 toggleEditorViewBtnRichText.classList.remove('bg-green-600', 'hover:bg-green-700', 'bg-zinc-700', 'hover:bg-zinc-600');
                 toggleEditorViewBtnRichText.classList.add('bg-sky-700', 'hover:bg-sky-800');
+            }
+        }
+
+        /**
+         * Updates the state of the "Clean MSO" button based on the "Auto-Clean MSO" toggle.
+         */
+        function updateCleanMsoButtonState() {
+            const isAutoCleanEnabled = toggleAutoCleanMsoOnSwitchRichText.checked; // Check any of the synced toggles
+            if (isAutoCleanEnabled) {
+                cleanMsoBtn.disabled = true;
+                cleanMsoBtn.classList.remove('bg-blue-700', 'hover:bg-blue-800');
+                cleanMsoBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+            } else {
+                cleanMsoBtn.disabled = false;
+                cleanMsoBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                cleanMsoBtn.classList.add('bg-blue-700', 'hover:bg-blue-800');
             }
         }
 
@@ -2372,9 +2547,9 @@
                         newSidebarWidth = initialMonacoWidth + initialSidebarWidth - newMonacoWidth;
                     }
                     if (newSidebarWidth < minWidth) {
-                        newSidebarWidth = minWidth;
-                        // Adjust Monaco width to maintain total space if sidebar hits min
-                        newMonacoWidth = initialMonacoWidth + initialSidebarWidth - newSidebarWidth;
+                        newMonacoWidth = minWidth;
+                        // Adjust Monaco width to maintain total space if Monaco hits min
+                        newMonacoWidth = initialMonacoWidth + initialSidebarWidth - newMonacoWidth;
                     }
 
                     // Apply the new widths directly to flex-basis
@@ -2428,12 +2603,19 @@
 
             autoFormatBtn.addEventListener('click', () => {
                 if (monacoEditorInstance) {
-                    const currentContent = monacoEditorInstance.getValue();
+                    let currentContent = monacoEditorInstance.getValue();
+                    currentContent = decodeHtmlEntities(currentContent); // Decode before processing
+                    currentContent = protectDataAttributes(currentContent); // Protect attributes (string replacement)
+
                     // Use js_beautify to format the HTML content
-                    const formattedContent = html_beautify(currentContent, {
+                    let formattedContent = html_beautify(currentContent, {
                         indent_size: 4, // You can customize indentation size
                         space_in_paren: true // Example option
                     });
+
+                    formattedContent = restoreDataAttributes(formattedContent); // Restore attributes (string replacement)
+                    formattedContent = convertAllEntitiesToNumeric(formattedContent); // Re-encode after formatting
+
                     monacoEditorInstance.setValue(formattedContent);
                     applyEntityHighlighting(); // Re-apply highlighting after formatting
 
@@ -2458,8 +2640,16 @@
             // New Auto-Encode button event listener
             autoEncodeBtn.addEventListener('click', () => {
                 if (monacoEditorInstance) {
-                    const currentContent = monacoEditorInstance.getValue();
-                    const encodedContent = convertAllEntitiesToNumeric(currentContent);
+                    let currentContent = monacoEditorInstance.getValue();
+                    currentContent = decodeHtmlEntities(currentContent); // Decode before processing
+                    currentContent = protectDataAttributes(currentContent); // Protect attributes (string replacement)
+
+                    let encodedContent = convertAllEntitiesToNumeric(currentContent); // Apply the encoding
+
+                    encodedContent = restoreDataAttributes(encodedContent); // Restore attributes (string replacement)
+                    // convertAllEntitiesToNumeric is the LAST step here, so no need to call it again after restore.
+                    // This is intentional as this button's purpose is to ensure all entities are numeric.
+
                     monacoEditorInstance.setValue(encodedContent);
                     htmlOutputContent = encodedContent; // Keep the main content variable updated
                     applyEntityHighlighting(); // Re-apply highlighting after encoding
@@ -2634,6 +2824,10 @@
                         .tox-edit-area__iframe {
                             flex-grow: 1; /* Make the actual iframe within TinyMCE fill space */
                         }
+                        /* Class for time tags to prevent wrapping */
+                        .nowrap {
+                            white-space: nowrap;
+                        }
                     </style>
                 </head>
                 <body>
@@ -2745,29 +2939,6 @@
                 }
             };
             
-
-            // Toggle switch logic for general cleaning toggles
-            generalCleaningToggles.forEach(switchElement => {
-                // Set initial state based on checked attribute
-                if (switchElement.checked) {
-                    switchElement.closest('.toggle-switch').classList.add('is-checked');
-                }
-
-                switchElement.addEventListener('change', (event) => {
-                    const switchId = event.target.id;
-                    const isChecked = event.target.checked;
-                    const parentLabel = event.target.closest('.toggle-switch');
-
-                    if (isChecked) {
-                        parentLabel.classList.add('is-checked');
-                    } else {
-                        parentLabel.classList.remove('is-checked');
-                    }
-                    console.log(`Toggle switch '${switchId}' is now: ${isChecked ? 'ON' : 'OFF'}`);
-                    updateRunButtonState(); // Update button state on toggle change
-                });
-            });
-
             // Event listeners for Auto-Clean MSO when switching toggles
             toggleAutoCleanMsoOnSwitchRichText.addEventListener('change', (event) => {
                 const isChecked = event.target.checked;
@@ -2781,6 +2952,7 @@
                 toggleAutoCleanMsoOnSwitchCode.closest('.toggle-switch').classList.toggle('is-checked', isChecked);
                 console.log(`Auto-Clean MSO on RichText switch is now: ${isChecked ? 'ON' : 'OFF'}`);
                 updateGoToHtmlButtonColor(); // Update button color
+                updateCleanMsoButtonState(); // Update Clean MSO button state
             });
 
             toggleAutoCleanMsoOnSwitchCode.addEventListener('change', (event) => {
@@ -2795,122 +2967,584 @@
                 toggleAutoCleanMsoOnSwitchRichText.closest('.toggle-switch').classList.toggle('is-checked', isChecked);
                 console.log(`Auto-Clean MSO on Code switch is now: ${isChecked ? 'ON' : 'OFF'}`);
                 // No button color update needed here as it's the "Go to Rich-Text" button
+                updateCleanMsoButtonState(); // Update Clean MSO button state
             });
 
 
-            // Call updateRunButtonState initially to set the correct state on load
-            updateRunButtonState();
-            // Removed updateRunTableButtonState() as it is no longer needed
-            // updateGoToHtmlButtonColor(); // Initial call is now handled directly in window.onload for better control
+            // Set Time Tags button functionality
+            timeTagsBtn.addEventListener('click', () => {
+                if (monacoEditorInstance) {
+                    let content = monacoEditorInstance.getValue();
+                    content = decodeHtmlEntities(content); // Decode before processing
+                    content = protectDataAttributes(content); // Protect attributes (string replacement)
 
-            // Functionality for "Run Selected" button for General Cleaning
-            runSelectedBtn.addEventListener('click', () => {
-                // Prevent execution if button is disabled
-                if (runSelectedBtn.disabled) {
-                    return;
-                }
-                console.log("Run Selected button clicked.");
+                    // Apply NBSP placeholders before any regex/DOM operations that might affect spaces
+                    content = applyNBSPPlaceholders(content);
 
-                let contentToClean;
-                if (currentView === 'richtext') {
-                    contentToClean = window.getRichEditorContent();
-                    // When running from rich text, entities are already decoded
-                    // and empty paragraphs outside tables/lists are removed by toggleEditorView
-                } else { // currentView === 'code'
-                    contentToClean = monacoEditorInstance.getValue();
-                    // If running from code view, ensure entities are decoded before cleaning functions
-                    // This is important because cleaning functions operate on a DOM, and decoded entities
-                    // ensure they are treated as actual characters.
-                    contentToClean = decodeHtmlEntities(contentToClean); 
-                }
-                
-                let cleanedContent = contentToClean; // Start with current content
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(content, 'text/html');
+                    const body = doc.body;
 
-                // Apply cleaning in the specified order for Run Selected
-                if (toggleCleanLists.checked) {
-                    cleanedContent = applyCleanLists(cleanedContent);
-                    console.log("Clean MSO Lists applied.");
-                }
+                    // Step 1: Remove existing <time> tags and extract their text content
+                    const existingTimeElements = doc.querySelectorAll('time');
+                    existingTimeElements.forEach(timeEl => {
+                        // Replace the <time> element with its text content
+                        const textNode = doc.createTextNode(timeEl.textContent);
+                        timeEl.parentNode.replaceChild(textNode, timeEl);
+                    });
 
-                if (toggleCleanTablesBasic.checked) {
-                    cleanedContent = applyCleanTablesBasic(cleanedContent);
-                    console.log("Clean MSO Tables applied.");
-                }
+                    // Now, `body.innerHTML` contains the HTML with all <time> tags removed.
+                    // This is the content we will re-process for tagging.
+                    let contentToProcess = body.innerHTML;
 
-                if (toggleCleanMsoCode.checked) { // This now includes Clean IMGs
-                    cleanedContent = applyCleanMsoCode(cleanedContent);
-                    console.log("Clean MSO Code (including IMGs) applied.");
-                }
+                    // Month mapping for conversion to numeric format
+                    const monthMap = {
+                        'january': '01', 'jan': '01', 'janvier': '01',
+                        'february': '02', 'feb': '02', 'février': '02',
+                        'march': '03', 'mar': '03', 'mars': '03',
+                        'april': '04', 'apr': '04', 'avril': '04',
+                        'may': '05', 'mai': '05',
+                        'june': '06', 'jun': '06', 'juin': '06',
+                        'july': '07', 'jul': '07', 'juillet': '07',
+                        'august': '08', 'aug': '08', 'août': '08',
+                        'september': '09', 'sep': '09', 'septembre': '09',
+                        'october': '10', 'oct': '10', 'octobre': '10',
+                        'november': '11', 'nov': '11', 'novembre': '11',
+                        'december': '12', 'dec': '12', 'décembre': '12'
+                    };
 
-                if (toggleUrlCleaning.checked) {
-                    cleanedContent = applyUrlCleaning(cleanedContent);
-                    console.log("Clean URLs applied.");
-                }
-
-                if (toggleAutoSpacing.checked) {
-                    cleanedContent = applyAutoSpacing(cleanedContent);
-                    console.log("Clean Spaces applied.");
-                }
-
-                // Remaining toggles (order doesn't matter for these)
-                if (toggleCleanSingleBreaks.checked) {
-                    cleanedContent = applyCleanSingleBreaks(cleanedContent);
-                    console.log("Clean Single Breaks applied.");
-                }
-
-                if (toggleCleanFormattingTags.checked) {
-                    cleanedContent = applyCleanFormattingTags(cleanedContent);
-                    console.log("Clean <u> | <b> | <i> applied.");
-                }
-
-                // After all cleaning operations, if in code view, re-encode entities to numeric HTML entities
-                // before setting the value back to Monaco.
-                if (currentView === 'code') {
-                    cleanedContent = convertAllEntitiesToNumeric(cleanedContent);
-                    console.log("Entities re-encoded to numeric after cleaning for code view.");
-                }
-
-                // Update the active editor with the final cleaned content
-                if (currentView === 'richtext') {
-                    window.setRichEditorContent(cleanedContent);
-                } else { // currentView === 'code'
-                    monacoEditorInstance.setValue(cleanedContent);
-                    htmlOutputContent = cleanedContent; // Keep the main content variable updated
-                    applyEntityHighlighting(); // Re-apply highlighting after cleaning
-                }
-
-                // Always run Auto-Indent after any cleaning operation
-                autoFormatBtn.click();
-                console.log("Auto-Indent applied after cleaning.");
-
-                // Turn off all general cleaning toggles after running
-                generalCleaningToggles.forEach(toggle => {
-                    if (toggle.checked) {
-                        toggle.checked = false;
-                        toggle.closest('.toggle-switch').classList.remove('is-checked');
+                    function getMonthNumber(monthName) {
+                        return monthMap[monthName.toLowerCase()] || null;
                     }
-                });
-                console.log("All general cleaning toggles turned off.");
-                updateRunButtonState(); // Update button state after toggles are turned off
+
+                    // Sort month keys by length in descending order to prioritize longer matches (e.g., 'mars' over 'mar')
+                    const sortedMonthKeys = Object.keys(monthMap).sort((a, b) => b.length - a.length);
+                    const monthPattern = sortedMonthKeys.map(m => m.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|');
+                    // Use the simplified NBSP placeholder in the regex
+                    const spaceOrNBSPChar = `(?:\\s|${NBSP_PLACEHOLDER})+`;
+
+                    // Regex for ISO-MM-DD
+                    const regexIsoDateFull = /(?<!\d)(\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01]))(?!\d)/g;
+
+                    // Regex for Month Day, Year (e.g., March 20, 2023)
+                    const regexMonthDayYear = new RegExp(`(?<!\\d)(${monthPattern})${spaceOrNBSPChar}(\\d{1,2}),?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'i');
+                    // Regex for Day Month Year (e.g., 20 March 2023, le 20 mars 2023)
+                    const regexDayMonthYear = new RegExp(`(?<!\\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2})${spaceOrNBSPChar}(${monthPattern}),?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'i');
+
+                    // NEW: Regex for Month Day (no year) - e.g., March 31
+                    // Negative lookahead `(?!\\d|${spaceOrNBSPChar}\\d{4})` ensures no digit or 4-digit year follows.
+                    // `(?!-)` prevents tagging numeric dates like 03-31
+                    const regexMonthDayNoYear = new RegExp(`(?<!\d)(${monthPattern})${spaceOrNBSPChar}(\\d{1,2})(?!\\d|${spaceOrNBSPChar}\\d{4})(?!-)`, 'i');
+
+                    // NEW: Regex for Day Month (no year) - e.g., 31 mars, le 31 mars
+                    // Negative lookahead `(?!\\d|${spaceOrNBSPChar}\\d{4})` ensures no digit or 4-digit year follows.
+                    // `(?!-)` prevents tagging numeric dates like 31-03
+                    const regexDayMonthNoYear = new RegExp(`(?<!\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2})${spaceOrNBSPChar}(${monthPattern})(?!\\d|${spaceOrNBSPChar}\\d{4})(?!-)`, 'i');
 
 
-                // Provide visual feedback
-                const originalText = runSelectedBtn.textContent;
-                runSelectedBtn.textContent = 'Cleaned!';
-                runSelectedBtn.classList.add('bg-sky-500', 'hover:bg-sky-600');
-                runSelectedBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
-                runSelectedBtn.disabled = true; // Disable the button
-                runSelectedBtn.setAttribute('data-temp-active', 'true'); // Mark as active
-                updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
-                setTimeout(() => {
-                    runSelectedBtn.textContent = originalText;
-                    runSelectedBtn.classList.remove('bg-sky-500', 'hover:bg-sky-600');
-                    runSelectedBtn.classList.add('bg-green-600', 'hover:bg-green-700');
-                    runSelectedBtn.disabled = false; // Re-enable the button
-                    runSelectedBtn.removeAttribute('data-temp-active'); // Unmark as active
+                    // Re-parse the content to allow traversal of the updated DOM
+                    const reParsedDoc = parser.parseFromString(contentToProcess, 'text/html');
+                    const reParsedBody = reParsedDoc.body;
+
+                    // Collect all text nodes to process first, then iterate and modify.
+                    const textNodesToModify = [];
+                    const walker = reParsedDoc.createTreeWalker(
+                        reParsedBody,
+                        NodeFilter.SHOW_TEXT,
+                        {
+                            acceptNode: function(node) {
+                                let parent = node.parentNode;
+                                while (parent) {
+                                    const tagName = parent.tagName ? parent.tagName.toLowerCase() : '';
+                                    if (tagName === 'script' || tagName === 'style' || tagName === 'time') {
+                                        return NodeFilter.FILTER_REJECT; // Reject if inside these tags
+                                    }
+                                    parent = parent.parentNode;
+                                }
+                                return NodeFilter.FILTER_ACCEPT; // Accept other text nodes
+                            }
+                        },
+                        false
+                    );
+
+                    let currentNode;
+                    while (currentNode = walker.nextNode()) {
+                        textNodesToModify.push(currentNode);
+                    }
+
+                    // Now iterate through the collected nodes and apply modifications
+                    textNodesToModify.forEach(textNode => {
+                        let text = textNode.nodeValue;
+                        let currentText = text;
+
+                        let allMatches = [];
+                        const patternsToTest = [
+                            { name: 'IsoDateFull', regex: regexIsoDateFull, handler: (match) => {
+                                // Full ISO date: Bamber-MM-DD
+                                const [fullMatch, yearMonthDay] = match;
+                                return yearMonthDay;
+                            }, priority: 3 }, // Highest priority for full dates
+                            { name: 'DayMonthYear', regex: regexDayMonthYear, handler: (match) => {
+                                // Day Month Year: e.g., 20 March 2023, le 20 mars 2023
+                                const [, day, month, year] = match;
+                                const monthNum = getMonthNumber(month);
+                                if (!monthNum || parseInt(day) < 1 || parseInt(day) > 31) return null;
+                                return `${year}-${monthNum}-${String(day).padStart(2, '0')}`;
+                            }, priority: 2 },
+                            { name: 'MonthDayYear', regex: regexMonthDayYear, handler: (match) => {
+                                // Month Day Year: e.g., March 20, 2023
+                                const [, month, day, year] = match;
+                                const monthNum = getMonthNumber(month);
+                                if (!monthNum || parseInt(day) < 1 || parseInt(day) > 31) return null;
+                                return `${year}-${monthNum}-${String(day).padStart(2, '0')}`;
+                            }, priority: 2 },
+                            // NEW: Month Day (no year)
+                            { name: 'MonthDayNoYear', regex: regexMonthDayNoYear, handler: (match) => {
+                                const [, month, day] = match;
+                                const monthNum = getMonthNumber(month);
+                                if (!monthNum || parseInt(day) < 1 || parseInt(day) > 31) return null;
+                                return `${new Date().getFullYear()}-${monthNum}-${String(day).padStart(2, '0')}`; // Add current year
+                            }, priority: 1 }, // Lower priority than full dates
+                            // NEW: Day Month (no year)
+                            { name: 'DayMonthNoYear', regex: regexDayMonthNoYear, handler: (match) => {
+                                const [, day, month] = match;
+                                const monthNum = getMonthNumber(month);
+                                if (!monthNum || parseInt(day) < 1 || parseInt(day) > 31) return null;
+                                return `${new Date().getFullYear()}-${monthNum}-${String(day).padStart(2, '0')}`; // Add current year
+                            }, priority: 1 } // Lower priority than full dates
+                        ];
+
+                        patternsToTest.forEach(pattern => {
+                            let localRegex = new RegExp(pattern.regex.source, pattern.regex.flags);
+                            // Ensure 'g' flag is always present for iterative matching
+                            if (!localRegex.flags.includes('g')) {
+                                localRegex = new RegExp(localRegex.source, localRegex.flags + 'g');
+                            }
+
+                            let match;
+                            while ((match = localRegex.exec(currentText)) !== null) {
+                                const datetimeValue = pattern.handler(match);
+                                if (datetimeValue) {
+                                    allMatches.push({
+                                        start: match.index,
+                                        end: match.index + match[0].length,
+                                        original: match[0],
+                                        datetime: datetimeValue,
+                                        priority: pattern.priority
+                                    });
+                                }
+                            }
+                        });
+
+                        // Sort by start position, then by priority (descending)
+                        allMatches.sort((a, b) => {
+                            if (a.start !== b.start) {
+                                return a.start - b.start;
+                            }
+                            return b.priority - a.priority; // Higher priority first for overlapping matches
+                        });
+
+                        let nonOverlappingMatches = [];
+                        // Process the sorted matches to remove overlaps, prioritizing higher priority matches
+                        if (allMatches.length > 0) {
+                            nonOverlappingMatches.push(allMatches[0]);
+                            for (let i = 1; i < allMatches.length; i++) {
+                                const currentMatch = allMatches[i];
+                                const lastAddedMatch = nonOverlappingMatches[nonOverlappingMatches.length - 1];
+
+                                // Check for overlap
+                                if (currentMatch.start >= lastAddedMatch.end) {
+                                    // No overlap, add the current match
+                                    nonOverlappingMatches.push(currentMatch);
+                                } else {
+                                    // Overlap detected. Keep the higher priority match.
+                                    // If priorities are equal, keep the longer match.
+                                    if (currentMatch.priority > lastAddedMatch.priority ||
+                                        (currentMatch.priority === lastAddedMatch.priority && currentMatch.original.length > lastAddedMatch.original.length)) {
+                                        nonOverlappingMatches[nonOverlappingMatches.length - 1] = currentMatch;
+                                    }
+                                }
+                            }
+                        }
+
+
+                        if (nonOverlappingMatches.length > 0) {
+                            let resultParts = [];
+                            let currentIndex = 0;
+                            nonOverlappingMatches.forEach(match => {
+                                resultParts.push(currentText.substring(currentIndex, match.start));
+                                // Add class="nowrap" here
+                                resultParts.push(`<time class="nowrap" datetime="${match.datetime}">${match.original}</time>`);
+                                currentIndex = match.end;
+                            });
+                            resultParts.push(currentText.substring(currentIndex));
+                            const newHtmlContent = resultParts.join('');
+
+                            const fragment = reParsedDoc.createRange().createContextualFragment(newHtmlContent);
+                            textNode.parentNode.replaceChild(fragment, textNode);
+                        }
+                    });
+
+                    let finalHtml = reParsedBody.innerHTML;
+                    finalHtml = revertNBSPPlaceholders(finalHtml); // Revert placeholders
+
+                    finalHtml = restoreDataAttributes(finalHtml); // Restore attributes (string replacement)
+                    finalHtml = convertAllEntitiesToNumeric(finalHtml); // Re-encode after processing
+
+                    monacoEditorInstance.setValue(finalHtml);
+
+                    // Update button feedback
+                    const originalText = timeTagsBtn.textContent;
+                    timeTagsBtn.textContent = 'Tagged!';
+                    timeTagsBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                    timeTagsBtn.classList.remove('bg-blue-700', 'hover:bg-blue-800'); // Changed from bg-gray-700
+                    timeTagsBtn.disabled = true; // Disable the button
+                    timeTagsBtn.setAttribute('data-temp-active', 'true'); // Mark as active
                     updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
-                }, 1500);
+                    setTimeout(() => {
+                        timeTagsBtn.textContent = originalText;
+                        timeTagsBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                        timeTagsBtn.classList.add('bg-blue-700', 'hover:bg-blue-800'); // Changed from bg-gray-700
+                        timeTagsBtn.disabled = false; // Re-enable the button
+                        timeTagsBtn.removeAttribute('data-temp-active'); // Unmark as active
+                        updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
+                    }, 1500);
+                }
             });
+
+            // Fix FN ID's button event listener
+            fixFnIdsBtn.addEventListener('click', () => {
+                if (monacoEditorInstance) {
+                    let content = monacoEditorInstance.getValue();
+                    content = decodeHtmlEntities(content); // Decode before processing
+                    content = protectDataAttributes(content); // Protect attributes (string replacement)
+
+                    content = applyNBSPPlaceholders(content); // Apply placeholders
+
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(content, 'text/html');
+
+                    // Map to store lists of <sup> elements for each baseId (e.g., 'fn1')
+                    const baseIdToSupElements = new Map();
+
+                    // First pass: Collect all <sup> elements with IDs ending in -rf
+                    const supElements = doc.querySelectorAll('sup[id$="-rf"]');
+                    supElements.forEach(sup => {
+                        const originalId = sup.id;
+                        const baseId = originalId.replace(/-rf$/, ''); // Get 'fn1' from 'fn1-rf'
+
+                        if (!baseIdToSupElements.has(baseId)) {
+                            baseIdToSupElements.set(baseId, []);
+                        }
+                        baseIdToSupElements.get(baseId).push(sup);
+                    });
+
+                    const idMapping = {}; // Map from original sup ID to the new canonical target ID for links
+
+                    // Second pass: Rectify IDs and build the idMapping
+                    for (const [baseId, supList] of baseIdToSupElements.entries()) {
+                        let canonicalTargetId = supList[0].id; // Default to the first sup's original ID
+
+                        if (supList.length > 1) {
+                            // If duplicates exist, we'll assign new sequential IDs to sups
+                            // and the canonical target for links will be the first one's new ID.
+                            canonicalTargetId = `${baseId}-rf-0`; // The new ID for the first instance
+                            supList.forEach((sup, index) => {
+                                const newSupId = `${baseId}-rf-${index}`;
+                                sup.id = newSupId; // Update the ID of the <sup> element
+                            });
+                        }
+                        // Now, map all original sup IDs for this baseId to the determined canonicalTargetId
+                        supList.forEach(sup => {
+                            idMapping[sup.id] = canonicalTargetId; // This maps the *new* sup.id to the canonical target
+                        });
+                        // Need to also map the *original* IDs to the canonical target, as links might still point to them
+                        // This handles cases where a link might point to 'fn1-rf' and we want it to go to 'fn1-rf-0'
+                        if (supList.length > 1) {
+                            idMapping[`${baseId}-rf`] = canonicalTargetId;
+                        }
+                    }
+
+                    // Third pass: Update <a> tags with corresponding hrefs
+                    const links = doc.querySelectorAll('a[href^="#"]');
+                    links.forEach(link => {
+                        let href = link.getAttribute('href');
+                        const anchor = href.substring(1); // Remove the '#'
+
+                        // If the anchor is in our mapping, update the href
+                        if (idMapping.hasOwnProperty(anchor)) {
+                            link.setAttribute('href', `#${idMapping[anchor]}`);
+                        } else {
+                            // If the anchor is an original ID that became canonical (e.g., 'fn1-rf' when no duplicates)
+                            // and it's not explicitly in idMapping because it's not renamed, ensure it links to itself.
+                            // This case is implicitly handled if targetIdForLinks was the original ID.
+                        }
+                    });
+
+                    let finalHtml = doc.body.innerHTML;
+                    finalHtml = revertNBSPPlaceholders(finalHtml); // Revert placeholders
+
+                    finalHtml = restoreDataAttributes(finalHtml); // Restore attributes (string replacement)
+                    finalHtml = convertAllEntitiesToNumeric(finalHtml); // Re-encode after processing
+
+                    monacoEditorInstance.setValue(finalHtml); // Use monacoEditorInstance here
+
+                    const originalText = fixFnIdsBtn.textContent;
+                    fixFnIdsBtn.textContent = 'Fixed!';
+                    fixFnIdsBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                    fixFnIdsBtn.classList.remove('bg-blue-700', 'hover:bg-blue-800'); // Changed from bg-gray-700
+                    fixFnIdsBtn.disabled = true; // Disable the button
+                    fixFnIdsBtn.setAttribute('data-temp-active', 'true'); // Mark as active
+                    updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
+                    setTimeout(() => {
+                        fixFnIdsBtn.textContent = originalText;
+                        fixFnIdsBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                        fixFnIdsBtn.classList.add('bg-blue-700', 'hover:bg-blue-800'); // Changed from bg-gray-700
+                        fixFnIdsBtn.disabled = false; // Re-enable the button
+                        fixFnIdsBtn.removeAttribute('data-temp-active'); // Unmark as active
+                        updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
+                    }, 1500);
+                }
+            });
+
+            // Clean MSO button event listener
+            cleanMsoBtn.addEventListener('click', () => {
+                if (monacoEditorInstance) {
+                    let contentToClean = monacoEditorInstance.getValue();
+                    contentToClean = decodeHtmlEntities(contentToClean); // Decode before processing
+                    contentToClean = protectDataAttributes(contentToClean); // Protect attributes once at the start (string replacement)
+
+                    console.log("Clean MSO button clicked. Applying all cleaning functions.");
+                    // Apply cleaning functions in the specified order
+                    contentToClean = applyCleanLists(contentToClean);
+                    console.log("Clean MSO Lists applied.");
+                    contentToClean = applyCleanTablesBasic(contentToClean);
+                    console.log("Clean MSO Tables applied.");
+                    contentToClean = applyUrlCleaning(contentToClean);
+                    console.log("Clean URLs applied.");
+                    contentToClean = applyAutoSpacing(contentToClean);
+                    console.log("Clean Spaces applied.");
+                    contentToClean = applyCleanSingleBreaks(contentToClean);
+                    console.log("Clean Single Breaks applied.");
+                    contentToClean = applyCleanFormattingTags(contentToClean);
+                    console.log("Clean <u> | <b> | <i> applied.");
+                    contentToClean = applyCleanMsoCode(contentToClean); // This also handles images now
+
+                    contentToClean = restoreDataAttributes(contentToClean); // Restore attributes once at the end (string replacement)
+                    contentToClean = convertAllEntitiesToNumeric(contentToClean); // Re-encode after all processing
+
+                    monacoEditorInstance.setValue(contentToClean);
+                    htmlOutputContent = contentToClean; // Keep the main content variable updated
+                    applyEntityHighlighting(); // Re-apply highlighting after cleaning
+
+                    // Always run Auto-Encode and Auto-Indent after any cleaning operation
+                    autoEncodeBtn.click(); // Run Auto-Encode
+                    autoFormatBtn.click(); // Run Auto-Indent
+                    console.log("Auto-Encode and Auto-Indent applied after cleaning.");
+
+                    // Provide visual feedback
+                    const originalText = cleanMsoBtn.textContent; // Changed to textContent
+                    cleanMsoBtn.textContent = 'Cleaned!';
+                    cleanMsoBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                    cleanMsoBtn.classList.remove('bg-blue-700', 'hover:bg-blue-800');
+                    cleanMsoBtn.disabled = true; // Disable the button
+                    cleanMsoBtn.setAttribute('data-temp-active', 'true'); // Mark as active
+                    updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
+                    setTimeout(() => {
+                        cleanMsoBtn.textContent = originalText; // Restore original text
+                        cleanMsoBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                        cleanMsoBtn.classList.add('bg-blue-700', 'hover:bg-blue-800');
+                        cleanMsoBtn.disabled = false; // Re-enable the button
+                        cleanMsoBtn.removeAttribute('data-temp-active'); // Unmark as active
+                        updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
+                    }, 1500);
+                }
+            });
+
+            // New: Event listener for Clean URLs button
+            cleanUrlsBtn.addEventListener('click', () => {
+                if (monacoEditorInstance) {
+                    let content = monacoEditorInstance.getValue();
+                    content = decodeHtmlEntities(content);
+                    content = protectDataAttributes(content); // Protect attributes (string replacement)
+
+                    content = applyUrlCleaning(content);
+
+                    content = restoreDataAttributes(content); // Restore attributes (string replacement)
+                    content = convertAllEntitiesToNumeric(content); // Re-encode after processing
+
+                    monacoEditorInstance.setValue(content);
+                    htmlOutputContent = content;
+                    applyEntityHighlighting();
+                    autoEncodeBtn.click(); // Run Auto-Encode
+                    autoFormatBtn.click(); // Run Auto-Indent
+
+                    const originalText = cleanUrlsBtn.textContent;
+                    cleanUrlsBtn.textContent = 'Cleaned!';
+                    cleanUrlsBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                    cleanUrlsBtn.classList.remove('bg-blue-700', 'hover:bg-blue-800');
+                    cleanUrlsBtn.disabled = true;
+                    cleanUrlsBtn.setAttribute('data-temp-active', 'true');
+                    updateToggleEditorViewBtnCodeState();
+                    setTimeout(() => {
+                        cleanUrlsBtn.textContent = originalText;
+                        cleanUrlsBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                        cleanUrlsBtn.classList.add('bg-blue-700', 'hover:bg-blue-800');
+                        cleanUrlsBtn.disabled = false;
+                        cleanUrlsBtn.removeAttribute('data-temp-active');
+                        updateToggleEditorViewBtnCodeState();
+                    }, 1500);
+                }
+            });
+
+            // New: Event listener for Clean Spaces button
+            cleanSpacesBtn.addEventListener('click', () => {
+                if (monacoEditorInstance) {
+                    let content = monacoEditorInstance.getValue();
+                    content = decodeHtmlEntities(content);
+                    content = protectDataAttributes(content); // Protect attributes (string replacement)
+
+                    content = applyAutoSpacing(content);
+
+                    content = restoreDataAttributes(content); // Restore attributes (string replacement)
+                    content = convertAllEntitiesToNumeric(content); // Re-encode after processing
+
+                    monacoEditorInstance.setValue(content);
+                    htmlOutputContent = content;
+                    applyEntityHighlighting();
+                    autoEncodeBtn.click(); // Run Auto-Encode
+                    autoFormatBtn.click(); // Run Auto-Indent
+
+                    const originalText = cleanSpacesBtn.textContent;
+                    cleanSpacesBtn.textContent = 'Cleaned!';
+                    cleanSpacesBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                    cleanSpacesBtn.classList.remove('bg-blue-700', 'hover:bg-blue-800');
+                    cleanSpacesBtn.disabled = true;
+                    cleanSpacesBtn.setAttribute('data-temp-active', 'true');
+                    updateToggleEditorViewBtnCodeState();
+                    setTimeout(() => {
+                        cleanSpacesBtn.textContent = originalText;
+                        cleanSpacesBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                        cleanSpacesBtn.classList.add('bg-blue-700', 'hover:bg-blue-800');
+                        cleanSpacesBtn.disabled = false;
+                        cleanSpacesBtn.removeAttribute('data-temp-active');
+                        updateToggleEditorViewBtnCodeState();
+                    }, 1500);
+                }
+            });
+
+            // New: Event listener for Clean Single Breaks button
+            cleanSingleBreaksBtn.addEventListener('click', () => {
+                if (monacoEditorInstance) {
+                    let content = monacoEditorInstance.getValue();
+                    content = decodeHtmlEntities(content);
+                    content = protectDataAttributes(content); // Protect attributes (string replacement)
+
+                    content = applyCleanSingleBreaks(content);
+
+                    content = restoreDataAttributes(content); // Restore attributes (string replacement)
+                    content = convertAllEntitiesToNumeric(content); // Re-encode after processing
+
+                    monacoEditorInstance.setValue(content);
+                    htmlOutputContent = content;
+                    applyEntityHighlighting();
+                    autoEncodeBtn.click(); // Run Auto-Encode
+                    autoFormatBtn.click(); // Run Auto-Indent
+
+                    const originalText = cleanSingleBreaksBtn.textContent;
+                    cleanSingleBreaksBtn.textContent = 'Cleaned!';
+                    cleanSingleBreaksBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                    cleanSingleBreaksBtn.classList.remove('bg-blue-700', 'hover:bg-blue-800');
+                    cleanSingleBreaksBtn.disabled = true;
+                    cleanSingleBreaksBtn.setAttribute('data-temp-active', 'true');
+                    updateToggleEditorViewBtnCodeState();
+                    setTimeout(() => {
+                        cleanSingleBreaksBtn.textContent = originalText;
+                        cleanSingleBreaksBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                        cleanSingleBreaksBtn.classList.add('bg-blue-700', 'hover:bg-blue-800');
+                        cleanSingleBreaksBtn.disabled = false;
+                        cleanSingleBreaksBtn.removeAttribute('data-temp-active');
+                        updateToggleEditorViewBtnCodeState();
+                    }, 1500);
+                }
+            });
+
+            // New: Event listener for Clean <u> | <b> | <i> button
+            cleanFormattingTagsBtn.addEventListener('click', () => {
+                if (monacoEditorInstance) {
+                    let content = monacoEditorInstance.getValue();
+                    content = decodeHtmlEntities(content);
+                    content = protectDataAttributes(content); // Protect attributes (string replacement)
+
+                    content = applyCleanFormattingTags(content);
+
+                    content = restoreDataAttributes(content); // Restore attributes (string replacement)
+                    content = convertAllEntitiesToNumeric(content); // Re-encode after processing
+
+                    monacoEditorInstance.setValue(content);
+                    htmlOutputContent = content;
+                    applyEntityHighlighting();
+                    autoEncodeBtn.click(); // Run Auto-Encode
+                    autoFormatBtn.click(); // Run Auto-Indent
+
+                    const originalText = cleanFormattingTagsBtn.textContent;
+                    cleanFormattingTagsBtn.textContent = 'Cleaned!';
+                    cleanFormattingTagsBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                    cleanFormattingTagsBtn.classList.remove('bg-blue-700', 'hover:bg-blue-800');
+                    cleanFormattingTagsBtn.disabled = true;
+                    cleanFormattingTagsBtn.setAttribute('data-temp-active', 'true');
+                    updateToggleEditorViewBtnCodeState();
+                    setTimeout(() => {
+                        cleanFormattingTagsBtn.textContent = originalText;
+                        cleanFormattingTagsBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                        cleanFormattingTagsBtn.classList.add('bg-blue-700', 'hover:bg-blue-800');
+                        cleanFormattingTagsBtn.disabled = false;
+                        cleanFormattingTagsBtn.removeAttribute('data-temp-active');
+                        updateToggleEditorViewBtnCodeState();
+                    }, 1500);
+                }
+            });
+
+            // New: Auto-Section button event listener
+            autoSectionBtn.addEventListener('click', () => {
+                if (monacoEditorInstance) {
+                    let content = monacoEditorInstance.getValue();
+                    content = decodeHtmlEntities(content); // Decode before processing
+                    content = protectDataAttributes(content); // Protect attributes (string replacement)
+
+                    content = applyAutoSectioning(content);
+
+                    content = restoreDataAttributes(content); // Restore attributes (string replacement)
+                    content = convertAllEntitiesToNumeric(content); // Re-encode after processing
+
+                    monacoEditorInstance.setValue(content);
+                    htmlOutputContent = content;
+                    applyEntityHighlighting();
+
+                    autoEncodeBtn.click(); // Run Auto-Encode
+                    autoFormatBtn.click(); // Run Auto-Indent
+
+                    const originalText = autoSectionBtn.textContent;
+                    autoSectionBtn.textContent = 'Sectioned!';
+                    autoSectionBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                    autoSectionBtn.classList.remove('bg-blue-700', 'hover:bg-blue-800');
+                    autoSectionBtn.disabled = true;
+                    autoSectionBtn.setAttribute('data-temp-active', 'true');
+                    updateToggleEditorViewBtnCodeState();
+                    setTimeout(() => {
+                        autoSectionBtn.textContent = originalText;
+                        autoSectionBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                        autoSectionBtn.classList.add('bg-blue-700', 'hover:bg-blue-800');
+                        autoSectionBtn.disabled = false;
+                        autoSectionBtn.removeAttribute('data-temp-active');
+                        updateToggleEditorViewBtnCodeState();
+                    }, 1500);
+                }
+            });
+
+
+            // Initial call to set the state of the Clean Mso button on load
+            updateCleanMsoButtonState();
         };
     </script>
 </body>
