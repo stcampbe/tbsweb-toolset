@@ -527,6 +527,7 @@
         #toggleEditorViewBtnCode:disabled, #timeTagsBtn:disabled, #fixFnIdsBtn:disabled,
         #cleanMsoBtn:disabled, #cleanUrlsBtn:disabled, #cleanSpacesBtn:disabled,
         #cleanSingleBreaksBtn:disabled, #cleanFormattingTagsBtn:disabled, #autoSectionBtn:disabled,
+        #autoIdBtn:disabled, #autoLevelHeadingsBtn:disabled, /* New: Auto-Level Headings button disabled state */
         #colophonBtn:disabled, #footnoteListBtn:disabled { /* Added for the new Footnote List button */
             background-color: #4a4a4a; /* Darker gray for disabled state */
             cursor: not-allowed;
@@ -645,9 +646,19 @@
                             Clean &lt;u&gt; | &lt;b&gt; | &lt;i&gt;
                         </button>
 
+                        <!-- New Auto-Level Headings Button -->
+                        <button id="autoLevelHeadingsBtn" class="px-4 py-2 text-sm bg-zinc-700 text-white hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                            Auto-Level Headings
+                        </button>
+
                         <!-- New Auto-Section Button -->
                         <button id="autoSectionBtn" class="px-4 py-2 text-sm bg-zinc-700 text-white hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
                             Auto-Section
+                        </button>
+
+                        <!-- New Auto-ID Button -->
+                        <button id="autoIdBtn" class="px-4 py-2 text-sm bg-zinc-700 text-white hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                            Auto-ID
                         </button>
                     </div>
 
@@ -704,7 +715,9 @@
         const cleanSpacesBtn = document.getElementById('cleanSpacesBtn');
         const cleanSingleBreaksBtn = document.getElementById('cleanSingleBreaksBtn');
         const cleanFormattingTagsBtn = document.getElementById('cleanFormattingTagsBtn');
+        const autoLevelHeadingsBtn = document.getElementById('autoLevelHeadingsBtn'); // New: Auto-Level Headings button
         const autoSectionBtn = document.getElementById('autoSectionBtn'); // New: Auto-Section button
+        const autoIdBtn = document.getElementById('autoIdBtn'); // New: Auto-ID button
         const colophonBtn = document.getElementById('colophonBtn'); // New: Colophon button
         const footnoteListBtn = document.getElementById('footnoteListBtn'); // New: Footnote List button
 
@@ -732,7 +745,9 @@
             cleanSpacesBtn,
             cleanSingleBreaksBtn,
             cleanFormattingTagsBtn,
+            autoLevelHeadingsBtn, // Add the new Auto-Level Headings button here
             autoSectionBtn,
+            autoIdBtn, // Add the new Auto-ID button here
             colophonBtn,
             footnoteListBtn // Add the new Footnote List button here
         ];
@@ -1920,9 +1935,10 @@
 
                 // Find the target element to replace. This could be the link itself
                 // or an existing <sup> parent that solely contains the link (or other <sup>s leading to it).
-                let elementToReplace = link;
-                let currentParent = link.parentNode;
+                let elementToReplace = link; // This `link` is the current <a> element being processed
+                let currentParent = link.parentNode; // Start with the immediate parent of the link
 
+                // Traverse up the DOM tree as long as the parent is <sup> and solely contains `elementToReplace`
                 while (currentParent && currentParent !== doc.body && currentParent.tagName.toLowerCase() === 'sup') {
                     // Check if this <sup> only contains the elementToReplace (which is the link or another sup)
                     // and no other significant content (like additional text nodes or other elements).
@@ -1931,10 +1947,10 @@
                     // If the <sup> has only one child and that child is our current elementToReplace (or nested <sup>),
                     // then this <sup> is an exclusive wrapper and we can move up.
                     if (children.length === 1 && children[0] === elementToReplace) {
-                        elementToReplace = currentParent; // Move up to replace this <sup>
-                        currentParent = element.parentNode;
+                        elementToReplace = currentParent; // Move up: now `elementToReplace` is this <sup>
+                        currentParent = currentParent.parentNode; // Move `currentParent` further up
                     } else {
-                        break; // This <sup> contains other content, stop here.
+                        break; // This <sup> contains other content, stop unwrapping here.
                     }
                 }
 
@@ -1984,7 +2000,7 @@
                     while (element.firstChild) {
                         parent.insertBefore(element.firstChild, element);
                     }
-                    element.parentNode.removeChild(element); // Remove the now empty element
+                    parent.removeChild(element); // Remove the now empty element
 
                     const currentParent = parent; // This is the original parent after unwrapping
 
@@ -2254,6 +2270,343 @@
             return newBody.innerHTML;
         }
 
+        /**
+         * Inserts IDs to all heading tags (h1-h6) based on specified rules.
+         *
+         * Rules:
+         * - H1s: Not ID'd.
+         * - H2s:
+         * - If text starts with a number (e.g., "1. Introduction"): ID is "toc<number>" (e.g., "toc1").
+         * - If text starts with "Appendix", "Annex", or "Annexe": ID is "app<letter>" (e.g., "appA", "appB").
+         * - If ALL H2s on the page are non-numeric (i.e., none start with a number), then ALL H2s get sequential numeric IDs (toc1, toc2, ...).
+         * - Otherwise (mixed or all non-numeric but not 'Appendix'), non-numeric H2s get sequential alphabetical IDs (tocA, tocB, ...).
+         * - H3-H6: Nested IDs "toc#-#", "toc#-#-#", etc.
+         * - Children of H2s (whether numeric, sequential-alpha, or appendix) will always use sequential numeric suffixes (e.g., "appA-1", "tocA-1").
+         *
+         * @param {string} htmlString - The HTML content to process.
+         * @returns {string} The HTML content with IDs inserted.
+         */
+        function applyAutoId(htmlString) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlString, 'text/html');
+            const body = doc.body;
+
+            // Helper functions for letter-number conversion
+            function toAlpha(num) {
+                let s = '';
+                let t;
+                while (num > 0) {
+                    t = (num - 1) % 26;
+                    s = String.fromCharCode(65 + t) + s;
+                    num = Math.floor((num - t) / 26);
+                }
+                return s || 'A'; // Default to 'A' if 0 (though numbers should be > 0)
+            }
+
+            function fromAlpha(str) {
+                let num = 0;
+                for (let i = 0; i < str.length; i++) {
+                    num = num * 26 + (str.charCodeAt(i) - 65 + 1);
+                }
+                return num;
+            }
+
+
+            // Remove existing IDs from headings (excluding H1 as they won't be re-ID'd)
+            doc.querySelectorAll('h2, h3, h4, h5, h6').forEach(heading => {
+                heading.removeAttribute('id');
+            });
+
+            // Counters for the top-level H2s, based on their detected type
+            let tocNumericMainCounter = 0;
+            let tocAlphaSequentialCounter = 0;
+            let appAlphaMainCounter = 0;
+
+            // This array holds the numerical counter for each heading level (H2, H3, H4, H5, H6).
+            // Index 0 is unused. Index 1 for H1 (not ID'd).
+            // Index 2 will hold the counter for H2 children (e.g. for generating tocX-1, tocX-2 for H3).
+            // Index 3 for H3 children (H4s), etc.
+            let subLevelCounters = new Array(7).fill(0); // [0, 0, H2_children_counter, H3_children_counter, ...]
+
+            let idPathStack = []; // Stores segments like ['tocD', '1', '2']
+
+            let hasNumericH2OnPage = false;
+            const allH2s = body.querySelectorAll('h2');
+            for (const h2 of allH2s) {
+                const text = h2.textContent.trim();
+                if (text.match(/^\s*(\d+)(?:\.|\s|\)|\-)?/)) {
+                    hasNumericH2OnPage = true;
+                    break;
+                }
+            }
+
+            const headings = body.querySelectorAll('h1, h2, h3, h4, h5, h6');
+
+            headings.forEach(heading => {
+                const level = parseInt(heading.tagName.substring(1), 10); // 1 to 6
+                const text = heading.textContent.trim();
+
+                if (level === 1) {
+                    return; // H1s are not ID'd by this function
+                }
+
+                const isAppendixOrAnnex = text.match(/^(?:Appendix|Annex|Annexe)\s*(?:([A-Z]))?/i);
+                const headingStartsWithNumber = text.match(/^\s*(\d+)(?:\.|\s|\)|\-)?/);
+
+                let currentSegment;
+
+                if (level === 2) {
+                    // This is a top-level H2. Reset all sub-level counters and the ID path.
+                    subLevelCounters.fill(0); // Reset all counters for subsequent headings
+
+                    if (hasNumericH2OnPage) {
+                        if (isAppendixOrAnnex) {
+                            if (isAppendixOrAnnex[1]) {
+                                appAlphaMainCounter = fromAlpha(isAppendixOrAnnex[1]);
+                            } else {
+                                appAlphaMainCounter++;
+                            }
+                            currentSegment = `app${toAlpha(appAlphaMainCounter)}`;
+                            tocNumericMainCounter = 0; // Reset other main counters
+                            tocAlphaSequentialCounter = 0;
+                        } else if (headingStartsWithNumber) {
+                            tocNumericMainCounter = parseInt(headingStartsWithNumber[1], 10);
+                            currentSegment = `toc${tocNumericMainCounter}`;
+                            appAlphaMainCounter = 0; // Reset other main counters
+                            tocAlphaSequentialCounter = 0;
+                        } else {
+                            tocAlphaSequentialCounter++;
+                            currentSegment = `toc${toAlpha(tocAlphaSequentialCounter)}`;
+                            tocNumericMainCounter = 0; // Reset other main counters
+                            appAlphaMainCounter = 0;
+                        }
+                    } else { // All H2s are non-numeric, so assign sequential numeric IDs
+                        tocNumericMainCounter++;
+                        currentSegment = `toc${tocNumericMainCounter}`;
+                        tocAlphaSequentialCounter = 0; // Only tocNumericMainCounter is active
+                        appAlphaMainCounter = 0;
+                    }
+                    idPathStack = [currentSegment]; // Initialize stack for this H2
+                } else { // For H3, H4, H5, H6
+                    // Truncate idPathStack to the parent's ID path.
+                    // The target length of idPathStack for the parent of 'level' is 'level - 1'.
+                    // Example: For H3 (level 3), parent is H2. idPathStack should be ['H2_segment']. Length 1.
+                    // Loop to pop segments until idPathStack matches the parent's path length.
+                    while (idPathStack.length > (level - 2)) { // Corrected: Pop until stack length is level-2 (for parent's parent)
+                        idPathStack.pop();
+                    }
+
+                    // Increment the counter for the current level's segment.
+                    // The counter for level 'L' is stored at `subLevelCounters[L]`.
+                    subLevelCounters[level]++;
+                    currentSegment = String(subLevelCounters[level]);
+
+                    // Reset counters for levels *deeper* than the current heading.
+                    subLevelCounters.fill(0, level + 1); // Reset from (current level + 1) onwards
+
+                    // Add the new segment to the stack
+                    idPathStack.push(currentSegment);
+                }
+
+                const fullId = idPathStack.join('-');
+                heading.setAttribute('id', fullId);
+            });
+
+            return body.innerHTML;
+        }
+
+        /**
+         * Auto-levels heading tags (h1-h6) based on structural rules.
+         * - Converts H1s to H2s (except specific ones with `id="wb-cont"` or `property="name"`).
+         * - Shifts H2s to H3s, H3s to H4s, ..., H5s to H6s.
+         * - Corrects skipped levels (e.g., H2 followed by H4 becomes H2, H3).
+         * - Converts H6s that would become an "H7" (due to skipped levels) to `<p><strong>`.
+         * @param {string} htmlString - The HTML content to process.
+         * @returns {string} The HTML content with adjusted heading levels.
+         */
+        function applyAutoLevelHeadings(htmlString) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlString, 'text/html');
+            const originalBodyChildren = Array.from(doc.body.childNodes); // Get a static copy
+
+            const newBody = doc.createElement('body'); // Build the new structure here
+
+            let currentHeadingLevelInSequence = 0; // Tracks the level of the most recently inserted *heading* (1-6)
+
+            originalBodyChildren.forEach(node => {
+                if (node.nodeType === Node.ELEMENT_NODE) {
+                    const tagName = node.tagName.toLowerCase();
+                    let newElement = node.cloneNode(false); // Clone element without children first
+                    let originalLevel = parseInt(tagName.substring(1));
+                    let isHeading = /^h[1-6]$/.test(tagName);
+                    let shouldBeStrongP = false;
+                    let targetNewLevel = null;
+
+                    if (isHeading) {
+                        const isPreservedH1 = tagName === 'h1' &&
+                                              (node.id === 'wb-cont' || node.hasAttribute('property') && node.getAttribute('property').includes('name'));
+
+                        if (isPreservedH1) {
+                            targetNewLevel = 1;
+                        } else {
+                            // Initial shift: H1->H2, H2->H3, ..., H5->H6
+                            if (originalLevel < 6) {
+                                targetNewLevel = originalLevel + 1;
+                            } else { // originalLevel === 6 (H6)
+                                shouldBeStrongP = true; // Mark as candidate for strong p initially
+                            }
+                        }
+
+                        // Apply skipped level correction (if it's a heading and not going to be strong P yet)
+                        if (targetNewLevel !== null) {
+                            if (currentHeadingLevelInSequence === 0) {
+                                // If no previous heading, the first heading should be H2 (or H1 if preserved)
+                                targetNewLevel = Math.max(targetNewLevel, 1); // Ensure at least H1 if preserved, else at least H2
+                                if (!isPreservedH1 && targetNewLevel < 2) targetNewLevel = 2; // Ensure it's at least H2 if not preserved H1
+                            } else {
+                                targetNewLevel = Math.min(targetNewLevel, currentHeadingLevelInSequence + 1);
+                            }
+                        }
+
+                        // Now finalize the element based on `targetNewLevel` and `shouldBeStrongP`
+                        if (shouldBeStrongP || (targetNewLevel && targetNewLevel > 6)) {
+                            // If it's an H6 that should become strong P, or a heading that would become H7+
+                            newElement = doc.createElement('p');
+                            const strong = doc.createElement('strong');
+                            // Move children of original node to strong, then strong to newElement (p)
+                            while (node.firstChild) {
+                                strong.appendChild(node.firstChild);
+                            }
+                            newElement.appendChild(strong);
+                            // Do not update currentHeadingLevelInSequence for p tags
+                        } else if (targetNewLevel !== null) {
+                            // It's a valid heading, create the new tag
+                            newElement = doc.createElement(`h${targetNewLevel}`);
+                            // Copy attributes from original node
+                            Array.from(node.attributes).forEach(attr => {
+                                // Skip original ID/property attributes if this was a preserved H1 that is now H1/H2 etc.
+                                // Or skip old id/property if this wasn't a preserved H1
+                                if (attr.name !== 'id' && attr.name !== 'property') {
+                                     newElement.setAttribute(attr.name, attr.value);
+                                }
+                            });
+                             // Ensure preserved H1 attributes are carried over if it remains H1
+                            if (isPreservedH1 && targetNewLevel === 1) {
+                                if (node.id === 'wb-cont') newElement.id = 'wb-cont';
+                                if (node.hasAttribute('property')) newElement.setAttribute('property', node.getAttribute('property'));
+                            }
+
+                            // Move children of original node to new heading
+                            while (node.firstChild) {
+                                newElement.appendChild(node.firstChild);
+                            }
+                            currentHeadingLevelInSequence = targetNewLevel;
+                        } else {
+                            // Should not happen for valid headings, but as a fallback, just clone.
+                            // This branch means a heading wasn't categorized for conversion.
+                            while (node.firstChild) { // Move children to newElement (which is a clone of the original tag)
+                                newElement.appendChild(node.firstChild);
+                            }
+                            // Do not update currentHeadingLevelInSequence as its level is ambiguous or not a heading.
+                        }
+                    } else {
+                        // Not a heading, just clone the element and its content.
+                        // We need to clone deep here since we are inserting content.
+                        newElement = node.cloneNode(true);
+                        // Reset currentHeadingLevelInSequence because non-heading content breaks the sequence
+                        currentHeadingLevelInSequence = 0;
+                    }
+                    newBody.appendChild(newElement);
+                } else {
+                    // Text node or comment node
+                    newBody.appendChild(node.cloneNode(true));
+                    // Reset currentHeadingLevelInSequence because non-heading content breaks the sequence
+                    currentHeadingLevelInSequence = 0;
+                }
+            });
+
+            return newBody.innerHTML;
+        }
+
+
+        /**
+         * Wraps <section> tags around heading tags and their content, nesting based on heading level.
+         * Treats <aside> tags as H2 for sectioning purposes but does not wrap them.
+         * @param {string} htmlString - The HTML content to section.
+         * @returns {string} The sectioned HTML content.
+         */
+        function applyAutoSectioning(htmlString) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlString, 'text/html');
+            const originalBody = doc.body;
+
+            // Step 1: Flatten the existing structure by unwrapping all <section> elements.
+            // This ensures we start with a clean slate for re-sectioning.
+            // Iterate in reverse to avoid issues with modifying live NodeLists.
+            const existingSections = Array.from(originalBody.querySelectorAll('section'));
+            for (let i = existingSections.length - 1; i >= 0; i--) {
+                const section = existingSections[i];
+                const parent = section.parentNode;
+                if (parent) {
+                    while (section.firstChild) {
+                        parent.insertBefore(section.firstChild, section);
+                    }
+                    parent.removeChild(section);
+                }
+            }
+
+            // At this point, originalBody's children are the flattened content.
+            const nodesToProcess = Array.from(originalBody.childNodes); // Get a static copy of nodes after flattening
+
+            const newBody = doc.createElement('body');
+            // Stack stores { domElement: Node, level: number }
+            let currentSectionStack = [{ domElement: newBody, level: 0 }]; // Level 0 for body
+
+            nodesToProcess.forEach(node => {
+                if (node.nodeType === Node.ELEMENT_NODE) {
+                    const tagName = node.tagName.toLowerCase();
+                    let nodeLevel = null; // Conceptual level of the current node (e.g., 1 for h1, 2 for h2 or aside)
+                    let shouldCreateNewSectionForNode = true; // Does this specific node warrant a new <section>?
+
+                    const headingLevelMatch = tagName.match(/^h([1-6])$/);
+                    if (headingLevelMatch) {
+                        nodeLevel = parseInt(headingLevelMatch[1], 10);
+                    } else if (tagName === 'aside') {
+                        nodeLevel = 2; // Treat <aside> as H2 for sectioning logic
+                        shouldCreateNewSectionForNode = false; // Do NOT wrap <aside> in its own section
+                    }
+
+                    if (nodeLevel !== null) { // It's either a heading (h1-h6) or an <aside>
+                        // Pop sections from stack if current node's level is equal to or higher than the top section's level
+                        // This handles both closing higher-level sections and moving to a sibling section.
+                        while (currentSectionStack.length > 1 && nodeLevel <= currentSectionStack[currentSectionStack.length - 1].level) {
+                            currentSectionStack.pop();
+                        }
+
+                        let currentParentDomElement = currentSectionStack[currentSectionStack.length - 1].domElement;
+
+                        if (shouldCreateNewSectionForNode) { // It's a heading, create a new section
+                            const newSection = doc.createElement('section');
+                            currentParentDomElement.appendChild(newSection);
+                            // Push the new section onto the stack, updating the current parent for next elements
+                            currentSectionStack.push({ domElement: newSection, level: nodeLevel });
+                            currentSectionStack[currentSectionStack.length - 1].domElement.appendChild(node.cloneNode(true));
+                        } else { // It's an <aside>, append it directly to the current effective parent
+                            currentParentDomElement.appendChild(node.cloneNode(true));
+                            // IMPORTANT: <aside> does NOT create a new section for itself and is not pushed onto the stack.
+                            // This means subsequent content will be appended relative to the section that *contains* the <aside>.
+                            // This ensures the <aside> is not wrapped, and nesting for following content works as per heading levels.
+                        }
+                    } else { // Not a heading or an aside, append to the current open section
+                        currentSectionStack[currentSectionStack.length - 1].domElement.appendChild(node.cloneNode(true));
+                    }
+                } else { // Text node or comment node, append to the current open section
+                    currentSectionStack[currentSectionStack.length - 1].domElement.appendChild(node.cloneNode(true));
+                }
+            });
+
+            return newBody.innerHTML;
+        }
 
         /**
          * Function to set the content of the HugeRTE editor.
@@ -2327,10 +2680,10 @@
                 // Apply Auto-Clean MSO in the specified order when switching to HTML editor
                 if (toggleAutoCleanMsoOnSwitchRichText.checked) {
                     console.log("Auto-Clean MSO applied when switching to HTML editor.");
-                    // Apply Clean MSO Lists
+                    // Apply Clean Mso Lists
                     processedContent = applyCleanLists(processedContent);
                     console.log("Clean MSO Lists applied.");
-                    // Apply Clean MSO Tables
+                    // Apply Clean Mso Tables
                     processedContent = applyCleanTablesBasic(processedContent);
                     console.log("Clean MSO Tables applied.");
                     // Apply Clean Mso Code (includes IMGs now)
@@ -2897,7 +3250,7 @@
                     let newSidebarWidth = initialSidebarWidth - dx;
 
                     const minWidth = 200; // Minimum size in pixels for each panel
-
+                    
                     // Ensure minimum widths
                     if (newMonacoWidth < minWidth) {
                         newMonacoWidth = minWidth;
@@ -3082,8 +3435,8 @@
                             importHtmlBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
                             importHtmlBtn.classList.add('bg-purple-700', 'hover:bg-purple-800');
                             importHtmlBtn.disabled = false; // Re-enable the button
-                            importHtmlBtn.removeAttribute('data-temp-active'); // Unmark as active
-                            updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
+                            importHtmlBtn.removeAttribute('data-temp-active');
+                            updateToggleEditorViewBtnCodeState();
                         }, 1500);
                     };
                     reader.onerror = () => {
@@ -3117,7 +3470,7 @@
                     clearAllBtn.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
                     clearAllBtn.disabled = false; // Re-enable the button
                     clearAllBtn.removeAttribute('data-temp-active'); // Unmark as active
-                    updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
+                    updateToggleEditorViewBtnCodeState();
                 }, 1500);
             });
 
@@ -3385,19 +3738,19 @@
                         const regexIsoDateFull = /(?<!\d)(\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01]))(?!\d)/g;
 
                         // Regex for Month Day, Year (e.g., March 20, 2023)
-                        const regexMonthDayYear = new RegExp(`(?<!\\d)(${monthPattern})${spaceOrNBSPChar}(\\d{1,2}),?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'i');
+                        const regexMonthDayYear = new RegExp(`(?<!\d)(${monthPattern})${spaceOrNBSPChar}(\\d{1,2}),?${spaceOrNBSPChar}(\\d{4})(?!\d)`, 'i');
                         // Regex for Day Month Year (e.g., 20 March 2023, le 20 mars 2023)
-                        const regexDayMonthYear = new RegExp(`(?<!\\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2})${spaceOrNBSPChar}(${monthPattern}),?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'i');
+                        const regexDayMonthYear = new RegExp(`(?<!\d)(?:(?:le|the)${spaceOrNBSPChar})?(\d{1,2})${spaceOrNBSPChar}(${monthPattern}),?${spaceOrNBSPChar}(\d{4})(?!\d)`, 'i');
 
                         // NEW: Regex for Month Day (no year) - e.g., March 31
-                        // Negative lookahead `(?!\\d|${spaceOrNBSPChar}\\d{4})` ensures no digit or 4-digit year follows.
+                        // Negative lookahead `(?!\d|${spaceOrNBSPChar}\d{4})` ensures no digit or 4-digit year follows.
                         // `(?!-)` prevents tagging numeric dates like 03-31
-                        const regexMonthDayNoYear = new RegExp(`(?<!\\d)(${monthPattern})${spaceOrNBSPChar}(\\d{1,2})(?!\\d|${spaceOrNBSPChar}\\d{4})(?!-)`, 'i');
+                        const regexMonthDayNoYear = new RegExp(`(?<!\d)(${monthPattern})${spaceOrNBSPChar}(\d{1,2})(?!\d|${spaceOrNBSPChar}\d{4})(?!-)`, 'i');
 
                         // NEW: Regex for Day Month (no year) - e.g., 31 mars, le 31 mars
-                        // Negative lookahead `(?!\\d|${spaceOrNBSPChar}\\d{4})` ensures no digit or 4-digit year follows.
+                        // Negative lookahead `(?!\d|${spaceOrNBSPChar}\d{4})` ensures no digit or 4-digit year follows.
                         // `(?!-)` prevents tagging numeric dates like 31-03
-                        const regexDayMonthNoYear = new RegExp(`(?<!\\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2})${spaceOrNBSPChar}(${monthPattern})(?!\\d|${spaceOrNBSPChar}\\d{4})(?!-)`, 'i');
+                        const regexDayMonthNoYear = new RegExp(`(?<!\d)(?:(?:le|the)${spaceOrNBSPChar})?(\d{1,2})${spaceOrNBSPChar}(${monthPattern})(?!\d|${spaceOrNBSPChar}\d{4})(?!-)`, 'i');
 
 
                         // Re-parse the content to allow traversal of the updated DOM
@@ -3565,7 +3918,7 @@
                             timeTagsBtn.classList.add('bg-zinc-700', 'hover:bg-zinc-600'); // Changed from bg-gray-700
                             timeTagsBtn.disabled = false; // Re-enable the button
                             timeTagsBtn.removeAttribute('data-temp-active'); // Unmark as active
-                            updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
+                            updateToggleEditorViewBtnCodeState();
                         }, 1500);
                     }
                 });
@@ -3650,91 +4003,80 @@
                     const originalText = fixFnIdsBtn.textContent;
                     fixFnIdsBtn.textContent = 'Fixed!';
                     fixFnIdsBtn.classList.add('bg-green-500', 'hover:bg-green-600');
-                    fixFnIdsBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600'); // Changed from bg-gray-700
+                    fixFnIdsBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
                     fixFnIdsBtn.disabled = true; // Disable the button
                     fixFnIdsBtn.setAttribute('data-temp-active', 'true'); // Mark as active
                     updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
                     setTimeout(() => {
                         fixFnIdsBtn.textContent = originalText;
                         fixFnIdsBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-                        fixFnIdsBtn.classList.add('bg-zinc-700', 'hover:bg-zinc-600'); // Changed from bg-gray-700
+                        fixFnIdsBtn.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
                         fixFnIdsBtn.disabled = false; // Re-enable the button
                         fixFnIdsBtn.removeAttribute('data-temp-active'); // Unmark as active
-                        updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
+                        updateToggleEditorViewBtnCodeState();
                     }, 1500);
                 }
             });
+
 
             // Clean MSO button event listener
             cleanMsoBtn.addEventListener('click', () => {
                 if (monacoEditorInstance) {
-                    let contentToClean = monacoEditorInstance.getValue();
-                    // Do NOT decodeHtmlEntities here. Protect attributes directly from Monaco's value.
-                    contentToClean = protectDataAttributes(contentToClean); // Protect attributes once at the start (string replacement)
+                    let currentContent = monacoEditorInstance.getValue();
+                    currentContent = protectDataAttributes(currentContent); // Protect attributes
 
-                    console.log("Clean MSO button clicked. Applying all cleaning functions.");
-                    // Apply cleaning functions in the specified order
-                    contentToClean = applyCleanLists(contentToClean);
+                    // Apply Clean Mso Lists
+                    currentContent = applyCleanLists(currentContent);
                     console.log("Clean MSO Lists applied.");
-                    contentToClean = applyCleanTablesBasic(contentToClean);
+                    // Apply Clean Mso Tables
+                    currentContent = applyCleanTablesBasic(currentContent);
                     console.log("Clean MSO Tables applied.");
-                    contentToClean = applyUrlCleaning(contentToClean);
+                    // Apply Clean Mso Code (includes IMGs now)
+                    currentContent = applyCleanMsoCode(currentContent);
+                    console.log("Clean MSO Code (including IMGs) applied.");
+                    // Apply URL cleaning
+                    currentContent = applyUrlCleaning(currentContent);
                     console.log("Clean URLs applied.");
-                    contentToClean = applyAutoSpacing(contentToClean);
+                    // Apply Clean Spaces
+                    currentContent = applyAutoSpacing(currentContent);
                     console.log("Clean Spaces applied.");
-                    contentToClean = applyCleanSingleBreaks(contentToClean);
-                    console.log("Clean Single Breaks applied.");
-                    contentToClean = applyCleanFormattingTags(contentToClean);
-                    contentToClean = applyCleanMsoCode(contentToClean); // This also handles images now
 
-                    contentToClean = restoreDataAttributes(contentToClean); // Restore attributes once at the end (string replacement)
-                    contentToClean = convertAllEntitiesToNumeric(contentToClean); // Re-encode after all processing
+                    currentContent = restoreDataAttributes(currentContent); // Restore attributes
+                    currentContent = convertAllEntitiesToNumeric(currentContent); // Ensure entities are correct after all operations
 
-                    monacoEditorInstance.setValue(contentToClean);
-                    htmlOutputContent = contentToClean; // Keep the main content variable updated
-                    applyEntityHighlighting(); // Re-apply highlighting after cleaning
+                    monacoEditorInstance.setValue(currentContent);
+                    htmlOutputContent = currentContent;
+                    applyEntityHighlighting();
 
-                    // Always run Auto-Encode and Auto-Indent after any cleaning operation
-                    autoEncodeBtn.click(); // Run Auto-Encode
-                    autoFormatBtn.click(); // Run Auto-Indent
-                    console.log("Auto-Encode and Auto-Indent applied after cleaning.");
-
-                    // Provide visual feedback
-                    const originalText = cleanMsoBtn.textContent; // Changed to textContent
+                    const originalText = cleanMsoBtn.textContent;
                     cleanMsoBtn.textContent = 'Cleaned!';
                     cleanMsoBtn.classList.add('bg-green-500', 'hover:bg-green-600');
                     cleanMsoBtn.classList.remove('bg-blue-700', 'hover:bg-blue-800');
-                    cleanMsoBtn.disabled = true; // Disable the button
-                    cleanMsoBtn.setAttribute('data-temp-active', 'true'); // Mark as active
-                    updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
+                    cleanMsoBtn.disabled = true;
+                    cleanMsoBtn.setAttribute('data-temp-active', 'true');
+                    updateToggleEditorViewBtnCodeState();
                     setTimeout(() => {
-                        cleanMsoBtn.textContent = originalText; // Restore original text
+                        cleanMsoBtn.textContent = originalText;
                         cleanMsoBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
                         cleanMsoBtn.classList.add('bg-blue-700', 'hover:bg-blue-800');
-                        cleanMsoBtn.disabled = false; // Re-enable the button
-                        cleanMsoBtn.removeAttribute('data-temp-active'); // Unmark as active
-                        updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
+                        cleanMsoBtn.disabled = false;
+                        cleanMsoBtn.removeAttribute('data-temp-active');
+                        updateToggleEditorViewBtnCodeState();
                     }, 1500);
                 }
             });
 
-            // New: Event listener for Clean URLs button
+            // Clean URLs button event listener
             cleanUrlsBtn.addEventListener('click', () => {
                 if (monacoEditorInstance) {
-                    let content = monacoEditorInstance.getValue();
-                    // Do NOT decodeHtmlEntities here. Protect attributes directly from Monaco's value.
-                    content = protectDataAttributes(content); // Protect attributes (string replacement)
-
-                    content = applyUrlCleaning(content);
-
-                    content = restoreDataAttributes(content); // Restore attributes (string replacement)
-                    content = convertAllEntitiesToNumeric(content); // Re-encode after processing
-
-                    monacoEditorInstance.setValue(content);
-                    htmlOutputContent = content;
+                    let currentContent = monacoEditorInstance.getValue();
+                    currentContent = protectDataAttributes(currentContent);
+                    currentContent = applyUrlCleaning(currentContent);
+                    currentContent = restoreDataAttributes(currentContent);
+                    currentContent = convertAllEntitiesToNumeric(currentContent);
+                    monacoEditorInstance.setValue(currentContent);
+                    htmlOutputContent = currentContent;
                     applyEntityHighlighting();
-                    autoEncodeBtn.click(); // Run Auto-Encode
-                    autoFormatBtn.click(); // Run Auto-Indent
 
                     const originalText = cleanUrlsBtn.textContent;
                     cleanUrlsBtn.textContent = 'Cleaned!';
@@ -3754,23 +4096,19 @@
                 }
             });
 
-            // New: Event listener for Clean Spaces button
+            // Clean Spaces button event listener
             cleanSpacesBtn.addEventListener('click', () => {
                 if (monacoEditorInstance) {
-                    let content = monacoEditorInstance.getValue();
-                    // Do NOT decodeHtmlEntities here. Protect attributes directly from Monaco's value.
-                    content = protectDataAttributes(content); // Protect attributes (string replacement)
-
-                    content = applyAutoSpacing(content);
-
-                    content = restoreDataAttributes(content); // Restore attributes (string replacement)
-                    content = convertAllEntitiesToNumeric(content); // Re-encode after processing
-
-                    monacoEditorInstance.setValue(content);
-                    htmlOutputContent = content;
+                    let currentContent = monacoEditorInstance.getValue();
+                    currentContent = protectDataAttributes(currentContent);
+                    currentContent = applyNBSPPlaceholders(currentContent); // Apply placeholders before spacing cleanup
+                    currentContent = applyAutoSpacing(currentContent);
+                    currentContent = revertNBSPPlaceholders(currentContent); // Revert placeholders after spacing cleanup
+                    currentContent = restoreDataAttributes(currentContent);
+                    currentContent = convertAllEntitiesToNumeric(currentContent);
+                    monacoEditorInstance.setValue(currentContent);
+                    htmlOutputContent = currentContent;
                     applyEntityHighlighting();
-                    autoEncodeBtn.click(); // Run Auto-Encode
-                    autoFormatBtn.click(); // Run Auto-Indent
 
                     const originalText = cleanSpacesBtn.textContent;
                     cleanSpacesBtn.textContent = 'Cleaned!';
@@ -3790,23 +4128,19 @@
                 }
             });
 
-            // New: Event listener for Clean Single Breaks button
+            // Clean Single Breaks button event listener
             cleanSingleBreaksBtn.addEventListener('click', () => {
                 if (monacoEditorInstance) {
-                    let content = monacoEditorInstance.getValue();
-                    // Do NOT decodeHtmlEntities here. Protect attributes directly from Monaco's value.
-                    content = protectDataAttributes(content); // Protect attributes (string replacement)
-
-                    content = applyCleanSingleBreaks(content);
-
-                    content = restoreDataAttributes(content); // Restore attributes (string replacement)
-                    content = convertAllEntitiesToNumeric(content); // Re-encode after processing
-
-                    monacoEditorInstance.setValue(content);
-                    htmlOutputContent = content;
+                    let currentContent = monacoEditorInstance.getValue();
+                    currentContent = protectDataAttributes(currentContent);
+                    currentContent = applyNBSPPlaceholders(currentContent); // Apply placeholders before break cleanup
+                    currentContent = applyCleanSingleBreaks(currentContent);
+                    currentContent = revertNBSPPlaceholders(currentContent); // Revert placeholders after break cleanup
+                    currentContent = restoreDataAttributes(currentContent);
+                    currentContent = convertAllEntitiesToNumeric(currentContent);
+                    monacoEditorInstance.setValue(currentContent);
+                    htmlOutputContent = currentContent;
                     applyEntityHighlighting();
-                    autoEncodeBtn.click(); // Run Auto-Encode
-                    autoFormatBtn.click(); // Run Auto-Indent
 
                     const originalText = cleanSingleBreaksBtn.textContent;
                     cleanSingleBreaksBtn.textContent = 'Cleaned!';
@@ -3826,23 +4160,17 @@
                 }
             });
 
-            // New: Event listener for Clean <u> | <b> | <i> button
+            // Clean Formatting Tags button event listener
             cleanFormattingTagsBtn.addEventListener('click', () => {
                 if (monacoEditorInstance) {
-                    let content = monacoEditorInstance.getValue();
-                    // Do NOT decodeHtmlEntities here. Protect attributes directly from Monaco's value.
-                    content = protectDataAttributes(content); // Protect attributes (string replacement)
-
-                    content = applyCleanFormattingTags(content);
-
-                    content = restoreDataAttributes(content); // Restore attributes (string replacement)
-                    content = convertAllEntitiesToNumeric(content); // Re-encode after processing
-
-                    monacoEditorInstance.setValue(content);
-                    htmlOutputContent = content;
+                    let currentContent = monacoEditorInstance.getValue();
+                    currentContent = protectDataAttributes(currentContent);
+                    currentContent = applyCleanFormattingTags(currentContent);
+                    currentContent = restoreDataAttributes(currentContent);
+                    currentContent = convertAllEntitiesToNumeric(currentContent);
+                    monacoEditorInstance.setValue(currentContent);
+                    htmlOutputContent = currentContent;
                     applyEntityHighlighting();
-                    autoEncodeBtn.click(); // Run Auto-Encode
-                    autoFormatBtn.click(); // Run Auto-Indent
 
                     const originalText = cleanFormattingTagsBtn.textContent;
                     cleanFormattingTagsBtn.textContent = 'Cleaned!';
@@ -3862,24 +4190,47 @@
                 }
             });
 
-            // New: Auto-Section button event listener
-            autoSectionBtn.addEventListener('click', () => {
+            // Auto-Level Headings button event listener
+            autoLevelHeadingsBtn.addEventListener('click', () => {
                 if (monacoEditorInstance) {
-                    let content = monacoEditorInstance.getValue();
-                    // Do NOT decodeHtmlEntities here. Protect attributes directly from Monaco's value.
-                    content = protectDataAttributes(content); // Protect attributes (string replacement)
-
-                    content = applyAutoSectioning(content);
-
-                    content = restoreDataAttributes(content); // Restore attributes (string replacement)
-                    content = convertAllEntitiesToNumeric(content); // Re-encode after processing
-
-                    monacoEditorInstance.setValue(content);
-                    htmlOutputContent = content;
+                    let currentContent = monacoEditorInstance.getValue();
+                    currentContent = protectDataAttributes(currentContent);
+                    currentContent = applyAutoLevelHeadings(currentContent);
+                    currentContent = restoreDataAttributes(currentContent);
+                    currentContent = convertAllEntitiesToNumeric(currentContent);
+                    monacoEditorInstance.setValue(currentContent);
+                    htmlOutputContent = currentContent;
                     applyEntityHighlighting();
 
-                    autoEncodeBtn.click(); // Run Auto-Encode
-                    autoFormatBtn.click(); // Run Auto-Indent
+                    const originalText = autoLevelHeadingsBtn.textContent;
+                    autoLevelHeadingsBtn.textContent = 'Leveled!';
+                    autoLevelHeadingsBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                    autoLevelHeadingsBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
+                    autoLevelHeadingsBtn.disabled = true;
+                    autoLevelHeadingsBtn.setAttribute('data-temp-active', 'true');
+                    updateToggleEditorViewBtnCodeState();
+                    setTimeout(() => {
+                        autoLevelHeadingsBtn.textContent = originalText;
+                        autoLevelHeadingsBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                        autoLevelHeadingsBtn.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
+                        autoLevelHeadingsBtn.disabled = false;
+                        autoLevelHeadingsBtn.removeAttribute('data-temp-active');
+                        updateToggleEditorViewBtnCodeState();
+                    }, 1500);
+                }
+            });
+
+            // Auto-Section button event listener
+            autoSectionBtn.addEventListener('click', () => {
+                if (monacoEditorInstance) {
+                    let currentContent = monacoEditorInstance.getValue();
+                    currentContent = protectDataAttributes(currentContent);
+                    currentContent = applyAutoSectioning(currentContent);
+                    currentContent = restoreDataAttributes(currentContent);
+                    currentContent = convertAllEntitiesToNumeric(currentContent);
+                    monacoEditorInstance.setValue(currentContent);
+                    htmlOutputContent = currentContent;
+                    applyEntityHighlighting();
 
                     const originalText = autoSectionBtn.textContent;
                     autoSectionBtn.textContent = 'Sectioned!';
@@ -3899,58 +4250,81 @@
                 }
             });
 
-            // New: Colophon button event listener
+            // Auto-ID button event listener
+            autoIdBtn.addEventListener('click', () => {
+                if (monacoEditorInstance) {
+                    let currentContent = monacoEditorInstance.getValue();
+                    currentContent = protectDataAttributes(currentContent);
+                    currentContent = applyAutoId(currentContent);
+                    currentContent = restoreDataAttributes(currentContent);
+                    currentContent = convertAllEntitiesToNumeric(currentContent);
+                    monacoEditorInstance.setValue(currentContent);
+                    htmlOutputContent = currentContent;
+                    applyEntityHighlighting();
+
+                    const originalText = autoIdBtn.textContent;
+                    autoIdBtn.textContent = 'ID\'d!';
+                    autoIdBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                    autoIdBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
+                    autoIdBtn.disabled = true;
+                    autoIdBtn.setAttribute('data-temp-active', 'true');
+                    updateToggleEditorViewBtnCodeState();
+                    setTimeout(() => {
+                        autoIdBtn.textContent = originalText;
+                        autoIdBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                        autoIdBtn.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
+                        autoIdBtn.disabled = false;
+                        autoIdBtn.removeAttribute('data-temp-active');
+                        updateToggleEditorViewBtnCodeState();
+                    }, 1500);
+                }
+            });
+
+            // Colophon button event listener
             colophonBtn.addEventListener('click', () => {
-                const currentYear = new Date().getFullYear();
-                const colophonContentHtml = `
+                const colophonHtml = `
                     <div class="flex flex-col space-y-4">
-                        <div class="flex flex-col space-y-4">
-                            <div>
-                                <span class="text-sm font-medium text-gray-200 mr-2">Language:</span>
-                                <div class="button-group inline-flex">
-                                    <button id="langEnglishBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">English</button>
-                                    <button id="langFrenchBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">French</button>
-                                </div>
+                        <div>
+                            <span class="text-sm font-medium text-gray-200 mr-2">Language:</span>
+                            <div class="button-group inline-flex">
+                                <button id="langEnglishBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">English</button>
+                                <button id="langFrenchBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">French</button>
                             </div>
-                            <div>
-                                <span class="text-sm font-medium text-gray-200 mr-2">Monarch:</span>
-                                <div class="button-group inline-flex">
-                                    <button id="monarchKingBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">King</button>
-                                    <button id="monarchQueenBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">Queen</button>
-                                </div>
+                        </div>
+                        <div>
+                            <span class="text-sm font-medium text-gray-200 mr-2">Monarch:</span>
+                            <div class="button-group inline-flex">
+                                <button id="monarchKingBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">King</button>
+                                <button id="monarchQueenBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">Queen</button>
                             </div>
-                            <div>
-                                <span class="text-sm font-medium text-gray-200 mr-2">Identifier:</span>
-                                <div class="button-group inline-flex">
-                                    <button id="idISBNBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">ISBN</button>
-                                    <button id="idISSNBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">ISSN</button>
-                                </div>
+                        </div>
+                        <div>
+                            <span class="text-sm font-medium text-gray-200 mr-2">Identifier:</span>
+                            <div class="button-group inline-flex">
+                                <button id="idISBNBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">ISBN</button>
+                                <button id="idISSNBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">ISSN</button>
                             </div>
-                            <div>
-                                <label for="colophonYear" class="block text-sm font-medium text-gray-200">Year:</label>
-                                <input type="text" id="colophonYear" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="YYYY" maxlength="4" pattern="\\d{4}" value="${currentYear}">
-                            </div>
-                            <div>
-                                <label for="colophonNumber" class="block text-sm font-medium text-gray-200">ISBN/ISSN #:</label>
-                                <input type="text" id="colophonNumber" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Enter number">
-                            </div>
+                        </div>
+                        <div>
+                            <label for="colophonYear" class="block text-sm font-medium text-gray-200">Year (optional):</label>
+                            <input type="number" id="colophonYear" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="${new Date().getFullYear()}" min="1900" max="2100">
+                        </div>
+                        <div>
+                            <label for="colophonNumber" class="block text-sm font-medium text-gray-200">Number (optional, e.g., for ISBN/ISSN):</label>
+                            <input type="text" id="colophonNumber" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="###-##-####-#" pattern="[0-9X-]*">
                         </div>
                     </div>
                 `;
-                showModal('Insert Colophon', colophonContentHtml);
+                showModal('Insert Colophon', colophonHtml);
 
                 const originalText = colophonBtn.textContent;
-                colophonBtn.textContent = 'Inserting...';
+                colophonBtn.textContent = 'Opening...';
                 colophonBtn.classList.add('bg-green-500', 'hover:bg-green-600');
                 colophonBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
                 colophonBtn.disabled = true;
                 colophonBtn.setAttribute('data-temp-active', 'true');
                 updateToggleEditorViewBtnCodeState();
 
-                // The modal has its own insert/cancel logic, so we don't set a direct timeout here
-                // We'll reset the button state once the modal is closed via its own event listener.
-                // However, for the purpose of the temporary active state, we can add a short timeout
-                // that resets the button, assuming the modal interaction will follow.
                 setTimeout(() => {
                     colophonBtn.textContent = originalText;
                     colophonBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
