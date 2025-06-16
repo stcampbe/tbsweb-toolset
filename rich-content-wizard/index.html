@@ -522,16 +522,13 @@
         }
 
         /* Styling for disabled button */
-        #autoEncodeBtn:disabled, #autoFormatBtn:disabled, #copyCodeBtn:disabled,
-        #exportHtmlBtn:disabled, #importHtmlBtn:disabled, #clearAllBtn:disabled,
-        #toggleEditorViewBtnCode:disabled, #timeTagsBtn:disabled, #fixFnIdsBtn:disabled,
-        #cleanMsoBtn:disabled, #cleanUrlsBtn:disabled, #cleanSpacesBtn:disabled,
-        #cleanSingleBreaksBtn:disabled, #cleanFormattingTagsBtn:disabled, #autoSectionBtn:disabled,
-        #autoIdBtn:disabled, #autoLevelHeadingsBtn:disabled, /* New: Auto-Level Headings button disabled state */
-        #colophonBtn:disabled, #footnoteListBtn:disabled { /* Added for the new Footnote List button */
-            background-color: #4a4a4a; /* Darker gray for disabled state */
-            cursor: not-allowed;
-            opacity: 0.6;
+        .button-list button:disabled,
+        .flex.justify-center.space-x-2 button:disabled,
+        .flex.items-center.mb-4 button:disabled,
+        .modal-content button:disabled { /* Apply to all buttons within these containers and modal buttons */
+            background-color: #4a4a4a !important; /* Darker gray for disabled state, use !important to override other styles */
+            cursor: not-allowed !important;
+            opacity: 0.6 !important;
         }
 
         /* New styles for the button list */
@@ -708,7 +705,7 @@
         const htmlFileInput = document.getElementById('htmlFileInput');
         const clearAllBtn = document.getElementById('clearAllBtn');
         const timeTagsBtn = document.getElementById('timeTagsBtn'); // New: Get reference to Set Time Tags button
-        const fixFnIdsBtn = document.getElementById('fixFnIdsBtn'); // New: Get reference to Fix FN ID's button
+        const fixFnIdsBtn = document.getElementById('fixFnIdsBtn'); // Fixed: Corrected ID for Fix FN ID's button
         const cleanMsoBtn = document.getElementById('cleanMsoBtn'); // New: Get reference to Clean MSO button
         // New button references for former toggles
         const cleanUrlsBtn = document.getElementById('cleanUrlsBtn');
@@ -730,26 +727,28 @@
         const toggleAutoCleanMsoOnSwitchRichText = document.getElementById('toggleAutoCleanMsoOnSwitchRichText');
         const toggleAutoCleanMsoOnSwitchCode = document.getElementById('toggleAutoCleanMsoOnSwitchCode');
 
-        // Array of all buttons that display temporary messages
-        const tempMessageButtons = [
-            copyCodeBtn,
-            autoFormatBtn,
-            autoEncodeBtn,
-            exportHtmlBtn,
+        // NEW: Array of all interactive buttons to control their disabled state
+        const allInteractiveButtons = [
+            toggleEditorViewBtnRichText,
+            toggleEditorViewBtnCode,
+            cleanMsoBtn,
             importHtmlBtn,
-            clearAllBtn,
+            exportHtmlBtn,
+            cleanSpacesBtn,
+            cleanUrlsBtn,
             timeTagsBtn,
             fixFnIdsBtn,
-            cleanMsoBtn,
-            cleanUrlsBtn,
-            cleanSpacesBtn,
             cleanSingleBreaksBtn,
             cleanFormattingTagsBtn,
-            autoLevelHeadingsBtn, // Add the new Auto-Level Headings button here
+            autoLevelHeadingsBtn,
             autoSectionBtn,
-            autoIdBtn, // Add the new Auto-ID button here
+            autoIdBtn,
+            footnoteListBtn,
             colophonBtn,
-            footnoteListBtn // Add the new Footnote List button here
+            clearAllBtn,
+            autoEncodeBtn,
+            autoFormatBtn,
+            copyCodeBtn
         ];
 
         let richTextEditorInstance; // HugeRTE editor instance
@@ -900,7 +899,6 @@
                 { old: 'https://www.canada.ca/fr/gouvernement', new: '/content/canadasite/fr/gouvernement' }
             ];
 
-            // Patterns to prepend with /content/canadasite
             const prependPatterns = [
                 '/en/treasury-board-secretariat', 'en/treasury-board-secretariat',
                 '/fr/secretariat-conseil-tresor', 'fr/secretariat-conseil-tresor',
@@ -917,7 +915,6 @@
                 if (name && !href) {
                     const parent = a.parentNode;
                     if (parent) {
-                        // Move children out of the <a> tag
                         while (a.firstChild) {
                             parent.insertBefore(a.firstChild, a);
                         }
@@ -1134,7 +1131,7 @@
                         if (element.parentNode) {
                             element.parentNode.replaceChild(doc.createTextNode(' '), element);
                         }
-                    }
+                        }
                 }
             }
 
@@ -1936,7 +1933,7 @@
                 // Find the target element to replace. This could be the link itself
                 // or an existing <sup> parent that solely contains the link (or other <sup>s leading to it).
                 let elementToReplace = link; // This `link` is the current <a> element being processed
-                let currentParent = link.parentNode; // Start with the immediate parent of the link
+                let currentParent = link.parentNode; // Start the the immediate parent of the link
 
                 // Traverse up the DOM tree as long as the parent is <sup> and solely contains `elementToReplace`
                 while (currentParent && currentParent !== doc.body && currentParent.tagName.toLowerCase() === 'sup') {
@@ -1974,7 +1971,9 @@
                     asideElement.innerHTML = cleanedInnerHtml;
 
                     // Replace the original element with the new <aside>
-                    element.parentNode.replaceChild(asideElement, element);
+                    if (element.parentNode) {
+                        element.parentNode.replaceChild(asideElement, element);
+                    }
                 }
             });
 
@@ -2192,8 +2191,123 @@
         }
 
         /**
+         * Adjusts heading levels (h1-h6) to ensure a correct hierarchical structure.
+         *
+         * Rules:
+         * - If an H1 exists with `property="name"` and `id="wb-cont"`, it is preserved as H1.
+         * - Otherwise, the very first encountered heading in the document (regardless of its initial level)
+         * is converted to H2.
+         * - All subsequent headings are adjusted relative to this H2 (or the preserved H1).
+         * Specifically, if the document starts with H1 (which becomes H2), all subsequent headings shift down one level.
+         * If the document starts with H3 (which becomes H2), all subsequent headings shift down one level.
+         * If an H2 follows an H2, it remains H2. If an H2 follows an H1 (now H2), it becomes H3.
+         * No more than one level skip down is allowed (e.g., H2 followed by H4 becomes H3).
+         * All headings are guaranteed to be at least H2 (except the special H1).
+         *
+         * @param {string} htmlString - The HTML content to process.
+         * @returns {string} The HTML content with adjusted heading levels.
+         */
+        function applyAutoLevelHeadings(htmlString) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlString, 'text/html');
+            const body = doc.body;
+
+            const headings = Array.from(body.querySelectorAll('h1, h2, h3, h4, h5, h6'));
+
+            // Find the special H1, if it exists, which should be preserved.
+            const specialH1 = headings.find(h =>
+                h.tagName.toLowerCase() === 'h1' &&
+                h.getAttribute('property') === 'name' &&
+                h.id === 'wb-cont'
+            );
+
+            let levelAdjustmentForGlobalShift = 0; // The numerical shift to apply to all relevant headings (+1 for H1->H2, -1 for H3->H2 etc.)
+            let firstRelevantHeadingFound = false;
+
+            // First pass: Determine the overall level adjustment based on the first non-special heading
+            for (const h of headings) {
+                if (h === specialH1) {
+                    continue; // Skip the special H1 in this calculation
+                }
+                if (!firstRelevantHeadingFound) {
+                    const actualLevel = parseInt(h.tagName.substring(1), 10);
+                    // Calculate the adjustment needed for this first heading to become an H2.
+                    // If actualLevel is 1 (H1), adjust by +1 (1 + 1 = 2). So adjustment = 1.
+                    // If actualLevel is 3 (H3), adjust by -1 (3 - 1 = 2). So adjustment = -1.
+                    // General formula: levelAdjustment = (Target Level for First) - (Actual Level for First)
+                    // Here, Target Level for First is always 2.
+                    levelAdjustmentForGlobalShift = 2 - actualLevel;
+                    firstRelevantHeadingFound = true;
+                    break; // Only need to consider the very first one
+                }
+            }
+
+            // Second pass: Apply the adjustments and enforce hierarchical rules
+            let effectivePreviousLevel = 0; // Tracks the *resulting* level of the previously processed heading
+
+            for (let i = 0; i < headings.length; i++) {
+                let currentHeading = headings[i]; // Get the element reference
+
+                // If it's the special H1, skip modification and set effectivePreviousLevel as H1 (level 1)
+                if (currentHeading === specialH1) {
+                    effectivePreviousLevel = 1;
+                    continue;
+                }
+
+                const currentActualLevel = parseInt(currentHeading.tagName.substring(1), 10);
+                let newLevel;
+
+                // Calculate the 'globally adjusted' level based on the initial shift
+                // (e.g., if first H1 became H2, all subsequent headings effectively shift up by 1 level number)
+                let globallyAdjustedLevel = currentActualLevel + levelAdjustmentForGlobalShift;
+                globallyAdjustedLevel = Math.max(2, globallyAdjustedLevel); // Ensure it's at least H2
+
+
+                if (effectivePreviousLevel === 0) {
+                    // This is the very first non-special heading we're processing. It must be H2.
+                    newLevel = 2;
+                } else {
+                    // For subsequent headings, ensure two rules are met:
+                    // 1. It maintains the overall global shift (`globallyAdjustedLevel`).
+                    // 2. It doesn't jump more than one level down from the `effectivePreviousLevel`.
+                    newLevel = Math.min(globallyAdjustedLevel, effectivePreviousLevel + 1);
+                    // Also, ensure the new level is never below H2
+                    newLevel = Math.max(2, newLevel);
+                }
+
+                // Only replace the element if its level needs to be changed
+                if (newLevel !== currentActualLevel) {
+                    const newHeadingTag = doc.createElement(`h${newLevel}`);
+                    // Copy all attributes from the original heading to the new one
+                    Array.from(currentHeading.attributes).forEach(attr => {
+                        newHeadingTag.setAttribute(attr.name, attr.value);
+                    });
+                    // Move all children (content) from the original heading to the new one
+                    while (currentHeading.firstChild) {
+                        newHeadingTag.appendChild(currentHeading.firstChild);
+                    }
+                    // Replace the original heading element with the newly created one in the DOM
+                    if (currentHeading.parentNode) {
+                        currentHeading.parentNode.replaceChild(newHeadingTag, currentHeading);
+                    }
+                    // Update the reference in the 'headings' array to point to the new DOM node.
+                    // This is crucial if subsequent iterations might re-evaluate elements that were
+                    // later in the original 'headings' array but whose parent or context might have changed.
+                    // Although not strictly necessary with the current loop, it's safer for DOM manipulations.
+                    headings[i] = newHeadingTag;
+                }
+                
+                // Update effectivePreviousLevel with the level that the current heading *actually* became
+                effectivePreviousLevel = newLevel;
+            }
+
+            return body.innerHTML;
+        }
+
+        /**
          * Wraps <section> tags around heading tags and their content, nesting based on heading level.
          * Treats <aside> tags as H2 for sectioning purposes but does not wrap them.
+         * Ignores sections with 'colophon' in their ID or containing a paragraph with '©' for auto-sectioning.
          * @param {string} htmlString - The HTML content to section.
          * @returns {string} The sectioned HTML content.
          */
@@ -2202,33 +2316,45 @@
             const doc = parser.parseFromString(htmlString, 'text/html');
             const originalBody = doc.body;
 
-            // Step 1: Flatten the existing structure by unwrapping all <section> elements.
-            // This ensures we start with a clean slate for re-sectioning.
-            // Iterate in reverse to avoid issues with modifying live NodeLists.
-            const existingSections = Array.from(originalBody.querySelectorAll('section'));
-            for (let i = existingSections.length - 1; i >= 0; i--) {
-                const section = existingSections[i];
-                const parent = section.parentNode;
-                if (parent) {
-                    while (section.firstChild) {
-                        parent.insertBefore(section.firstChild, section);
-                    }
-                    parent.removeChild(section);
-                }
-            }
-
-            // At this point, originalBody's children are the flattened content.
-            const nodesToProcess = Array.from(originalBody.childNodes); // Get a static copy of nodes after flattening
-
             const newBody = doc.createElement('body');
             // Stack stores { domElement: Node, level: number }
-            let currentSectionStack = [{ domElement: newBody, level: 0 }]; // Level 0 for body
+            let currentSectionStack = [{ domElement: newBody, level: 0 }]; // Level 0 for body (root container)
 
-            nodesToProcess.forEach(node => {
+            // Iterate over the live childNodes of the originalBody
+            while (originalBody.firstChild) {
+                const node = originalBody.firstChild;
+                // Temporarily remove the node from originalBody to process it
+                originalBody.removeChild(node);
+
                 if (node.nodeType === Node.ELEMENT_NODE) {
                     const tagName = node.tagName.toLowerCase();
                     let nodeLevel = null; // Conceptual level of the current node (e.g., 1 for h1, 2 for h2 or aside)
                     let shouldCreateNewSectionForNode = true; // Does this specific node warrant a new <section>?
+                    let isProtectedSection = false; // Flag for sections to ignore
+
+                    if (tagName === 'section') {
+                        // Check if this section should be ignored (colophon ID or p with ©)
+                        if (node.id.includes('colophon') || node.querySelector('p')?.textContent?.includes('©')) {
+                            isProtectedSection = true;
+                            shouldCreateNewSectionForNode = false; // Do not wrap or re-section this
+                        } else {
+                            // For non-protected existing sections, unwrap their content
+                            // This ensures the headings/content within them are processed by the main loop
+                            const fragment = doc.createDocumentFragment();
+                            while (node.firstChild) {
+                                fragment.appendChild(node.firstChild);
+                            }
+                            // Temporarily append the fragment's children back to the originalBody
+                            // so they are picked up in the next iteration of the while loop.
+                            // Insert at the beginning so they are processed immediately.
+                            originalBody.insertBefore(fragment, originalBody.firstChild);
+                            // The original section 'node' is now empty. It will be implicitly removed
+                            // when originalBody.removeChild(node) is called at the beginning of the next loop iteration.
+                            // We use 'continue' to skip the rest of the current loop iteration, ensuring
+                            // the unwrapped children are processed next.
+                            continue;
+                        }
+                    }
 
                     const headingLevelMatch = tagName.match(/^h([1-6])$/);
                     if (headingLevelMatch) {
@@ -2238,9 +2364,14 @@
                         shouldCreateNewSectionForNode = false; // Do NOT wrap <aside> in its own section
                     }
 
-                    if (nodeLevel !== null) { // It's either a heading (h1-h6) or an <aside>
-                        // Pop sections from stack if current node's level is equal to or higher than the top section's level
-                        // This handles both closing higher-level sections and moving to a sibling section.
+                    if (isProtectedSection) {
+                        // For protected sections, append them directly to the current effective parent
+                        // and *don't* modify the currentSectionStack.
+                        let parentToAppendTo = currentSectionStack[currentSectionStack.length - 1].domElement;
+                        parentToAppendTo.appendChild(node);
+                    }
+                    else if (nodeLevel !== null) { // It's either a heading (h1-h6) or an <aside> and not a protected section
+                        // Pop sections from stack if current node's level is less than or equal to the top section's level.
                         while (currentSectionStack.length > 1 && nodeLevel <= currentSectionStack[currentSectionStack.length - 1].level) {
                             currentSectionStack.pop();
                         }
@@ -2252,46 +2383,75 @@
                             currentParentDomElement.appendChild(newSection);
                             // Push the new section onto the stack, updating the current parent for next elements
                             currentSectionStack.push({ domElement: newSection, level: nodeLevel });
-                            currentSectionStack[currentSectionStack.length - 1].domElement.appendChild(node.cloneNode(true));
+                            // Append the original heading node to the newly created section
+                            currentSectionStack[currentSectionStack.length - 1].domElement.appendChild(node);
                         } else { // It's an <aside>, append it directly to the current effective parent
-                            currentParentDomElement.appendChild(node.cloneNode(true));
+                            currentParentDomElement.appendChild(node);
                             // IMPORTANT: <aside> does NOT create a new section for itself and is not pushed onto the stack.
                             // This means subsequent content will be appended relative to the section that *contains* the <aside>.
-                            // This ensures the <aside> is not wrapped, and nesting for following content works as per heading levels.
                         }
-                    } else { // Not a heading or an aside, append to the current open section
-                        currentSectionStack[currentSectionStack.length - 1].domElement.appendChild(node.cloneNode(true));
+                    } else { // Not a heading, aside, or protected section; append to the current open section
+                        currentSectionStack[currentSectionStack.length - 1].domElement.appendChild(node);
                     }
                 } else { // Text node or comment node, append to the current open section
-                    currentSectionStack[currentSectionStack.length - 1].domElement.appendChild(node.cloneNode(true));
+                    currentSectionStack[currentSectionStack.length - 1].domElement.appendChild(node);
                 }
-            });
+            }
 
             return newBody.innerHTML;
         }
 
         /**
-         * Inserts IDs to all heading tags (h1-h6) based on specified rules.
+         * Inserts IDs to all heading tags (h1-h6), section, and table tags based on specified rules.
+         * This function ensures full re-numbering on each run, allowing for dynamic updates
+         * after elements are added, deleted, or reordered.
          *
          * Rules:
          * - H1s: Not ID'd.
          * - H2s:
          * - If text starts with a number (e.g., "1. Introduction"): ID is "toc<number>" (e.g., "toc1").
-         * - If text starts with "Appendix", "Annex", or "Annexe": ID is "app<letter>" (e.g., "appA", "appB").
-         * - If ALL H2s on the page are non-numeric (i.e., none start with a number), then ALL H2s get sequential numeric IDs (toc1, toc2, ...).
-         * - Otherwise (mixed or all non-numeric but not 'Appendix'), non-numeric H2s get sequential alphabetical IDs (tocA, tocB, ...).
-         * - H3-H6: Nested IDs "toc#-#", "toc#-#-#", etc.
-         * - Children of H2s (whether numeric, sequential-alpha, or appendix) will always use sequential numeric suffixes (e.g., "appA-1", "tocA-1").
+         * - If text starts with "Appendix", "Annex", or "Annexe": ID is "app<letter>" (e.g., "appA", "appB"),
+         * where the letter is derived from the text if present, otherwise sequentially generated.
+         * - Otherwise (general H2): ID is "toc<sequential_letter>" (e.g., "tocA", "tocB").
+         * - H3-H6: Nested IDs.
+         * - If text starts with "Appendix", "Annex", or "Annexe": ID is "<parentID>-app<letter>",
+         * where the letter is derived from the text if present, otherwise sequentially generated within that parent's scope.
+         * - Otherwise (general H3-H6): ID is "<parentID>-<sequential_number>".
+         *
+         * - Sections:
+         * - Top-level sections (direct children of body or not nested within other sections) get "sec#" (e.g., "sec1").
+         * - Nested sections get "sec#-#", "sec#-#-#", etc., based on their parent section's ID.
+         * - Sections that already have an ID are not modified if their ID does not follow the "sec" pattern.
+         *
+         * - Tables:
+         * - Tables outside of a <figure> element get "tbl#" (e.g., "tbl1").
+         * - Tables within a <figure> element get "ftbl#" (e.g., "ftbl1").
+         * - "ftbl" IDs are numbered separately from "tbl" IDs.
+         * - Tables that already have an ID are not modified (similar to sections).
          *
          * @param {string} htmlString - The HTML content to process.
+         * @param {object} options - An object specifying which elements to ID.
+         * @param {boolean} options.idSections - Whether to ID sections.
+         * @param {boolean} options.idHeadings - Whether to ID headings.
+         * @param {boolean} options.idTables - Whether to ID general tables.
+         * @param {boolean} options.idFigureTables - Whether to ID tables within figure elements.
          * @returns {string} The HTML content with IDs inserted.
          */
-        function applyAutoId(htmlString) {
+        function applyAutoId(htmlString, options = {}) {
+            // Default options to true if not provided
+            const defaultOptions = {
+                idSections: true,
+                idHeadings: true,
+                idTables: true,
+                idFigureTables: true
+            };
+            const currentOptions = { ...defaultOptions, ...options };
+
             const parser = new DOMParser();
             const doc = parser.parseFromString(htmlString, 'text/html');
             const body = doc.body;
 
-            // Helper functions for letter-number conversion
+            // Helper function to convert a number to an uppercase alphabetical string (A, B, C, ..., Z, AA, AB, ...)
             function toAlpha(num) {
                 let s = '';
                 let t;
@@ -2300,312 +2460,250 @@
                     s = String.fromCharCode(65 + t) + s;
                     num = Math.floor((num - t) / 26);
                 }
-                return s || 'A'; // Default to 'A' if 0 (though numbers should be > 0)
+                return s || 'A';
             }
 
-            function fromAlpha(str) {
-                let num = 0;
-                for (let i = 0; i < str.length; i++) {
-                    num = num * 26 + (str.charCodeAt(i) - 65 + 1);
+            // Helper function to extract an alphabetical character from an appendix/annex text
+            // e.g., "Appendix A" -> "A", "Annex B" -> "B"
+            function getLetterFromAppendixText(text) {
+                const match = text.match(/^(?:Appendix|Annex|Annexe)\s*([A-Z])?/i);
+                if (match && match[1]) {
+                    return match[1].toUpperCase();
                 }
-                return num;
+                return null;
             }
 
+            // Store existing IDs to avoid re-assigning if they match the desired pattern and are already present,
+            // though for full re-numbering, we will overwrite. This set helps track uniqueness.
+            const existingIds = new Set();
+            // Collect existing IDs before processing to ensure no duplicate IDs are generated
+            // even if the user had some manually set.
+            doc.querySelectorAll('[id]').forEach(el => existingIds.add(el.id));
 
-            // Remove existing IDs from headings (excluding H1 as they won't be re-ID'd)
-            doc.querySelectorAll('h2, h3, h4, h5, h6').forEach(heading => {
-                heading.removeAttribute('id');
-            });
+            // Headings counters - these should be persistent and not reset each other
+            let h2_num_counter = 0; // For H2s starting with numbers (toc1, toc2)
+            let h2_general_alpha_counter = 0; // For general H2s (tocA, tocB)
+            let h2_appendix_alpha_counter = 0; // For H2s explicitly "Appendix" (appA, appB)
 
-            // Counters for the top-level H2s, based on their detected type
-            let tocNumericMainCounter = 0;
-            let tocAlphaSequentialCounter = 0;
-            let appAlphaMainCounter = 0;
+            // Sub-level counters (H3-H6)
+            // Maps parent ID path string (e.g., "toc1" or "tocA-1") to its child counters
+            let sub_num_counters = new Map(); // Stores { "parent_id": next_numeric_count }
+            let sub_appendix_alpha_counters = new Map(); // Stores { "parent_id": next_alpha_count_for_appendices }
 
-            // This array holds the numerical counter for each heading level (H2, H3, H4, H5, H6).
-            // Index 0 is unused. Index 1 for H1 (not ID'd).
-            // Index 2 will hold the counter for H2 children (e.g. for generating tocX-1, tocX-2 for H3).
-            // Index 3 for H3 children (H4s), etc.
-            let subLevelCounters = new Array(7).fill(0); // [0, 0, H2_children_counter, H3_children_counter, ...]
+            // This array will hold segments of the current heading's ID path
+            // e.g., ["toc1"], ["toc1", "1"], ["tocA", "appA"]
+            let currentHeadingIdPathSegments = [];
 
-            let idPathStack = []; // Stores segments like ['tocD', '1', '2']
+            // Table counters
+            let tableCounter = 0; // For 'tbl#'
+            let figureTableCounter = 0; // For 'ftbl#'
 
-            let hasNumericH2OnPage = false;
-            const allH2s = body.querySelectorAll('h2');
-            for (const h2 of allH2s) {
-                const text = h2.textContent.trim();
-                if (text.match(/^\s*(\d+)(?:\.|\s|\)|\-)?/)) {
-                    hasNumericH2OnPage = true;
-                    break;
-                }
-            }
+            // Section specific counters: Maps parent section ID to its next child number
+            // 'root' key is used for top-level sections (children of body)
+            let sectionChildCounters = { 'root': 0 };
 
-            const headings = body.querySelectorAll('h1, h2, h3, h4, h5, h6');
+            if (currentOptions.idHeadings) {
+                // --- Pre-scan: Determine if any H2 is numerically prefaced ---
+                let hasAnyNumberedH2 = false;
+                const allH2s = Array.from(body.querySelectorAll('h2'));
+                const specialH1 = allH2s.find(h => h.tagName.toLowerCase() === 'h1' && h.getAttribute('property') === 'name' && h.id === 'wb-cont');
 
-            headings.forEach(heading => {
-                const level = parseInt(heading.tagName.substring(1), 10); // 1 to 6
-                const text = heading.textContent.trim();
+                for (const h2 of allH2s) {
+                    // Skip the special H1 for this check
+                    if (h2 === specialH1) continue;
 
-                if (level === 1) {
-                    return; // H1s are not ID'd by this function
-                }
-
-                const isAppendixOrAnnex = text.match(/^(?:Appendix|Annex|Annexe)\s*(?:([A-Z]))?/i);
-                const headingStartsWithNumber = text.match(/^\s*(\d+)(?:\.|\s|\)|\-)?/);
-
-                let currentSegment;
-
-                if (level === 2) {
-                    // This is a top-level H2. Reset all sub-level counters and the ID path.
-                    subLevelCounters.fill(0); // Reset all counters for subsequent headings
-
-                    if (hasNumericH2OnPage) {
-                        if (isAppendixOrAnnex) {
-                            if (isAppendixOrAnnex[1]) {
-                                appAlphaMainCounter = fromAlpha(isAppendixOrAnnex[1]);
-                            } else {
-                                appAlphaMainCounter++;
-                            }
-                            currentSegment = `app${toAlpha(appAlphaMainCounter)}`;
-                            tocNumericMainCounter = 0; // Reset other main counters
-                            tocAlphaSequentialCounter = 0;
-                        } else if (headingStartsWithNumber) {
-                            tocNumericMainCounter = parseInt(headingStartsWithNumber[1], 10);
-                            currentSegment = `toc${tocNumericMainCounter}`;
-                            appAlphaMainCounter = 0; // Reset other main counters
-                            tocAlphaSequentialCounter = 0;
-                        } else {
-                            tocAlphaSequentialCounter++;
-                            currentSegment = `toc${toAlpha(tocAlphaSequentialCounter)}`;
-                            tocNumericMainCounter = 0; // Reset other main counters
-                            appAlphaMainCounter = 0;
+                    // Skip if inside an ignored parent like aside, caption, figure, figcaption, table
+                    const ignoredParents = ['aside', 'caption', 'figure', 'figcaption', 'table'];
+                    let isInsideIgnoredParent = false;
+                    let currentParent = h2.parentNode;
+                    while (currentParent && currentParent !== body) {
+                        if (ignoredParents.includes(currentParent.tagName.toLowerCase())) {
+                            isInsideIgnoredParent = true;
+                            break;
                         }
-                    } else { // All H2s are non-numeric, so assign sequential numeric IDs
-                        tocNumericMainCounter++;
-                        currentSegment = `toc${tocNumericMainCounter}`;
-                        tocAlphaSequentialCounter = 0; // Only tocNumericMainCounter is active
-                        appAlphaMainCounter = 0;
+                        currentParent = currentParent.parentNode;
                     }
-                    idPathStack = [currentSegment]; // Initialize stack for this H2
-                } else { // For H3, H4, H5, H6
-                    // Truncate idPathStack to the parent's ID path.
-                    // The target length of idPathStack for the parent of 'level' is 'level - 1'.
-                    // Example: For H3 (level 3), parent is H2. idPathStack should be ['H2_segment']. Length 1.
-                    // Loop to pop segments until idPathStack matches the parent's path length.
-                    while (idPathStack.length > (level - 2)) { // Corrected: Pop until stack length is level-2 (for parent's parent)
-                        idPathStack.pop();
+                    if (isInsideIgnoredParent) continue;
+
+                    const text = h2.textContent.trim();
+                    if (text.match(/^\s*(\d+)(?:\.|\s|\)|\-)?/)) {
+                        hasAnyNumberedH2 = true;
+                        break;
                     }
-
-                    // Increment the counter for the current level's segment.
-                    // The counter for level 'L' is stored at `subLevelCounters[L]`.
-                    subLevelCounters[level]++;
-                    currentSegment = String(subLevelCounters[level]);
-
-                    // Reset counters for levels *deeper* than the current heading.
-                    subLevelCounters.fill(0, level + 1); // Reset from (current level + 1) onwards
-
-                    // Add the new segment to the stack
-                    idPathStack.push(currentSegment);
                 }
+                // --- End Pre-scan ---
 
-                const fullId = idPathStack.join('-');
-                heading.setAttribute('id', fullId);
-            });
+                // Process all headings (H1, H2, H3, H4, H5, H6)
+                doc.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(heading => {
+                    // NEW: Check if the heading is inside an ignored parent
+                    const ignoredParents = ['aside', 'caption', 'figure', 'figcaption', 'table'];
+                    let isInsideIgnoredParent = false;
+                    let currentParent = heading.parentNode;
+                    while (currentParent && currentParent !== body) {
+                        if (ignoredParents.includes(currentParent.tagName.toLowerCase())) {
+                            isInsideIgnoredParent = true;
+                            break;
+                        }
+                        currentParent = currentParent.parentNode;
+                    }
+
+                    if (isInsideIgnoredParent) {
+                        return; // Skip ID assignment for this heading
+                    }
+
+                    const level = parseInt(heading.tagName.substring(1), 10);
+                    const text = heading.textContent.trim(); // Get raw text for pattern matching
+
+                    // H1s are never ID'd, but reset path for subsequent headings
+                    if (level === 1) {
+                        currentHeadingIdPathSegments = [];
+                        // Clear all sub-level counters as we're starting a new top-level structure
+                        sub_num_counters.clear();
+                        sub_appendix_alpha_counters.clear();
+                        return; // Skip ID assignment for H1
+                    }
+
+                    let id_segment = ''; // The ID segment for the current heading's level
+                    const isNumericHeading = text.match(/^\s*(\d+)(?:\.|\s|\)|\-)?/);
+                    const isAppendixHeading = text.match(/^(?:Appendix|Annex|Annexe)\s*(?:([A-Z]))?/i);
+
+                    if (level === 2) {
+                        // Determine H2 segment
+                        if (isAppendixHeading) {
+                            const letterFromText = getLetterFromAppendixText(text);
+                            if (letterFromText) {
+                                // If letter exists in text (e.g., "Appendix A"), use it directly
+                                // No need to increment counter, as the letter dictates uniqueness
+                                id_segment = `app${letterFromText}`;
+                            } else {
+                                // If "Appendix" but no letter provided, use a sequential letter for app H2s
+                                h2_appendix_alpha_counter++; // Only increment its own counter
+                                id_segment = `app${toAlpha(h2_appendix_alpha_counter)}`;
+                            }
+                        } else if (hasAnyNumberedH2) { // If there's *any* numbered H2 in the document
+                            if (isNumericHeading) { // This H2 is numeric (e.g., "1. Sample")
+                                h2_num_counter++; // Only increment its own counter
+                                id_segment = `toc${h2_num_counter}`;
+                            } else { // This H2 is NOT numeric, but some H2s *are* numeric (e.g., "Sample Section Title")
+                                h2_general_alpha_counter++; // Only increment its own counter
+                                id_segment = `toc${toAlpha(h2_general_alpha_counter)}`;
+                            }
+                        } else { // No numbered H2s in the document, so all H2s get numeric IDs (e.g., "toc1", "toc2")
+                            h2_num_counter++; // Only increment its own counter
+                            id_segment = `toc${h2_num_counter}`;
+                        }
+                        // For H2, this starts a new path
+                        currentHeadingIdPathSegments = [id_segment];
+                        // Reset all sub-level counters (for H3-H6) as a new main branch begins
+                        sub_num_counters.clear();
+                        sub_appendix_alpha_counters.clear();
+                    } else { // For H3, H4, H5, H6
+                        // Ensure the currentHeadingIdPathSegments correctly reflects the parent's path
+                        // Truncate path to parent's level's segment. E.g., if current is H4 (level 4), parent is H3 (level 3).
+                        // Path should be currentHeadingIdPathSegments up to index (level-1)-1 = level-2.
+                        currentHeadingIdPathSegments.length = level - 2;
+
+                        const parent_id_path_string = currentHeadingIdPathSegments.join('-'); // The full ID of the immediate parent heading (e.g., "toc1" or "tocA-1")
+
+                        if (isAppendixHeading) {
+                            const letterFromText = getLetterFromAppendixText(text);
+                            if (letterFromText) {
+                                id_segment = `app${letterFromText}`;
+                            } else {
+                                // If "Appendix" but no letter provided, use sequential letter within this parent's appendix scope
+                                const currentAppCount = (sub_appendix_alpha_counters.get(parent_id_path_string) || 0) + 1;
+                                sub_appendix_alpha_counters.set(parent_id_path_string, currentAppCount);
+                                id_segment = `app${toAlpha(currentAppCount)}`;
+                            }
+                            // Reset numeric counter for this parent's scope to allow for a clean numeric sequence after an appendix
+                            sub_num_counters.delete(parent_id_path_string);
+                        } else { // General sub-heading (numeric sequence)
+                            const currentNumCount = (sub_num_counters.get(parent_id_path_string) || 0) + 1;
+                            sub_num_counters.set(parent_id_path_string, currentNumCount);
+                            id_segment = String(currentNumCount);
+                            // Reset appendix alpha counter for this parent's scope
+                            sub_appendix_alpha_counters.delete(parent_id_path_string);
+                        }
+                        currentHeadingIdPathSegments.push(id_segment);
+                    }
+
+                    const newId = currentHeadingIdPathSegments.join('-');
+                    // Forcing re-assignment as per user request to re-number when pressed again.
+                    heading.setAttribute('id', newId);
+                    existingIds.add(newId); // Add newly assigned ID to set, mainly for uniqueness tracking if not forcing overwrite
+                });
+            }
+
+
+            if (currentOptions.idSections) {
+                // Process Sections
+                // The approach for sections already rebuilds IDs based on hierarchy on each run.
+                doc.querySelectorAll('section').forEach(section => {
+                    const existingId = section.getAttribute('id');
+
+                    // NEW: If section already has an ID AND it does NOT match the "sec" pattern, skip it.
+                    if (existingId && !/^sec\d+(-\d+)*$/.test(existingId)) {
+                        return; // Do not overwrite non-standard section IDs
+                    }
+
+                    let parentSectionId = 'root'; // Default for top-level sections
+                    let tempParent = section.parentNode;
+
+                    // Traverse up to find the closest parent section with an ID
+                    while (tempParent && tempParent !== body) {
+                        if (tempParent.tagName.toLowerCase() === 'section' && tempParent.id) {
+                            parentSectionId = tempParent.id;
+                            break;
+                        }
+                        tempParent = tempParent.parentNode;
+                    }
+
+                    // Increment the counter for the current parent's children
+                    sectionChildCounters[parentSectionId] = (sectionChildCounters[parentSectionId] || 0) + 1;
+                    const newSectionNum = sectionChildCounters[parentSectionId];
+
+                    let newId;
+                    if (parentSectionId === 'root') {
+                        newId = `sec${newSectionNum}`;
+                    } else {
+                        newId = `${parentSectionId}-${newSectionNum}`;
+                    }
+                    section.setAttribute('id', newId);
+                    existingIds.add(newId); // Add newly assigned ID to set
+                });
+            }
+
+
+            if (currentOptions.idTables || currentOptions.idFigureTables) {
+                // Process Tables
+                // Similar to sections, table IDing also rebuilds on each run.
+                doc.querySelectorAll('table').forEach(table => {
+                    // For full re-numbering, we will re-assign table IDs.
+                    const parentFigure = table.closest('figure');
+                    let newId = null;
+
+                    if (parentFigure && currentOptions.idFigureTables) {
+                        // It's inside a figure, assign ftbl#
+                        figureTableCounter++;
+                        newId = `ftbl${figureTableCounter}`;
+                    } else if (!parentFigure && currentOptions.idTables) {
+                        // It's not inside a figure, assign tbl#
+                        tableCounter++;
+                        newId = `tbl${tableCounter}`;
+                    }
+
+                    if (newId) {
+                        table.setAttribute('id', newId);
+                        existingIds.add(newId);
+                    } else {
+                        // If neither option is selected for this table type, ensure it has no ID.
+                        table.removeAttribute('id');
+                    }
+                });
+            }
+
 
             return body.innerHTML;
-        }
-
-        /**
-         * Auto-levels heading tags (h1-h6) based on structural rules.
-         * - Converts H1s to H2s (except specific ones with `id="wb-cont"` or `property="name"`).
-         * - Shifts H2s to H3s, H3s to H4s, ..., H5s to H6s.
-         * - Corrects skipped levels (e.g., H2 followed by H4 becomes H2, H3).
-         * - Converts H6s that would become an "H7" (due to skipped levels) to `<p><strong>`.
-         * @param {string} htmlString - The HTML content to process.
-         * @returns {string} The HTML content with adjusted heading levels.
-         */
-        function applyAutoLevelHeadings(htmlString) {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(htmlString, 'text/html');
-            const originalBodyChildren = Array.from(doc.body.childNodes); // Get a static copy
-
-            const newBody = doc.createElement('body'); // Build the new structure here
-
-            let currentHeadingLevelInSequence = 0; // Tracks the level of the most recently inserted *heading* (1-6)
-
-            originalBodyChildren.forEach(node => {
-                if (node.nodeType === Node.ELEMENT_NODE) {
-                    const tagName = node.tagName.toLowerCase();
-                    let newElement = node.cloneNode(false); // Clone element without children first
-                    let originalLevel = parseInt(tagName.substring(1));
-                    let isHeading = /^h[1-6]$/.test(tagName);
-                    let shouldBeStrongP = false;
-                    let targetNewLevel = null;
-
-                    if (isHeading) {
-                        const isPreservedH1 = tagName === 'h1' &&
-                                              (node.id === 'wb-cont' || node.hasAttribute('property') && node.getAttribute('property').includes('name'));
-
-                        if (isPreservedH1) {
-                            targetNewLevel = 1;
-                        } else {
-                            // Initial shift: H1->H2, H2->H3, ..., H5->H6
-                            if (originalLevel < 6) {
-                                targetNewLevel = originalLevel + 1;
-                            } else { // originalLevel === 6 (H6)
-                                shouldBeStrongP = true; // Mark as candidate for strong p initially
-                            }
-                        }
-
-                        // Apply skipped level correction (if it's a heading and not going to be strong P yet)
-                        if (targetNewLevel !== null) {
-                            if (currentHeadingLevelInSequence === 0) {
-                                // If no previous heading, the first heading should be H2 (or H1 if preserved)
-                                targetNewLevel = Math.max(targetNewLevel, 1); // Ensure at least H1 if preserved, else at least H2
-                                if (!isPreservedH1 && targetNewLevel < 2) targetNewLevel = 2; // Ensure it's at least H2 if not preserved H1
-                            } else {
-                                targetNewLevel = Math.min(targetNewLevel, currentHeadingLevelInSequence + 1);
-                            }
-                        }
-
-                        // Now finalize the element based on `targetNewLevel` and `shouldBeStrongP`
-                        if (shouldBeStrongP || (targetNewLevel && targetNewLevel > 6)) {
-                            // If it's an H6 that should become strong P, or a heading that would become H7+
-                            newElement = doc.createElement('p');
-                            const strong = doc.createElement('strong');
-                            // Move children of original node to strong, then strong to newElement (p)
-                            while (node.firstChild) {
-                                strong.appendChild(node.firstChild);
-                            }
-                            newElement.appendChild(strong);
-                            // Do not update currentHeadingLevelInSequence for p tags
-                        } else if (targetNewLevel !== null) {
-                            // It's a valid heading, create the new tag
-                            newElement = doc.createElement(`h${targetNewLevel}`);
-                            // Copy attributes from original node
-                            Array.from(node.attributes).forEach(attr => {
-                                // Skip original ID/property attributes if this was a preserved H1 that is now H1/H2 etc.
-                                // Or skip old id/property if this wasn't a preserved H1
-                                if (attr.name !== 'id' && attr.name !== 'property') {
-                                     newElement.setAttribute(attr.name, attr.value);
-                                }
-                            });
-                             // Ensure preserved H1 attributes are carried over if it remains H1
-                            if (isPreservedH1 && targetNewLevel === 1) {
-                                if (node.id === 'wb-cont') newElement.id = 'wb-cont';
-                                if (node.hasAttribute('property')) newElement.setAttribute('property', node.getAttribute('property'));
-                            }
-
-                            // Move children of original node to new heading
-                            while (node.firstChild) {
-                                newElement.appendChild(node.firstChild);
-                            }
-                            currentHeadingLevelInSequence = targetNewLevel;
-                        } else {
-                            // Should not happen for valid headings, but as a fallback, just clone.
-                            // This branch means a heading wasn't categorized for conversion.
-                            while (node.firstChild) { // Move children to newElement (which is a clone of the original tag)
-                                newElement.appendChild(node.firstChild);
-                            }
-                            // Do not update currentHeadingLevelInSequence as its level is ambiguous or not a heading.
-                        }
-                    } else {
-                        // Not a heading, just clone the element and its content.
-                        // We need to clone deep here since we are inserting content.
-                        newElement = node.cloneNode(true);
-                        // Reset currentHeadingLevelInSequence because non-heading content breaks the sequence
-                        currentHeadingLevelInSequence = 0;
-                    }
-                    newBody.appendChild(newElement);
-                } else {
-                    // Text node or comment node
-                    newBody.appendChild(node.cloneNode(true));
-                    // Reset currentHeadingLevelInSequence because non-heading content breaks the sequence
-                    currentHeadingLevelInSequence = 0;
-                }
-            });
-
-            return newBody.innerHTML;
-        }
-
-
-        /**
-         * Wraps <section> tags around heading tags and their content, nesting based on heading level.
-         * Treats <aside> tags as H2 for sectioning purposes but does not wrap them.
-         * @param {string} htmlString - The HTML content to section.
-         * @returns {string} The sectioned HTML content.
-         */
-        function applyAutoSectioning(htmlString) {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(htmlString, 'text/html');
-            const originalBody = doc.body;
-
-            // Step 1: Flatten the existing structure by unwrapping all <section> elements.
-            // This ensures we start with a clean slate for re-sectioning.
-            // Iterate in reverse to avoid issues with modifying live NodeLists.
-            const existingSections = Array.from(originalBody.querySelectorAll('section'));
-            for (let i = existingSections.length - 1; i >= 0; i--) {
-                const section = existingSections[i];
-                const parent = section.parentNode;
-                if (parent) {
-                    while (section.firstChild) {
-                        parent.insertBefore(section.firstChild, section);
-                    }
-                    parent.removeChild(section);
-                }
-            }
-
-            // At this point, originalBody's children are the flattened content.
-            const nodesToProcess = Array.from(originalBody.childNodes); // Get a static copy of nodes after flattening
-
-            const newBody = doc.createElement('body');
-            // Stack stores { domElement: Node, level: number }
-            let currentSectionStack = [{ domElement: newBody, level: 0 }]; // Level 0 for body
-
-            nodesToProcess.forEach(node => {
-                if (node.nodeType === Node.ELEMENT_NODE) {
-                    const tagName = node.tagName.toLowerCase();
-                    let nodeLevel = null; // Conceptual level of the current node (e.g., 1 for h1, 2 for h2 or aside)
-                    let shouldCreateNewSectionForNode = true; // Does this specific node warrant a new <section>?
-
-                    const headingLevelMatch = tagName.match(/^h([1-6])$/);
-                    if (headingLevelMatch) {
-                        nodeLevel = parseInt(headingLevelMatch[1], 10);
-                    } else if (tagName === 'aside') {
-                        nodeLevel = 2; // Treat <aside> as H2 for sectioning logic
-                        shouldCreateNewSectionForNode = false; // Do NOT wrap <aside> in its own section
-                    }
-
-                    if (nodeLevel !== null) { // It's either a heading (h1-h6) or an <aside>
-                        // Pop sections from stack if current node's level is equal to or higher than the top section's level
-                        // This handles both closing higher-level sections and moving to a sibling section.
-                        while (currentSectionStack.length > 1 && nodeLevel <= currentSectionStack[currentSectionStack.length - 1].level) {
-                            currentSectionStack.pop();
-                        }
-
-                        let currentParentDomElement = currentSectionStack[currentSectionStack.length - 1].domElement;
-
-                        if (shouldCreateNewSectionForNode) { // It's a heading, create a new section
-                            const newSection = doc.createElement('section');
-                            currentParentDomElement.appendChild(newSection);
-                            // Push the new section onto the stack, updating the current parent for next elements
-                            currentSectionStack.push({ domElement: newSection, level: nodeLevel });
-                            currentSectionStack[currentSectionStack.length - 1].domElement.appendChild(node.cloneNode(true));
-                        } else { // It's an <aside>, append it directly to the current effective parent
-                            currentParentDomElement.appendChild(node.cloneNode(true));
-                            // IMPORTANT: <aside> does NOT create a new section for itself and is not pushed onto the stack.
-                            // This means subsequent content will be appended relative to the section that *contains* the <aside>.
-                            // This ensures the <aside> is not wrapped, and nesting for following content works as per heading levels.
-                        }
-                    } else { // Not a heading or an aside, append to the current open section
-                        currentSectionStack[currentSectionStack.length - 1].domElement.appendChild(node.cloneNode(true));
-                    }
-                } else { // Text node or comment node, append to the current open section
-                    currentSectionStack[currentSectionStack.length - 1].domElement.appendChild(node.cloneNode(true));
-                }
-            });
-
-            return newBody.innerHTML;
         }
 
         /**
@@ -2640,24 +2738,29 @@
         };
 
         /**
-         * Updates the disabled state of the "Go to Rich-Text" button.
-         * It is disabled if any other button that displays a temporary message is active.
+         * Updates the disabled state of all interactive buttons.
+         * Buttons are disabled if any button has 'data-temp-active' set to 'true'.
          */
-        function updateToggleEditorViewBtnCodeState() {
-            const anyTempMessageActive = tempMessageButtons.some(btn => btn.getAttribute('data-temp-active') === 'true');
-            toggleEditorViewBtnCode.disabled = anyTempMessageActive;
+        function updateAllInteractiveButtonStates() {
+            const anyTempMessageActive = allInteractiveButtons.some(btn => btn.getAttribute('data-temp-active') === 'true');
+
+            allInteractiveButtons.forEach(btn => {
+                // If a button itself has 'data-temp-active', it means its modal is open, so it should be disabled.
+                // Otherwise, it's disabled if ANY other button has 'data-temp-active'.
+                btn.disabled = btn.getAttribute('data-temp-active') === 'true' || anyTempMessageActive;
+            });
         }
+
 
         /**
          * Toggles the active editor view between 'richtext' and 'code'.
          * Includes automatic content synchronization.
          */
         function toggleEditorView() {
-            // Prevent toggling if the button is disabled
-            if (toggleEditorViewBtnCode.disabled && currentView === 'code') {
-                return;
-            }
-            if (toggleEditorViewBtnRichText.disabled && currentView === 'richtext') {
+            // Prevent toggling if any button is disabled (implicitly means a temp message is active)
+            const anyTempMessageActive = allInteractiveButtons.some(btn => btn.getAttribute('data-temp-active') === 'true');
+            if (anyTempMessageActive) {
+                console.log("Toggle prevented: another button is active.");
                 return;
             }
 
@@ -2715,8 +2818,8 @@
 
                 // Run Auto-Encode and Auto-Indent when switching to HTML editor
                 autoEncodeBtn.click();
-                autoFormatBtn.click();
-                // console.log("Auto-Encode and Auto-Indent applied on switch to HTML editor.");
+                autoFormatBtn.click(); // This is already here, no change needed for this specific request.
+                                  // The user asked for "go to html" to run Auto-Indent, which is exactly this.
 
                 // 3. Switch panel visibility.
                 richtextOutputPanel.classList.remove('panel-visible');
@@ -2780,9 +2883,6 @@
 
                 currentView = 'richtext';
                 console.log("Switched to Rich Text View.");
-                if (richTextEditorInstance) {
-                    richTextEditorInstance.focus();
-                }
             }
         }
 
@@ -2839,7 +2939,7 @@
         }
 
         /**
-         * Updates the state of the "Clean MSO" button based on the "Auto-Clean MSO" toggle.
+         * Updates the state of the "Clean Mso" button based on the "Auto-Clean MSO" toggle.
          */
         function updateCleanMsoButtonState() {
             const isAutoCleanEnabled = toggleAutoCleanMsoOnSwitchRichText.checked; // Check any of the synced toggles
@@ -2881,8 +2981,10 @@
          * Note: This `showModal` function is specifically for the Colophon, and is distinct from `showFootnoteModal`.
          * @param {string} title - The title of the modal.
          * @param {string} contentHtml - The HTML content for the modal body.
+         * @param {HTMLElement} triggeringButton - The button that opened this modal.
+         * @param {string} originalButtonText - The original text of the triggering button before "Opening...".
          */
-        function showModal(title, contentHtml) {
+        function showModal(title, contentHtml, triggeringButton, originalButtonText) {
             const modalOverlay = document.createElement('div');
             modalOverlay.className = 'modal-overlay';
             modalOverlay.innerHTML = `
@@ -2897,9 +2999,19 @@
             `;
             document.body.appendChild(modalOverlay);
 
-            document.getElementById('modalCancelBtn').addEventListener('click', () => {
+            // Function to clean up and re-enable buttons
+            function closeModalAndReEnableButtons() {
                 modalOverlay.remove();
-            });
+                triggeringButton.removeAttribute('data-temp-active'); // Crucial: Remove flag
+                // Directly revert the button text and color here
+                triggeringButton.textContent = originalButtonText;
+                triggeringButton.classList.remove('bg-green-500', 'hover:bg-green-600');
+                triggeringButton.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
+                updateAllInteractiveButtonStates(); // Re-enable all buttons
+            }
+
+
+            document.getElementById('modalCancelBtn').addEventListener('click', closeModalAndReEnableButtons);
 
             // Get references to elements within the newly created modal
             const langEnglishBtn = document.getElementById('langEnglishBtn');
@@ -2980,19 +3092,19 @@
                 const currentYear = new Date().getFullYear();
                 const year = colophonYearInput.value || currentYear;
                 const number = colophonNumberInput.value || '###';
-                let colophonHtml = `<section id="colophon">\n<p class="mrgn-tp-lg text-center small">© `;
+                let colophonHtmlContent = `<section id="colophon">\n<p class="mrgn-tp-lg text-center small">© `;
 
                 if (selectedLanguage === 'English') {
                     if (selectedMonarch === 'King') {
-                        colophonHtml += `His Majesty the King in Right of Canada, represented by the President of the Treasury Board, ${year},<br>${selectedIdentifier}:&#160;${number}</p>\n</section>`;
+                        colophonHtmlContent += `His Majesty the King in Right of Canada, represented by the President of the Treasury Board, ${year},<br>${selectedIdentifier}:&#160;${number}</p>\n</section>`;
                     } else { // Queen
-                        colophonHtml += `Her Majesty the Queen in Right of Canada, represented by the President of the Treasury Board, ${year},<br>${selectedIdentifier}:&#160;${number}</p>\n</section>`;
+                        colophonHtmlContent += `Her Majesty the Queen in Right of Canada, represented by the President of the Treasury Board, ${year},<br>${selectedIdentifier}:&#160;${number}</p>\n</section>`;
                     }
                 } else { // French
                     if (selectedMonarch === 'King') {
-                        colophonHtml += `Sa Majesté le Roi du chef du Canada, représenté par le président du Conseil du Trésor, ${year},<br>${selectedIdentifier}&#160;:&#160;${number}</p>\n</section>`;
+                        colophonHtmlContent += `Sa Majesté le Roi du chef du Canada, représenté par le président du Conseil du Trésor, ${year},<br>${selectedIdentifier}&#160;:&#160;${number}</p>\n</section>`;
                     } else { // Queen
-                        colophonHtml += `Sa Majesté la Reine du chef du Canada, représentée par le président du Conseil du Trésor, ${year},<br>${selectedIdentifier}&#160;:&#160;${number}</p>\n</section>`;
+                        colophonHtmlContent += `Sa Majesté la Reine du chef du Canada, représentée par le président du Conseil du Conseil du Trésor, ${year},<br>${selectedIdentifier}&#160;:&#160;${number}</p>\n</section>`;
                     }
                 }
 
@@ -3002,7 +3114,7 @@
                     currentContent = protectDataAttributes(currentContent); // Protect attributes before string manipulation
 
                     // Append the new colophon HTML
-                    currentContent += colophonHtml;
+                    currentContent += colophonHtmlContent;
 
                     currentContent = restoreDataAttributes(currentContent); // Restore attributes
                     currentContent = convertAllEntitiesToNumeric(currentContent); // Ensure entities are correct after all operations
@@ -3011,14 +3123,31 @@
                     htmlOutputContent = currentContent; // Update main content variable
                     applyEntityHighlighting(); // Re-apply highlighting
                 }
-                modalOverlay.remove(); // Close the modal
+
+                closeModalAndReEnableButtons(); // Cleanup and re-enable immediately
+
+                // Capture originalButtonText in a local constant for the setTimeout closure
+                const capturedOriginalText = originalButtonText;
+
+                // Provide visual feedback for the triggering button only after successful insert
+                triggeringButton.textContent = 'Inserted!';
+                triggeringButton.classList.add('bg-green-500', 'hover:bg-green-600');
+                triggeringButton.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
+                // The disabled state is managed by updateAllInteractiveButtonStates()
+                setTimeout(() => {
+                    triggeringButton.textContent = capturedOriginalText; // Revert to initial text
+                    triggeringButton.classList.remove('bg-green-500', 'hover:bg-green-600');
+                    triggeringButton.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
+                }, 1500);
             });
         }
 
         /**
          * Displays a modal dialog for configuring and inserting footnote lists.
+         * @param {HTMLElement} triggeringButton - The button that opened this modal.
+         * @param {string} originalButtonText - The original text of the triggering button.
          */
-        function showFootnoteModal() {
+        function showFootnoteModal(triggeringButton, originalButtonText) {
             const footnoteContentHtml = `
                 <div class="flex flex-col space-y-4">
 				<div>
@@ -3057,9 +3186,17 @@
             `;
             document.body.appendChild(modalOverlay);
 
-            document.getElementById('modalCancelFnBtn').addEventListener('click', () => {
+            // Function to clean up and re-enable buttons
+            function closeModalAndReEnableButtons() {
                 modalOverlay.remove();
-            });
+                triggeringButton.removeAttribute('data-temp-active'); // Crucial: Remove flag
+                triggeringButton.textContent = originalButtonText; // Revert immediately
+                triggeringButton.classList.remove('bg-green-500', 'hover:bg-green-600');
+                triggeringButton.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
+                updateAllInteractiveButtonStates(); // Re-enable all buttons
+            }
+
+            document.getElementById('modalCancelFnBtn').addEventListener('click', closeModalAndReEnableButtons);
 
             const fnLangEnglishBtn = document.getElementById('fnLangEnglishBtn');
             const fnLangFrenchBtn = document.getElementById('fnLangFrenchBtn');
@@ -3104,9 +3241,12 @@
                 const idPrefix = fnIdPrefixInput.value.trim();
                 const footnoteCount = parseInt(fnCountInput.value) || 1; // Default to 1
 
-                let footnoteHtml = `<aside class="wb-fnote" role="note">\n`;
-                footnoteHtml += `\t<h2 id="${idPrefix}fn">${selectedFnLanguage === 'English' ? 'Footnotes' : 'Notes en bas de page'}</h2>\n`;
-                footnoteHtml += `\t<dl>\n`;
+                // Capture originalButtonText in a local constant for the setTimeout closure
+                const capturedOriginalText = originalButtonText;
+
+                let footnoteHtmlContent = `<aside class="wb-fnote" role="note">\n`;
+                footnoteHtmlContent += `\t<h2 id="${idPrefix}fn">${selectedFnLanguage === 'English' ? 'Footnotes' : 'Notes en bas de page'}</h2>\n`;
+                footnoteHtmlContent += `\t<dl>\n`;
 
                 for (let i = 1; i <= footnoteCount; i++) {
                     const dtText = selectedFnLanguage === 'English' ? `Footnote ${i}` : `Note en bas de page ${i}`;
@@ -3114,15 +3254,15 @@
                     const returnTextInv = selectedFnLanguage === 'English' ? `Return to footnote ` : `Retour à la référence de la note en bas de page `;
                     const returnTextRef = selectedFnLanguage === 'English' ? ` referrer` : ``;
 
-                    footnoteHtml += `\t\t<dt>${dtText}</dt>\n`;
-                    footnoteHtml += `\t\t<dd id="${idPrefix}fn${i}">\n`;
-                    footnoteHtml += `\t\t\t<p>${ddContent}</p>\n`;
-                    footnoteHtml += `\t\t\t<p class="fn-rtn"> <a href="#${idPrefix}fn${i}-rf"><span class="wb-inv">${returnTextInv}</span>${i}<span class="wb-inv">${returnTextRef}</span></a> </p>\n`;
-                    footnoteHtml += `\t\t</dd>\n`;
+                    footnoteHtmlContent += `\t\t<dt>${dtText}</dt>\n`;
+                    footnoteHtmlContent += `\t\t<dd id="${idPrefix}fn${i}">\n`;
+                    footnoteHtmlContent += `\t\t\t<p>${ddContent}</p>\n`;
+                    footnoteHtmlContent += `\t\t\t<p class="fn-rtn"> <a href="#${idPrefix}fn${i}-rf"><span class="wb-inv">${returnTextInv}</span>${i}<span class="wb-inv">${returnTextRef}</span></a> </p>\n`;
+                    footnoteHtmlContent += `\t\t</dd>\n`;
                 }
 
-                footnoteHtml += `\t</dl>\n`;
-                footnoteHtml += `</aside>\n`;
+                footnoteHtmlContent += `\t</dl>\n`;
+                footnoteHtmlContent += `</aside>\n`;
 
                 if (monacoEditorInstance) {
                     let currentContent = monacoEditorInstance.getValue();
@@ -3138,14 +3278,14 @@
 
                     if (insertionIndex !== -1) {
                         // Insert the footnote HTML before the colophon section
-                        currentContent = currentContent.substring(0, insertionIndex) + footnoteHtml + currentContent.substring(insertionIndex);
+                        currentContent = currentContent.substring(0, insertionIndex) + footnoteHtmlContent + currentContent.substring(insertionIndex);
                     } else {
                         // If no colophon section, append to the end of the body just before </body>
                         const bodyEndTagIndex = currentContent.lastIndexOf('</body>');
                         if (bodyEndTagIndex !== -1) {
-                            currentContent = currentContent.substring(0, bodyEndTagIndex) + footnoteHtml + '\n' + currentContent.substring(bodyEndTagIndex);
+                            currentContent = currentContent.substring(0, bodyEndTagIndex) + footnoteHtmlContent + '\n' + currentContent.substring(bodyEndTagIndex);
                         } else {
-                            currentContent += footnoteHtml; // Fallback to simply appending
+                            currentContent += footnoteHtmlContent; // Fallback to simply appending
                         }
                     }
 
@@ -3157,24 +3297,148 @@
                     applyEntityHighlighting();
                 }
 
-                modalOverlay.remove(); // Close the modal
+                closeModalAndReEnableButtons(); // Cleanup and re-enable immediately
 
-                // Provide visual feedback for the button
-                const originalText = footnoteListBtn.textContent;
-                footnoteListBtn.textContent = 'Inserted!';
-                footnoteListBtn.classList.add('bg-green-500', 'hover:bg-green-600');
-                footnoteListBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
-                footnoteListBtn.disabled = true;
-                footnoteListBtn.setAttribute('data-temp-active', 'true');
-                updateToggleEditorViewBtnCodeState();
+                // Provide visual feedback for the button after successful insert
+                triggeringButton.textContent = 'Inserted!';
+                triggeringButton.classList.add('bg-green-500', 'hover:bg-green-600');
+                triggeringButton.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
+                // The disabled state is managed by updateAllInteractiveButtonStates()
                 setTimeout(() => {
-                    footnoteListBtn.textContent = originalText;
-                    footnoteListBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-                    footnoteListBtn.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
-                    footnoteListBtn.disabled = false;
-                    footnoteListBtn.removeAttribute('data-temp-active');
-                    updateToggleEditorViewBtnCodeState();
+                    triggeringButton.textContent = capturedOriginalText; // Use the captured variable
+                    triggeringButton.classList.remove('bg-green-500', 'hover:bg-green-600');
+                    triggeringButton.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
                 }, 1500);
+            });
+        }
+
+        /**
+         * Displays a modal dialog for Auto-ID options.
+         * @param {HTMLElement} triggeringButton - The button that opened this modal.
+         * @param {string} originalButtonText - The original text of the triggering button.
+         */
+        function showAutoIdModal(triggeringButton, originalButtonText) {
+            const autoIdContentHtml = `
+                <div class="flex flex-col space-y-4">
+                    <div>
+                        <span class="text-sm font-medium text-gray-200 mr-2">Choose elements to ID:</span>
+                        <div class="space-y-2 mt-2">
+                            <!-- Section Toggle -->
+                            <div class="toggle-switch-container">
+                                <label class="toggle-switch is-checked" for="toggleSectionsId">
+                                    <input type="checkbox" id="toggleSectionsId" checked>
+                                    <span class="toggle-switch-slider"></span>
+                                </label>
+                                <span class="toggle-switch-label text-white text-sm">Sections</span>
+                            </div>
+                            <!-- Headings Toggle -->
+                            <div class="toggle-switch-container">
+                                <label class="toggle-switch is-checked" for="toggleHeadingsId">
+                                    <input type="checkbox" id="toggleHeadingsId" checked>
+                                    <span class="toggle-switch-slider"></span>
+                                </label>
+                                <span class="toggle-switch-label text-white text-sm">Headings</span>
+                            </div>
+                            <!-- Tables Toggle -->
+                            <div class="toggle-switch-container">
+                                <label class="toggle-switch is-checked" for="toggleTablesId">
+                                    <input type="checkbox" id="toggleTablesId" checked>
+                                    <span class="toggle-switch-slider"></span>
+                                </label>
+                                <span class="toggle-switch-label text-white text-sm">Tables (outside figures)</span>
+                            </div>
+                            <!-- Figure Tables Toggle -->
+                            <div class="toggle-switch-container">
+                                <label class="toggle-switch is-checked" for="toggleFigureTablesId">
+                                    <input type="checkbox" id="toggleFigureTablesId" checked>
+                                    <span class="toggle-switch-slider"></span>
+                                </label>
+                                <span class="toggle-switch-label text-white text-sm">Figure Tables (inside figures)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const modalOverlay = document.createElement('div');
+            modalOverlay.className = 'modal-overlay';
+            modalOverlay.innerHTML = `
+                <div class="modal-content">
+                    <h3>Auto-ID Options</h3>
+                    <div id="modalBody">${autoIdContentHtml}</div>
+                    <div class="flex justify-end mt-4 space-x-2">
+                        <button id="modalCancelAutoIdBtn" class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700">Cancel</button>
+                        <button id="modalApplyAutoIdBtn" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Apply IDs</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modalOverlay);
+
+            // Function to clean up and re-enable buttons
+            function closeModalAndReEnableButtons() {
+                modalOverlay.remove();
+                triggeringButton.removeAttribute('data-temp-active'); // Crucial: Remove flag
+                triggeringButton.textContent = originalButtonText; // Revert immediately
+                triggeringButton.classList.remove('bg-green-500', 'hover:bg-green-600');
+                triggeringButton.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
+                updateAllInteractiveButtonStates(); // Re-enable all buttons
+            }
+
+            document.getElementById('modalCancelAutoIdBtn').addEventListener('click', closeModalAndReEnableButtons);
+
+            // Get references to elements within the newly created modal
+            const toggleSectionsId = document.getElementById('toggleSectionsId');
+            const toggleHeadingsId = document.getElementById('toggleHeadingsId');
+            const toggleTablesId = document.getElementById('toggleTablesId');
+            const toggleFigureTablesId = document.getElementById('toggleFigureTablesId');
+            const modalApplyAutoIdBtn = document.getElementById('modalApplyAutoIdBtn');
+
+            // Event listeners for pill switches
+            [toggleSectionsId, toggleHeadingsId, toggleTablesId, toggleFigureTablesId].forEach(toggle => {
+                toggle.addEventListener('change', (event) => {
+                    const parentLabel = event.target.closest('.toggle-switch');
+                    if (event.target.checked) {
+                        parentLabel.classList.add('is-checked');
+                    } else {
+                        parentLabel.classList.remove('is-checked');
+                    }
+                });
+            });
+
+            modalApplyAutoIdBtn.addEventListener('click', () => {
+                const options = {
+                    idSections: toggleSectionsId.checked,
+                    idHeadings: toggleHeadingsId.checked,
+                    idTables: toggleTablesId.checked,
+                    idFigureTables: toggleFigureTablesId.checked
+                };
+
+                if (monacoEditorInstance) {
+                    let currentContent = monacoEditorInstance.getValue();
+                    currentContent = protectDataAttributes(currentContent);
+                    currentContent = applyAutoId(currentContent, options); // Pass options to applyAutoId
+                    currentContent = restoreDataAttributes(currentContent);
+                    currentContent = convertAllEntitiesToNumeric(currentContent);
+                    monacoEditorInstance.setValue(currentContent);
+                    htmlOutputContent = currentContent;
+                    applyEntityHighlighting();
+
+                    closeModalAndReEnableButtons(); // Cleanup and re-enable immediately
+
+                    // Capture originalButtonText in a local constant for the setTimeout closure
+                    const capturedOriginalText = originalButtonText;
+
+                    // Provide visual feedback for the main Auto-ID button
+                    triggeringButton.textContent = 'ID\'d!';
+                    triggeringButton.classList.add('bg-green-500', 'hover:bg-green-600');
+                    triggeringButton.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
+                    // The disabled state is managed by updateAllInteractiveButtonStates()
+                    setTimeout(() => {
+                        triggeringButton.textContent = capturedOriginalText; // Revert to initial text
+                        triggeringButton.classList.remove('bg-green-500', 'hover:bg-green-600');
+                        triggeringButton.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
+                    }, 1500);
+                }
             });
         }
 
@@ -3187,7 +3451,7 @@
             codePanel.classList.add('panel-hidden');
 
             // Set initial button styles based on default view (richtext)
-            // The "Go to HTML" button is visible initially, so its color depends on the MSO toggle.
+            // The "Go to HTML" button is visible initially, so its color depends on the Mso toggle.
             // The "Go to Rich-Text" button is hidden initially, so it should have its default blue color.
             toggleEditorViewBtnCode.classList.add('bg-sky-700', 'hover:bg-sky-800');
             toggleEditorViewBtnCode.classList.remove('bg-sky-700', 'hover:bg-sky-800', 'bg-zinc-700', 'hover:bg-zinc-600');
@@ -3298,14 +3562,14 @@
                     copyCodeBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
                     copyCodeBtn.disabled = true; // Disable the button
                     copyCodeBtn.setAttribute('data-temp-active', 'true'); // Mark as active
-                    updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
+                    updateAllInteractiveButtonStates(); // Update all buttons
                     setTimeout(() => {
                         copyCodeBtn.textContent = originalText;
                         copyCodeBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
                         copyCodeBtn.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
                         copyCodeBtn.disabled = false; // Re-enable the button
                         copyCodeBtn.removeAttribute('data-temp-active'); // Unmark as active
-                        updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
+                        updateAllInteractiveButtonStates(); // Update all buttons
                     }, 1500);
                 } catch (err) {
                     console.error('Failed to copy text: ', err);
@@ -3336,14 +3600,14 @@
                     autoFormatBtn.classList.remove('bg-red-700', 'hover:bg-red-800');
                     autoFormatBtn.disabled = true; // Disable the button
                     autoFormatBtn.setAttribute('data-temp-active', 'true'); // Mark as active
-                    updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
+                    updateAllInteractiveButtonStates(); // Update all buttons
                     setTimeout(() => {
                         autoFormatBtn.textContent = originalText;
                         autoFormatBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
                         autoFormatBtn.classList.add('bg-red-700', 'hover:bg-red-800');
                         autoFormatBtn.disabled = false; // Re-enable the button
                         autoFormatBtn.removeAttribute('data-temp-active'); // Unmark as active
-                        updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
+                        updateAllInteractiveButtonStates(); // Update all buttons
                     }, 1500);
                 }
             });
@@ -3371,14 +3635,14 @@
                     autoEncodeBtn.classList.remove('bg-red-700', 'hover:bg-red-800');
                     autoEncodeBtn.disabled = true; // Disable the button
                     autoEncodeBtn.setAttribute('data-temp-active', 'true'); // Mark as active
-                    updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
+                    updateAllInteractiveButtonStates(); // Update all buttons
                     setTimeout(() => {
                         autoEncodeBtn.textContent = originalText;
                         autoEncodeBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
                         autoEncodeBtn.classList.add('bg-red-700', 'hover:bg-red-800');
                         autoEncodeBtn.disabled = false; // Re-enable the button
                         autoEncodeBtn.removeAttribute('data-temp-active'); // Unmark as active
-                        updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
+                        updateAllInteractiveButtonStates(); // Update all buttons
                     }, 1500);
                 }
             });
@@ -3400,14 +3664,14 @@
                 exportHtmlBtn.classList.remove('bg-red-700', 'hover:bg-red-800');
                 exportHtmlBtn.disabled = true; // Disable the button
                 exportHtmlBtn.setAttribute('data-temp-active', 'true'); // Mark as active
-                updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
+                updateAllInteractiveButtonStates(); // Update all buttons
                 setTimeout(() => {
                     exportHtmlBtn.textContent = originalText;
                     exportHtmlBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
                     exportHtmlBtn.classList.add('bg-red-700', 'hover:bg-red-800');
                     exportHtmlBtn.disabled = false; // Re-enable the button
                     exportHtmlBtn.removeAttribute('data-temp-active'); // Unmark as active
-                    updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
+                    updateAllInteractiveButtonStates(); // Update all buttons
                 }, 1500);
             });
 
@@ -3429,14 +3693,14 @@
                         importHtmlBtn.classList.remove('bg-purple-700', 'hover:bg-purple-800');
                         importHtmlBtn.disabled = true; // Disable the button
                         importHtmlBtn.setAttribute('data-temp-active', 'true'); // Mark as active
-                        updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
+                        updateAllInteractiveButtonStates(); // Update all buttons
                         setTimeout(() => {
                             importHtmlBtn.textContent = originalText;
                             importHtmlBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
                             importHtmlBtn.classList.add('bg-purple-700', 'hover:bg-purple-800');
                             importHtmlBtn.disabled = false; // Re-enable the button
                             importHtmlBtn.removeAttribute('data-temp-active');
-                            updateToggleEditorViewBtnCodeState();
+                            updateAllInteractiveButtonStates();
                         }, 1500);
                     };
                     reader.onerror = () => {
@@ -3463,14 +3727,14 @@
                 clearAllBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
                 clearAllBtn.disabled = true; // Disable the button
                 clearAllBtn.setAttribute('data-temp-active', 'true'); // Mark as active
-                updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
+                updateAllInteractiveButtonStates(); // Update all buttons
                 setTimeout(() => {
                     clearAllBtn.textContent = originalText;
                     clearAllBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
                     clearAllBtn.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
                     clearAllBtn.disabled = false; // Re-enable the button
                     clearAllBtn.removeAttribute('data-temp-active'); // Unmark as active
-                    updateToggleEditorViewBtnCodeState();
+                    updateAllInteractiveButtonStates();
                 }, 1500);
             });
 
@@ -3590,7 +3854,8 @@
                          */
                         if (typeof hugerte === 'undefined') {
                             console.error("Iframe: HugeRTE library not loaded!");
-                        } else {
+                        }
+                        else {
                             console.log("Iframe: HugeRTE library loaded. Initializing editor.");
                             hugerte.init({
                                 selector: '#richEditor',
@@ -3663,7 +3928,7 @@
                 toggleAutoCleanMsoOnSwitchCode.closest('.toggle-switch').classList.toggle('is-checked', isChecked);
                 console.log(`Auto-Clean MSO on RichText switch is now: ${isChecked ? 'ON' : 'OFF'}`);
                 updateGoToHtmlButtonColor(); // Update button color
-                updateCleanMsoButtonState(); // Update Clean MSO button state
+                updateCleanMsoButtonState(); // Update Clean Mso button state
             });
 
             toggleAutoCleanMsoOnSwitchCode.addEventListener('change', (event) => {
@@ -3678,7 +3943,7 @@
                 toggleAutoCleanMsoOnSwitchRichText.closest('.toggle-switch').classList.toggle('is-checked', isChecked);
                 console.log(`Auto-Clean MSO on Code switch is now: ${isChecked ? 'ON' : 'OFF'}`);
                 // No button color update needed here as it's the "Go to Rich-Text" button
-                updateCleanMsoButtonState(); // Update Clean MSO button state
+                updateCleanMsoButtonState(); // Update Clean Mso button state
             });
 
 
@@ -3701,7 +3966,9 @@
                         existingTimeElements.forEach(timeEl => {
                             // Replace the <time> element with its text content
                             const textNode = doc.createTextNode(timeEl.textContent);
-                            timeEl.parentNode.replaceChild(textNode, timeEl);
+                            if (timeEl.parentNode) {
+                                timeEl.parentNode.replaceChild(textNode, timeEl);
+                            }
                         });
 
                         // Now, `body.innerHTML` contains the HTML with all <time> tags removed.
@@ -3738,19 +4005,19 @@
                         const regexIsoDateFull = /(?<!\d)(\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01]))(?!\d)/g;
 
                         // Regex for Month Day, Year (e.g., March 20, 2023)
-                        const regexMonthDayYear = new RegExp(`(?<!\d)(${monthPattern})${spaceOrNBSPChar}(\\d{1,2}),?${spaceOrNBSPChar}(\\d{4})(?!\d)`, 'i');
+                        const regexMonthDayYear = new RegExp(`(?<!\\d)(${monthPattern})${spaceOrNBSPChar}(\\d{1,2}),?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'i');
                         // Regex for Day Month Year (e.g., 20 March 2023, le 20 mars 2023)
-                        const regexDayMonthYear = new RegExp(`(?<!\d)(?:(?:le|the)${spaceOrNBSPChar})?(\d{1,2})${spaceOrNBSPChar}(${monthPattern}),?${spaceOrNBSPChar}(\d{4})(?!\d)`, 'i');
+                        const regexDayMonthYear = new RegExp(`(?<!\\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2})${spaceOrNBSPChar}(${monthPattern}),?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'i');
 
                         // NEW: Regex for Month Day (no year) - e.g., March 31
                         // Negative lookahead `(?!\d|${spaceOrNBSPChar}\d{4})` ensures no digit or 4-digit year follows.
                         // `(?!-)` prevents tagging numeric dates like 03-31
-                        const regexMonthDayNoYear = new RegExp(`(?<!\d)(${monthPattern})${spaceOrNBSPChar}(\d{1,2})(?!\d|${spaceOrNBSPChar}\d{4})(?!-)`, 'i');
+                        const regexMonthDayNoYear = new RegExp(`(?<!\\d)(${monthPattern})${spaceOrNBSPChar}(\\d{1,2})(?!\\d|${spaceOrNBSPChar}\\d{4})(?!-)`, 'i');
 
                         // NEW: Regex for Day Month (no year) - e.g., 31 mars, le 31 mars
-                        // Negative lookahead `(?!\d|${spaceOrNBSPChar}\d{4})` ensures no digit or 4-digit year follows.
+                        // Negative lookahead `(?!\d|${spaceOrNBSPChar}\\d{4})` ensures no digit or 4-digit year follows.
                         // `(?!-)` prevents tagging numeric dates like 31-03
-                        const regexDayMonthNoYear = new RegExp(`(?<!\d)(?:(?:le|the)${spaceOrNBSPChar})?(\d{1,2})${spaceOrNBSPChar}(${monthPattern})(?!\d|${spaceOrNBSPChar}\d{4})(?!-)`, 'i');
+                        const regexDayMonthNoYear = new RegExp(`(?<!\\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2})${spaceOrNBSPChar}(${monthPattern})(?!\\d|${spaceOrNBSPChar}\\d{4})(?!-)`, 'i');
 
 
                         // Re-parse the content to allow traversal of the updated DOM
@@ -3892,7 +4159,9 @@
                                 const newHtmlContent = resultParts.join('');
 
                                 const fragment = reParsedDoc.createRange().createContextualFragment(newHtmlContent);
-                                textNode.parentNode.replaceChild(fragment, textNode);
+                                if (textNode.parentNode) {
+                                    textNode.parentNode.replaceChild(fragment, textNode);
+                                }
                             }
                         });
 
@@ -3911,14 +4180,14 @@
                         timeTagsBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600'); // Changed from bg-gray-700
                         timeTagsBtn.disabled = true; // Disable the button
                         timeTagsBtn.setAttribute('data-temp-active', 'true'); // Mark as active
-                        updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
+                        updateAllInteractiveButtonStates(); // Update all buttons
                         setTimeout(() => {
                             timeTagsBtn.textContent = originalText;
                             timeTagsBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
                             timeTagsBtn.classList.add('bg-zinc-700', 'hover:bg-zinc-600'); // Changed from bg-gray-700
                             timeTagsBtn.disabled = false; // Re-enable the button
                             timeTagsBtn.removeAttribute('data-temp-active'); // Unmark as active
-                            updateToggleEditorViewBtnCodeState();
+                            updateAllInteractiveButtonStates(); // Update all buttons
                         }, 1500);
                     }
                 });
@@ -4006,14 +4275,14 @@
                     fixFnIdsBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
                     fixFnIdsBtn.disabled = true; // Disable the button
                     fixFnIdsBtn.setAttribute('data-temp-active', 'true'); // Mark as active
-                    updateToggleEditorViewBtnCodeState(); // Update Go to Rich-Text button state
+                    updateAllInteractiveButtonStates(); // Update all buttons
                     setTimeout(() => {
                         fixFnIdsBtn.textContent = originalText;
                         fixFnIdsBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
                         fixFnIdsBtn.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
-                        fixFnIdsBtn.disabled = false; // Re-enable the button
+                        fixFnIdsBtn.disabled = false;
                         fixFnIdsBtn.removeAttribute('data-temp-active'); // Unmark as active
-                        updateToggleEditorViewBtnCodeState();
+                        updateAllInteractiveButtonStates(); // Update all buttons
                     }, 1500);
                 }
             });
@@ -4030,10 +4299,10 @@
                     console.log("Clean MSO Lists applied.");
                     // Apply Clean Mso Tables
                     currentContent = applyCleanTablesBasic(currentContent);
-                    console.log("Clean MSO Tables applied.");
+                    console.log("Clean Mso Tables applied.");
                     // Apply Clean Mso Code (includes IMGs now)
                     currentContent = applyCleanMsoCode(currentContent);
-                    console.log("Clean MSO Code (including IMGs) applied.");
+                    console.log("Clean Mso Code (including IMGs) applied.");
                     // Apply URL cleaning
                     currentContent = applyUrlCleaning(currentContent);
                     console.log("Clean URLs applied.");
@@ -4054,14 +4323,14 @@
                     cleanMsoBtn.classList.remove('bg-blue-700', 'hover:bg-blue-800');
                     cleanMsoBtn.disabled = true;
                     cleanMsoBtn.setAttribute('data-temp-active', 'true');
-                    updateToggleEditorViewBtnCodeState();
+                    updateAllInteractiveButtonStates(); // Update all buttons
                     setTimeout(() => {
                         cleanMsoBtn.textContent = originalText;
                         cleanMsoBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
                         cleanMsoBtn.classList.add('bg-blue-700', 'hover:bg-blue-800');
                         cleanMsoBtn.disabled = false;
                         cleanMsoBtn.removeAttribute('data-temp-active');
-                        updateToggleEditorViewBtnCodeState();
+                        updateAllInteractiveButtonStates(); // Update all buttons
                     }, 1500);
                 }
             });
@@ -4084,14 +4353,14 @@
                     cleanUrlsBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
                     cleanUrlsBtn.disabled = true;
                     cleanUrlsBtn.setAttribute('data-temp-active', 'true');
-                    updateToggleEditorViewBtnCodeState();
+                    updateAllInteractiveButtonStates(); // Update all buttons
                     setTimeout(() => {
                         cleanUrlsBtn.textContent = originalText;
                         cleanUrlsBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
                         cleanUrlsBtn.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
                         cleanUrlsBtn.disabled = false;
                         cleanUrlsBtn.removeAttribute('data-temp-active');
-                        updateToggleEditorViewBtnCodeState();
+                        updateAllInteractiveButtonStates();
                     }, 1500);
                 }
             });
@@ -4116,14 +4385,14 @@
                     cleanSpacesBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
                     cleanSpacesBtn.disabled = true;
                     cleanSpacesBtn.setAttribute('data-temp-active', 'true');
-                    updateToggleEditorViewBtnCodeState();
+                    updateAllInteractiveButtonStates(); // Update all buttons
                     setTimeout(() => {
                         cleanSpacesBtn.textContent = originalText;
                         cleanSpacesBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
                         cleanSpacesBtn.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
                         cleanSpacesBtn.disabled = false;
                         cleanSpacesBtn.removeAttribute('data-temp-active');
-                        updateToggleEditorViewBtnCodeState();
+                        updateAllInteractiveButtonStates();
                     }, 1500);
                 }
             });
@@ -4148,14 +4417,14 @@
                     cleanSingleBreaksBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
                     cleanSingleBreaksBtn.disabled = true;
                     cleanSingleBreaksBtn.setAttribute('data-temp-active', 'true');
-                    updateToggleEditorViewBtnCodeState();
+                    updateAllInteractiveButtonStates(); // Update all buttons
                     setTimeout(() => {
                         cleanSingleBreaksBtn.textContent = originalText;
                         cleanSingleBreaksBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
                         cleanSingleBreaksBtn.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
                         cleanSingleBreaksBtn.disabled = false;
                         cleanSingleBreaksBtn.removeAttribute('data-temp-active');
-                        updateToggleEditorViewBtnCodeState();
+                        updateAllInteractiveButtonStates();
                     }, 1500);
                 }
             });
@@ -4178,14 +4447,14 @@
                     cleanFormattingTagsBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
                     cleanFormattingTagsBtn.disabled = true;
                     cleanFormattingTagsBtn.setAttribute('data-temp-active', 'true');
-                    updateToggleEditorViewBtnCodeState();
+                    updateAllInteractiveButtonStates(); // Update all buttons
                     setTimeout(() => {
                         cleanFormattingTagsBtn.textContent = originalText;
                         cleanFormattingTagsBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
                         cleanFormattingTagsBtn.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
                         cleanFormattingTagsBtn.disabled = false;
                         cleanFormattingTagsBtn.removeAttribute('data-temp-active');
-                        updateToggleEditorViewBtnCodeState();
+                        updateAllInteractiveButtonStates();
                     }, 1500);
                 }
             });
@@ -4201,6 +4470,7 @@
                     monacoEditorInstance.setValue(currentContent);
                     htmlOutputContent = currentContent;
                     applyEntityHighlighting();
+                    autoFormatBtn.click(); // Call Auto-Indent at the end
 
                     const originalText = autoLevelHeadingsBtn.textContent;
                     autoLevelHeadingsBtn.textContent = 'Leveled!';
@@ -4208,14 +4478,14 @@
                     autoLevelHeadingsBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
                     autoLevelHeadingsBtn.disabled = true;
                     autoLevelHeadingsBtn.setAttribute('data-temp-active', 'true');
-                    updateToggleEditorViewBtnCodeState();
+                    updateAllInteractiveButtonStates(); // Update all buttons
                     setTimeout(() => {
                         autoLevelHeadingsBtn.textContent = originalText;
                         autoLevelHeadingsBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
                         autoLevelHeadingsBtn.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
                         autoLevelHeadingsBtn.disabled = false;
                         autoLevelHeadingsBtn.removeAttribute('data-temp-active');
-                        updateToggleEditorViewBtnCodeState();
+                        updateAllInteractiveButtonStates();
                     }, 1500);
                 }
             });
@@ -4231,6 +4501,7 @@
                     monacoEditorInstance.setValue(currentContent);
                     htmlOutputContent = currentContent;
                     applyEntityHighlighting();
+                    autoFormatBtn.click(); // Call Auto-Indent at the end
 
                     const originalText = autoSectionBtn.textContent;
                     autoSectionBtn.textContent = 'Sectioned!';
@@ -4238,51 +4509,39 @@
                     autoSectionBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
                     autoSectionBtn.disabled = true;
                     autoSectionBtn.setAttribute('data-temp-active', 'true');
-                    updateToggleEditorViewBtnCodeState();
+                    updateAllInteractiveButtonStates(); // Update all buttons
                     setTimeout(() => {
                         autoSectionBtn.textContent = originalText;
                         autoSectionBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
                         autoSectionBtn.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
                         autoSectionBtn.disabled = false;
                         autoSectionBtn.removeAttribute('data-temp-active');
-                        updateToggleEditorViewBtnCodeState();
+                        updateAllInteractiveButtonStates();
                     }, 1500);
                 }
             });
 
             // Auto-ID button event listener
             autoIdBtn.addEventListener('click', () => {
-                if (monacoEditorInstance) {
-                    let currentContent = monacoEditorInstance.getValue();
-                    currentContent = protectDataAttributes(currentContent);
-                    currentContent = applyAutoId(currentContent);
-                    currentContent = restoreDataAttributes(currentContent);
-                    currentContent = convertAllEntitiesToNumeric(currentContent);
-                    monacoEditorInstance.setValue(currentContent);
-                    htmlOutputContent = currentContent;
-                    applyEntityHighlighting();
-
-                    const originalText = autoIdBtn.textContent;
-                    autoIdBtn.textContent = 'ID\'d!';
-                    autoIdBtn.classList.add('bg-green-500', 'hover:bg-green-600');
-                    autoIdBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
-                    autoIdBtn.disabled = true;
-                    autoIdBtn.setAttribute('data-temp-active', 'true');
-                    updateToggleEditorViewBtnCodeState();
-                    setTimeout(() => {
-                        autoIdBtn.textContent = originalText;
-                        autoIdBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-                        autoIdBtn.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
-                        autoIdBtn.disabled = false;
-                        autoIdBtn.removeAttribute('data-temp-active');
-                        updateToggleEditorViewBtnCodeState();
-                    }, 1500);
-                }
+                const originalText = autoIdBtn.textContent;
+                autoIdBtn.textContent = 'Opening...';
+                autoIdBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                autoIdBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
+                autoIdBtn.setAttribute('data-temp-active', 'true'); // Set the flag
+                updateAllInteractiveButtonStates(); // Disable all buttons
+                showAutoIdModal(autoIdBtn, originalText); // Pass original text to the modal
             });
 
             // Colophon button event listener
             colophonBtn.addEventListener('click', () => {
-                const colophonHtml = `
+                const originalText = colophonBtn.textContent;
+                colophonBtn.textContent = 'Opening...';
+                colophonBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                colophonBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
+                colophonBtn.setAttribute('data-temp-active', 'true'); // Set the flag
+                updateAllInteractiveButtonStates(); // Disable all buttons
+
+                const colophonHtmlContent = `
                     <div class="flex flex-col space-y-4">
                         <div>
                             <span class="text-sm font-medium text-gray-200 mr-2">Language:</span>
@@ -4315,46 +4574,18 @@
                         </div>
                     </div>
                 `;
-                showModal('Insert Colophon', colophonHtml);
-
-                const originalText = colophonBtn.textContent;
-                colophonBtn.textContent = 'Opening...';
-                colophonBtn.classList.add('bg-green-500', 'hover:bg-green-600');
-                colophonBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
-                colophonBtn.disabled = true;
-                colophonBtn.setAttribute('data-temp-active', 'true');
-                updateToggleEditorViewBtnCodeState();
-
-                setTimeout(() => {
-                    colophonBtn.textContent = originalText;
-                    colophonBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-                    colophonBtn.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
-                    colophonBtn.disabled = false;
-                    colophonBtn.removeAttribute('data-temp-active');
-                    updateToggleEditorViewBtnCodeState();
-                }, 2000); // Reset after 2 seconds, assuming modal interaction starts
+                showModal('Insert Colophon', colophonHtmlContent, colophonBtn, originalText); // Pass original text
             });
 
             // New: Footnote List button event listener
             footnoteListBtn.addEventListener('click', () => {
-                showFootnoteModal();
-
                 const originalText = footnoteListBtn.textContent;
                 footnoteListBtn.textContent = 'Opening...';
                 footnoteListBtn.classList.add('bg-green-500', 'hover:bg-green-600');
                 footnoteListBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
-                footnoteListBtn.disabled = true;
-                footnoteListBtn.setAttribute('data-temp-active', 'true');
-                updateToggleEditorViewBtnCodeState();
-
-                setTimeout(() => {
-                    footnoteListBtn.textContent = originalText;
-                    footnoteListBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-                    footnoteListBtn.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
-                    footnoteListBtn.disabled = false;
-                    footnoteListBtn.removeAttribute('data-temp-active');
-                    updateToggleEditorViewBtnCodeState();
-                }, 2000); // Reset after 2 seconds, assuming modal interaction starts
+                footnoteListBtn.setAttribute('data-temp-active', 'true'); // Set the flag
+                updateAllInteractiveButtonStates(); // Disable all buttons
+                showFootnoteModal(footnoteListBtn, originalText); // Pass original text
             });
 
 
