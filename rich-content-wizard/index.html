@@ -1488,7 +1488,8 @@
         }
 
         /**
-         * Processes <p> tags with "MsoListParagraph" class, converting them to <ul><li> structures.
+         * Processes <p> or heading tags with "MsoListParagraph" class or specific style attributes,
+         * converting them to <ul><li> structures.
          * @param {string} htmlString - The HTML content to clean.
          * @returns {string} The cleaned HTML content.
          */
@@ -1558,8 +1559,8 @@
             }
 
             // Helper to determine list type
-            function detectListType(pElement) {
-                const msoListIgnoreSpan = pElement.querySelector('span[style*="mso-list: Ignore"]');
+            function detectListType(element) {
+                const msoListIgnoreSpan = element.querySelector('span[style*="mso-list: Ignore"]');
                 if (msoListIgnoreSpan) {
                     const bulletText = msoListIgnoreSpan.textContent.trim();
                     if (/^\d+(\.\d+)+[\.\)]*$/.test(bulletText)) {
@@ -1578,46 +1579,60 @@
                 return 'unordered';
             }
 
-            const paragraphs = Array.from(body.querySelectorAll('p'));
-            const paragraphsToReplace = new Map();
-            const paragraphsToRemove = new Set();
+            // Query for p AND heading tags
+            const targetElements = Array.from(body.querySelectorAll('p, h1, h2, h3, h4, h5, h6'));
+            const elementsToReplace = new Map(); // Maps old element to new list element
+            const elementsToRemove = new Set(); // Elements that have been integrated into a list
 
-            for (let i = 0; i < paragraphs.length; i++) {
-                const p = paragraphs[i];
-                const classList = Array.from(p.classList);
-                const isMsoListParagraph = classList.some(cls =>
+            for (let i = 0; i < targetElements.length; i++) {
+                const element = targetElements[i];
+
+                if (elementsToRemove.has(element)) {
+                    continue; // Skip if already processed and marked for removal
+                }
+
+                const tagName = element.tagName.toLowerCase();
+                const classList = Array.from(element.classList);
+                const styleAttr = element.getAttribute('style') || '';
+
+                // Condition 1: Check for existing MsoListParagraph classes
+                const isMsoListParagraphClass = classList.some(cls =>
                     cls === 'MsoListParagraphCxSpFirst' ||
                     cls === 'MsoListParagraphCxSpMiddle' ||
                     cls === 'MsoListParagraphCxSpLast' ||
                     cls === 'MsoListParagraph'
                 );
 
-                if (paragraphsToRemove.has(p)) {
-                    continue;
-                }
+                // Condition 2: Check for new rule: p or heading with no class OR class that DOES NOT contain "MsoList", AND style contains "mso-list"
+                const matchesNewRule =
+                    (['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tagName)) &&
+                    (!element.hasAttribute('class') || !element.className.includes('MsoList')) &&
+                    (styleAttr.includes('mso-list'));
 
-                if (isMsoListParagraph) {
-                    const pStyle = p.getAttribute('style') || '';
-                    const level = getLevel(pStyle);
+                // Combined condition for a list item
+                if (isMsoListParagraphClass || matchesNewRule) {
+                    const level = getLevel(styleAttr);
 
-                    if (isMsoListParagraph && level === null) {
-                        p.removeAttribute('class');
-                        p.classList.add('MsoNormal');
-                        continue;
+                    // If it's identified as a list paragraph but no level is found,
+                    // assume it's not a proper MSO list item and convert to MsoNormal or remove styling.
+                    if (level === null) {
+                        element.removeAttribute('class');
+                        element.removeAttribute('style'); // Also remove style
+                        element.classList.add('MsoNormal');
+                        continue; // Skip further list processing for this element
                     }
 
-                    const msoListIgnoreSpan = p.querySelector('span[style*="mso-list: Ignore"]');
+                    const msoListIgnoreSpan = element.querySelector('span[style*="mso-list: Ignore"]');
                     let bulletTextToPrepend = '';
                     let listType = 'unordered';
 
                     if (msoListIgnoreSpan) {
                         bulletTextToPrepend = msoListIgnoreSpan.textContent.trim();
-                        listType = detectListType(p);
+                        listType = detectListType(element);
                         msoListIgnoreSpan.parentNode.removeChild(msoListIgnoreSpan);
                     }
 
                     let newRootListElement;
-
                     if (listType === 'ordered-numeric') {
                         newRootListElement = doc.createElement('ol');
                     } else if (listType === 'ordered-alpha') {
@@ -1627,11 +1642,11 @@
                         newRootListElement = doc.createElement('ul');
                     }
 
-                    let currentListStack = [newRootListElement];
+                    let currentListStack = [{ domElement: newRootListElement, level: level }];
                     let currentParentList = newRootListElement;
 
                     const li = doc.createElement('li');
-                    let listItemContent = extractAllowedContentForLists(p);
+                    let listItemContent = extractAllowedContentForLists(element);
 
                     if (listType === 'complex-bullet') {
                         li.innerHTML = bulletTextToPrepend + ' ' + listItemContent;
@@ -1639,46 +1654,65 @@
                         li.innerHTML = listItemContent;
                     }
                     currentParentList.appendChild(li);
-                    paragraphsToReplace.set(p, newRootListElement);
+                    elementsToReplace.set(element, newRootListElement); // Mark the first element of the sequence for replacement
 
-                    let nextSibling = p.nextElementSibling;
-                    let currentSequenceIndex = i + 1;
+                    // Remove class and style attributes from the processed element
+                    element.removeAttribute('class');
+                    element.removeAttribute('style');
 
-                    while (nextSibling && nextSibling.nodeType === Node.ELEMENT_NODE && nextSibling.tagName.toLowerCase() === 'p') {
-                        const nextP = nextSibling;
-                        const nextPClassList = Array.from(nextP.classList);
-                        const isNextPListParagraph = nextPClassList.some(cls =>
+
+                    // Process subsequent sibling elements that are part of the same list sequence
+                    let nextSibling = element.nextElementSibling;
+                    let currentSequenceIndex = i + 1; // Track index in original targetElements array
+
+                    while (nextSibling && currentSequenceIndex < targetElements.length) {
+                        const nextElement = targetElements[currentSequenceIndex]; // Get from original array
+                        if (nextElement !== nextSibling) { // Ensure we are still processing actual next siblings
+                            break;
+                        }
+
+                        const nextTagName = nextElement.tagName.toLowerCase();
+                        const nextClassList = Array.from(nextElement.classList);
+                        const nextStyleAttr = nextElement.getAttribute('style') || '';
+
+                        const isNextMsoListParagraphClass = nextClassList.some(cls =>
                             cls === 'MsoListParagraphCxSpFirst' ||
                             cls === 'MsoListParagraphCxSpMiddle' ||
                             cls === 'MsoListParagraphCxSpLast' ||
                             cls === 'MsoListParagraph'
                         );
+                        const nextMatchesNewRule =
+                            (['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(nextTagName)) &&
+                            (!nextElement.hasAttribute('class') || !nextElement.className.includes('MsoList')) &&
+                            (nextStyleAttr.includes('mso-list'));
 
-                        const nextPStyle = nextP.getAttribute('style') || '';
-                        const nextLevelCheck = getLevel(nextPStyle);
-                        if (isNextPListParagraph && nextLevelCheck === null) {
-                            nextP.removeAttribute('class');
-                            nextP.classList.add('MsoNormal');
-                            break;
-                        }
+                        if (isNextMsoListParagraphClass || nextMatchesNewRule) {
+                            const nextLevel = getLevel(nextStyleAttr);
 
-                        if (isNextPListParagraph) {
-                            const nextLevel = getLevel(nextP.getAttribute('style') || '');
-                            let currentDepth = currentListStack.length;
+                            // If next element is identified as list but has no level, break the sequence
+                            if (nextLevel === null) {
+                                nextElement.removeAttribute('class');
+                                nextElement.removeAttribute('style');
+                                nextElement.classList.add('MsoNormal');
+                                break;
+                            }
 
-                            const nextMsoListIgnoreSpan = nextP.querySelector('span[style*="mso-list: Ignore"]');
+                            const nextMsoListIgnoreSpan = nextElement.querySelector('span[style*="mso-list: Ignore"]');
                             let nextBulletTextToPrepend = '';
                             let nextListType = 'unordered';
 
                             if (nextMsoListIgnoreSpan) {
                                 nextBulletTextToPrepend = nextMsoListIgnoreSpan.textContent.trim();
-                                nextListType = detectListType(nextP);
+                                nextListType = detectListType(nextElement);
                                 nextMsoListIgnoreSpan.parentNode.removeChild(nextMsoListIgnoreSpan);
                             }
 
-                            if (nextLevel > currentDepth) {
-                                let nestedListElement;
+                            // Adjust list nesting based on level
+                            let currentDepth = currentListStack[currentListStack.length - 1].level;
 
+                            if (nextLevel > currentDepth) {
+                                // Deeper level, create nested list
+                                let nestedListElement;
                                 if (nextListType === 'ordered-numeric') {
                                     nestedListElement = doc.createElement('ol');
                                 } else if (nextListType === 'ordered-alpha') {
@@ -1688,69 +1722,88 @@
                                     nestedListElement = doc.createElement('ul');
                                 }
 
-                                for (let k = currentDepth; k > nextLevel; k--) {
-                                    currentListStack.pop();
-                                    currentParentList = currentListStack[currentListStack.length - 1];
+                                // Append to the last <li> of the current parent list
+                                let targetLi = currentParentList.lastElementChild;
+                                if (!targetLi || targetLi.tagName.toLowerCase() !== 'li') {
+                                    // Should ideally not happen if structure is well-formed, but a fallback
+                                    targetLi = doc.createElement('li');
+                                    currentParentList.appendChild(targetLi);
                                 }
-                                while (currentListStack.length < nextLevel) {
-                                     let targetLi = currentParentList.lastElementChild;
-                                     if (!targetLi || targetLi.tagName.toLowerCase() !== 'li') {
-                                         targetLi = doc.createElement('li');
-                                         currentParentList.appendChild(targetLi);
-                                     }
-                                     let newNestedList;
-                                     if (currentListStack.length + 1 === nextLevel) {
-                                         if (nextListType === 'ordered-numeric') {
-                                             newNestedList = doc.createElement('ol');
-                                         } else if (nextListType === 'ordered-alpha') {
-                                             newNestedList = doc.createElement('ol');
-                                             newNestedList.classList.add('lst-lwr-alph');
-                                         } else {
-                                             newNestedList = doc.createElement('ul');
-                                         }
-                                     } else {
-                                         newNestedList = doc.createElement('ul');
-                                     }
-                                     targetLi.appendChild(newNestedList);
-                                     currentListStack.push(newNestedList);
-                                     currentParentList = newNestedList;
-                                 }
+                                targetLi.appendChild(nestedListElement);
+                                currentListStack.push({ domElement: nestedListElement, level: nextLevel });
+                                currentParentList = nestedListElement;
 
                             } else if (nextLevel < currentDepth) {
-                                for (let k = currentDepth; k > nextLevel; k--) {
+                                // Higher level, pop from stack until appropriate parent is found
+                                while (currentListStack.length > 1 && nextLevel <= currentListStack[currentListStack.length - 1].level) {
                                     currentListStack.pop();
-                                    currentParentList = currentListStack[currentListStack.length - 1];
                                 }
+                                currentParentList = currentListStack[currentListStack.length - 1].domElement;
+
+                                // If after popping, the next level is still greater than current parent's level,
+                                // it means an intermediate level was skipped, so create missing intermediate list(s).
+                                // This logic might need further refinement for complex cases but aims to prevent too-deep jumps.
+                                while (currentListStack.length < nextLevel) {
+                                    let targetLi = currentParentList.lastElementChild;
+                                    if (!targetLi || targetLi.tagName.toLowerCase() !== 'li') {
+                                        targetLi = doc.createElement('li');
+                                        currentParentList.appendChild(targetLi);
+                                    }
+                                    let newNestedList;
+                                    if (currentListStack.length + 1 === nextLevel) { // Only create the *correct* type if this is the target level
+                                        if (nextListType === 'ordered-numeric') {
+                                            newNestedList = doc.createElement('ol');
+                                        } else if (nextListType === 'ordered-alpha') {
+                                            newNestedList = doc.createElement('ol');
+                                            newNestedList.classList.add('lst-lwr-alph');
+                                        } else {
+                                            newNestedList = doc.createElement('ul');
+                                        }
+                                    } else { // Intermediate levels are always <ul>
+                                        newNestedList = doc.createElement('ul');
+                                    }
+                                    targetLi.appendChild(newNestedList);
+                                    currentListStack.push({ domElement: newNestedList, level: currentListStack.length + 1 });
+                                    currentParentList = newNestedList;
+                                }
+
                             }
+                            // If nextLevel === currentDepth, simply append to currentParentList
+
 
                             const nextLi = doc.createElement('li');
-                            let nextListItemContent = extractAllowedContentForLists(nextP);
+                            let nextListItemContent = extractAllowedContentForLists(nextElement);
                             if (nextListType === 'complex-bullet') {
                                 nextLi.innerHTML = nextBulletTextToPrepend + ' ' + nextListItemContent;
                             } else {
                                 nextLi.innerHTML = nextListItemContent;
                             }
                             currentParentList.appendChild(nextLi);
-                            paragraphsToRemove.add(nextP);
+                            elementsToRemove.add(nextElement); // Mark subsequent elements for removal
 
-                            nextSibling = nextP.nextElementSibling;
+                            // Remove class and style attributes from the processed element
+                            nextElement.removeAttribute('class');
+                            nextElement.removeAttribute('style');
+
+                            nextSibling = nextElement.nextElementSibling;
                             currentSequenceIndex++;
                         } else {
-                            break;
+                            break; // End of list sequence
                         }
                     }
-                    i = currentSequenceIndex - 1;
+                    i = currentSequenceIndex - 1; // Adjust outer loop index
                 }
             }
 
-            paragraphs.forEach(p => {
-                if (paragraphsToReplace.has(p)) {
-                    if (p.parentNode) {
-                        p.parentNode.replaceChild(paragraphsToReplace.get(p), p);
+            // Perform DOM modifications based on maps
+            targetElements.forEach(element => {
+                if (elementsToReplace.has(element)) {
+                    if (element.parentNode) {
+                        element.parentNode.replaceChild(elementsToReplace.get(element), element);
                     }
-                } else if (paragraphsToRemove.has(p)) {
-                    if (p.parentNode) {
-                        p.parentNode.removeChild(p);
+                } else if (elementsToRemove.has(element)) {
+                    if (element.parentNode) {
+                        element.parentNode.removeChild(element);
                     }
                 }
             });
@@ -1844,7 +1897,7 @@
                     const alignAttr = p.getAttribute('align');
                     if (alignAttr) {
                         p.removeAttribute('align');
-                        let tailwclassName = '';
+                        let tailwindAlignClass = ''; // Fixed typo from tailwclassName
                         switch (alignAttr.toLowerCase()) {
                             case 'left':
                                 tailwindAlignClass = 'text-left';
