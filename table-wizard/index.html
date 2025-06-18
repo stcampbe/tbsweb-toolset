@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monaco HTML Table Formatter</title>
+    <title>AutoTabler™ - HTML Table Wizard</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.0/beautify-html.min.js"></script>
@@ -220,7 +220,7 @@
 
         /* Checked state styles (applied to the .toggle-switch label itself) */
         .toggle-switch.is-checked {
-            background-color: #22c55e;
+            background-color: #3b82f6; /* Blue-500 */
         }
 
         .toggle-switch.is-checked .toggle-switch-slider {
@@ -265,7 +265,7 @@
             border-radius: 0.5rem;
             padding: 0.75rem 1rem; /* Direct padding for content, no header separate */
             flex: 1; /* Allow sections to grow and shrink within the row */
-            min-width: 280px; /* Ensure a minimum width for each section in the row */
+            /* min-width: 280px; Removed min-width from here */
         }
 
         .options-section h4 { /* Styling for the section titles */
@@ -351,13 +351,13 @@
 
         .modal-content {
             background-color: #18181b; /* Darker zinc */
-            padding: 2rem;
+            padding: 1rem;
             border-radius: 0.75rem;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
             color: #ffffff;
             text-align: left; /* Left align content */
             max-width: 95%; /* Increased max-width for better use of space */
-            width: 1000px; /* Increased width to accommodate 3-column layout */
+            width: 1700px; /* Increased width to accommodate 3-column layout */
             max-height: 90vh; /* Max height to prevent overflow on smaller screens */
             overflow-y: auto; /* Enable scrolling for modal content */
             display: flex; /* Make modal content a flex container */
@@ -396,7 +396,7 @@
             margin-bottom: 1.5rem;
         }
 
-        .modal-content .modal-buttons { /* New container for modal action buttons */
+        .modal-content .modal-buttons {
             margin-top: auto; /* Push buttons to the bottom */
             display: flex;
             justify-content: flex-end; /* Push buttons to the right */
@@ -416,38 +416,202 @@
         .modal-content .modal-buttons button:hover {
             background-color: #3f3f46; /* Zinc-700 */
         }
+
+        /* Styles for the new dropdown for table search */
+        .table-select-container { /* Changed class name for consistency */
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1rem; /* Added margin-top to separate from editor */
+            padding-top: 0.5rem; /* Added padding-top */
+            color: #d4d4d8;
+        }
+
+        .table-select-container select {
+            background-color: #27272a;
+            color: #ffffff;
+            border: 1px solid #3f3f46;
+            border-radius: 0.25rem;
+            padding: 0.4rem 0.6rem;
+            font-size: 0.875rem;
+            flex-grow: 1;
+            cursor: pointer;
+        }
+
+        .table-select-container select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+        }
+
+        /* Monaco Editor highlight for selected line */
+        .selected-line-highlight {
+            background-color: rgba(59, 130, 246, 0.2); /* Blue with some transparency */
+            border-radius: 4px;
+        }
+
+        /* --- New/Modified styles for Customize Modal Layout --- */
+        #customize-modal-overlay .modal-content {
+            width: 95%; /* Adjust width for the new horizontal layout */
+            max-width: 1700px; /* Max width for larger screens */
+            height: 90vh; /* Fixed height for consistency */
+            max-height: 90vh; /* Ensure it doesn't exceed viewport height */
+            display: flex;
+            flex-direction: column; /* Default to column on small screens */
+            overflow: hidden; /* Prevent modal content from scrolling itself, inner panels will scroll */
+        }
+
+
+        /* Make modal-content horizontal on medium and larger screens */
+        @media (min-width: 768px) { /* md breakpoint */
+            #customize-modal-overlay .modal-content {
+                flex-direction: column; /* Keep column for header, main content, and buttons */
+            }
+        }
+
+        .customize-main-content-wrapper {
+            display: flex;
+            flex-direction: column; /* Stack preview and options vertically on small screens */
+            flex-grow: 1; /* Allow this wrapper to take available height */
+            gap: 1rem; /* Space between preview and options */
+            overflow: hidden; /* Contain inner scrolling */
+            padding: 1rem 0 0 0; /* Padding for the main content area */
+        }
+
+        @media (min-width: 768px) { /* md breakpoint */
+            .customize-main-content-wrapper {
+                flex-direction: row; /* Horizontal layout on larger screens */
+            }
+        }
+
+        .customize-preview-wrapper { /* New wrapper for iframe to control its styling/overflow */
+            width: 100%; /* Full width on small screens */
+            height: 70%; /* Take 70% height on small screens */
+            flex-shrink: 1; /* Allow it to shrink */
+            flex-grow: 1; /* Allow it to grow */
+            display: flex;
+            flex-direction: column;
+            border-radius: 0.5rem;
+            overflow-y: auto; /* Allow vertical scrolling for the wrapper */
+            overflow-x: hidden; /* Prevent horizontal scrolling for the wrapper */
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.5); /* Inner shadow for depth */
+        }
+
+        @media (min-width: 768px) { /* md breakpoint */
+            .customize-preview-wrapper {
+                width: 75%; /* 3/4 width on larger screens */
+                height: auto; /* Auto height to fill flex container */
+            }
+        }
+
+        #customize-preview-iframe {
+            width: 100%;
+            height: 100%; /* Take full height of its parent wrapper */
+            border: 1px solid #475569; /* Slate-600 border */
+            border-radius: 0.375rem;
+            background-color: #e2e8f0; /* Light blue-gray for iframe background */
+        }
+
+        .customize-options-panel {
+            width: 100%; /* Full width on small screens */
+            height: 30%; /* Take 30% height on small screens */
+            flex-shrink: 1;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem; /* Gap between option sections */
+            overflow-y: auto; /* Scrollable for options */
+            /* Removed padding-right: 0.5rem; and margin-left: 1rem; */
+            overflow-x: hidden; /* Ensure no horizontal scrollbar here */
+        }
+
+        @media (min-width: 768px) { /* md breakpoint */
+            .customize-options-panel {
+                width: 25%; /* 1/4 width on larger screens */
+                height: auto; /* Auto height to fill flex container */
+                /* Removed margin-left: 1rem; and padding-left: 0; */
+            }
+        }
+
+        .customize-options-panel .options-section {
+            background-color: #27272a; /* Darker zinc for options sections */
+            padding: 1rem; /* Consistent padding */
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            flex-shrink: 0; /* Prevent sections from shrinking, let scroll take over */
+            /* Removed min-width: 280px; */
+        }
+        
+        /* New styles for the interaction mode toggle */
+        .interaction-mode-toggle {
+            margin-bottom: 0.5rem;
+            padding: 0 0.5rem;
+        }
+
+        .interaction-mode-toggle .button-group {
+            max-width: 300px;
+        }
+
+        /* End of New/Modified styles for Customize Modal Layout */
+
     </style>
 </head>
 <body>
     <div class="editor-container">
         <!-- Main Content Area (Monaco Editor and Action Buttons) -->
         <div class="code-panel">
-            <div class="flex items-center mb-4 justify-between">
-                <h2 class="text-xl font-semibold text-white">HTML Table Formatter</h2>
-                <button id="open-options-modal-btn" class="px-4 py-2 text-sm bg-zinc-700 text-white rounded-md hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-opacity-50 font-semibold">
-                    Table Options
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold text-white">Table Code Editor</h2>
+                <button id="open-options-modal-btn" class="ml-4 px-4 py-2 text-base bg-blue-700 text-white rounded-md hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-semibold">
+                    Universal Format
                 </button>
+                <div class="inline-flex space-x-2 ml-auto mt-2 sm:mt-0">
+                    <button id="importHtmlBtn" class="px-3 py-1 text-sm bg-purple-700 text-white rounded-md hover:bg-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-opacity-50 font-bold">Import HTML</button>
+                    <button id="exportHtmlBtn" class="px-3 py-1 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-bold">Export HTML</button>
+                    <input type="file" id="htmlFileInput" accept=".html" style="display: none;">
+                </div>
             </div>
+
+            <!-- Message Box for alerts/errors - Moved ABOVE editor -->
+            <div id="message-box" class="hidden p-4 rounded-lg text-sm text-center transition-all duration-300 ease-in-out mb-4" role="alert"></div>
+
             <!-- Monaco Editor takes full remaining space -->
             <div id="editor-container"></div>
 
-            <!-- Action Buttons at the bottom of the code-panel -->
-            <div class="mt-auto pt-4 flex justify-center space-x-2">
-                <button id="clear-button" class="px-4 py-2 text-sm bg-zinc-700 text-white rounded-md hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-opacity-50 font-semibold">
-                    Clear Editor
+            <!-- New: Table Select Dropdown and Customize Button at the bottom -->
+            <div class="table-select-container">
+                <label for="table-search-dropdown" class="text-sm font-medium">Table Select:</label>
+                <select id="table-search-dropdown" class="text-sm">
+                    <option value="">-- Select a table --</option>
+                </select>
+                <button id="customize-button" class="px-3 py-1 text-sm bg-blue-800 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-opacity-50 font-bold" disabled>
+                    Customize
                 </button>
             </div>
 
-            <!-- Message Box for alerts/errors -->
-            <div id="message-box" class="hidden p-4 rounded-lg text-sm text-center transition-all duration-300 ease-in-out mt-6" role="alert"></div>
+            <!-- Action Buttons at the bottom of the code-panel -->
+            <div class="mt-auto pt-4 flex justify-center space-x-2">
+                <button id="clearAllBtn" class="px-4 py-2 text-sm bg-zinc-700 text-white rounded-md hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-opacity-50 font-semibold">
+                    Clear All
+                </button>
+                <button id="autoEncodeBtn" class="px-4 py-2 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold">
+                    Auto-Encode
+                </button>
+                <button id="autoFormatBtn" class="px-4 py-2 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold">
+                    Auto-Indent
+                </button>
+                <button id="copyCodeBtn" class="px-4 py-2 text-sm bg-zinc-700 text-white rounded-md hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-opacity-50 font-semibold">
+                    Copy Code
+                </button>
+            </div>
         </div>
     </div>
 
-    <!-- Modal Overlay and Content -->
+    <!-- Universal Format Modal Overlay and Content -->
     <div id="options-modal-overlay" class="modal-overlay hidden">
         <div class="modal-content">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-bold text-white">Table Options</h3>
+                <h3 class="text-xl font-bold text-white">Format All Tables</h3>
                 <button id="close-options-modal-btn" class="text-gray-400 hover:text-gray-200">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
@@ -523,7 +687,7 @@
                                 <input type="checkbox" id="remove-p-tags-checkbox" class="hidden">
                                 <span class="toggle-switch-slider"></span>
                             </label>
-                            <span class="toggle-switch-label text-gray-200">Remove &lt;p&gt; tags</span>
+                            <span class="toggle-switch-label text-gray-200">Remove &lt;p&gt; Tags</span>
                         </div>
                         
                         <!-- Add Small to DIV (renamed) Checkbox -->
@@ -722,10 +886,273 @@
         </div>
     </div>
 
+    <!-- Customize Table Modal Overlay and Content -->
+    <div id="customize-modal-overlay" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-white">Customize Table</h3>
+                <button id="close-customize-modal-btn" class="text-gray-400 hover:text-gray-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <!-- New flex container for main layout: preview on left, options on right -->
+            <div class="customize-main-content-wrapper">
+                <!-- Preview Wrapper (3/4 width on md and up) -->
+                <div class="customize-preview-wrapper flex flex-col">
+                    <!-- NEW: Interaction Mode Toggle -->
+                    <div class="interaction-mode-toggle">
+                        <div id="interaction-mode-group" class="button-group">
+                            <button id="select-mode-btn" data-mode="select" class="active">Select Mode</button>
+                            <button id="type-mode-btn" data-mode="type">Type Mode</button>
+                        </div>
+                    </div>
+                    <iframe id="customize-preview-iframe" class="flex-grow"></iframe>
+                </div>
+
+                <!-- Options Panel (1/4 width on md and up) -->
+                <div class="customize-options-panel">
+                    <!-- Table Properties Section -->
+                    <div class="options-section">
+                        <h4>Base Properties</h4>
+                        <div class="options-grid">
+                            <!-- Table ID Prefix Input (Renamed to Custom ID) -->
+                            <div class="option-text-input">
+                                <label for="customize-page-id-prefix-input" class="text-gray-200">Custom ID</label>
+                                <input type="text" id="customize-page-id-prefix-input" class="flex-grow bg-zinc-700 text-white border border-zinc-500 rounded-md p-1" placeholder="my-custom-id">
+                            </div>
+                            
+                            <!-- Make TFOOT from LAST COLSPAN -->
+                            <div class="toggle-switch-container">
+                                <label class="toggle-switch is-checked" for="customize-make-tfoot-from-colspan-checkbox">
+                                    <input type="checkbox" id="customize-make-tfoot-from-colspan-checkbox" class="hidden" checked>
+                                    <span class="toggle-switch-slider"></span>
+                                </label>
+                                <span class="toggle-switch-label text-gray-200">TFOOT from LAST COLSPAN</span>
+                            </div>
+                            <!-- Fix Empty Cells -->
+                            <div class="toggle-switch-container">
+                                <label class="toggle-switch is-checked" for="customize-fix-empty-cells-checkbox">
+                                    <input type="checkbox" id="customize-fix-empty-cells-checkbox" class="hidden" checked>
+                                    <span class="toggle-switch-slider"></span>
+                                </label>
+                                <span class="toggle-switch-label text-gray-200">Fix Empty Cells</span>
+                            </div>
+                            <!-- Remove p tags -->
+                            <div class="toggle-switch-container">
+                                <label class="toggle-switch" for="customize-remove-p-tags-checkbox">
+                                    <input type="checkbox" id="customize-remove-p-tags-checkbox" class="hidden">
+                                    <span class="toggle-switch-slider"></span>
+                                </label>
+                                <span class="toggle-switch-label text-gray-200">Remove &lt;p&gt; Tags</span>
+                            </div>
+                            
+                            <!-- Add Small to TABLE (renamed and moved) Checkbox -->
+                            <div class="toggle-switch-container">
+                                <label class="toggle-switch" for="customize-class-small-checkbox">
+                                    <input type="checkbox" id="customize-class-small-checkbox" class="hidden">
+                                    <span class="toggle-switch-slider"></span>
+                                </label>
+                                <span class="toggle-switch-label text-gray-200">Add <strong>small</strong> to TABLE</span>
+                            </div>
+                            <!-- Add small to ALL TR -->
+                            <div class="toggle-switch-container">
+                                <label class="toggle-switch" for="customize-add-small-to-tr-checkbox">
+                                    <input type="checkbox" id="customize-add-small-to-tr-checkbox" class="hidden">
+                                    <span class="toggle-switch-slider"></span>
+                                </label>
+                                <span class="toggle-switch-label text-gray-200">Add <strong>small</strong> to ALL TR</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Table Structure Section -->
+                    <div class="options-section">
+                        <h4>Structure and Styling</h4>
+                        <div class="options-grid">
+                            <!-- Column Headers + THEAD Checkbox -->
+                            <div class="toggle-switch-container">
+                                <label class="toggle-switch is-checked" for="customize-header-checkbox">
+                                    <input type="checkbox" id="customize-header-checkbox" class="hidden" checked>
+                                    <span class="toggle-switch-slider"></span>
+                                </label>
+                                <span class="toggle-switch-label text-gray-200">TH COL Headers (1st row)</span>
+                            </div>
+                            <!-- Row Headers in TBODY Checkbox -->
+                            <div class="toggle-switch-container">
+                                <label class="toggle-switch is-checked" for="customize-row-header-checkbox">
+                                    <input type="checkbox" id="customize-row-header-checkbox" class="hidden" checked>
+                                    <span class="toggle-switch-slider"></span>
+                                </label>
+                                <span class="toggle-switch-label text-gray-200">TH ROW Headers (1st col)</span>
+                            </div>
+                            <!-- Active Column Headers Checkbox -->
+                            <div class="toggle-switch-container">
+                                <label class="toggle-switch is-checked" for="customize-active-col-headers-checkbox">
+                                    <input type="checkbox" id="customize-active-col-headers-checkbox" class="hidden" checked>
+                                    <span class="toggle-switch-slider"></span>
+                                </label>
+                                <span class="toggle-switch-label text-gray-200"><strong>active</strong> COL Headers</span>
+                            </div>
+                            <!-- Active Colspan Headers Checkbox -->
+                            <div class="toggle-switch-container">
+                                <label class="toggle-switch is-checked" for="customize-active-colspan-headers-checkbox">
+                                    <input type="checkbox" id="customize-active-colspan-headers-checkbox" class="hidden" checked>
+                                    <span class="toggle-switch-slider"></span>
+                                </label>
+                                <span class="toggle-switch-label text-gray-200"><strong>active</strong> COLSPAN Headers</span>
+                            </div>
+                            <!-- Active Row Headers Checkbox -->
+                            <div class="toggle-switch-container">
+                                <label class="toggle-switch" for="customize-active-row-headers-checkbox">
+                                    <input type="checkbox" id="customize-active-row-headers-checkbox" class="hidden">
+                                    <span class="toggle-switch-slider"></span>
+                                </label>
+                                <span class="toggle-switch-label text-gray-200"><strong>active</strong> ROW Headers</span>
+                            </div>
+                            <!-- Bordered Checkbox -->
+                            <div class="toggle-switch-container">
+                                <label class="toggle-switch is-checked" for="customize-bordered-checkbox">
+                                    <input type="checkbox" id="customize-bordered-checkbox" class="hidden" checked>
+                                    <span class="toggle-switch-slider"></span>
+                                </label>
+                                <span class="toggle-switch-label text-gray-200">Add <strong>bordered</strong></span>
+                            </div>
+                            <!-- Striped Checkbox -->
+                            <div class="toggle-switch-container">
+                                <label class="toggle-switch" for="customize-striped-checkbox">
+                                    <input type="checkbox" id="customize-striped-checkbox" class="hidden">
+                                    <span class="toggle-switch-slider"></span>
+                                </label>
+                                <span class="toggle-switch-label text-gray-200">Add <strong>striped</strong></span>
+                            </div>
+                            <!-- Hover Checkbox -->
+                            <div class="toggle-switch-container">
+                                <label class="toggle-switch" for="customize-hover-checkbox">
+                                    <input type="checkbox" id="customize-hover-checkbox" class="hidden">
+                                    <span class="toggle-switch-slider"></span>
+                                </label>
+                                <span class="toggle-switch-label text-gray-200">Add <strong>hover</strong></span>
+                            </div>
+                            <!-- Bold Totals here -->
+                            <div class="toggle-switch-container">
+                                <label class="toggle-switch" for="customize-bold-totals-checkbox">
+                                    <input type="checkbox" id="customize-bold-totals-checkbox" class="hidden">
+                                    <span class="toggle-switch-slider"></span>
+                                </label>
+                                <span class="toggle-switch-label text-gray-200">Bold Totals</span>
+                            </div>
+                            <!-- Finance Table here -->
+                            <div class="toggle-switch-container">
+                                <label class="toggle-switch" for="customize-finance-table-checkbox">
+                                    <input type="checkbox" id="customize-finance-table-checkbox" class="hidden">
+                                    <span class="toggle-switch-slider"></span>
+                                </label>
+                                <span class="toggle-switch-label text-gray-200">Finance Tables</span>
+                            </div>
+                            
+                        </div>
+                    </div>
+
+                    <!-- Table Styling Section -->
+                    <div class="options-section">
+                        <h4>Alignment</h4>
+                        <div class="options-grid">
+                            
+                            
+
+                            <!-- Caption Alignment Button Group -->
+                            <div class="alignment-group-container">
+                                <label for="customize-caption-alignment">Caption</label>
+                                <div id="customize-caption-alignment-group" class="button-group">
+                                    <button data-align="left" class="active">Left</button>
+                                    <button data-align="center">Center</button>
+                                    <button data-align="right">Right</button>
+                                </div>
+                            </div>
+
+                            <!-- Column Headers Alignment Button Group -->
+                            <div class="alignment-group-container">
+                                <label for="customize-col-headers-alignment">Column Headers</label>
+                                <div id="customize-col-headers-alignment-group" class="button-group">
+                                    <button data-align="none" class="active">None</button>
+                                    <button data-align="left">Left</button>
+                                    <button data-align="center">Center</button>
+                                    <button data-align="right">Right</button>
+                                </div>
+                            </div>
+
+                            <!-- Row Headers Alignment Button Group -->
+                            <div class="alignment-group-container">
+                                <label for="customize-row-headers-alignment">Row Headers</label>
+                                <div id="customize-row-headers-alignment-group" class="button-group">
+                                    <button data-align="none" class="active">None</button>
+                                    <button data-align="left">Left</button>
+                                    <button data-align="center">Center</button>
+                                    <button data-align="right">Right</button>
+                                </div>
+                            </div>
+
+                            <!-- Colspan Headers Alignment Button Group -->
+                            <div class="alignment-group-container">
+                                <label for="customize-colspan-headers-alignment">Colspan Headers</label>
+                                <div id="customize-colspan-headers-alignment-group" class="button-group">
+                                    <button data-align="none" class="active">None</button>
+                                    <button data-align="left">Left</button>
+                                    <button data-align="center">Center</button>
+                                    <button data-align="right">Right</button>
+                                </div>
+                            </div>
+
+                            <!-- Data Cells Alignment Button Group -->
+                            <div class="alignment-group-container">
+                                <label for="customize-data-cells-alignment">Data Cells</label>
+                                <div id="customize-data-cells-alignment-group" class="button-group">
+                                    <button data-align="none" class="active">None</button>
+                                    <button data-align="left">Left</button>
+                                    <button data-align="center">Center</button>
+                                    <button data-align="right">Right</button>
+                                </div>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-buttons mt-4"> <!-- Added mt-4 for spacing -->
+                <button id="format-specific-table-button" class="px-4 py-2 text-sm bg-blue-700 text-white rounded-md hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-semibold">
+                    Format Table
+                </button>
+            </div>
+        </div>
+    </div>
+
+
     <!-- Monaco Editor Loader -->
     <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.49.0/min/vs/loader.js"></script>
     <script>
         let monacoEditor; // Declare editor variable globally
+        let entityDecorations = []; // Variable to store Monaco decorations for entities
+        let messageTimeoutId; // Timeout for message box
+        let tableDataMap = new Map(); // Stores {optionValue: {startIndex: ...}} for jump functionality
+        let currentHighlightDecorationId = []; // Stores the ID of the current highlight decoration
+        let previewInteractionMode = 'select'; // 'select' or 'type'
+
+        // Initialize global state variables for alignment options
+        // These are for the UNIVERSAL format modal
+        window.captionAlignment = 'left'; // Changed to 'left'
+        window.colHeaderAlignment = 'none';
+        window.rowHeaderAlignment = 'none';
+        window.colspanHeaderAlignment = 'none'; // Changed to 'none'
+        window.dataCellsAlignment = 'none';
+
+        // Global variables for CUSTOMIZE modal alignment options (initialize to default for specific table)
+        window.customizeCaptionAlignment = 'left'; // Changed to 'left'
+        window.customizeColHeaderAlignment = 'none';
+        window.customizeRowHeaderAlignment = 'none';
+        window.customizeColspanHeaderAlignment = 'none'; // Changed to 'none'
+        window.customizeDataCellsAlignment = 'none';
 
         // Helper function to get the current HTML from the editor
         function getEditorContent() {
@@ -739,8 +1166,16 @@
             }
         }
 
-        // Variable to store Monaco decorations for entities
-        let entityDecorations = [];
+        /**
+         * Clears any active Monaco editor line highlighting.
+         */
+        function clearMonacoHighlight() {
+            if (monacoEditor && currentHighlightDecorationId.length > 0) {
+                // Corrected: deltaDecorations is on the model
+                monacoEditor.getModel().deltaDecorations(currentHighlightDecorationId, []);
+                currentHighlightDecorationId = [];
+            }
+        }
 
         /**
          * Applies highlighting to HTML character entities in the Monaco editor.
@@ -770,8 +1205,8 @@
                 });
             }
 
-            // Apply the new decorations and clear old ones
-            entityDecorations = monacoEditor.deltaDecorations(entityDecorations, newDecorations);
+            // Corrected: deltaDecorations is on the model
+            entityDecorations = model.deltaDecorations(entityDecorations, newDecorations);
         }
 
         /**
@@ -828,203 +1263,81 @@
             });
         }
 
-        // Initialize Monaco Editor after the loader script is available
-        require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.49.0/min/vs' }});
-        require(['vs/editor/editor.main'], function() {
-            monacoEditor = monaco.editor.create(document.getElementById('editor-container'), {
-                value: `<table>
-      <tbody>
-        <tr>
-          <td>&nbsp;</td>
-          <td>North</td>
-          <td>South</td>
-          <td>East</td>
-          <td>West</td>
-        </tr>
-        <tr>
-          <td>Electronics</td>
-          <td>100</td>
-          <td>150,50</td>
-          <td>120 000</td>
-          <td>180.75</td>
-        </tr>
-        <tr>
-          <td>Apparel</td>
-          <td>80.00</td>
-          <td>-120</td>
-          <td>90 000.50</td>
-          <td>+110,25</td>
-        </tr>
-        <tr>
-          <td>Books</td>
-          <td>50</td>
-          <td>70</td>
-          <td>60</td>
-          <td>90</td>
-        </tr>
-         <tr>
-          <td>Food</td>
-          <td>120</td>
-          <td>100</td>
-          <td>140</td>
-          <td>140</td>
-        </tr>
-        <tr>
-          <td colspan="5">This is a colspan spanning the entire table.</td>
-        </tr>
-      </tbody>
-    </table>
-<table id="tbl11">
-    <thead>
-        <tr>
-            <th rowspan="2">Category</th>
-            <th colspan="2">Q1 Sales</th>
-            <th colspan="2">Q2 Sales</th>
-        </tr>
-        <tr>
-            <th>Jan</th>
-            <th>Feb</th>
-            <th>Mar</th>
-            <th>Apr</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <th>Electronics</th>
-            <td>100</td>
-            <td>150</td>
-            <td>120</td>
-            <td>180</td>
-        </tr>
-        <tr>
-            <th>Apparel</th>
-            <td>80</td>
-            <td>-120</td>
-            <td>90</td>
-            <td>110</td>
-        </tr>
-        <tr>
-            <th>Books</th>
-            <td>50</td>
-            <td>70</td>
-            <td>60</td>
-            <td>90</td>
-        </tr>
-    </tbody>
-</table>
-    <table>
-        <thead>
-            <tr>
-                <th>Header 1</th>
-                <th>Header 2</th>
-                <th>Header 3</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <th>Row Header A</th>
-                <td></td> <!-- Test empty td -->
-                <td>Data A2</td>
-            </tr>
-            <tr>
-                <th></th> <!-- Test empty th -->
-                <td>Data B1</td>
-                <td>Data B2</td>
-            </tr>
-            <tr>
-                <td> <p></p> </td> <!-- Test td with empty p tag -->
-                <td>Data C1</td>
-                <td>Data C2</td>
-            </tr>
-            <tr>
-                <td>  </td> <!-- Test td with only spaces -->
-                <td>Data D1</td>
-                <td>Data D2</td>
-            </tr>
-            <tr>
-                <td>&nbsp;</td> <!-- Test td with existing nbsp -->
-                <td>Data E1</td>
-                <td>Data E2</td>
-            </tr>
-        </tbody>
-    </table>
+        /**
+         * Converts common character entities and named entities to their numeric HTML entity equivalents.
+         * This function operates on an HTML string, parsing it to a temporary DOM, modifying text nodes,
+         * and then serializing it back to a string, ensuring numeric entities are preserved.
+         * @param {string} htmlString - The HTML content to process.
+         * @returns {string} The processed HTML string with numeric entities.
+         */
+        function convertAllEntitiesToNumeric(htmlString) {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlString; // This parses entities to characters
 
-    <p>Table with existing ID and caption:</p>
-    <table id="myExistingTable" class="some-custom-class">
-        <caption>Existing Caption with more info</caption>
-        <thead>
-            <tr><th colspan="2">Existing Header Group</th></tr>
-        </thead>
-        <tbody>
-            <tr><td>Data 1</td><td>Data 2</td></tr>
-        </tbody>
-    </table>
-    `,
-                language: 'html',
-                theme: 'vs-dark',
-                automaticLayout: true,
-                minimap: { enabled: false }
+            const walker = document.createTreeWalker(
+                tempDiv,
+                NodeFilter.SHOW_TEXT,
+                {
+                    acceptNode: function(textNode) {
+                        let parent = textNode.parentNode;
+                        while (parent) {
+                            const tagName = parent.tagName ? parent.tagName.toLowerCase() : '';
+                            if (tagName === 'script' || tagName === 'style' || tagName === 'time') {
+                                return NodeFilter.FILTER_REJECT;
+                            }
+                            parent = parent.parentNode;
+                        }
+                        return NodeFilter.FILTER_ACCEPT;
+                    }
+                },
+                false
+
+            );
+
+            let currentNode;
+            const textNodesToProcess = [];
+            while (currentNode = walker.nextNode()) {
+                textNodesToProcess.push(currentNode);
+            }
+
+            textNodesToProcess.forEach(textNode => {
+                let text = textNode.nodeValue;
+                // Replace specific named entities/characters with their numeric character references
+                text = text.replace(/’/g, '&#8217;');     // literal ’
+                text = text.replace(/&rsquo;/g, '&#8217;'); // &rsquo;
+                text = text.replace(/“/g, '&#8220;');     // literal “
+                text = text.replace(/&ldquo;/g, '&#8220;'); // &ldquo;
+                text = text.replace(/”/g, '&#8221;');     // literal ”
+                text = text.replace(/&rdquo;/g, '&#8221;'); // &rdquo;
+                text = text.replace(/«/g, '&#171;');     // literal «
+                text = text.replace(/&laquo;/g, '&#171;'); // &laquo;
+                text = text.replace(/»/g, '&#187;');     // literal »
+                text = text.replace(/&raquo;/g, '&#187;'); // &raquo;
+                text = text.replace(/\u00A0/g, '&#160;'); // This converts literal NBSP char to numeric entity
+                text = text.replace(/&nbsp;/g, '&#160;'); // This handles named NBSP entity to numeric
+
+                textNode.nodeValue = text;
             });
 
-            monacoEditor.onDidChangeModelContent(() => {
-                applyEntityHighlighting();
-            });
+            let processedHtml = tempDiv.innerHTML; // This re-serializes characters to entities
 
-            applyEntityHighlighting();
-        });
+            // Final string-based replacements to ensure numeric entities are explicitly present
+            // This is a safeguard against browser's innerHTML serialization re-converting entities.
+            processedHtml = processedHtml.replace(/&nbsp;/g, '&#160;');
+            processedHtml = processedHtml.replace(/&rsquo;/g, '&#8217;');
+            processedHtml = processedHtml.replace(/&ldquo;/g, '&#8220;');
+            processedHtml = processedHtml.replace(/&rdquo;/g, '&#8221;');
+            processedHtml = processedHtml.replace(/&laquo;/g, '&#171;');
+            processedHtml = processedHtml.replace(/&raquo;/g, '&#187;');
 
-        const formatButton = document.getElementById('format-button-modal');
-        const clearButton = document.getElementById('clear-button');
-        const openOptionsModalButton = document.getElementById('open-options-modal-btn');
-        const optionsModalOverlay = document.getElementById('options-modal-overlay');
-        const closeOptionsModalButton = document.getElementById('close-options-modal-btn');
+            // Handle double encoding if it occurs (e.g., &amp;#160; -> &#160;)
+            processedHtml = processedHtml.replace(/&amp;#(\d+);/g, '&#$1;');
 
-        const idCheckbox = document.getElementById('id-checkbox');
-        const pageIdPrefixInput = document.getElementById('page-id-prefix-input');
-        const figureDataIdPrefixInput = document.getElementById('figure-data-id-prefix-input');
-        const classTablesCheckbox = document.getElementById('class-tables-checkbox');
-        const captionCheckbox = document.getElementById('caption-checkbox');
-        const autoCaptionCheckbox = document.getElementById('auto-caption-checkbox');
-        const fixEmptyCellsCheckbox = document.getElementById('fix-empty-cells-checkbox');
-        const removePTagsCheckbox = document.getElementById('remove-p-tags-checkbox');
-        const makeTfootFromColspanCheckbox = document.getElementById('make-tfoot-from-colspan-checkbox'); // New checkbox reference
-        const addSmallToTrCheckbox = document.getElementById('add-small-to-tr-checkbox');
-        const headerCheckbox = document.getElementById('header-checkbox');
-        const rowHeaderCheckbox = document.getElementById('row-header-checkbox');
-
-        const responsiveTablesCheckbox = document.getElementById('responsive-tables-checkbox');
-        const responsiveSmallCheckbox = document.getElementById('responsive-small-checkbox');
-
-        const borderedCheckbox = document.getElementById('bordered-checkbox');
-        const stripedCheckbox = document.getElementById('striped-checkbox');
-        const hoverCheckbox = document.getElementById('hover-checkbox');
-        const activeColHeadersCheckbox = document.getElementById('active-col-headers-checkbox');
-        const activeColspanHeadersCheckbox = document.getElementById('active-colspan-headers-checkbox');
-        const activeRowHeadersCheckbox = document.getElementById('active-row-headers-checkbox');
-        const classSmallCheckboxElement = document.getElementById('class-small-checkbox');
-
-        const financeTableCheckbox = document.getElementById('finance-table-checkbox');
-        const boldTotalsCheckbox = document.getElementById('bold-totals-checkbox');
-
-        const messageBox = document.getElementById('message-box');
-
-        let messageTimeoutId;
-
-        // Initialize global state variables for alignment options
-        // These MUST be on the window object to be truly global and modifiable by event listeners
-        window.captionAlignment = 'left';
-        window.colHeaderAlignment = 'none';
-        window.rowHeaderAlignment = 'none';
-        window.colspanHeaderAlignment = 'center';
-        window.dataCellsAlignment = 'none';
-
+            return processedHtml;
+        }
 
         // Array of all interactive buttons to control their disabled state
-        const allInteractiveButtons = [
-            formatButton,
-            clearButton,
-            openOptionsModalButton
-        ];
+        const allInteractiveButtons = []; // Initialized here, populated later
 
         /**
          * Updates the disabled state of all interactive buttons.
@@ -1037,7 +1350,13 @@
                 btn.disabled = btn.getAttribute('data-temp-active') === 'true' || (anyTempMessageActive && btn.getAttribute('data-temp-active') !== 'true');
             });
             // Specific handling for modal close button at the top right
-            if (closeOptionsModalButton) closeOptionsModalButton.disabled = anyTempMessageActive;
+            // Check if closeOptionsModalButton is defined before trying to access it
+            if (typeof closeOptionsModalButton !== 'undefined' && closeOptionsModalButton) {
+                closeOptionsModalButton.disabled = anyTempMessageActive;
+            }
+            if (typeof closeCustomizeModalButton !== 'undefined' && closeCustomizeModalButton) {
+                closeCustomizeModalButton.disabled = anyTempMessageActive;
+            }
         }
 
         /**
@@ -1079,6 +1398,7 @@
          */
         function openOptionsModal() {
             optionsModalOverlay.classList.remove('hidden');
+            initializeToggleSwitchesVisuals(optionsModalOverlay); // Initialize visuals when opening
         }
 
         /**
@@ -1088,97 +1408,77 @@
             optionsModalOverlay.classList.add('hidden');
         }
 
-        // Event listeners for modal buttons
-        openOptionsModalButton.addEventListener('click', openOptionsModal);
-        closeOptionsModalButton.addEventListener('click', closeOptionsModal);
-        formatButton.addEventListener('click', formatHtmlTables); // Format button now inside modal
+        /**
+         * Closes the customize table modal.
+         */
+        function closeCustomizeModal() {
+            customizeModalOverlay.classList.add('hidden');
+        }
 
-        // Function to handle button group clicks for alignment
-        function setupButtonGroup(groupId, alignmentVarName) {
-            const group = document.getElementById(groupId);
+        /**
+         * Function to handle button group clicks for alignment
+         * @param {string} groupId - The ID of the button group container.
+         * @param {string} alignmentVarName - The name of the global window variable to update.
+         * @param {HTMLElement} [parentContainer=document] - The parent element to search for the group in (e.g., a modal).
+         * @param {Function} [callback] - Optional callback function to execute after updating.
+         */
+        function setupButtonGroup(groupId, alignmentVarName, parentContainer = document, callback = null) {
+            const group = parentContainer.querySelector('#' + groupId);
+            if (!group) {
+                console.warn(`Button group with ID "${groupId}" not found in parentContainer.`);
+                return;
+            }
             Array.from(group.children).forEach(button => {
                 button.addEventListener('click', () => {
-                    console.log(`Button "${button.dataset.align}" clicked for group "${groupId}"`);
+                    console.log(`Button "${button.dataset.align || button.dataset.mode}" clicked for group "${groupId}"`);
                     // Remove 'active' class from all buttons in this group
                     Array.from(group.children).forEach(btn => btn.classList.remove('active'));
                     // Add 'active' class to the clicked button
                     button.classList.add('active');
-                    // Update the corresponding global alignment variable (now directly on window)
-                    window[alignmentVarName] = button.dataset.align;
-                    console.log(`Global variable ${alignmentVarName} updated to: ${window[alignmentVarName]}`);
+
+                    // If a global alignment variable name is provided, update it
+                    if (alignmentVarName) {
+                        window[alignmentVarName] = button.dataset.align;
+                        console.log(`Global variable ${alignmentVarName} updated to: ${window[alignmentVarName]}`);
+                    }
+                    if (callback) {
+                        callback();
+                    }
                 });
             });
         }
 
-        // Setup all new alignment button groups
-        setupButtonGroup('caption-alignment-group', 'captionAlignment');
-        setupButtonGroup('col-headers-alignment-group', 'colHeaderAlignment');
-        setupButtonGroup('row-headers-alignment-group', 'rowHeaderAlignment');
-        setupButtonGroup('colspan-headers-alignment-group', 'colspanHeaderAlignment');
-        setupButtonGroup('data-cells-alignment-group', 'dataCellsAlignment');
-
-
-        // Mutual exclusivity logic for Finance Table checkbox and Alignment button groups
-        if (financeTableCheckbox) {
-             financeTableCheckbox.addEventListener('change', function() {
-                const parentLabel = this.closest('.toggle-switch');
-                parentLabel.classList.toggle('is-checked', this.checked);
-            });
-        }
-
-
-        // Mutual exclusivity logic for Captions (placeholder) and Auto-Caption
-        captionCheckbox.addEventListener('change', function() {
-            const parentLabel = this.closest('.toggle-switch');
-            parentLabel.classList.toggle('is-checked', this.checked);
-            if (this.checked) {
-                autoCaptionCheckbox.checked = false;
-                autoCaptionCheckbox.closest('.toggle-switch').classList.remove('is-checked');
-            }
-        });
-
-        autoCaptionCheckbox.addEventListener('change', function() {
-            const parentLabel = this.closest('.toggle-switch');
-            parentLabel.classList.toggle('is-checked', this.checked);
-            if (this.checked) {
-                captionCheckbox.checked = false;
-                captionCheckbox.closest('.toggle-switch').classList.remove('is-checked');
-            }
-        });
-
-
-        // Initialize pill switch states
-        document.querySelectorAll('.toggle-switch input[type="checkbox"]').forEach(checkbox => {
-            const parentLabel = checkbox.closest('.toggle-switch');
-            if (checkbox.checked) {
-                parentLabel.classList.add('is-checked');
-            } else {
-                parentLabel.classList.remove('is-checked');
-            }
-
-            checkbox.addEventListener('change', () => {
-                parentLabel.classList.toggle('is-checked', checkbox.checked);
-            });
-        });
-
         /**
          * Applies an alignment class to an element, removing any conflicting alignment classes first.
+         * If 'none' is selected, existing alignment classes are preserved.
          * @param {HTMLElement} element - The HTML element to apply alignment to.
          * @param {string} alignment - The alignment to apply ('left', 'center', 'right', or 'none').
          * @param {string[]} alignmentClasses - An array of all possible alignment classes.
          */
         function applyAlignment(element, alignment, alignmentClasses) {
+            if (!element) {
+                console.warn("Attempted to apply alignment to a null or undefined element.");
+                return;
+            }
             console.log(`Attempting to apply alignment "${alignment}" to element:`, element.tagName, element.textContent.trim().substring(0, 20) + '...');
+
+            if (alignment === 'none') {
+                // If 'none' is selected, do not remove or add any alignment classes.
+                console.log('  Alignment is "none", leaving existing alignment classes untouched.');
+                return; // Exit without modifying classes
+            }
+
+            // If a specific alignment (left, center, right) is selected, remove all conflicting ones first
             alignmentClasses.forEach(cls => {
                 if (element.classList.contains(cls)) {
-                    console.log(`  Removing existing class: ${cls}`);
+                    console.log(`  Removing conflicting class: ${cls}`);
                     element.classList.remove(cls);
                 }
             });
-            if (alignment !== 'none') {
-                console.log(`  Adding new class: text-${alignment}`);
-                element.classList.add(`text-${alignment}`);
-            }
+
+            // Add the selected alignment class
+            console.log(`  Adding new class: text-${alignment}`);
+            element.classList.add(`text-${alignment}`);
             console.log('  Element classList after alignment:', Array.from(element.classList).join(' '));
         }
 
@@ -1195,10 +1495,659 @@
             return count;
         }
 
+        /**
+         * Populates the table search dropdown with IDs and captions from tables in the editor.
+         * It also stores the starting character index of each table in the Monaco editor content
+         * for efficient jumping.
+         */
+        function populateTableSearchDropdown() {
+            if (!monacoEditor || !tableSearchDropdown) return;
+
+            const htmlContent = monacoEditor.getValue();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlContent, 'text/html');
+            const tables = Array.from(doc.querySelectorAll('table'));
+
+            // Clear existing options and map
+            tableSearchDropdown.innerHTML = '<option value="">-- Select a table --</option>';
+            tableDataMap = new Map();
+
+            let unidCounter = 1;
+            tables.forEach((table, originalTableIndex) => {
+                let tableId = table.id;
+                let tableCaption = '';
+
+                const captionElement = table.querySelector('caption');
+                if (captionElement && captionElement.textContent.trim()) {
+                    tableCaption = captionElement.textContent.trim();
+                }
+
+                let optionValue;
+                let startIndex = -1;
+
+                if (tableId) {
+                    optionValue = `id:${tableId}`;
+                    // Attempt to find the table by its ID in the raw content
+                    const idRegex = new RegExp(`<table[^>]*id=["']${tableId}["'][^>]*>`, 'i'); // More precise regex for ID
+                    const idMatch = htmlContent.match(idRegex);
+                    if (idMatch) {
+                        startIndex = idMatch.index;
+                    }
+                } else {
+                    optionValue = `unid:${unidCounter}`; // Unique ID for this dropdown option
+                    // For tables without an ID, find their starting index by counting `<table>` tags
+                    let tempHtml = htmlContent;
+                    let count = 0;
+                    let regex = /<table/gi; // Case-insensitive search for <table> tag
+                    let match;
+                    while ((match = regex.exec(tempHtml)) !== null) {
+                        if (count === originalTableIndex) {
+                            startIndex = match.index;
+                            break;
+                        }
+                        count++;
+                    }
+                    unidCounter++; // Increment only if successfully assigned an unid
+                }
+
+                if (startIndex !== -1) {
+                    const option = document.createElement('option');
+                    option.value = optionValue;
+                    option.textContent = `${tableCaption ? captionElement.textContent.trim() + ' ' : ''}${tableId ? '(ID: ' + tableId + ')' : '(Table ' + (originalTableIndex + 1) + ')'}`;
+                    tableSearchDropdown.appendChild(option);
+
+                    // Store the start index and original outerHTML for later lookup and modification
+                    const tableOuterHtml = table.outerHTML;
+                    tableDataMap.set(optionValue, {
+                        startIndex: startIndex,
+                        outerHTML: tableOuterHtml,
+                        length: tableOuterHtml.length
+                    });
+                } else {
+                    console.warn(`Could not find table "${tableId || ('Table ' + (originalTableIndex + 1))}" in editor content by regex.`);
+                }
+            });
+
+            // Ensure customize button is disabled if no table is selected or dropdown is reset
+            customizeButton.disabled = !tableSearchDropdown.value;
+        }
 
         /**
-         * Formats the HTML content, specifically targeting and cleaning up tables,
-         * and optionally applies various styling and structural enhancements.
+         * Contains the core logic for formatting a single HTML table.
+         * This function is designed to be reusable by both universal and specific table formatting.
+         * @param {HTMLElement} table - The table DOM element to format.
+         * @param {object} options - An object containing all formatting options (checkbox states, alignment values).
+         */
+        function formatTableLogic(table, options) {
+            console.log(`--- Applying formatting logic to table ---`);
+
+            const financeRegex = /^\s*[-+]?(?:\d+|\d{1,3}(?:\s\d{3})*)(?:[.,]\d+)?\s*$/;
+            const responsiveDivClass = 'table-responsive';
+            const smallClass = 'small';
+            const alignmentClasses = ['text-left', 'text-center', 'text-right'];
+
+
+            let responsiveDiv = table.parentNode;
+            const parentIsResponsiveDiv = responsiveDiv && responsiveDiv.classList.contains(responsiveDivClass);
+
+            if (options.applyResponsiveTables) {
+                if (!parentIsResponsiveDiv) {
+                    responsiveDiv = document.createElement('div');
+                    responsiveDiv.classList.add(responsiveDivClass);
+                    // table.parentNode.insertBefore(responsiveDiv, table); // This line is problematic when table is cloned
+                    // Instead, append directly to a temporary container if needed, or handle outside this function
+                    // For now, if no parent, assume it's for preview and create a dummy parent
+                    if (table.parentNode) {
+                        table.parentNode.insertBefore(responsiveDiv, table);
+                    } else {
+                        // For preview scenario where table might not have a real parent yet
+                        const tempWrapper = document.createElement('div');
+                        tempWrapper.appendChild(table);
+                        responsiveDiv = tempWrapper; // Use tempWrapper as effective parent for checks
+                    }
+                    responsiveDiv.appendChild(table);
+                }
+                if (options.applyResponsiveSmall) {
+                    responsiveDiv.classList.add(smallClass);
+                } else {
+                    responsiveDiv.classList.remove(smallClass);
+                }
+            } else {
+                if (parentIsResponsiveDiv) {
+                    responsiveDiv.classList.remove(smallClass);
+                    if (responsiveDiv.parentNode) { // Check if responsiveDiv still has a parent
+                        responsiveDiv.parentNode.insertBefore(table, responsiveDiv);
+                        responsiveDiv.remove();
+                    }
+                }
+            }
+
+            // --- UNCONDITIONALLY REMOVE ALL IDs, HEADERS, AND SCOPES AT THE START from cells ---
+            Array.from(table.querySelectorAll('th, td')).forEach(cell => {
+                cell.removeAttribute('id');
+                cell.removeAttribute('headers');
+                cell.removeAttribute('scope');
+            });
+            // --- END UNCONDITIONAL REMOVAL from cells ---
+
+            // Clear existing active, centering, and alignment classes from all cells
+            // This is done before applying new alignments to avoid conflicts
+            Array.from(table.querySelectorAll('th, tr, td, caption')).forEach(el => {
+                el.classList.remove('active');
+                // Removed explicit alignment class removal here, as applyAlignment handles 'none' correctly.
+                el.classList.remove('nowrap'); // Also clear nowrap for finance
+            });
+            console.log('Classes cleared from all relevant elements for current table.');
+
+            // ID Assignment Logic (Table ID)
+            if (options.specificTableId) { // This block is for the "Customize Table" modal
+                let customId = options.tableIdPrefix; // This now holds the value from the "Custom ID" input
+                if (customId.trim() !== '') {
+                    table.id = customId.trim();
+                    console.log(`Customized table ID set to: ${table.id}`);
+                } else {
+                    table.removeAttribute('id'); // Remove ID if input is empty
+                    console.log('Customized table ID removed as input was empty.');
+                }
+            } else if (options.applyId) { // This block is for the "Universal Format" modal
+                let prefix = options.tableIdPrefix || 'tbl';
+                if (options.isFigureTable) {
+                    prefix = options.figureDataIdPrefix || 'ftbl';
+                }
+                table.id = `${prefix}${options.assignedIdCounter}`;
+                console.log(`Universal format assigned ID: ${table.id} (isFigureTable: ${options.isFigureTable})`);
+            } else { // For Universal Format when "ID Tables" checkbox is OFF
+                table.removeAttribute('id');
+                console.log('Removed ID from table as "ID Tables" option (Universal) is off.');
+            }
+
+            let currentClasses = table.className.split(' ').filter(c => c.trim() !== '');
+            const newClasses = new Set();
+
+            if (options.specificTableId) { // CUSTOMIZE flow: preserve all existing classes
+                currentClasses.forEach(cls => newClasses.add(cls));
+                console.log('Customize flow: Retaining all original classes.');
+            } else { // UNIVERSAL flow: filter out controlled classes
+                const controlledUniversalClasses = ['table', 'table-bordered', 'table-striped', 'table-hover', 'table-condensed', smallClass];
+                currentClasses.filter(c => !controlledUniversalClasses.includes(c)).forEach(cls => newClasses.add(cls));
+                // Apply Basic Classes logic for Universal
+                if (options.applyClassTables) {
+                    newClasses.add('table');
+                    newClasses.add('table-condensed');
+                }
+                console.log('Universal flow: Filtering controlled classes.');
+            }
+
+            // Apply other classes based on options, common to both flows, or only applicable to one.
+            if (options.applyBordered) newClasses.add('table-bordered');
+            else if (!options.specificTableId) newClasses.delete('table-bordered'); // Only remove if universal and unchecked
+            
+            if (options.applyStriped) newClasses.add('table-striped');
+            else if (!options.specificTableId) newClasses.delete('table-striped'); // Only remove if universal and unchecked
+
+            if (options.applyHover) newClasses.add('table-hover');
+            else if (!options.specificTableId) newClasses.delete('table-hover'); // Only remove if universal and unchecked
+
+            if (options.applyClassSmall) newClasses.add(smallClass); // Apply Add Small to TABLE class (used by customize)
+            else if (!options.specificTableId) newClasses.delete(smallClass); // Only remove if universal and unchecked and applies to table
+
+            table.className = Array.from(newClasses).join(' ');
+
+
+            const originalTableRows = Array.from(table.querySelectorAll('tr'));
+
+            let headerRowCount = 0;
+            if (options.applyHeader) {
+                let maxRowSpanEnd = -1;
+
+                for (let i = 0; i < originalTableRows.length; i++) {
+                    const currentRow = originalTableRows[i];
+                    headerRowCount = i + 1;
+
+                    const cellsInCurrentRow = Array.from(currentRow.querySelectorAll('th, td'));
+                    cellsInCurrentRow.forEach(cell => {
+                        const rowspan = parseInt(cell.getAttribute('rowspan') || '1', 10);
+                        maxRowSpanEnd = Math.max(maxRowSpanEnd, i + rowspan - 1);
+                    });
+
+                    if (i >= maxRowSpanEnd) {
+                        break;
+                    }
+                }
+            }
+
+            // Temporarily store existing caption before removing thead/tbody/tfoot
+            let existingCaptionElement = table.querySelector('caption');
+            let existingCaptionContent = existingCaptionElement ? existingCaptionElement.innerHTML : '';
+            let existingCaptionClasses = existingCaptionElement ? Array.from(existingCaptionElement.classList) : [];
+
+            // Remove existing thead, tbody, tfoot, and colgroup
+            table.querySelectorAll('thead, tbody, tfoot, colgroup').forEach(el => el.remove());
+
+            const newThead = document.createElement('thead');
+            let newTbody = document.createElement('tbody'); // Declare newTbody with let as it might be replaced
+
+            originalTableRows.forEach((row, index) => {
+                if (index < headerRowCount) {
+                    const clonedRow = row.cloneNode(true);
+                    Array.from(clonedRow.querySelectorAll('td')).forEach(td => {
+                        const newTh = document.createElement('th');
+                        Array.from(td.attributes).forEach(attr => {
+                            newTh.setAttribute(attr.name, attr.value);
+                        });
+                        newTh.innerHTML = td.innerHTML;
+                        td.parentNode.replaceChild(newTh, td);
+                    });
+                    newThead.appendChild(clonedRow);
+                } else {
+                    newTbody.appendChild(row);
+                }
+            });
+
+            if (newThead.children.length > 0) {
+                table.appendChild(newThead);
+            }
+            table.appendChild(newTbody);
+
+            // Re-handle caption based on options
+            let captionElement = table.querySelector('caption'); // Get it again, in case a new one was added or old one removed
+            
+            // Customize flow: DO NOT add or remove caption, only apply alignment if it exists
+            if (options.specificTableId) {
+                if (captionElement) {
+                    console.log('Customize flow: Retaining existing caption. Applying alignment:', options.currentCaptionAlignment);
+                    applyAlignment(captionElement, options.currentCaptionAlignment, alignmentClasses);
+                } else {
+                    console.log('Customize flow: No caption found, no action taken on caption.');
+                }
+            } else { // Universal flow: old caption logic remains
+                const shouldHaveCaption = options.applyCaption || options.applyAutoCaption;
+                const shouldAutoCaption = options.applyAutoCaption;
+
+                if (shouldHaveCaption) {
+                    if (!captionElement) { // If no caption element currently exists, create one
+                        captionElement = document.createElement('caption');
+                        if (table.firstChild) {
+                            table.insertBefore(captionElement, table.firstChild);
+                        } else {
+                            table.appendChild(captionElement);
+                        }
+                        console.log('Universal flow: Caption element created.');
+                    }
+
+                    // Apply existing classes if they were provided (from original table), otherwise clear/default
+                    if (existingCaptionClasses && existingCaptionClasses.length > 0) {
+                        captionElement.className = existingCaptionClasses.join(' ');
+                    } else {
+                        captionElement.removeAttribute('class');
+                    }
+
+                    console.log('Universal flow: Applying caption alignment. Current captionAlignment value:', options.currentCaptionAlignment);
+                    applyAlignment(captionElement, options.currentCaptionAlignment, alignmentClasses);
+
+                    // Handle content:
+                    if (shouldAutoCaption) {
+                        let extractedContent = '';
+                        let prevSibling = (responsiveDiv || table).previousElementSibling;
+                        while (prevSibling) {
+                            if (['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'].includes(prevSibling.tagName)) {
+                                extractedContent = prevSibling.textContent.trim();
+                                prevSibling.remove();
+                                break;
+                            }
+                            if (prevSibling.nodeType === Node.TEXT_NODE && prevSibling.textContent.trim() !== '') {
+                                break;
+                            }
+                            prevSibling = prevSibling.previousElementSibling;
+                        }
+                        if (!extractedContent) {
+                            const firstRow = table.querySelector('tr');
+                            if (firstRow) {
+                                const firstCell = firstRow.firstElementChild;
+                                if (firstCell && (firstCell.tagName.toLowerCase() === 'th' || firstCell.tagName.toLowerCase() === 'td')) {
+                                    const colspan = parseInt(firstCell.getAttribute('colspan') || '1', 10);
+                                    const rowCells = Array.from(firstRow.children).length;
+                                    if (colspan >= rowCells && firstCell.textContent.trim() !== '') {
+                                        extractedContent = firstCell.textContent.trim();
+                                        firstCell.remove();
+                                        if (firstRow.children.length === 0) {
+                                            firstRow.remove();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        captionElement.textContent = extractedContent || `[insert table caption]`;
+                        console.log('Universal flow: Auto-caption content set:', captionElement.textContent);
+                    } else if (existingCaptionContent) { // If not auto-captioning, but original content exists, restore it.
+                        captionElement.innerHTML = existingCaptionContent;
+                        console.log('Universal flow: Restored original caption content.');
+                    } else { // No auto-caption, no original content, apply placeholder
+                        captionElement.textContent = `[insert table caption]`;
+                        console.log('Universal flow: Placeholder caption content set.');
+                    }
+                } else { // Should not have caption
+                    if (captionElement) {
+                        captionElement.remove();
+                        console.log('Universal flow: Caption element removed.');
+                    }
+                }
+            }
+
+
+            // --- Start: Whitespace cleanup between caption and thead ---
+            const currentCaption = table.querySelector('caption');
+            const currentThead = table.querySelector('thead');
+
+            if (currentCaption && currentThead) {
+                let currentNode = currentCaption.nextSibling;
+                while (currentNode && currentNode !== currentThead) {
+                    const next = currentNode.nextSibling;
+                    if (currentNode.nodeType === Node.TEXT_NODE && currentNode.nodeValue.trim() === '') {
+                        currentNode.parentNode.removeChild(currentNode);
+                        console.log('Removed whitespace text node between caption and thead.');
+                    } else if (currentNode.nodeType === Node.ELEMENT_NODE && ['BR', 'P', 'DIV'].includes(currentNode.tagName.toUpperCase()) && currentNode.textContent.trim() === '') {
+                        // Also remove empty <br>, <p>, <div> between caption and thead
+                        currentNode.parentNode.removeChild(currentNode);
+                        console.log(`Removed empty <${currentNode.tagName}> between caption and thead.`);
+                    }
+                    currentNode = next;
+                }
+            }
+            // --- End: Whitespace cleanup ---
+
+            // --- New Feature: Make TFOOT from LAST COLSPAN ---
+            if (options.applyMakeTfootFromColspan) {
+                const currentTbody = table.querySelector('tbody'); // Get the current tbody after potential restructuring
+                if (currentTbody) {
+                    const rowsInTbody = Array.from(currentTbody.querySelectorAll('tr'));
+                    if (rowsInTbody.length > 0) {
+                        const lastRow = rowsInTbody[rowsInTbody.length - 1];
+
+                        // Determine the total number of columns in the table
+                        let totalColumns = 0;
+                        const theadRowsForColCount = Array.from(table.querySelectorAll('thead tr'));
+                        const firstTbodyRowForColCount = table.querySelector('tbody tr');
+
+                        if (theadRowsForColCount.length > 0) {
+                            theadRowsForColCount.forEach(hRow => {
+                                totalColumns = Math.max(totalColumns, getEffectiveColumnCount(hRow));
+                            });
+                        } else if (firstTbodyRowForColCount) {
+                            totalColumns = getEffectiveColumnCount(firstTbodyRowForColCount);
+                        }
+                        console.log(`Detected total columns for table (for TFOOT check): ${totalColumns}`);
+
+                        if (totalColumns > 0) {
+                            // Check if the last row consists of a single cell that spans the entire table
+                            if (lastRow.children.length === 1) {
+                                const singleCell = lastRow.firstElementChild;
+                                const colspan = parseInt(singleCell.getAttribute('colspan') || '1', 10);
+
+                                if (colspan === totalColumns) {
+                                    console.log(`Detected last row with a single cell spanning full width (${colspan} of ${totalColumns}). Moving to tfoot.`);
+
+                                    let tfoot = table.querySelector('tfoot');
+                                    if (!tfoot) {
+                                        tfoot = document.createElement('tfoot');
+                                        table.appendChild(tfoot);
+                                        console.log('Created new tfoot element for colspan row.');
+                                    }
+
+                                    tfoot.appendChild(lastRow);
+                                    console.log('Moved last row with full-width colspan to tfoot.');
+
+                                    // If the tbody is now empty, remove it
+                                    if (currentTbody.children.length === 0) {
+                                        currentTbody.remove();
+                                        console.log('Removed empty tbody after moving last row to tfoot.');
+                                    }
+                                } else {
+                                    console.log(`Last row has single cell with colspan ${colspan}, but table width is ${totalColumns}. Not moving to tfoot.`);
+                                }
+                            } else {
+                                console.log('Last row does not contain a single cell. Not checking for full-width colspan for tfoot.');
+                            }
+                        } else {
+                            console.log('Could not determine total columns for table. Skipping "Make TFOOT from LAST COLSPAN" check.');
+                        }
+                    } else {
+                        console.log('Tbody has no rows. Skipping "Make TFOOT from LAST COLSPAN" check.');
+                    }
+                } else {
+                    console.log('No tbody found. Skipping "Make TFOOT from LAST COLSPAN" check.');
+                }
+            } else {
+                // If option is OFF, do not create tfoot. If one exists, it remains.
+                console.log('"Make TFOOT from LAST COLSPAN" option is disabled. No action taken for creating tfoot.');
+            }
+            // --- End: New Feature ---
+
+
+            const tbodyRows = Array.from(newTbody.querySelectorAll('tr'));
+            tbodyRows.forEach(row => {
+                const firstCell = row.firstElementChild;
+                if (firstCell) {
+                    const existingClasses = Array.from(firstCell.classList).join(' '); // Capture existing classes
+                    if (options.applyRowHeader) {
+                        if (firstCell.tagName.toLowerCase() !== 'th') { // If it's not already a TH
+                            const newTh = document.createElement('th');
+                            // Copy all attributes from the original cell, excluding class for now
+                            Array.from(firstCell.attributes).forEach(attr => {
+                                if (attr.name !== 'class') newTh.setAttribute(attr.name, attr.value);
+                            });
+                            newTh.innerHTML = firstCell.innerHTML;
+                            newTh.className = existingClasses; // Reapply captured classes
+                            console.log('Applying row header alignment to new TH:', options.currentRowHeaderAlignment);
+                            applyAlignment(newTh, options.currentRowHeaderAlignment, alignmentClasses);
+                            row.replaceChild(newTh, firstCell);
+                        } else {
+                            console.log('Applying row header alignment to existing TH:', options.currentRowHeaderAlignment);
+                            applyAlignment(firstCell, options.currentRowHeaderAlignment, alignmentClasses);
+                        }
+                    } else { // applyRowHeader is FALSE
+                        if (firstCell.tagName.toLowerCase() !== 'td') { // If it's not already a TD
+                            const newTd = document.createElement('td');
+                            // Copy all attributes from the original cell, excluding class for now
+                            Array.from(firstCell.attributes).forEach(attr => {
+                                if (attr.name !== 'class') newTd.setAttribute(attr.name, attr.value);
+                            });
+                            newTd.innerHTML = firstCell.innerHTML;
+                            newTd.className = existingClasses; // Reapply captured classes
+                            // Removed alignment classes removal here, as applyAlignment handles 'none' correctly.
+                            row.replaceChild(newTd, firstCell);
+                            console.log('Converted cell to TD, removed alignment classes.');
+                        } else {
+                            // It's already a TD, applyAlignment with 'none' will preserve existing classes
+                            applyAlignment(firstCell, 'none', alignmentClasses); // Ensure no new alignment added if not a row header
+                            console.log('Ensured alignment classes untouched for TD (not a row header).');
+                        }
+                    }
+                }
+            });
+
+            // Add small class to all TRs if option is checked
+            if (options.applyAddSmallToTr) {
+                Array.from(table.querySelectorAll('tr')).forEach(tr => {
+                    tr.classList.add(smallClass);
+                });
+                console.log('Added "small" class to all TRs.');
+            } else {
+                Array.from(table.querySelectorAll('tr')).forEach(tr => {
+                    tr.classList.remove(smallClass);
+                });
+                console.log('Removed "small" class from all TRs.');
+            }
+
+
+            const currentTableCells = Array.from(table.querySelectorAll('th, td'));
+
+            // Remove existing colgroup (already handled above, but keeping comment for clarity)
+            // const existingColgroup = table.querySelector('colgroup');
+            // if (existingColgroup) {
+            //     existingColgroup.remove();
+            //     console.log('Removed existing colgroup.');
+            // }
+
+            currentTableCells.forEach(cell => {
+                // Fix Empty Cells
+                if (options.applyFixEmptyCells) {
+                    const currentInnerHtml = cell.innerHTML;
+                    // Check for explicit non-breaking spaces first to prevent removal
+                    const containsNBSP = currentInnerHtml.includes('&#160;') || currentInnerHtml.includes('&nbsp;');
+
+                    // Use a temporary div to get a true representation of the visual text content
+                    const tempDivForTextContent = document.createElement('div');
+                    tempDivForTextContent.innerHTML = currentInnerHtml;
+                    const visualTextContent = tempDivForTextContent.textContent.trim();
+
+                    // If it's visually empty AND doesn't already contain an NBSP, then insert NBSP
+                    if (visualTextContent === '' && !containsNBSP) {
+                        cell.innerHTML = '&#160;';
+                        console.log('Fixed empty cell with &nbsp;:', cell);
+                    }
+                }
+
+                // Remove p tags
+                if (options.applyRemovePTags) {
+                    const pTags = Array.from(cell.querySelectorAll('p'));
+                    pTags.forEach(p => {
+                        // Unwrap p tag: move its children outside and then remove the p tag
+                        while (p.firstChild) {
+                            p.parentNode.insertBefore(p.firstChild, p);
+                        }
+                        p.remove();
+                        console.log('Removed <p> tag from cell:', cell);
+                    });
+                }
+
+
+                if (cell.tagName.toLowerCase() === 'td') {
+                    // Apply data cells alignment from button group, unless finance table applies specific alignment
+                    console.log('Processing TD cell:', cell.textContent.trim().substring(0, 20) + '...');
+                    if (options.applyFinanceTable && financeRegex.test(cell.textContent.trim())) {
+                        console.log('  Applying finance alignment (right) to TD.');
+                        applyAlignment(cell, 'right', alignmentClasses);
+                        cell.classList.add('nowrap');
+                    } else {
+                        console.log('  Applying general data cells alignment:', options.currentDataCellsAlignment);
+                        applyAlignment(cell, options.currentDataCellsAlignment, alignmentClasses);
+                        // Ensure nowrap is removed if not a finance cell or finance table is off
+                        cell.classList.remove('nowrap');
+                    }
+                }
+            });
+
+            const boldableRows = Array.from(table.querySelectorAll('tbody tr'));
+            boldableRows.forEach(row => {
+                const thInRow = row.querySelector('th'); // Corrected typo here
+                let isTotalRow = false;
+
+                if (thInRow && (thInRow.textContent.trim().toLowerCase() === 'total' || thInRow.textContent.trim().toLowerCase() === 'subtotal')) {
+                    isTotalRow = true;
+                }
+
+                const tdsInRow = Array.from(row.querySelectorAll('td'));
+                tdsInRow.forEach(td => {
+                    if (options.applyBoldTotals && isTotalRow) {
+                        if (td.firstElementChild && td.firstElementChild.tagName.toLowerCase() === 'strong') {
+                            // Content is already strong, just trim
+                            td.firstElementChild.innerHTML = td.textContent.trim();
+                            console.log('Bold totals: already strong, trimmed content.');
+                        } else {
+                            // Wrap content in strong tag
+                            const strongElement = document.createElement('strong');
+                            strongElement.innerHTML = td.innerHTML; // Take existing content
+                            td.innerHTML = ''; // Clear cell
+                            td.appendChild(strongElement); // Append strong
+                            console.log('Bold totals: wrapped content in strong.');
+                        }
+                    } else {
+                        // If not bold totals, unwrap strong tag if present
+                        if (td.firstElementChild && td.firstElementChild.tagName.toLowerCase() === 'strong') {
+                            const originalContent = td.firstElementChild.innerHTML;
+                            td.innerHTML = originalContent;
+                            console.log('Unwrapped strong tag.');
+                        }
+                    }
+                });
+            });
+
+            // Remove active class from all thead tr (as they will be re-added if activeColHeadersCheckbox is checked)
+            Array.from(table.querySelectorAll('thead tr')).forEach(tr => tr.classList.remove('active'));
+            console.log('Removed "active" class from all THEAD TRs initially.');
+
+
+            const theadThs = Array.from(newThead.querySelectorAll('th'));
+            const tbodyThs = Array.from(newTbody.querySelectorAll('th'));
+
+            if (options.applyActiveColHeaders) {
+                Array.from(newThead.querySelectorAll('tr')).forEach(tr => {
+                    tr.classList.add('active');
+                });
+                console.log('Added "active" class to THEAD TRs.');
+            }
+
+            if (options.activeColspanHeadersCheckboxValue) {
+                tbodyThs.forEach(th => {
+                    if (th.hasAttribute('colspan') && parseInt(th.getAttribute('colspan')) > 1) {
+                        th.classList.add('active');
+                        console.log('Added "active" to COLSPAN TH:', th.textContent.trim());
+                    }
+                });
+            }
+
+            if (options.activeRowHeadersCheckboxValue) {
+                tbodyThs.forEach(th => {
+                    if (th.parentNode.firstElementChild === th) {
+                        th.classList.add('active');
+                        console.log('Added "active" to ROW HEADER TH:', th.textContent.trim());
+                    }
+                });
+            }
+
+            // Apply Column Headers Alignment (to TH in THEAD, excluding first cell if it's a row header)
+            console.log('Applying Column Headers Alignment. Current colHeaderAlignment:', options.currentColHeaderAlignment);
+            theadThs.forEach((th, index) => {
+                // Apply column header alignment unless it's the very first cell AND that cell is acting as a row header
+                // (The first cell, if it's a TH and applyRowHeader is true, will be handled by rowHeaderAlignment below for precedence)
+                if (index === 0 && options.applyRowHeader && newThead.firstElementChild === th) {
+                    console.log('  Skipping colHeaderAlignment for first THEAD TH (handled by rowHeader).');
+                } else {
+                    applyAlignment(th, options.currentColHeaderAlignment, alignmentClasses);
+                }
+            });
+
+            // Apply Colspan Headers Alignment (to TH in TBODY with colspan)
+            console.log('Applying Colspan Headers Alignment. Current colspanHeaderAlignment:', options.currentColspanHeaderAlignment);
+            tbodyThs.forEach(th => {
+                if (th.hasAttribute('colspan') && parseInt(th.getAttribute('colspan')) > 1) {
+                    applyAlignment(th, options.currentColspanHeaderAlignment, alignmentClasses);
+                }
+            });
+
+            // Explicitly apply Row Headers Alignment to the first TH in THEAD if applyRowHeader is true
+            // This ensures correct precedence if it's both a column header and a row header.
+            console.log('Applying Row Headers Alignment. Current rowHeaderAlignment:', options.currentRowHeaderAlignment);
+            if (options.applyRowHeader && newThead.firstElementChild && newThead.firstElementChild.firstElementChild && newThead.firstElementChild.firstElementChild.tagName.toLowerCase() === 'th') {
+                applyAlignment(newThead.firstElementChild.firstElementChild, options.currentRowHeaderAlignment, alignmentClasses);
+            }
+
+
+            // --- Start: Final cleanup for empty class attributes within the current table ---
+            Array.from(table.querySelectorAll('*')).forEach(el => {
+                if (el.hasAttribute('class') && el.classList.length === 0) {
+                    el.removeAttribute('class');
+                }
+            });
+            console.log('Removed empty class attributes from elements.');
+            // --- End: Final cleanup ---
+            return table; // Return the modified table element
+        }
+
+
+        /**
+         * Formats all HTML tables in the editor based on universal options.
          */
         function formatHtmlTables() {
             // Close the modal immediately when format button is clicked
@@ -1239,568 +2188,69 @@
                     return;
                 }
 
-                const applyId = idCheckbox.checked;
-                const tableIdPrefix = pageIdPrefixInput.value.trim(); // Get custom prefix
-                const figureDataIdPrefix = figureDataIdPrefixInput.value.trim(); // Get custom figure data prefix
-
-                const applyClassTables = classTablesCheckbox.checked;
-                const applyCaption = captionCheckbox.checked;
-                const applyAutoCaption = autoCaptionCheckbox.checked;
-                const applyFixEmptyCells = fixEmptyCellsCheckbox.checked;
-                const applyRemovePTags = removePTagsCheckbox.checked;
-                const applyMakeTfootFromColspan = makeTfootFromColspanCheckbox.checked; // New feature toggle
-                const applyAddSmallToTr = addSmallToTrCheckbox.checked;
-                const applyHeader = headerCheckbox.checked;
-                const applyRowHeader = rowHeaderCheckbox.checked;
-
-                const applyResponsiveTables = responsiveTablesCheckbox.checked;
-                const applyResponsiveSmall = responsiveSmallCheckbox.checked;
-
-                const applyBordered = borderedCheckbox.checked;
-                const applyStriped = stripedCheckbox.checked;
-                const applyHover = hoverCheckbox.checked;
-                const applyActiveColHeaders = activeColHeadersCheckbox.checked;
-                const activeColspanHeadersCheckboxValue = activeColspanHeadersCheckbox.checked; // Capture value
-                const activeRowHeadersCheckboxValue = activeRowHeadersCheckbox.checked;
-                const applyClassSmall = classSmallCheckboxElement.checked;
-
-                const applyFinanceTable = financeTableCheckbox.checked;
-                const applyBoldTotals = boldTotalsCheckbox.checked;
-
-                const financeClasses = ['text-right', 'nowrap'];
-                const alignmentClasses = ['text-left', 'text-center', 'text-right'];
-                const financeRegex = /^\s*[-+]?(?:\d+|\d{1,3}(?:\s\d{3})*)(?:[.,]\d+)?\s*$/;
-                const responsiveDivClass = 'table-responsive';
-                const smallClass = 'small';
-
-                let tableCounter = 1;
-
-                // Capture current alignment values from the window object
-                const currentCaptionAlignment = window.captionAlignment;
-                const currentColHeaderAlignment = window.colHeaderAlignment;
-                const currentRowHeaderAlignment = window.rowHeaderAlignment;
-                const currentColspanHeaderAlignment = window.colspanHeaderAlignment;
-                const currentDataCellsAlignment = window.dataCellsAlignment;
-
-                console.log('Current alignment settings being used by formatHtmlTables:');
-                console.log(`  Caption: ${currentCaptionAlignment}`);
-                console.log(`  Col Headers: ${currentColHeaderAlignment}`);
-                console.log(`  Row Headers: ${currentRowHeaderAlignment}`);
-                console.log(`  Colspan Headers: ${currentColspanHeaderAlignment}`);
-                console.log(`  Data Cells: ${currentDataCellsAlignment}`);
+                // Introduce separate counters for 'tbl' and 'ftbl' IDs
+                let tblCounter = 1;
+                let ftblCounter = 1;
 
                 tables.forEach(table => {
-                    console.log(`--- Processing Table ${tableCounter} ---`);
+                    const isFigureTable = table.closest('figure') !== null;
+                    let currentAssignedCounter;
 
-                    let responsiveDiv = table.parentNode;
-                    const parentIsResponsiveDiv = responsiveDiv && responsiveDiv.classList.contains(responsiveDivClass);
-
-                    if (applyResponsiveTables) {
-                        if (!parentIsResponsiveDiv) {
-                            responsiveDiv = document.createElement('div');
-                            responsiveDiv.classList.add(responsiveDivClass);
-                            table.parentNode.insertBefore(responsiveDiv, table);
-                            responsiveDiv.appendChild(table);
-                        }
-                        if (applyResponsiveSmall) {
-                            responsiveDiv.classList.add(smallClass);
-                        } else {
-                            responsiveDiv.classList.remove(smallClass);
-                        }
+                    if (isFigureTable) {
+                        currentAssignedCounter = ftblCounter++;
                     } else {
-                        if (parentIsResponsiveDiv) {
-                            responsiveDiv.classList.remove(smallClass);
-                            responsiveDiv.parentNode.insertBefore(table, responsiveDiv);
-                            responsiveDiv.remove();
-                        }
+                        currentAssignedCounter = tblCounter++;
                     }
 
-                    // --- UNCONDITIONALLY REMOVE ALL IDs, HEADERS, AND SCOPES AT THE START ---
-                    table.removeAttribute('id');
-                    Array.from(table.querySelectorAll('th, td')).forEach(cell => {
-                        cell.removeAttribute('id');
-                        cell.removeAttribute('headers');
-                        cell.removeAttribute('scope');
-                    });
-                    // --- END UNCONDITIONAL REMOVAL ---
+                    // Get existing caption details for universal formatter as well for robust handling
+                    const existingCaptionElementForUniversal = table.querySelector('caption');
+                    const existingCaptionContentForUniversal = existingCaptionElementForUniversal ? existingCaptionElementForUniversal.innerHTML : '';
+                    const existingCaptionClassesForUniversal = existingCaptionElementForUniversal ? Array.from(existingCaptionElementForUniversal.classList) : [];
 
-                    // Clear existing active, centering, and alignment classes from all cells
-                    // This is done before applying new alignments to avoid conflicts
-                    Array.from(table.querySelectorAll('th, tr, td, caption')).forEach(el => {
-                        el.classList.remove('active');
-                        alignmentClasses.forEach(cls => el.classList.remove(cls)); // Remove text-left, text-center, text-right
-                        el.classList.remove('nowrap'); // Also clear nowrap for finance
-                    });
-                    console.log('Classes cleared from all relevant elements for current table.');
-
-                    // Conditional re-application of table ID based on applyId checkbox and custom prefix
-                    if (applyId) {
-                        const currentTablePrefix = tableIdPrefix || 'tbl'; // Use custom prefix if provided, else 'tbl'
-                        table.id = `${currentTablePrefix}${tableCounter}`;
-                    }
-
-                    const controlledClasses = ['table', 'table-bordered', 'table-striped', 'table-hover', 'table-condensed', smallClass];
-                    let currentClasses = table.className.split(' ').filter(c => c.trim() !== '');
-                    const newClasses = new Set(currentClasses.filter(c => !controlledClasses.includes(c)));
-
-                    // Apply Basic Classes logic
-                    if (applyClassTables) {
-                        newClasses.add('table');
-                        newClasses.add('table-condensed');
-                    }
-                    if (applyBordered) newClasses.add('table-bordered');
-                    if (applyStriped) newClasses.add('table-striped');
-                    if (applyHover) newClasses.add('table-hover');
-                    if (applyClassSmall) newClasses.add(smallClass); // Apply Add Small to TABLE class
-
-                    table.className = Array.from(newClasses).join(' ');
-
-                    const originalTableRows = Array.from(table.querySelectorAll('tr'));
-
-                    let headerRowCount = 0;
-                    if (applyHeader) {
-                        let maxRowSpanEnd = -1;
-
-                        for (let i = 0; i < originalTableRows.length; i++) {
-                            const currentRow = originalTableRows[i];
-                            headerRowCount = i + 1;
-
-                            const cellsInCurrentRow = Array.from(currentRow.querySelectorAll('th, td'));
-                            cellsInCurrentRow.forEach(cell => {
-                                const rowspan = parseInt(cell.getAttribute('rowspan') || '1', 10);
-                                maxRowSpanEnd = Math.max(maxRowSpanEnd, i + rowspan - 1);
-                            });
-
-                            if (i >= maxRowSpanEnd) {
-                                break;
-                            }
-                        }
-                    }
-
-                    table.querySelectorAll('thead, tbody, tfoot').forEach(el => el.remove());
-
-                    const newThead = document.createElement('thead');
-                    let newTbody = document.createElement('tbody'); // Declare newTbody with let as it might be replaced
-
-                    originalTableRows.forEach((row, index) => {
-                        if (index < headerRowCount) {
-                            const clonedRow = row.cloneNode(true);
-                            Array.from(clonedRow.querySelectorAll('td')).forEach(td => {
-                                const newTh = document.createElement('th');
-                                Array.from(td.attributes).forEach(attr => {
-                                    newTh.setAttribute(attr.name, attr.value);
-                                });
-                                newTh.innerHTML = td.innerHTML;
-                                td.parentNode.replaceChild(newTh, td);
-                            });
-                            newThead.appendChild(clonedRow);
-                        } else {
-                            newTbody.appendChild(row);
-                        }
-                    });
-
-                    if (newThead.children.length > 0) {
-                        table.appendChild(newThead);
-                    }
-                    table.appendChild(newTbody);
-
-                    let captionElement = table.querySelector('caption');
-                    const captionAlreadyExists = !!captionElement;
-
-                    if (applyCaption || applyAutoCaption) { // If *any* captioning is enabled
-                        if (!captionElement) { // If no caption element currently exists, create one
-                            captionElement = document.createElement('caption');
-                            if (table.firstChild) {
-                                table.insertBefore(captionElement, table.firstChild);
-                            } else {
-                                table.appendChild(captionElement);
-                            }
-                            console.log('Caption element created.');
-                        }
-
-                        console.log('Applying caption alignment. Current captionAlignment value:', currentCaptionAlignment);
-                        applyAlignment(captionElement, currentCaptionAlignment, alignmentClasses);
-
-
-                        // NOW handle content based on user choice AND whether a caption originally existed
-                        if (applyAutoCaption && !captionAlreadyExists) { // Only auto-caption if it didn't exist initially
-                            let extractedContent = '';
-                            // ... auto-caption extraction logic ... (same as before)
-                            let prevSibling = (responsiveDiv || table).previousElementSibling;
-                            while (prevSibling) {
-                                if (['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'].includes(prevSibling.tagName)) {
-                                    extractedContent = prevSibling.textContent.trim();
-                                    prevSibling.remove();
-                                    break;
-                                }
-                                if (prevSibling.nodeType === Node.TEXT_NODE && prevSibling.textContent.trim() !== '') {
-                                    break;
-                                }
-                                prevSibling = prevSibling.previousElementSibling;
-                            }
-                            if (!extractedContent) {
-                                const firstRow = table.querySelector('tr');
-                                if (firstRow) {
-                                    const firstCell = firstRow.firstElementChild;
-                                    if (firstCell && (firstCell.tagName.toLowerCase() === 'th' || firstCell.tagName.toLowerCase() === 'td')) {
-                                        const colspan = parseInt(firstCell.getAttribute('colspan') || '1', 10);
-                                        const rowCells = Array.from(firstRow.children).length;
-                                        if (colspan >= rowCells && firstCell.textContent.trim() !== '') {
-                                            extractedContent = firstCell.textContent.trim();
-                                            firstCell.remove();
-                                            if (firstRow.children.length === 0) {
-                                                firstRow.remove();
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            captionElement.textContent = extractedContent || `[insert table caption]`; // Use extracted or placeholder
-                            console.log('Auto-caption content set:', captionElement.textContent);
-                        } else if (applyCaption && !captionAlreadyExists) { // If placeholder caption is explicitly chosen (and not auto-caption)
-                            captionElement.textContent = `[insert table caption]`;
-                            console.log('Placeholder caption content set.');
-                        }
-                        // If applyAutoCaption is true AND captionAlreadyExists, its content is NOT changed (per "ONLY IF a caption doesn't already exist")
-                        // If applyAutoCaption is false AND captionAlreadyExists, its content is NOT changed (as this is the "placeholder" path, but an explicit placeholder wasn't selected)
-
-                    } else { // Neither applyCaption nor applyAutoCaption is true
-                        // If no captioning option is selected, remove any existing caption
-                        if (captionElement) {
-                            captionElement.remove();
-                            console.log('Caption element removed.');
-                        }
-                    }
-
-                    // --- Start: Whitespace cleanup between caption and thead ---
-                    const currentCaption = table.querySelector('caption');
-                    const currentThead = table.querySelector('thead');
-
-                    if (currentCaption && currentThead) {
-                        let currentNode = currentCaption.nextSibling;
-                        while (currentNode && currentNode !== currentThead) {
-                            const next = currentNode.nextSibling;
-                            if (currentNode.nodeType === Node.TEXT_NODE && currentNode.nodeValue.trim() === '') {
-                                currentNode.parentNode.removeChild(currentNode);
-                                console.log('Removed whitespace text node between caption and thead.');
-                            } else if (currentNode.nodeType === Node.ELEMENT_NODE && ['BR', 'P', 'DIV'].includes(currentNode.tagName.toUpperCase()) && currentNode.textContent.trim() === '') {
-                                // Also remove empty <br>, <p>, <div> between caption and thead
-                                currentNode.parentNode.removeChild(currentNode);
-                                console.log(`Removed empty <${currentNode.tagName}> between caption and thead.`);
-                            }
-                            currentNode = next;
-                        }
-                    }
-                    // --- End: Whitespace cleanup ---
-
-                    // --- New Feature: Make TFOOT from LAST COLSPAN ---
-                    if (applyMakeTfootFromColspan) {
-                        const currentTbody = table.querySelector('tbody'); // Get the current tbody after potential restructuring
-                        if (currentTbody) {
-                            const rowsInTbody = Array.from(currentTbody.querySelectorAll('tr'));
-                            if (rowsInTbody.length > 0) {
-                                const lastRow = rowsInTbody[rowsInTbody.length - 1];
-
-                                // Determine the total number of columns in the table
-                                let totalColumns = 0;
-                                const theadRowsForColCount = Array.from(table.querySelectorAll('thead tr'));
-                                const firstTbodyRowForColCount = table.querySelector('tbody tr');
-
-                                if (theadRowsForColCount.length > 0) {
-                                    theadRowsForColCount.forEach(hRow => {
-                                        totalColumns = Math.max(totalColumns, getEffectiveColumnCount(hRow));
-                                    });
-                                } else if (firstTbodyRowForColCount) {
-                                    totalColumns = getEffectiveColumnCount(firstTbodyRowForColCount);
-                                }
-                                console.log(`Detected total columns for table (for TFOOT check): ${totalColumns}`);
-
-                                if (totalColumns > 0) {
-                                    // Check if the last row consists of a single cell that spans the entire table
-                                    if (lastRow.children.length === 1) {
-                                        const singleCell = lastRow.firstElementChild;
-                                        const colspan = parseInt(singleCell.getAttribute('colspan') || '1', 10);
-
-                                        if (colspan === totalColumns) {
-                                            console.log(`Detected last row with a single cell spanning full width (${colspan} of ${totalColumns}). Moving to tfoot.`);
-
-                                            let tfoot = table.querySelector('tfoot');
-                                            if (!tfoot) {
-                                                tfoot = document.createElement('tfoot');
-                                                table.appendChild(tfoot);
-                                                console.log('Created new tfoot element for colspan row.');
-                                            }
-
-                                            tfoot.appendChild(lastRow);
-                                            console.log('Moved last row with full-width colspan to tfoot.');
-
-                                            // If the tbody is now empty, remove it
-                                            if (currentTbody.children.length === 0) {
-                                                currentTbody.remove();
-                                                console.log('Removed empty tbody after moving last row to tfoot.');
-                                            }
-                                        } else {
-                                            console.log(`Last row has single cell with colspan ${colspan}, but table width is ${totalColumns}. Not moving to tfoot.`);
-                                        }
-                                    } else {
-                                        console.log('Last row does not contain a single cell. Not checking for full-width colspan for tfoot.');
-                                    }
-                                } else {
-                                    console.log('Could not determine total columns for table. Skipping "Make TFOOT from LAST COLSPAN" check.');
-                                }
-                            } else {
-                                console.log('Tbody has no rows. Skipping "Make TFOOT from LAST COLSPAN" check.');
-                            }
-                        } else {
-                            console.log('No tbody found. Skipping "Make TFOOT from LAST COLSPAN" check.');
-                        }
-                    } else {
-                        // If option is OFF, remove any tfoot that was created this way or is empty
-                        // This prevents unexpected tfoods if the user disables the option after enabling it.
-                        // However, be careful not to remove manually added tfoods.
-                        // For simplicity now, if the feature is off, just don't create it.
-                        // If a tfoot existed before this feature, it should stay.
-                        // If it's a tfoot that was previously moved, and the option is off, it should move back to tbody.
-                        // This is complex. For now, if the feature is off, it just won't trigger the move.
-                        // If you need to revert, it implies a more complex undo logic or re-parsing.
-                        console.log('"Make TFOOT from LAST COLSPAN" option is disabled. No action taken.');
-                    }
-                    // --- End: New Feature ---
-
-
-                    const tbodyRows = Array.from(newTbody.querySelectorAll('tr'));
-                    tbodyRows.forEach(row => {
-                        const firstCell = row.firstElementChild;
-                        if (firstCell) {
-                            const existingClasses = Array.from(firstCell.classList).join(' '); // Capture existing classes
-                            if (applyRowHeader) {
-                                if (firstCell.tagName.toLowerCase() !== 'th') { // If it's not already a TH
-                                    const newTh = document.createElement('th');
-                                    // Copy all attributes from the original cell, excluding class for now
-                                    Array.from(firstCell.attributes).forEach(attr => {
-                                        if (attr.name !== 'class') newTh.setAttribute(attr.name, attr.value);
-                                    });
-                                    newTh.innerHTML = firstCell.innerHTML;
-                                    newTh.className = existingClasses; // Reapply captured classes
-                                    console.log('Applying row header alignment to new TH:', currentRowHeaderAlignment);
-                                    applyAlignment(newTh, currentRowHeaderAlignment, alignmentClasses);
-                                    row.replaceChild(newTh, firstCell);
-                                } else {
-                                    console.log('Applying row header alignment to existing TH:', currentRowHeaderAlignment);
-                                    applyAlignment(firstCell, currentRowHeaderAlignment, alignmentClasses);
-                                }
-                            } else { // applyRowHeader is FALSE
-                                if (firstCell.tagName.toLowerCase() !== 'td') { // If it's not already a TD
-                                    const newTd = document.createElement('td');
-                                    // Copy all attributes from the original cell, excluding class for now
-                                    Array.from(firstCell.attributes).forEach(attr => {
-                                        if (attr.name !== 'class') newTd.setAttribute(attr.name, attr.value);
-                                    });
-                                    newTd.innerHTML = firstCell.innerHTML;
-                                    newTd.className = existingClasses; // Reapply captured classes
-                                    // Remove any alignment classes when reverting to TD
-                                    alignmentClasses.forEach(cls => newTd.classList.remove(cls));
-                                    row.replaceChild(newTd, firstCell);
-                                    console.log('Converted cell to TD, removed alignment classes.');
-                                } else {
-                                    // It's already a TD, ensure alignment classes are removed if no longer a row header
-                                    alignmentClasses.forEach(cls => firstCell.classList.remove(cls));
-                                    console.log('Ensured alignment classes removed from TD (not a row header).');
-                                }
-                            }
-                        }
-                    });
-
-                    // Add small class to all TRs if option is checked
-                    if (applyAddSmallToTr) {
-                        Array.from(table.querySelectorAll('tr')).forEach(tr => {
-                            tr.classList.add(smallClass);
-                        });
-                        console.log('Added "small" class to all TRs.');
-                    } else {
-                        Array.from(table.querySelectorAll('tr')).forEach(tr => {
-                            tr.classList.remove(smallClass);
-                        });
-                        console.log('Removed "small" class from all TRs.');
-                    }
-
-
-                    const currentTableCells = Array.from(table.querySelectorAll('th, td'));
-
-                    const existingColgroup = table.querySelector('colgroup');
-                    if (existingColgroup) {
-                        existingColgroup.remove();
-                        console.log('Removed existing colgroup.');
-                    }
-
-                    currentTableCells.forEach(cell => {
-                        // Fix Empty Cells
-                        if (applyFixEmptyCells) {
-                            const currentInnerHtml = cell.innerHTML;
-                            // Check for explicit non-breaking spaces first to prevent removal
-                            const containsNBSP = currentInnerHtml.includes('&#160;') || currentInnerHtml.includes('&nbsp;');
-
-                            // Use a temporary div to get a true representation of the visual text content
-                            const tempDivForTextContent = document.createElement('div');
-                            tempDivForTextContent.innerHTML = currentInnerHtml;
-                            const visualTextContent = tempDivForTextContent.textContent.trim();
-
-                            // If it's visually empty AND doesn't already contain an NBSP, then insert NBSP
-                            if (visualTextContent === '' && !containsNBSP) {
-                                cell.innerHTML = '&#160;';
-                                console.log('Fixed empty cell with &nbsp;:', cell);
-                            }
-                        }
-
-                        // Remove p tags
-                        if (applyRemovePTags) {
-                            const pTags = Array.from(cell.querySelectorAll('p'));
-                            pTags.forEach(p => {
-                                // Unwrap p tag: move its children outside and then remove the p tag
-                                while (p.firstChild) {
-                                    p.parentNode.insertBefore(p.firstChild, p);
-                                }
-                                p.remove();
-                                console.log('Removed <p> tag from cell:', cell);
-                            });
-                        }
-
-
-                        if (cell.tagName.toLowerCase() === 'td') {
-                            // Apply data cells alignment from button group, unless finance table applies specific alignment
-                            console.log('Processing TD cell:', cell.textContent.trim().substring(0, 20) + '...');
-                            if (applyFinanceTable && financeRegex.test(cell.textContent.trim())) {
-                                console.log('  Applying finance alignment (right) to TD.');
-                                applyAlignment(cell, 'right', alignmentClasses);
-                                cell.classList.add('nowrap');
-                            } else {
-                                console.log('  Applying general data cells alignment:', currentDataCellsAlignment);
-                                applyAlignment(cell, currentDataCellsAlignment, alignmentClasses);
-                                // Ensure nowrap is removed if not a finance cell or finance table is off
-                                cell.classList.remove('nowrap');
-                            }
-                        }
-                    });
-
-                    const boldableRows = Array.from(table.querySelectorAll('tbody tr'));
-                    boldableRows.forEach(row => {
-                        const thInRow = row.querySelector('th');
-                        let isTotalRow = false;
-
-                        if (thInRow && (thInRow.textContent.trim().toLowerCase() === 'total' || thInRow.textContent.trim().toLowerCase() === 'subtotal')) {
-                            isTotalRow = true;
-                        }
-
-                        const tdsInRow = Array.from(row.querySelectorAll('td'));
-                        tdsInRow.forEach(td => {
-                            if (applyBoldTotals && isTotalRow) {
-                                if (td.firstElementChild && td.firstElementChild.tagName.toLowerCase() === 'strong') {
-                                    // Content is already strong, just trim
-                                    td.firstElementChild.innerHTML = td.textContent.trim();
-                                    console.log('Bold totals: already strong, trimmed content.');
-                                } else {
-                                    // Wrap content in strong tag
-                                    const strongElement = document.createElement('strong');
-                                    strongElement.innerHTML = td.innerHTML; // Take existing content
-                                    td.innerHTML = ''; // Clear cell
-                                    td.appendChild(strongElement); // Append strong
-                                    console.log('Bold totals: wrapped content in strong.');
-                                }
-                            } else {
-                                // If not bold totals, unwrap strong tag if present
-                                if (td.firstElementChild && td.firstElementChild.tagName.toLowerCase() === 'strong') {
-                                    const originalContent = td.firstElementChild.innerHTML;
-                                    td.innerHTML = originalContent;
-                                    console.log('Unwrapped strong tag.');
-                                }
-                            }
-                        });
-                    });
-
-                    // Remove active class from all thead tr (as they will be re-added if activeColHeadersCheckbox is checked)
-                    Array.from(table.querySelectorAll('thead tr')).forEach(tr => tr.classList.remove('active'));
-                    console.log('Removed "active" class from all THEAD TRs initially.');
-
-
-                    const theadThs = Array.from(newThead.querySelectorAll('th'));
-                    const tbodyThs = Array.from(newTbody.querySelectorAll('th'));
-
-                    if (applyActiveColHeaders) {
-                        Array.from(newThead.querySelectorAll('tr')).forEach(tr => {
-                            tr.classList.add('active');
-                        });
-                        console.log('Added "active" class to THEAD TRs.');
-                    }
-
-                    if (activeColspanHeadersCheckboxValue) {
-                        tbodyThs.forEach(th => {
-                            if (th.hasAttribute('colspan') && parseInt(th.getAttribute('colspan')) > 1) {
-                                th.classList.add('active');
-                                console.log('Added "active" to COLSPAN TH:', th.textContent.trim());
-                            }
-                        });
-                    }
-
-                    if (activeRowHeadersCheckboxValue) {
-                        tbodyThs.forEach(th => {
-                            if (th.parentNode.firstElementChild === th) {
-                                th.classList.add('active');
-                                console.log('Added "active" to ROW HEADER TH:', th.textContent.trim());
-                            }
-                        });
-                    }
-
-                    // Apply Column Headers Alignment (to TH in THEAD, excluding first cell if it's a row header)
-                    console.log('Applying Column Headers Alignment. Current colHeaderAlignment:', currentColHeaderAlignment);
-                    theadThs.forEach((th, index) => {
-                        // Apply column header alignment unless it's the very first cell AND that cell is acting as a row header
-                        // (The first cell, if it's a TH and applyRowHeader is true, will be handled by rowHeaderAlignment below for precedence)
-                        if (index === 0 && applyRowHeader && newThead.firstElementChild === th) {
-                            console.log('  Skipping colHeaderAlignment for first THEAD TH (handled by rowHeader).');
-                        } else {
-                            applyAlignment(th, currentColHeaderAlignment, alignmentClasses);
-                        }
-                    });
-
-                    // Apply Colspan Headers Alignment (to TH in TBODY with colspan)
-                    console.log('Applying Colspan Headers Alignment. Current colspanHeaderAlignment:', currentColspanHeaderAlignment);
-                    tbodyThs.forEach(th => {
-                        if (th.hasAttribute('colspan') && parseInt(th.getAttribute('colspan')) > 1) {
-                            applyAlignment(th, currentColspanHeaderAlignment, alignmentClasses);
-                        }
-                    });
-
-                    // Explicitly apply Row Headers Alignment to the first TH in THEAD if applyRowHeader is true
-                    // This ensures correct precedence if it's both a column header and a row header.
-                    console.log('Applying Row Headers Alignment. Current rowHeaderAlignment:', currentRowHeaderAlignment);
-                    if (applyRowHeader && newThead.firstElementChild && newThead.firstElementChild.firstElementChild && newThead.firstElementChild.firstElementChild.tagName.toLowerCase() === 'th') {
-                        applyAlignment(newThead.firstElementChild.firstElementChild, currentRowHeaderAlignment, alignmentClasses);
-                    }
-
-
-                    // --- Start: Final cleanup for empty class attributes within the current table ---
-                    Array.from(table.querySelectorAll('*')).forEach(el => {
-                        if (el.hasAttribute('class') && el.classList.length === 0) {
-                            el.removeAttribute('class');
-                        }
-                    });
-                    console.log('Removed empty class attributes from elements.');
-                    // --- End: Final cleanup ---
-
-
-                    tableCounter++;
+                    const options = {
+                        applyId: idCheckbox.checked,
+                        tableIdPrefix: pageIdPrefixInput.value.trim(),
+                        figureDataIdPrefix: figureDataIdPrefixInput.value.trim(),
+                        applyClassTables: classTablesCheckbox.checked,
+                        applyCaption: captionCheckbox.checked,
+                        applyAutoCaption: autoCaptionCheckbox.checked,
+                        applyFixEmptyCells: fixEmptyCellsCheckbox.checked,
+                        applyRemovePTags: removePTagsCheckbox.checked,
+                        applyMakeTfootFromColspan: makeTfootFromColspanCheckbox.checked,
+                        applyAddSmallToTr: addSmallToTrCheckbox.checked,
+                        applyHeader: headerCheckbox.checked,
+                        applyRowHeader: rowHeaderCheckbox.checked,
+                        applyResponsiveTables: responsiveTablesCheckbox.checked,
+                        applyResponsiveSmall: responsiveSmallCheckbox.checked,
+                        applyBordered: borderedCheckbox.checked,
+                        applyStriped: stripedCheckbox.checked,
+                        applyHover: hoverCheckbox.checked,
+                        applyActiveColHeaders: activeColHeadersCheckbox.checked,
+                        activeColspanHeadersCheckboxValue: activeColspanHeadersCheckbox.checked,
+                        activeRowHeadersCheckboxValue: activeRowHeadersCheckbox.checked,
+                        applyClassSmall: classSmallCheckboxElement.checked,
+                        applyFinanceTable: financeTableCheckbox.checked,
+                        applyBoldTotals: boldTotalsCheckbox.checked,
+                        currentCaptionAlignment: window.captionAlignment,
+                        currentColHeaderAlignment: window.colHeaderAlignment,
+                        currentRowHeaderAlignment: window.rowHeaderAlignment,
+                        currentColspanHeaderAlignment: window.colspanHeaderAlignment,
+                        currentDataCellsAlignment: window.dataCellsAlignment,
+                        assignedIdCounter: currentAssignedCounter, // Pass the chosen counter
+                        isFigureTable: isFigureTable, // Pass the figure table status
+                        // New properties for robust caption handling
+                        existingCaptionContent: existingCaptionContentForUniversal,
+                        existingCaptionClasses: existingCaptionClassesForUniversal,
+                        specificTableId: false // This is important to distinguish from customize modal
+                    };
+                    formatTableLogic(table, options);
                 });
 
                 let formattedContent = tempDiv.innerHTML;
-                console.log('Raw HTML from tempDiv.innerHTML (before beautify/restore):', formattedContent);
-
-                formattedContent = protectDataAttributes(formattedContent); // Protect before beautify
-                formattedContent = html_beautify(formattedContent, {
-                    indent_size: 4,
-                    space_in_paren: true
-                });
-                formattedContent = restoreDataAttributes(formattedContent); // Restore after beautify
-                console.log('Final formattedContent (after beautify/restore):', formattedContent);
+                formattedContent = protectDataAttributes(formattedContent);
+                formattedContent = html_beautify(formattedContent, { indent_size: 4, space_in_paren: true });
+                formattedContent = restoreDataAttributes(formattedContent);
+                formattedContent = convertAllEntitiesToNumeric(formattedContent);
 
                 setEditorContent(formattedContent);
                 applyEntityHighlighting();
@@ -1822,25 +2272,1128 @@
             }
         }
 
-        clearButton.addEventListener('click', () => {
-            if (monacoEditor) {
-                monacoEditor.setValue('');
-                showMessage('Editor content cleared.', 'info');
-                // Re-enable buttons and revert text/color
-                clearButton.textContent = 'Cleared!'; // Temporary feedback
-                clearButton.classList.add('bg-green-500', 'hover:bg-green-600');
-                clearButton.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
-                clearButton.setAttribute('data-temp-active', 'true');
+        /**
+         * Gathers options from the customize modal and formats the selected table in memory.
+         * @returns {string} The HTML string of the formatted table.
+         */
+        function generatePreviewTableHtml() {
+            const selectedValue = tableSearchDropdown.value;
+            const tableInfo = tableDataMap.get(selectedValue);
+
+            if (!tableInfo) {
+                return ''; // No table selected or info missing
+            }
+
+            // Create a temporary div to parse and clone the table without affecting the main editor's DOM
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = tableInfo.outerHTML; // Use the raw, original HTML from the map
+            const clonedTable = tempDiv.querySelector('table');
+
+            if (!clonedTable) {
+                console.error("Failed to clone table for preview.");
+                return '';
+            }
+
+            // Update the ID of the cloned table in the preview DOM if the custom ID input has a value
+            const customId = customizePageIdPrefixInput.value.trim();
+            if (customId) {
+                clonedTable.id = customId;
+            } else {
+                clonedTable.removeAttribute('id');
+            }
+
+            // Get existing caption details from the original table for formatting options
+            const existingCaptionElementForCustomize = clonedTable.querySelector('caption');
+            const existingCaptionContentForCustomize = existingCaptionElementForCustomize ? existingCaptionElementForCustomize.innerHTML : '';
+            const existingCaptionClassesForCustomize = existingCaptionElementForCustomize ? Array.from(existingCaptionElementForCustomize.classList) : [];
+
+            // Gather options from the CUSTOMIZE modal's controls
+            const customizeOptions = {
+                tableIdPrefix: customId, // Use the live custom ID input value
+                applyFixEmptyCells: customizeFixEmptyCellsCheckbox.checked,
+                applyRemovePTags: customizeRemovePTagsCheckbox.checked,
+                applyMakeTfootFromColspan: customizeMakeTfootFromColspanCheckbox.checked,
+                applyAddSmallToTr: customizeAddSmallToTrCheckbox.checked,
+                applyHeader: customizeHeaderCheckbox.checked,
+                applyRowHeader: customizeRowHeaderCheckbox.checked,
+                applyBordered: customizeBorderedCheckbox.checked,
+                applyStriped: customizeStripedCheckbox.checked,
+                applyHover: customizeHoverCheckbox.checked,
+                applyActiveColHeaders: customizeActiveColHeadersCheckbox.checked,
+                activeColspanHeadersCheckboxValue: customizeActiveColspanHeadersCheckbox.checked,
+                activeRowHeadersCheckboxValue: customizeActiveRowHeadersCheckbox.checked,
+                applyClassSmall: customizeClassSmallCheckboxElement.checked,
+                applyFinanceTable: customizeFinanceTableCheckbox.checked,
+                applyBoldTotals: customizeBoldTotalsCheckbox.checked,
+                // Specific alignment values from customize modal
+                currentCaptionAlignment: window.customizeCaptionAlignment,
+                currentColHeaderAlignment: window.customizeColHeaderAlignment,
+                currentRowHeaderAlignment: window.customizeRowHeaderAlignment,
+                currentColspanHeaderAlignment: window.customizeColspanHeaderAlignment,
+                currentDataCellsAlignment: window.customizeDataCellsAlignment,
+                specificTableId: selectedValue, // Used for ID assignment in formatTableLogic, identifies it as customize flow
+                // No caption options for customize flow here, handled by specificTableId
+                existingCaptionContent: existingCaptionContentForCustomize, // Still pass for potential internal logic
+                existingCaptionClasses: existingCaptionClassesForCustomize
+            };
+
+            // Apply formatting logic to the cloned table
+            const formattedTableElement = formatTableLogic(clonedTable, customizeOptions);
+
+            let formattedTableOuterHTML = formattedTableElement.outerHTML;
+
+            // Apply protection, beautify, and entity conversion to the *single table's* HTML
+            formattedTableOuterHTML = protectDataAttributes(formattedTableOuterHTML);
+            formattedTableOuterHTML = html_beautify(formattedTableOuterHTML, { indent_size: 4, space_in_paren: true });
+            formattedTableOuterHTML = restoreDataAttributes(formattedTableOuterHTML);
+            formattedTableOuterHTML = convertAllEntitiesToNumeric(formattedTableOuterHTML);
+
+            return formattedTableOuterHTML;
+        }
+
+        /**
+         * Updates the customize modal's preview iframe based on current option selections.
+         * @param {string} [htmlContentToPreview] - Optional. If provided, this HTML is used for the iframe.
+         * Otherwise, generatePreviewTableHtml() is called to create the HTML.
+         */
+        function updateCustomizeModalPreview(htmlContentToPreview) {
+            if (htmlContentToPreview === undefined) {
+                // If no specific content is provided, generate it based on current modal options
+                htmlContentToPreview = generatePreviewTableHtml();
+            }
+            updateCustomizePreview(htmlContentToPreview);
+        }
+
+        /**
+         * Updates the content of the customize preview iframe.
+         * This now also injects the necessary JavaScript for cell editing and highlighting.
+         * @param {string} tableHtmlString - The HTML string of the table to display in the iframe.
+         */
+        function updateCustomizePreview(tableHtmlString) {
+            if (!customizePreviewIframe) {
+                console.warn("Customize preview iframe not found.");
+                return;
+            }
+
+            const iframeDoc = customizePreviewIframe.contentDocument || customizePreviewIframe.contentWindow.document;
+
+            const baseHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Table Preview</title>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css">
+    <link rel="stylesheet" href="https://www.canada.ca/etc/designs/canada/wet-boew/css/theme.min.css">
+    <link rel="stylesheet" href="https://cdn.design-system.alpha.canada.ca/@cdssnc/gcds-components@latest/dist/gcds/gcds.css">
+    <style>
+        /* Styles for interactive cells in the iframe preview */
+        td, th, caption {
+            border: 1px solid #ccc;
+            padding: 8px;
+            min-width: 50px;
+        }
+        td.highlighted-cell, th.highlighted-cell, caption.highlighted-cell {
+            background-color: #add8e6 !important; /* Light blue highlight, use !important to override theme styles */
+            border: 2px solid #3b82f6;
+        }
+        /* Make sure cells have a visible border for editing */
+        table.table-bordered td, table.table-bordered th {
+            border-color: #666 !important; /* Make borders visible */
+        }
+    </style>
+</head>
+<body><main property="mainContentOfPage" resource="#wb-main" typeof="WebPageElement">
+    <div class="container"><div class="table-responsive">
+            ${tableHtmlString}
+    </div></div></main>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"><\/script>
+    <script src="https://www.canada.ca/etc/designs/canada/wet-boew/js/wet-boew.min.js"><\/script>
+    <script src="https://www.canada.ca/etc/designs/canada/wet-boew/js/theme.min.js"><\/script>
+    <script>
+        // JavaScript to be injected into the iframe
+        document.addEventListener('DOMContentLoaded', () => {
+            let currentMode = 'select'; // Default mode
+            const table = document.querySelector('table');
+            if (!table) return;
+
+            const allCells = table.querySelectorAll('th, td, caption');
+
+            function updateCellBehavior() {
+                allCells.forEach(cell => {
+                    if (currentMode === 'type') {
+                        cell.setAttribute('contenteditable', 'true');
+                        cell.style.cursor = 'text';
+                        // In type mode, remove highlight to avoid confusion
+                        cell.classList.remove('highlighted-cell');
+                    } else { // 'select' mode
+                        cell.setAttribute('contenteditable', 'false');
+                        cell.style.cursor = 'pointer';
+                    }
+                });
+            }
+
+            // Handle clicks on cells
+            allCells.forEach(cell => {
+                cell.addEventListener('click', function(event) {
+                    if (currentMode === 'select') {
+                        event.stopPropagation(); // Prevent event from bubbling to document
+                        // Clear all other highlights first
+                        document.querySelectorAll('.highlighted-cell').forEach(hCell => {
+                            if (hCell !== this) hCell.classList.remove('highlighted-cell');
+                        });
+                        this.classList.toggle('highlighted-cell');
+                    }
+                });
+
+                 // Update parent editor on blur (when typing stops)
+                cell.addEventListener('blur', function() {
+                    if (currentMode === 'type') {
+                        const updatedTableHtml = table.outerHTML;
+                        window.parent.postMessage({
+                            type: 'updateTableContent',
+                            tableHtml: updatedTableHtml
+                        }, '*');
+                    }
+                });
+            });
+
+            // Clear highlight when clicking anywhere outside a cell in select mode
+            document.body.addEventListener('click', function() {
+                if (currentMode === 'select') {
+                    document.querySelectorAll('.highlighted-cell').forEach(hCell => {
+                        hCell.classList.remove('highlighted-cell');
+                    });
+                }
+            });
+
+            // Listen for messages from the parent
+            window.addEventListener('message', (event) => {
+                if (event.data && event.data.type === 'setInteractionMode') {
+                    currentMode = event.data.mode;
+                    updateCellBehavior();
+                } else if (event.data && event.data.type === 'updateTableId' && table) {
+                    const newId = event.data.newId;
+                    if (newId) {
+                        table.id = newId;
+                    } else {
+                        table.removeAttribute('id');
+                    }
+                }
+            });
+
+            // Initial setup
+            updateCellBehavior();
+
+             // Notify parent that iframe is ready to receive mode
+            window.parent.postMessage({ type: 'iframeReady' }, '*');
+        });
+    <\/script>
+</body>
+</html>`;
+
+            iframeDoc.open();
+            iframeDoc.write(baseHtml); 
+            iframeDoc.close();
+        }
+
+
+        /**
+         * Formats a specific HTML table in the editor based on options from the customize modal.
+         */
+        async function formatSpecificTable() {
+            closeCustomizeModal(); // Close the customize modal
+
+            const selectedValue = tableSearchDropdown.value;
+            if (!selectedValue) {
+                showMessage('No table selected for customization.', 'info');
+                return;
+            }
+
+            const tableInfo = tableDataMap.get(selectedValue);
+            if (!tableInfo || tableInfo.startIndex === -1) {
+                showMessage('Selected table not found in editor content.', 'error');
+                return;
+            }
+
+            const currentEditorContent = getEditorContent();
+
+            // Perform the formatting on a *copy* of the table HTML
+            const formattedTableOuterHTML = generatePreviewTableHtml(); // Re-use logic for consistency
+
+            // Replace the original table's content in the full editor content
+            const newEditorContent = currentEditorContent.substring(0, tableInfo.startIndex) +
+                                     formattedTableOuterHTML +
+                                     currentEditorContent.substring(tableInfo.startIndex + tableInfo.length);
+
+            setEditorContent(newEditorContent);
+            applyEntityHighlighting();
+            populateTableSearchDropdown(); // Re-populate dropdown as content/IDs might have changed
+
+            // Temporarily disable buttons and show feedback
+            formatSpecificTableButton.textContent = 'Formatting...';
+            formatSpecificTableButton.classList.add('bg-green-500', 'hover:bg-green-600');
+            formatSpecificTableButton.classList.remove('bg-blue-700', 'hover:bg-blue-800');
+            formatSpecificTableButton.setAttribute('data-temp-active', 'true');
+            updateAllInteractiveButtonStates();
+
+            setTimeout(() => {
+                formatSpecificTableButton.textContent = 'Format Table';
+                formatSpecificTableButton.classList.remove('bg-green-500', 'hover:bg-green-600');
+                formatSpecificTableButton.classList.add('bg-blue-700', 'hover:bg-blue-800');
+                formatSpecificTableButton.removeAttribute('data-temp-active');
+                updateAllInteractiveButtonStates();
+                showMessage('Selected table customized successfully!', 'success'); // Show success message
+            }, 1500);
+        }
+
+
+        // DOM element references (moved after functions to ensure they are available)
+        const formatButton = document.getElementById('format-button-modal');
+        const openOptionsModalButton = document.getElementById('open-options-modal-btn');
+        const optionsModalOverlay = document.getElementById('options-modal-overlay');
+        const closeOptionsModalButton = document.getElementById('close-options-modal-btn');
+
+        // Universal Format Modal controls
+        const idCheckbox = document.getElementById('id-checkbox');
+        const pageIdPrefixInput = document.getElementById('page-id-prefix-input');
+        const figureDataIdPrefixInput = document.getElementById('figure-data-id-prefix-input');
+        const classTablesCheckbox = document.getElementById('class-tables-checkbox');
+        const captionCheckbox = document.getElementById('caption-checkbox');
+        const autoCaptionCheckbox = document.getElementById('auto-caption-checkbox');
+        const fixEmptyCellsCheckbox = document.getElementById('fix-empty-cells-checkbox');
+        const removePTagsCheckbox = document.getElementById('remove-p-tags-checkbox');
+        const makeTfootFromColspanCheckbox = document.getElementById('make-tfoot-from-colspan-checkbox');
+        const addSmallToTrCheckbox = document.getElementById('add-small-to-tr-checkbox');
+        const headerCheckbox = document.getElementById('header-checkbox');
+        const rowHeaderCheckbox = document.getElementById('row-header-checkbox');
+
+        const responsiveTablesCheckbox = document.getElementById('responsive-tables-checkbox');
+        const responsiveSmallCheckbox = document.getElementById('responsive-small-checkbox');
+
+        const borderedCheckbox = document.getElementById('bordered-checkbox');
+        const stripedCheckbox = document.getElementById('striped-checkbox');
+        const hoverCheckbox = document.getElementById('hover-checkbox');
+        const activeColHeadersCheckbox = document.getElementById('active-col-headers-checkbox');
+        const activeColspanHeadersCheckbox = document.getElementById('active-colspan-headers-checkbox');
+        const activeRowHeadersCheckbox = document.getElementById('active-row-headers-checkbox');
+        const classSmallCheckboxElement = document.getElementById('class-small-checkbox');
+
+        const financeTableCheckbox = document.getElementById('finance-table-checkbox');
+        const boldTotalsCheckbox = document.getElementById('bold-totals-checkbox');
+
+        const messageBox = document.getElementById('message-box');
+
+        // New button references for integrated features
+        const clearAllBtn = document.getElementById('clearAllBtn');
+        const autoEncodeBtn = document.getElementById('autoEncodeBtn');
+        const autoFormatBtn = document.getElementById('autoFormatBtn');
+        const copyCodeBtn = document.getElementById('copyCodeBtn');
+        const importHtmlBtn = document.getElementById('importHtmlBtn');
+        const exportHtmlBtn = document.getElementById('exportHtmlBtn');
+        const htmlFileInput = document.getElementById('htmlFileInput');
+
+        // New dropdown for table search and customize button
+        const tableSearchDropdown = document.getElementById('table-search-dropdown');
+        const customizeButton = document.getElementById('customize-button');
+
+        // Customize Table Modal elements
+        const customizeModalOverlay = document.getElementById('customize-modal-overlay');
+        const closeCustomizeModalButton = document.getElementById('close-customize-modal-btn');
+        const formatSpecificTableButton = document.getElementById('format-specific-table-button');
+        const customizePreviewIframe = document.getElementById('customize-preview-iframe'); // New iframe reference
+        const selectModeBtn = document.getElementById('select-mode-btn');
+        const typeModeBtn = document.getElementById('type-mode-btn');
+
+        // Customize Modal controls (all prefixed with customize-)
+        const customizePageIdPrefixInput = document.getElementById('customize-page-id-prefix-input'); // Renamed to Custom ID
+        const customizeMakeTfootFromColspanCheckbox = document.getElementById('customize-make-tfoot-from-colspan-checkbox');
+        const customizeFixEmptyCellsCheckbox = document.getElementById('customize-fix-empty-cells-checkbox');
+        const customizeRemovePTagsCheckbox = document.getElementById('customize-remove-p-tags-checkbox');
+        // Removed: customizeCaptionCheckbox, customizeAutoCaptionCheckbox
+        const customizeClassSmallCheckboxElement = document.getElementById('customize-class-small-checkbox');
+        const customizeAddSmallToTrCheckbox = document.getElementById('customize-add-small-to-tr-checkbox');
+        // Removed: customizeClassTablesCheckbox
+        const customizeHeaderCheckbox = document.getElementById('customize-header-checkbox');
+        const customizeRowHeaderCheckbox = document.getElementById('customize-row-header-checkbox');
+        const customizeBorderedCheckbox = document.getElementById('customize-bordered-checkbox');
+        const customizeStripedCheckbox = document.getElementById('customize-striped-checkbox');
+        const customizeHoverCheckbox = document.getElementById('customize-hover-checkbox');
+        const customizeActiveColHeadersCheckbox = document.getElementById('customize-active-col-headers-checkbox');
+        const customizeActiveColspanHeadersCheckbox = document.getElementById('customize-active-colspan-headers-checkbox');
+        const customizeActiveRowHeadersCheckbox = document.getElementById('customize-active-row-headers-checkbox');
+        const customizeFinanceTableCheckbox = document.getElementById('customize-finance-table-checkbox');
+        const customizeBoldTotalsCheckbox = document.getElementById('customize-bold-totals-checkbox');
+
+
+        // Populate allInteractiveButtons array after all button elements are defined
+        allInteractiveButtons.push(
+            formatButton,
+            openOptionsModalButton,
+            clearAllBtn,
+            autoEncodeBtn,
+            autoFormatBtn,
+            copyCodeBtn,
+            importHtmlBtn,
+            exportHtmlBtn,
+            customizeButton,
+            formatSpecificTableButton, // Add the new customize modal's format button
+            selectModeBtn,
+            typeModeBtn
+        );
+
+        // Event listeners for modals
+        openOptionsModalButton.addEventListener('click', openOptionsModal);
+        closeOptionsModalButton.addEventListener('click', closeOptionsModal);
+        formatButton.addEventListener('click', formatHtmlTables); // Universal Format button
+
+        customizeButton.addEventListener('click', () => {
+            if (!tableSearchDropdown.value) {
+                showMessage('Please select a table from the dropdown first.', 'info');
+                return;
+            }
+            // openOptionsModalCustomize() will be called by tableSearchDropdown's change listener
+            // once the dropdown's value is programmatically set or changed.
+            customizeModalOverlay.classList.remove('hidden'); // Show the modal immediately
+            // Manually trigger the dropdown change event to load table data and initialize modal
+            tableSearchDropdown.dispatchEvent(new Event('change'));
+        });
+        closeCustomizeModalButton.addEventListener('click', closeCustomizeModal);
+        formatSpecificTableButton.addEventListener('click', formatSpecificTable); // Specific Table Format button
+
+
+        // Setup all new alignment button groups for UNIVERSAL modal
+        setupButtonGroup('caption-alignment-group', 'captionAlignment');
+        setupButtonGroup('col-headers-alignment-group', 'colHeaderAlignment');
+        setupButtonGroup('row-headers-alignment-group', 'rowHeaderAlignment');
+        setupButtonGroup('colspan-headers-alignment-group', 'colspanHeaderAlignment');
+        setupButtonGroup('data-cells-alignment-group', 'dataCellsAlignment');
+
+        // Setup all new alignment button groups for CUSTOMIZE modal, with preview update callback
+        setupButtonGroup('customize-caption-alignment-group', 'customizeCaptionAlignment', customizeModalOverlay, updateCustomizeModalPreview);
+        setupButtonGroup('customize-col-headers-alignment-group', 'customizeColHeaderAlignment', customizeModalOverlay, updateCustomizeModalPreview);
+        setupButtonGroup('customize-row-headers-alignment-group', 'customizeRowHeaderAlignment', customizeModalOverlay, updateCustomizeModalPreview);
+        setupButtonGroup('customize-colspan-headers-alignment-group', 'customizeColspanHeaderAlignment', customizeModalOverlay, updateCustomizeModalPreview);
+        setupButtonGroup('customize-data-cells-alignment-group', 'customizeDataCellsAlignment', customizeModalOverlay, updateCustomizeModalPreview);
+
+
+        // Mutual exclusivity logic for Finance Table checkbox and Alignment button groups
+        if (financeTableCheckbox) {
+             financeTableCheckbox.addEventListener('change', function() {
+                const parentLabel = this.closest('.toggle-switch');
+                parentLabel.classList.toggle('is-checked', this.checked);
+            });
+        }
+        if (customizeFinanceTableCheckbox) {
+             customizeFinanceTableCheckbox.addEventListener('change', function() {
+                const parentLabel = this.closest('.toggle-switch');
+                parentLabel.classList.toggle('is-checked', this.checked);
+                updateCustomizeModalPreview(); // Trigger preview update
+            });
+        }
+
+
+        // Mutual exclusivity logic for Captions (placeholder) and Auto-Caption (Universal Modal)
+        captionCheckbox.addEventListener('change', function() {
+            const parentLabel = this.closest('.toggle-switch');
+            parentLabel.classList.toggle('is-checked', this.checked);
+            if (this.checked) {
+                autoCaptionCheckbox.checked = false;
+                autoCaptionCheckbox.closest('.toggle-switch').classList.remove('is-checked');
+            }
+        });
+
+        autoCaptionCheckbox.addEventListener('change', function() {
+            const parentLabel = this.closest('.toggle-switch');
+            parentLabel.classList.toggle('is-checked', this.checked);
+            if (this.checked) {
+                captionCheckbox.checked = false;
+                captionCheckbox.closest('.toggle-switch').classList.remove('is-checked');
+            }
+        });
+
+
+        /**
+         * Initializes the visual state of toggle switches.
+         * This function ONLY applies the 'is-checked' class based on the checkbox's 'checked' property.
+         * It does NOT attach event listeners to prevent duplicates.
+         * @param {HTMLElement} [container=document] - The container element to search for toggle switches.
+         */
+        function initializeToggleSwitchesVisuals(container = document) {
+            container.querySelectorAll('.toggle-switch input[type="checkbox"]').forEach(checkbox => {
+                const parentLabel = checkbox.closest('.toggle-switch');
+                if (checkbox.checked) {
+                    parentLabel.classList.add('is-checked');
+                } else {
+                    parentLabel.classList.remove('is-checked');
+                }
+            });
+        }
+
+
+        function openOptionsModalCustomize() {
+            // Retrieve selected table's original HTML
+            const selectedValue = tableSearchDropdown.value;
+            const tableInfo = tableDataMap.get(selectedValue);
+            
+            let selectedTableElement = null;
+
+            if (tableInfo) {
+                // Parse the original HTML of the selected table for its current state
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(tableInfo.outerHTML, 'text/html');
+                selectedTableElement = doc.querySelector('table');
+            }
+
+            // Initialize Custom ID input
+            customizePageIdPrefixInput.value = selectedTableElement ? selectedTableElement.id : '';
+
+            // Initialize checkboxes based on selectedTableElement's current state
+            if (selectedTableElement) {
+                const tableClasses = Array.from(selectedTableElement.classList);
+                
+                // Make TFOOT from LAST COLSPAN: Default to true (hard to infer its original intent from HTML structure alone)
+                customizeMakeTfootFromColspanCheckbox.checked = true;
+
+                // Fix Empty Cells: Default to true (logic only adds nbsp, no way to detect prior state)
+                customizeFixEmptyCellsCheckbox.checked = true; 
+
+                // Remove p tags: Default to false (logic removes p tags, no way to detect if they were removed previously)
+                customizeRemovePTagsCheckbox.checked = false;
+
+                // Add small to TABLE
+                customizeClassSmallCheckboxElement.checked = tableClasses.includes('small');
+                
+                // Add small to ALL TR: true if ALL TRs have the 'small' class
+                const allTrs = Array.from(selectedTableElement.querySelectorAll('tr'));
+                customizeAddSmallToTrCheckbox.checked = allTrs.length > 0 && allTrs.every(tr => Array.from(tr.classList).includes('small'));
+
+                // TH COL Headers (1st row)
+                const thead = selectedTableElement.querySelector('thead');
+                customizeHeaderCheckbox.checked = thead && thead.querySelector('tr')?.querySelector('th') !== null;
+
+                // TH ROW Headers (1st col)
+                const tbody = selectedTableElement.querySelector('tbody');
+                customizeRowHeaderCheckbox.checked = tbody && Array.from(tbody.querySelectorAll('tr')).some(row => row.firstElementChild?.tagName.toLowerCase() === 'th');
+
+                // Bordered, Striped, Hover
+                customizeBorderedCheckbox.checked = tableClasses.includes('table-bordered');
+                customizeStripedCheckbox.checked = tableClasses.includes('table-striped');
+                customizeHoverCheckbox.checked = tableClasses.includes('table-hover');
+                
+                // Active COL Headers
+                customizeActiveColHeadersCheckbox.checked = thead && Array.from(thead.querySelectorAll('tr')).some(tr => Array.from(tr.classList).includes('active'));
+
+                // Active COLSPAN Headers
+                customizeActiveColspanHeadersCheckbox.checked = Array.from(selectedTableElement.querySelectorAll('th[colspan]')).some(th => Array.from(th.classList).includes('active'));
+                
+                // Active ROW Headers
+                customizeActiveRowHeadersCheckbox.checked = Array.from(selectedTableElement.querySelectorAll('tbody tr > th:first-child')).some(th => Array.from(th.classList).includes('active'));
+                
+                // Bold Totals (heuristic: check for <strong> in cells of last tbody row, if it contains 'total' TH)
+                const lastTbodyRow = selectedTableElement.querySelector('tbody > tr:last-child');
+                const lastRowIsTotal = lastTbodyRow && lastTbodyRow.querySelector('th')?.textContent.toLowerCase().includes('total');
+                customizeBoldTotalsCheckbox.checked = lastRowIsTotal && Array.from(lastTbodyRow.querySelectorAll('td')).some(td => td.querySelector('strong'));
+
+                // Finance Tables (heuristic: check for 'nowrap' class on any TD)
+                customizeFinanceTableCheckbox.checked = Array.from(selectedTableElement.querySelectorAll('td')).some(td => Array.from(td.classList).includes('nowrap'));
+                
+
+                // Alignment states (using a helper function to set buttons and window variable)
+                const alignmentClasses = ['text-left', 'text-center', 'text-right'];
+
+                const setAlignmentButtonState = (groupId, element, defaultAlign) => {
+                    let inferredAlignment = defaultAlign;
+                    if (element) {
+                        if (Array.from(element.classList).includes('text-left')) inferredAlignment = 'left';
+                        else if (Array.from(element.classList).includes('text-center')) inferredAlignment = 'center';
+                        else if (Array.from(element.classList).includes('text-right')) inferredAlignment = 'right';
+                    }
+                    customizeModalOverlay.querySelectorAll(`#${groupId} button`).forEach(btn => {
+                        btn.classList.toggle('active', btn.dataset.align === inferredAlignment);
+                    });
+                    return inferredAlignment;
+                };
+
+                // Apply to relevant elements (or their best proxies)
+                const captionElement = selectedTableElement.querySelector('caption'); // Re-get caption here
+                window.customizeCaptionAlignment = setAlignmentButtonState('customize-caption-alignment-group', captionElement, 'left');
+                
+                // For col headers, prioritize THs in THEAD, and consider the case where the first TH is a row header
+                const theadTrs = thead ? Array.from(thead.querySelectorAll('tr')) : [];
+                let targetColHeaderElement = null;
+                if (theadTrs.length > 0) {
+                    const firstTheadTr = theadTrs[0];
+                    const firstTheadTh = firstTheadTr.querySelector('th');
+                    if (firstTheadTh) {
+                        if (customizeRowHeaderCheckbox.checked && firstTheadTh === firstTheadTr.firstElementChild) {
+                            targetColHeaderElement = firstTheadTr.querySelector('th:not(:first-child)');
+                            if (!targetColHeaderElement && firstTheadTr.children.length > 1) {
+                                targetColHeaderElement = Array.from(firstTheadTr.children)[1];
+                            } else if (!targetColHeaderElement && firstTheadTr.children.length === 1) {
+                                targetColHeaderElement = firstTheadTh;
+                            }
+                        } else {
+                            targetColHeaderElement = firstTheadTh;
+                        }
+                    }
+                }
+                window.customizeColHeaderAlignment = setAlignmentButtonState('customize-col-headers-alignment-group', targetColHeaderElement, 'none');
+
+                window.customizeRowHeaderAlignment = setAlignmentButtonState('customize-row-headers-alignment-group', tbody?.querySelector('tr > th:first-child'), 'none');
+                window.customizeColspanHeaderAlignment = setAlignmentButtonState('customize-colspan-headers-alignment-group', selectedTableElement.querySelector('th[colspan]'), 'none');
+                window.customizeDataCellsAlignment = setAlignmentButtonState('customize-data-cells-alignment-group', selectedTableElement.querySelector('td'), 'none');
+
+            } else {
+                // Default resets for non-selected table (shouldn't happen if selectedValue is present)
+                customizePageIdPrefixInput.value = '';
+                customizeMakeTfootFromColspanCheckbox.checked = true;
+                customizeFixEmptyCellsCheckbox.checked = true;
+                customizeRemovePTagsCheckbox.checked = false;
+                customizeClassSmallCheckboxElement.checked = false;
+                customizeAddSmallToTrCheckbox.checked = false;
+                customizeHeaderCheckbox.checked = true;
+                customizeRowHeaderCheckbox.checked = true;
+                customizeBorderedCheckbox.checked = true;
+                customizeStripedCheckbox.checked = false;
+                customizeHoverCheckbox.checked = false;
+                customizeActiveColHeadersCheckbox.checked = true;
+                customizeActiveColspanHeadersCheckbox.checked = true;
+                customizeActiveRowHeadersCheckbox.checked = false;
+                customizeBoldTotalsCheckbox.checked = false;
+                customizeFinanceTableCheckbox.checked = false;
+
+                // Set all alignment buttons to 'none' or 'left' (caption) and activate them
+                customizeModalOverlay.querySelectorAll('#customize-caption-alignment-group button').forEach(btn => btn.dataset.align === 'left' ? btn.classList.add('active') : btn.classList.remove('active'));
+                customizeModalOverlay.querySelectorAll('#customize-col-headers-alignment-group button').forEach(btn => btn.dataset.align === 'none' ? btn.classList.add('active') : btn.classList.remove('active'));
+                customizeModalOverlay.querySelectorAll('#customize-row-headers-alignment-group button').forEach(btn => btn.dataset.align === 'none' ? btn.classList.add('active') : btn.classList.remove('active'));
+                customizeModalOverlay.querySelectorAll('#customize-colspan-headers-alignment-group button').forEach(btn => btn.dataset.align === 'none' ? btn.classList.add('active') : btn.classList.remove('active'));
+                customizeModalOverlay.querySelectorAll('#customize-data-cells-alignment-group button').forEach(btn => btn.dataset.align === 'none' ? btn.classList.add('active') : btn.classList.remove('active'));
+                window.customizeCaptionAlignment = 'left';
+                window.customizeColHeaderAlignment = 'none';
+                window.customizeRowHeaderAlignment = 'none';
+                window.customizeColspanHeaderAlignment = 'none';
+                window.customizeDataCellsAlignment = 'none';
+            }
+            
+            // Re-initialize toggle visuals after setting checkbox states (only visuals)
+            initializeToggleSwitchesVisuals(customizeModalOverlay);
+
+            // Populate the preview iframe with the selected table's current HTML
+            updateCustomizeModalPreview(tableInfo.outerHTML); // Show the table as-is initially
+        }
+
+        // New button event listeners for Clear All, Auto-Encode, Auto-Indent, Copy Code, Import/Export
+        copyCodeBtn.addEventListener('click', async () => {
+            const codeContent = monacoEditor ? monacoEditor.getValue() : '';
+            try {
+                // Use a temporary textarea for copying to clipboard as navigator.clipboard.writeText might not work in iframes
+                const tempTextArea = document.createElement('textarea');
+                tempTextArea.value = codeContent;
+                document.body.appendChild(tempTextArea);
+                tempTextArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempTextArea);
+
+                const originalText = copyCodeBtn.textContent;
+                copyCodeBtn.textContent = 'Copied!';
+                copyCodeBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                copyCodeBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
+                copyCodeBtn.setAttribute('data-temp-active', 'true');
                 updateAllInteractiveButtonStates();
                 setTimeout(() => {
-                    clearButton.textContent = 'Clear Editor';
-                    clearButton.classList.remove('bg-green-500', 'hover:bg-green-600');
-                    clearButton.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
-                    clearButton.removeAttribute('data-temp-active');
+                    copyCodeBtn.textContent = originalText;
+                    copyCodeBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                    copyCodeBtn.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
+                    copyCodeBtn.removeAttribute('data-temp-active');
+                    updateAllInteractiveButtonStates();
+                }, 1500);
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+                showMessage('Failed to copy code. Please try again or copy manually.', 'error');
+            }
+        });
+
+        autoFormatBtn.addEventListener('click', () => {
+            if (monacoEditor) {
+                let currentContent = monacoEditor.getValue();
+                currentContent = protectDataAttributes(currentContent); // Protect attributes
+
+                let formattedContent = html_beautify(currentContent, {
+                    indent_size: 4,
+                    space_in_paren: true
+                });
+
+                formattedContent = restoreDataAttributes(formattedContent); // Restore attributes
+                formattedContent = convertAllEntitiesToNumeric(formattedContent); // Ensure entities are correct
+
+                monacoEditor.setValue(formattedContent);
+                applyEntityHighlighting();
+
+                const originalText = autoFormatBtn.textContent;
+                autoFormatBtn.textContent = 'Formatted!';
+                autoFormatBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                autoFormatBtn.classList.remove('bg-red-700', 'hover:bg-red-800');
+                autoFormatBtn.setAttribute('data-temp-active', 'true');
+                updateAllInteractiveButtonStates();
+                setTimeout(() => {
+                    autoFormatBtn.textContent = originalText;
+                    autoFormatBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                    autoFormatBtn.classList.add('bg-red-700', 'hover:bg-red-800');
+                    autoFormatBtn.removeAttribute('data-temp-active');
                     updateAllInteractiveButtonStates();
                 }, 1500);
             }
         });
+
+        autoEncodeBtn.addEventListener('click', () => {
+            if (monacoEditor) {
+                let currentContent = monacoEditor.getValue();
+                currentContent = protectDataAttributes(currentContent); // Protect attributes
+                let encodedContent = convertAllEntitiesToNumeric(currentContent); // Apply encoding
+                encodedContent = restoreDataAttributes(encodedContent); // Restore attributes
+
+                monacoEditor.setValue(encodedContent);
+                applyEntityHighlighting();
+
+                const originalText = autoEncodeBtn.textContent;
+                autoEncodeBtn.textContent = 'Encoded!';
+                autoEncodeBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                autoEncodeBtn.classList.remove('bg-red-700', 'hover:bg-red-800');
+                autoEncodeBtn.setAttribute('data-temp-active', 'true');
+                updateAllInteractiveButtonStates();
+                setTimeout(() => {
+                    autoEncodeBtn.textContent = originalText;
+                    autoEncodeBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                    autoEncodeBtn.classList.add('bg-red-700', 'hover:bg-red-800');
+                    autoEncodeBtn.removeAttribute('data-temp-active');
+                    updateAllInteractiveButtonStates();
+                }, 1500);
+            }
+        });
+
+        exportHtmlBtn.addEventListener('click', () => {
+            const htmlContent = monacoEditor ? monacoEditor.getValue() : '';
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'table_formatter_output.html'; // Default filename
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            const originalText = exportHtmlBtn.textContent;
+            exportHtmlBtn.textContent = 'Exported!';
+            exportHtmlBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+            exportHtmlBtn.classList.remove('bg-red-700', 'hover:bg-red-800');
+            exportHtmlBtn.setAttribute('data-temp-active', 'true');
+            updateAllInteractiveButtonStates();
+            setTimeout(() => {
+                exportHtmlBtn.textContent = originalText;
+                exportHtmlBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                exportHtmlBtn.classList.add('bg-red-700', 'hover:bg-red-800');
+                exportHtmlBtn.removeAttribute('data-temp-active');
+                updateAllInteractiveButtonStates();
+            }, 1500);
+        });
+
+        importHtmlBtn.addEventListener('click', () => htmlFileInput.click());
+        htmlFileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const importedContent = e.target.result;
+                    if (monacoEditor) {
+                        monacoEditor.setValue(importedContent);
+                        applyEntityHighlighting();
+                    }
+                    const originalText = importHtmlBtn.textContent;
+                    importHtmlBtn.textContent = 'Imported!';
+                    importHtmlBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                    importHtmlBtn.classList.remove('bg-purple-700', 'hover:bg-purple-800');
+                    importHtmlBtn.setAttribute('data-temp-active', 'true');
+                    updateAllInteractiveButtonStates();
+                    setTimeout(() => {
+                        importHtmlBtn.textContent = originalText;
+                        importHtmlBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                        importHtmlBtn.classList.add('bg-purple-700', 'hover:bg-purple-800');
+                        htmlFileInput.value = null; // Clear the input so same file can be imported again
+                        importHtmlBtn.removeAttribute('data-temp-active');
+                        updateAllInteractiveButtonStates();
+                    }, 1500);
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        clearAllBtn.addEventListener('click', () => {
+            if (monacoEditor) {
+                monacoEditor.setValue('');
+                showMessage('Editor content cleared.', 'info');
+                const originalText = clearAllBtn.textContent;
+                clearAllBtn.textContent = 'Cleared!';
+                clearAllBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                clearAllBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
+                clearAllBtn.setAttribute('data-temp-active', 'true');
+                updateAllInteractiveButtonStates();
+                setTimeout(() => {
+                    clearAllBtn.textContent = originalText;
+                    clearAllBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                    clearAllBtn.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
+                    clearAllBtn.removeAttribute('data-temp-active');
+                    updateAllInteractiveButtonStates();
+                }, 1500);
+            }
+        });
+
+        // Event listener for the table search dropdown
+        tableSearchDropdown.addEventListener('change', () => {
+            const selectedValue = tableSearchDropdown.value;
+            clearMonacoHighlight(); // Always clear previous highlight on new selection
+
+            if (selectedValue && monacoEditor) {
+                const model = monaco.editor.getModels()[0]; // Get the active model
+                const tableInfo = tableDataMap.get(selectedValue);
+
+                if (tableInfo && tableInfo.startIndex !== -1) {
+                    const position = model.getPositionAt(tableInfo.startIndex);
+                    monacoEditor.revealLineInCenter(position.lineNumber, monaco.editor.ScrollType.Smooth);
+
+                    // Add a temporary highlight to the selected line
+                    // The range should cover the entire table for better visual indication.
+                    // Recalculate length in case the table was modified
+                    const currentTableOuterHtml = getEditorContent().substring(tableInfo.startIndex, tableInfo.startIndex + tableInfo.length);
+                    const doc = new DOMParser().parseFromString(currentTableOuterHtml, 'text/html');
+                    const tableElement = doc.querySelector('table');
+                    const actualLength = tableElement ? tableElement.outerHTML.length : tableInfo.length;
+
+                    // DEFINE endPosition HERE
+                    const endPosition = model.getPositionAt(tableInfo.startIndex + actualLength);
+
+                    currentHighlightDecorationId = monacoEditor.getModel().deltaDecorations([], [{ // Corrected call
+                        range: new monaco.Range(position.lineNumber, position.column, endPosition.lineNumber, endPosition.column),
+                        options: {
+                            isTransparent: true,
+                            className: 'selected-line-highlight',
+                            hoverMessage: { value: 'Selected Table' }
+                        }
+                    }]);
+                    customizeButton.disabled = false; // Enable customize button
+
+                    // When a table is selected, call openOptionsModalCustomize to set modal states
+                    // This is essential to initialize the modal's controls to the selected table's state.
+                    openOptionsModalCustomize();
+                } else {
+                    showMessage('Could not find the selected table in the editor.', 'error');
+                    customizeButton.disabled = true; // Disable customize button
+                    updateCustomizePreview(''); // Clear preview if no table selected
+                }
+            } else {
+                customizeButton.disabled = true; // Disable if "Select a table" is chosen
+                updateCustomizePreview(''); // Clear preview if no table selected
+            }
+        });
+
+        // Listen for messages from the iframe (for content updates)
+        window.addEventListener('message', (event) => {
+            if (event.data && event.data.type === 'iframeReady') {
+                // When iframe is ready, send the initial mode
+                customizePreviewIframe.contentWindow.postMessage({
+                    type: 'setInteractionMode',
+                    mode: previewInteractionMode
+                }, '*');
+            } else if (event.data && event.data.type === 'updateTableContent') {
+                const updatedTableHtml = event.data.tableHtml;
+                const selectedValue = tableSearchDropdown.value;
+                const tableInfo = tableDataMap.get(selectedValue);
+
+                if (tableInfo && monacoEditor) {
+                    const currentEditorContent = monacoEditor.getValue();
+
+                    // Replace the original table's content with the updated content from the iframe
+                    const newEditorContent = currentEditorContent.substring(0, tableInfo.startIndex) +
+                                             updatedTableHtml +
+                                             currentEditorContent.substring(tableInfo.startIndex + tableInfo.length);
+                    
+                    const newLength = updatedTableHtml.length;
+                    
+                    // Update the editor
+                    monacoEditor.executeEdits('iframe-update', [{
+                        range: new monaco.Range(
+                            monacoEditor.getModel().getPositionAt(tableInfo.startIndex).lineNumber,
+                            monacoEditor.getModel().getPositionAt(tableInfo.startIndex).column,
+                            monacoEditor.getModel().getPositionAt(tableInfo.startIndex + tableInfo.length).lineNumber,
+                            monacoEditor.getModel().getPositionAt(tableInfo.startIndex + tableInfo.length).column
+                        ),
+                        text: updatedTableHtml
+                    }]);
+
+                    // Update the map with the new length
+                    tableInfo.length = newLength;
+                    tableInfo.outerHTML = updatedTableHtml;
+                    
+                    applyEntityHighlighting();
+
+                    // No need to repopulate dropdown, as IDs don't change here
+                    // Select the updated table again in the dropdown to maintain context
+                    tableSearchDropdown.value = selectedValue;
+                }
+            }
+        });
+
+        // Event Listeners for Interaction Mode Toggle
+        selectModeBtn.addEventListener('click', () => {
+            previewInteractionMode = 'select';
+            selectModeBtn.classList.add('active');
+            typeModeBtn.classList.remove('active');
+            customizePreviewIframe.contentWindow.postMessage({ type: 'setInteractionMode', mode: 'select' }, '*');
+        });
+
+        typeModeBtn.addEventListener('click', () => {
+            previewInteractionMode = 'type';
+            typeModeBtn.classList.add('active');
+            selectModeBtn.classList.remove('active');
+            customizePreviewIframe.contentWindow.postMessage({ type: 'setInteractionMode', mode: 'type' }, '*');
+        });
+
+
+        // Wrap Monaco editor initialization and main event listener attachments in window.onload
+        window.onload = function() {
+            console.log('Window loaded, initializing Monaco Editor...'); // Debugging log
+            require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.49.0/min/vs' }});
+            require(['vs/editor/editor.main'], function() {
+                monacoEditor = monaco.editor.create(document.getElementById('editor-container'), {
+                    value: `<table>
+      <tbody>
+        <tr>
+          <td>&nbsp;</td>
+          <td>North</td>
+          <td>South</td>
+          <td>East</td>
+          <td>West</td>
+        </tr>
+        <tr>
+          <td>Electronics</td>
+          <td>100</td>
+          <td>150,50</td>
+          <td>120 000</td>
+          <td>180.75</td>
+        </tr>
+        <tr>
+          <td>Apparel</td>
+          <td>80.00</td>
+          <td>-120</td>
+          <td>90 000.50</td>
+          <td>+110,25</td>
+        </tr>
+        <tr>
+          <td>Books</td>
+          <td>50</td>
+          <td>70</td>
+          <td>60</td>
+          <td>90</td>
+        </tr>
+         <tr>
+          <td>Food</td>
+          <td>120</td>
+          <td>100</td>
+          <td>140</td>
+          <td>140</td>
+        </tr>
+        <tr>
+          <td colspan="5">This is a colspan spanning the entire table.</td>
+        </tr>
+      </tbody>
+    </table>
+<figure>
+    <table id="tbl11">
+        <thead>
+            <tr>
+                <th rowspan="2">Category</th>
+                <th colspan="2">Q1 Sales</th>
+                <th colspan="2">Q2 Sales</th>
+            </tr>
+            <tr>
+                <th>Jan</th>
+                <th>Feb</th>
+                <th>Mar</th>
+                <th>Apr</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <th>Electronics</th>
+                <td>100</td>
+                <td>150</td>
+                <td>120</td>
+                <td>180</td>
+            </tr>
+            <tr>
+                <th>Apparel</th>
+                <td>80</td>
+                <td>-120</td>
+                <td>90</td>
+                <td>110</td>
+            </tr>
+            <tr>
+                <th>Books</th>
+                <td>50</td>
+                <td>70</td>
+                <td>60</td>
+                <td>90</td>
+            </tr>
+        </tbody>
+    </table>
+</figure>
+    <p>Table with existing ID and caption:</p>
+    <table id="myExistingTable" class="some-custom-class">
+        <caption>Existing Caption with more info</caption>
+        <thead>
+            <tr><th colspan="2">Existing Header Group</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Data 1</td><td>Data 2</td></tr>
+        </tbody>
+    </table>
+    <table>
+        <thead>
+            <tr>
+                <th>Header 1</th>
+                <th>Header 2</th>
+                <th>Header 3</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <th>Row Header A</th>
+                <td></td> <!-- Test empty td -->
+                <td>Data A2</td>
+            </tr>
+            <tr>
+                <th></th> <!-- Test empty th -->
+                <td>Data B1</td>
+                <td>Data B2</td>
+            </tr>
+            <tr>
+                <td> <p></p> </td> <!-- Test td with empty p tag -->
+                <td>Data C1</td>
+                <td>Data C2</td>
+            </tr>
+            <tr>
+                <td>  </td> <!-- Test td with only spaces -->
+                <td>Data D1</td>
+                <td>Data D2</td>
+            </tr>
+            <tr>
+                <td>&nbsp;</td> <!-- Test td with existing nbsp -->
+                <td>Data E1</td>
+                <td>Data E2</td>
+            </tr>
+        </tbody>
+    </table>
+
+    `,
+                    language: 'html',
+                    theme: 'vs-dark',
+                    automaticLayout: true,
+                    minimap: { enabled: false }
+                });
+
+                // Initial population of the dropdown
+                populateTableSearchDropdown();
+
+                monacoEditor.onDidChangeModelContent(() => {
+                    // Use a timeout to debounce the update. This prevents excessive re-parsing
+                    // during rapid typing, which can be slow and cause UI lag.
+                    clearTimeout(window.monacoUpdateTimeout);
+                    window.monacoUpdateTimeout = setTimeout(() => {
+                        applyEntityHighlighting();
+                        populateTableSearchDropdown();
+                    }, 500); // 500ms delay
+                });
+
+
+                applyEntityHighlighting(); // Apply initial highlighting
+
+                // Attach event listeners for customize modal controls ONCE
+                customizePageIdPrefixInput.addEventListener('input', function() {
+                    const newId = this.value.trim();
+                    updateCustomizeModalPreview(); // Update preview based on new ID/options
+                    // Send the new ID to the iframe so its internal table ID can be updated
+                    customizePreviewIframe.contentWindow.postMessage({
+                        type: 'updateTableId',
+                        newId: newId
+                    }, '*');
+                });
+                customizeFinanceTableCheckbox.addEventListener('change', function() {
+                    const parentLabel = this.closest('.toggle-switch');
+                    parentLabel.classList.toggle('is-checked', this.checked);
+                    updateCustomizeModalPreview();
+                });
+
+                // Attach listeners for other customize checkboxes to update preview
+                const otherCustomizeCheckboxes = [
+                    customizeMakeTfootFromColspanCheckbox,
+                    customizeFixEmptyCellsCheckbox,
+                    customizeRemovePTagsCheckbox,
+                    customizeClassSmallCheckboxElement,
+                    customizeAddSmallToTrCheckbox,
+                    customizeHeaderCheckbox,
+                    customizeRowHeaderCheckbox,
+                    customizeBorderedCheckbox,
+                    customizeStripedCheckbox,
+                    customizeHoverCheckbox,
+                    customizeActiveColHeadersCheckbox,
+                    customizeActiveColspanHeadersCheckbox,
+                    customizeActiveRowHeadersCheckbox,
+                    customizeBoldTotalsCheckbox
+                ];
+
+                otherCustomizeCheckboxes.forEach(checkbox => {
+                    checkbox.addEventListener('change', function() {
+                        const parentLabel = this.closest('.toggle-switch');
+                        parentLabel.classList.toggle('is-checked', this.checked);
+                        updateCustomizeModalPreview();
+                    });
+                });
+
+                // New: Attach listeners for Universal Format modal checkboxes to update their visual state
+                const universalFormatCheckboxes = [
+                    idCheckbox,
+                    responsiveTablesCheckbox,
+                    makeTfootFromColspanCheckbox,
+                    captionCheckbox,
+                    autoCaptionCheckbox, // Has mutual exclusivity handled above, but still needs visual toggle
+                    fixEmptyCellsCheckbox,
+                    removePTagsCheckbox,
+                    responsiveSmallCheckbox,
+                    classSmallCheckboxElement,
+                    addSmallToTrCheckbox,
+                    classTablesCheckbox,
+                    headerCheckbox,
+                    rowHeaderCheckbox,
+                    activeColHeadersCheckbox,
+                    activeColspanHeadersCheckbox,
+                    activeRowHeadersCheckbox,
+                    borderedCheckbox,
+                    stripedCheckbox,
+                    hoverCheckbox,
+                    boldTotalsCheckbox,
+                    financeTableCheckbox // Has mutual exclusivity handled above, but still needs visual toggle
+                ];
+
+                universalFormatCheckboxes.forEach(checkbox => {
+                    checkbox.addEventListener('change', function() {
+                        const parentLabel = this.closest('.toggle-switch');
+                        parentLabel.classList.toggle('is-checked', this.checked);
+                        // No need to call formatHtmlTables here; it's explicitly called by the "Format Tables" button
+                    });
+                });
+            });
+        };
     </script>
 </body>
 </html>
