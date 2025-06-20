@@ -976,9 +976,9 @@
         function updateSettingsButtonStates() {
             toggleContainerBtn.classList.remove('bg-gray-500', 'hover:bg-gray-600', 'bg-gray-600', 'bg-gray-700');
             if (useContainerDiv) {
-                toggleContainerBtn.classList.add('bg-gray-600', 'hover:bg-gray-700');
+                    toggleContainerBtn.classList.add('bg-gray-600', 'hover:bg-gray-700');
             } else {
-                toggleContainerBtn.classList.add('bg-gray-700', 'hover:bg-gray-600');
+                    toggleContainerBtn.classList.add('bg-gray-700', 'hover:bg-gray-600');
             }
             toggleTitleBtn.classList.remove('bg-gray-500', 'hover:bg-gray-600', 'bg-gray-600', 'bg-gray-700');
             if (showTitle) {
@@ -2081,9 +2081,11 @@
                         return monthMap[monthName.toLowerCase()] || null;
                     }
 
-                    // Sort month keys by length in descending order to prioritize longer matches (e.g., 'mars' over 'mar')
+                    // Sort month keys by length in descending order to prioritize longer matches (e.g., 'september' over 'sep')
                     const sortedMonthKeys = Object.keys(monthMap).sort((a, b) => b.length - a.length);
+                    // Create a regex pattern for months, escaping special characters
                     const monthPattern = sortedMonthKeys.map(m => m.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|');
+                    // Regex for any type of space, including non-breaking spaces and placeholders
                     const spaceOrNBSPChar = `(?:\\s|\\u00A0|&nbsp;|&#160;|${NBSP_ENTITY_PLACEHOLDER}|${NUMERIC_NBSP_ENTITY_PLACEHOLDER}|${LITERAL_NBSP_CHAR_PLACEHOLDER})+`;
 
                     // Regex for YYYY-MM-DD
@@ -2103,6 +2105,10 @@
                     // Negative lookahead `(?!\\d|${spaceOrNBSPChar}\\d{4})` ensures no digit or 4-digit year follows.
                     // `(?!-)` prevents tagging numeric dates like 31-03
                     const regexDayMonthNoYear = new RegExp(`(?<!\\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2})${spaceOrNBSPChar}(${monthPattern})(?!\\d|${spaceOrNBSPChar}\\d{4})(?!-)`, 'i');
+
+                    // NEW: Regex for Month Year (e.g., March 2024, mars 2024)
+                    // Allows for both regular spaces and non-breaking spaces.
+                    const regexMonthYear = new RegExp(`(?<!\\d)(${monthPattern})${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'i');
 
 
                     // Re-parse the content to allow traversal of the updated DOM
@@ -2146,29 +2152,36 @@
                                 // Full ISO date: YYYY-MM-DD
                                 const [fullMatch, yearMonthDay] = match;
                                 return yearMonthDay;
-                            }, priority: 3 }, // Highest priority for full dates
+                            }, priority: 4 }, // Highest priority for full dates
                             { name: 'DayMonthYear', regex: regexDayMonthYear, handler: (match) => {
                                 // Day Month Year: e.g., 20 March 2023, le 20 mars 2023
                                 const [, day, month, year] = match;
                                 const monthNum = getMonthNumber(month);
                                 if (!monthNum || parseInt(day) < 1 || parseInt(day) > 31) return null;
                                 return `${year}-${monthNum}-${String(day).padStart(2, '0')}`;
-                            }, priority: 2 },
+                            }, priority: 3 },
                             { name: 'MonthDayYear', regex: regexMonthDayYear, handler: (match) => {
                                 // Month Day Year: e.g., March 20, 2023
                                 const [, month, day, year] = match;
                                 const monthNum = getMonthNumber(month);
                                 if (!monthNum || parseInt(day) < 1 || parseInt(day) > 31) return null;
                                 return `${year}-${monthNum}-${String(day).padStart(2, '0')}`;
-                            }, priority: 2 },
-                            // NEW: Month Day (no year)
+                            }, priority: 3 },
+                            // NEW: Month Year
+                            { name: 'MonthYear', regex: regexMonthYear, handler: (match) => {
+                                const [, month, year] = match;
+                                const monthNum = getMonthNumber(month);
+                                if (!monthNum) return null;
+                                return `${year}-${monthNum}`; // Format as YYYY-MM
+                            }, priority: 2 }, // Higher than Month Day, lower than full dates
+                            // Month Day (no year)
                             { name: 'MonthDayNoYear', regex: regexMonthDayNoYear, handler: (match) => {
                                 const [, month, day] = match;
                                 const monthNum = getMonthNumber(month);
                                 if (!monthNum || parseInt(day) < 1 || parseInt(day) > 31) return null;
                                 return `${monthNum}-${String(day).padStart(2, '0')}`; // Modified to MM-DD
                             }, priority: 1 }, // Lower priority than full dates
-                            // NEW: Day Month (no year)
+                            // Day Month (no year)
                             { name: 'DayMonthNoYear', regex: regexDayMonthNoYear, handler: (match) => {
                                 const [, day, month] = match;
                                 const monthNum = getMonthNumber(month);
@@ -2204,33 +2217,33 @@
                             if (a.start !== b.start) {
                                 return a.start - b.start;
                             }
-                            return b.priority - a.priority; // Higher priority first for overlapping matches
+                            // If start positions are the same, prefer the match with higher priority.
+                            // If priorities are also the same, prefer the longer match (more specific).
+                            if (b.priority !== a.priority) {
+                                return b.priority - a.priority;
+                            }
+                            return b.original.length - a.original.length;
                         });
 
+                        // Filter for non-overlapping matches, prioritizing higher priority/longer matches in case of overlap
                         let nonOverlappingMatches = [];
-                        let lastEnd = -1;
+                        let processedRanges = []; // To keep track of text ranges already covered by a tag
+
                         allMatches.forEach(match => {
-                            let shouldAdd = true;
-                            if (nonOverlappingMatches.length > 0) {
-                                const lastAdded = nonOverlappingMatches[nonOverlappingMatches.length - 1];
-                                if (!(match.start >= lastAdded.end)) { // If there's an overlap
-                                    // If the new match has lower or equal priority and is not longer, skip it
-                                    if (match.priority < lastAdded.priority ||
-                                        (match.priority === lastAdded.priority && match.original.length <= lastAdded.original.length)) {
-                                        shouldAdd = false;
-                                    } else {
-                                        // If higher priority or longer, replace the last one
-                                        nonOverlappingMatches.pop();
-                                    }
+                            let isOverlapping = false;
+                            for (const range of processedRanges) {
+                                // Check if the current match overlaps with any already processed range
+                                if (match.start < range.end && match.end > range.start) {
+                                    isOverlapping = true;
+                                    break;
                                 }
                             }
 
-                            if (shouldAdd) {
+                            if (!isOverlapping) {
                                 nonOverlappingMatches.push(match);
-                                lastEnd = match.end;
+                                processedRanges.push({ start: match.start, end: match.end });
                             }
                         });
-
 
                         if (nonOverlappingMatches.length > 0) {
                             let resultParts = [];
