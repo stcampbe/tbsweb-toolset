@@ -1123,6 +1123,11 @@
                 }
                 // Rules for other tags: remove if empty or contains only NBSP, replace with space if contains only space
                 else {
+                    // NEW: Exclude div elements with any attributes from being removed/replaced
+                    if (tagName === 'div' && element.attributes.length > 0) {
+                        continue; // Skip this div, keep it intact
+                    }
+
                     if (trimmedContent === '' || containsOnlyNBSP) {
                         if (element.parentNode) {
                             element.parentNode.removeChild(element);
@@ -2008,7 +2013,7 @@
                 // Replace the determined 'elementToReplace' (which could be the original <a>
                 // or the outermost exclusively wrapping <sup>) with the 'idealSupElement'.
                 if (elementToReplace.parentNode) {
-                    elementToReplace.parentNode.replaceChild(idealSupElement, elementToReplace);
+                    element.parentNode.replaceChild(idealSupElement, elementToReplace);
                 }
             });
 
@@ -2386,13 +2391,12 @@
                     let isProtectedSection = false; // Flag for sections to ignore
 
                     if (tagName === 'section') {
-                        // Check if this section should be ignored (colophon ID or p with ©)
-                        if (node.id.includes('colophon') || node.querySelector('p')?.textContent?.includes('©')) {
+                        // Check if this section should be ignored (colophon ID, p with ©, or has a class attribute)
+                        if (node.id.includes('colophon') || node.querySelector('p')?.textContent?.includes('©') || node.hasAttribute('class')) {
                             isProtectedSection = true;
                             shouldCreateNewSectionForNode = false; // Do not wrap or re-section this
                         } else {
-                            // For non-protected existing sections, unwrap their content
-                            // This ensures the headings/content within them are processed by the main loop
+                            // For non-protected existing sections (those without class and not colophon/copyright), unwrap their content
                             const fragment = doc.createDocumentFragment();
                             while (node.firstChild) {
                                 fragment.appendChild(node.firstChild);
@@ -4062,6 +4066,9 @@
                         // Regex for Day Month Year (e.g., 20 March 2023, le 20 mars 2023)
                         const regexDayMonthYear = new RegExp(`(?<!\\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2})${spaceOrNBSPChar}(${monthPattern}),?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'i');
 
+                        // NEW: Regex for Month Year (e.g., March 2024, mars 2024)
+                        const regexMonthYear = new RegExp(`(?<!\\d)(${monthPattern})${spaceOrNBSPChar}(\\d{4})(?!\\d|${spaceOrNBSPChar}\\d{1,2})`, 'i');
+
                         // NEW: Regex for Month Day (no year) - e.g., March 31
                         // Negative lookahead `(?!\d|${spaceOrNBSPChar}\d{4})` ensures no digit or 4-digit year follows.
                         // `(?!-)` prevents tagging numeric dates like 03-31
@@ -4129,6 +4136,13 @@
                                     if (!monthNum || parseInt(day) < 1 || parseInt(day) > 31) return null;
                                     return `${year}-${monthNum}-${String(day).padStart(2, '0')}`;
                                 }, priority: 2 },
+                                // NEW: Month Year
+                                { name: 'MonthYear', regex: regexMonthYear, handler: (match) => {
+                                    const [, month, year] = match;
+                                    const monthNum = getMonthNumber(month);
+                                    if (!monthNum) return null;
+                                    return `${year}-${monthNum}`; // YYYY-MM format
+                                }, priority: 2 }, // Same priority as full dates
                                 // NEW: Month Day (no year)
                                 { name: 'MonthDayNoYear', regex: regexMonthDayNoYear, handler: (match) => {
                                     const [, month, day] = match;
@@ -4167,16 +4181,19 @@
                                 }
                             });
 
-                            // Sort by start position, then by priority (descending)
+                            // Sort by start position, then by priority (descending), then by length (descending)
                             allMatches.sort((a, b) => {
                                 if (a.start !== b.start) {
                                     return a.start - b.start;
                                 }
-                                return b.priority - a.priority; // Higher priority first for overlapping matches
+                                if (a.priority !== b.priority) {
+                                    return b.priority - a.priority; // Higher priority first
+                                }
+                                return b.original.length - a.original.length; // Longer match first if same start and priority
                             });
 
                             let nonOverlappingMatches = [];
-                            // Process the sorted matches to remove overlaps, prioritizing higher priority matches
+                            // Process the sorted matches to remove overlaps, prioritizing higher priority and longer matches
                             if (allMatches.length > 0) {
                                 nonOverlappingMatches.push(allMatches[0]);
                                 for (let i = 1; i < allMatches.length; i++) {
@@ -4188,16 +4205,13 @@
                                         // No overlap, add the current match
                                         nonOverlappingMatches.push(currentMatch);
                                     } else {
-                                        // Overlap detected. Keep the higher priority match.
-                                        // If priorities are equal, keep the longer match.
-                                        if (currentMatch.priority > lastAddedMatch.priority ||
-                                            (currentMatch.priority === lastAddedMatch.priority && currentMatch.original.length > lastAddedMatch.original.length)) {
-                                            nonOverlappingMatches[nonOverlappingMatches.length - 1] = currentMatch;
-                                        }
+                                        // Overlap detected. The sorting should have already placed the preferred match first.
+                                        // So if an overlap occurs, the currentMatch is implicitly less preferred
+                                        // than the `lastAddedMatch` (which was already determined as best for its span).
+                                        // We simply skip the currentMatch as it's an inferior overlap.
                                     }
                                 }
                             }
-
 
                             if (nonOverlappingMatches.length > 0) {
                                 let resultParts = [];
