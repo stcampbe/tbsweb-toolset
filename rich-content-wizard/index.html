@@ -718,15 +718,23 @@
 
                     <h3 class="text-lg font-semibold text-white mb-4">Quick Insert</h3>
                     <div class="button-list">
-                        <!-- New Auto-ID Button -->
+                        <!-- Auto-ID Button -->
                         <button id="autoIdBtn" class="px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded-md">
                             Element ID's
                         </button>
-                        <!-- New Footnote List Button -->
+                        <!-- Page ToC Button -->
+                        <button id="pageTocBtn" class="px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded-md">
+                            Page ToC
+                        </button>
+                        <!-- Section ToC Button -->
+                        <button id="sectionTocBtn" class="px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded-md">
+                            Section ToC
+                        </button>
+                        <!-- Footnote List Button -->
                         <button id="footnoteListBtn" class="px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded-md">
                             Footnote List
                         </button>
-                        <!-- New Colophon Button -->
+                        <!-- Colophon Button -->
                         <button id="colophonBtn" class="px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded-md">
                             Colophon
                         </button>
@@ -782,6 +790,8 @@
         const autoIdBtn = document.getElementById('autoIdBtn'); // New: Auto-ID button
         const colophonBtn = document.getElementById('colophonBtn'); // New: Colophon button
         const footnoteListBtn = document.getElementById('footnoteListBtn'); // New: Footnote List button
+        const pageTocBtn = document.getElementById('pageTocBtn'); // NEW: Page ToC button
+        const sectionTocBtn = document.getElementById('sectionTocBtn'); // NEW: Section ToC button
 
         // Monaco Resizer elements
         const monacoEditorContainer = document.getElementById('monacoEditorContainer');
@@ -801,6 +811,8 @@
             exportHtmlBtn,
             formatSelectedBtn, // Add the new Format button
             autoIdBtn,
+            pageTocBtn, // Added new button
+            sectionTocBtn, // Added new button
             footnoteListBtn,
             colophonBtn,
             clearAllBtn,
@@ -2593,6 +2605,7 @@
          * @param {object} options - An object specifying which elements to ID.
          * @param {boolean} options.idSections - Whether to ID sections.
          * @param {boolean} options.idHeadings - Whether to ID headings.
+         * @param {boolean} options.occursOutsideIgnoredParent - Determines if heading is within ignored parent (used to skip ID).
          * @param {boolean} options.idFigures - Whether to ID figures.
          * @param {boolean} options.idTables - Whether to ID general tables.
          * @param {boolean} options.idFigureTables - Whether to ID tables within figure elements.
@@ -2764,6 +2777,7 @@
                         // Ensure the currentHeadingIdPathSegments correctly reflects the parent's path
                         // Truncate path to parent's level's segment. E.g., if current is H4 (level 4), parent is H3 (level 3).
                         // Path should be currentHeadingIdPathSegments up to index (level-1)-1 = level-2.
+                        // So, if level 3, we want path.length = 2.
                         currentHeadingIdPathSegments.length = level - 2;
 
                         const parent_id_path_string = currentHeadingIdPathSegments.join('-'); // The full ID of the immediate parent heading (e.g., "toc1" or "tocA-1")
@@ -2884,6 +2898,296 @@
         }
 
         /**
+         * Generates a Table of Contents (ToC) dynamically from H2 headings in the document.
+         *
+         * @param {string} htmlString - The HTML content to parse.
+         * @param {string} tocType - 'page' for full page ToC, 'section' for current section ToC.
+         * @param {string} selectedLanguage - 'English' or 'French'.
+         * @param {string} listTypeOption - 'default', 'unordered', or 'ordered'.
+         * @returns {string} The generated ToC HTML.
+         */
+        function generateToc(htmlString, tocType, selectedLanguage, listTypeOption) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlString, 'text/html');
+            const headings = Array.from(doc.querySelectorAll('h2, h3, h4, h5, h6'));
+
+            const tocTitle = selectedLanguage === 'English' ? 'On this page' : 'Sur cette page';
+            const defaultListTag = 'ul'; // Default for mixed/unordered
+            const orderedListTag = 'ol';
+
+            let currentTocHtml = '';
+            let currentListStack = [{ tag: defaultListTag, level: 1 }]; // Start with level 1 (H2) list
+
+            console.log(`generateToc: Starting ToC generation for ${tocType} type. Found ${headings.length} potential headings.`);
+
+            headings.forEach(heading => {
+                const id = heading.id;
+                const text = heading.textContent.trim();
+                const level = parseInt(heading.tagName.substring(1), 10); // H2 is level 2, H3 is level 3, etc.
+
+                if (!id) {
+                    console.warn(`generateToc: Heading "${text}" (${heading.tagName}) has no ID and will be skipped in ToC generation.`);
+                    return;
+                }
+                console.log(`generateToc: Processing heading: ${heading.tagName}, ID: ${id}, Text: "${text}"`);
+
+                // Adjust level relative to H2 as base (level 1 in ToC)
+                const tocLevel = level - 1;
+
+                while (currentListStack.length > tocLevel) {
+                    currentTocHtml += `</${currentListStack.pop().tag}>`; // Close previous lists if level is higher
+                }
+
+                while (currentListStack.length < tocLevel) {
+                    // Open new nested list
+                    const parentTag = currentListStack[currentListStack.length - 1].tag; // Inherit parent's list type for default
+                    const newListTag = (listTypeOption === 'ordered') ? orderedListTag : defaultListTag;
+                    currentTocHtml += `<${newListTag}>`;
+                    currentListStack.push({ tag: newListTag, level: currentListStack.length + 1 });
+                }
+
+                // If level is equal, just append li
+                currentTocHtml += `<li><a href="#${id}">${text}</a>`;
+
+                // If next heading is deeper, or this is the last one, close the li
+                const nextHeadingIndex = headings.indexOf(heading) + 1;
+                const nextHeading = headings[nextHeadingIndex];
+
+                if (!nextHeading || parseInt(nextHeading.tagName.substring(1), 10) > level) {
+                    // Close the current li, and potentially open a new list if next is deeper
+                    currentTocHtml += '</li>';
+                }
+            });
+
+            // Close any remaining open lists
+            while (currentListStack.length > 1) {
+                currentTocHtml += `</${currentListStack.pop().tag}>`;
+            }
+
+            console.log("generateToc: Final currentTocHtml before wrapping:", currentTocHtml.substring(0, 500) + (currentTocHtml.length > 500 ? '...' : ''));
+
+            return `
+<section id="page-nav">
+  <h2 id="toc">${tocTitle}</h2>
+  ${currentTocHtml ? `<${(listTypeOption === 'ordered') ? orderedListTag : defaultListTag}>${currentTocHtml}</${(listTypeOption === 'ordered') ? orderedListTag : defaultListTag}>` : `<p>${selectedLanguage === 'English' ? 'No headings found to generate Table of Contents.' : 'Aucun titre trouvé pour générer la table des matières.'}</p>`}
+</section>`;
+        }
+
+
+        /**
+         * Displays a modal dialog for Page/Section ToC options.
+         * @param {HTMLElement} triggeringButton - The button that opened this modal.
+         * @param {string} originalButtonText - The original text of the triggering button.
+         * @param {string} tocType - 'page' or 'section' to determine the modal title.
+         */
+        function showTocModal(triggeringButton, originalButtonText, tocType) {
+            const modalTitle = tocType === 'page' ? 'Insert Page Table of Contents' : 'Insert Section Table of Contents';
+            const tocContentHtml = `
+                <div class="flex flex-col space-y-4">
+                    <div>
+                        <span class="text-sm font-medium text-CBD5E1 mr-2">Language:</span>
+                        <div class="button-group inline-flex">
+                            <button id="tocLangEnglishBtn" class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50 font-bold">English</button>
+                            <button id="tocLangFrenchBtn" class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50 font-bold">French</button>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="text-sm font-medium text-CBD5E1 mr-2">List type:</span>
+                        <div class="button-group inline-flex">
+                            <button id="tocListDefaultBtn" class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50 font-bold">Default/Mixed</button>
+                            <button id="tocListUnorderedBtn" class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50 font-bold">Unordered (ul)</button>
+                            <button id="tocListOrderedBtn" class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50 font-bold">Ordered (ol)</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const modalOverlay = document.createElement('div');
+            modalOverlay.className = 'modal-overlay';
+            modalOverlay.innerHTML = `
+                <div class="modal-content">
+                    <h3>${modalTitle}</h3>
+                    <div id="modalBody">${tocContentHtml}</div>
+                    <div class="flex justify-end mt-4 space-x-2">
+                        <button id="modalCancelTocBtn" class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600">Cancel</button>
+                        <button id="modalInsertTocBtn" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">Update/Insert</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modalOverlay);
+
+            function closeModalAndReEnableButtons() {
+                modalOverlay.remove();
+                triggeringButton.removeAttribute('data-temp-active');
+                triggeringButton.textContent = originalButtonText;
+                triggeringButton.classList.remove('bg-green-500', 'hover:bg-green-600');
+                triggeringButton.classList.add('bg-slate-600', 'hover:bg-slate-500');
+                updateAllInteractiveButtonStates();
+            }
+
+            document.getElementById('modalCancelTocBtn').addEventListener('click', closeModalAndReEnableButtons);
+
+            const tocLangEnglishBtn = document.getElementById('tocLangEnglishBtn');
+            const tocLangFrenchBtn = document.getElementById('tocLangFrenchBtn');
+            const tocListDefaultBtn = document.getElementById('tocListDefaultBtn');
+            const tocListUnorderedBtn = document.getElementById('tocListUnorderedBtn');
+            const tocListOrderedBtn = document.getElementById('tocListOrderedBtn');
+            const modalInsertTocBtn = document.getElementById('modalInsertTocBtn');
+
+            let selectedTocLanguage = 'English';
+            let selectedTocListType = 'default'; // 'default', 'unordered', 'ordered'
+
+            function updateTocButtonActiveState(buttons, activeBtn) {
+                buttons.forEach(btn => {
+                    btn.classList.remove('active', 'bg-indigo-600');
+                    btn.classList.add('bg-gray-600', 'hover:bg-gray-500');
+                });
+                activeBtn.classList.add('active', 'bg-indigo-600');
+                activeBtn.classList.remove('bg-gray-600', 'hover:bg-gray-500');
+            }
+
+            updateTocButtonActiveState([tocLangEnglishBtn, tocLangFrenchBtn], tocLangEnglishBtn);
+            updateTocButtonActiveState([tocListDefaultBtn, tocListUnorderedBtn, tocListOrderedBtn], tocListDefaultBtn);
+
+            tocLangEnglishBtn.addEventListener('click', () => {
+                selectedTocLanguage = 'English';
+                updateTocButtonActiveState([tocLangEnglishBtn, tocLangFrenchBtn], tocLangEnglishBtn);
+            });
+
+            tocLangFrenchBtn.addEventListener('click', () => {
+                selectedTocLanguage = 'French';
+                updateTocButtonActiveState([tocLangEnglishBtn, tocLangFrenchBtn], tocLangFrenchBtn);
+            });
+
+            tocListDefaultBtn.addEventListener('click', () => {
+                selectedTocListType = 'default';
+                updateTocButtonActiveState([tocListDefaultBtn, tocListUnorderedBtn, tocListOrderedBtn], tocListDefaultBtn);
+            });
+
+            tocListUnorderedBtn.addEventListener('click', () => {
+                selectedTocListType = 'unordered';
+                updateTocButtonActiveState([tocListDefaultBtn, tocListUnorderedBtn, tocListOrderedBtn], tocListUnorderedBtn);
+            });
+
+            tocListOrderedBtn.addEventListener('click', () => {
+                selectedTocListType = 'ordered';
+                updateTocButtonActiveState([tocListDefaultBtn, tocListUnorderedBtn, tocListOrderedBtn], tocListOrderedBtn);
+            });
+
+
+            modalInsertTocBtn.addEventListener('click', () => {
+                if (monacoEditorInstance) {
+                    let currentContent = monacoEditorInstance.getValue();
+                    console.log("showTocModal: Initial Monaco content length:", currentContent.length);
+
+                    currentContent = protectDataAttributes(currentContent);
+
+                    // First, ensure all headings are ID'd
+                    currentContent = applyAutoId(currentContent, {
+                        idHeadings: true,
+                        idSections: false, // Don't re-ID sections here
+                        idFigures: false,
+                        idTables: false,
+                        idFigureTables: false
+                    });
+                    console.log("showTocModal: Content after applyAutoId. Length:", currentContent.length);
+                    // Temporarily create a DOM object to query for headings and log their IDs
+                    const tempDocForDebug = new DOMParser().parseFromString(currentContent, 'text/html');
+                    const headingsInDoc = Array.from(tempDocForDebug.querySelectorAll('h1, h2, h3, h4, h5, h6'));
+                    if (headingsInDoc.length > 0) {
+                        headingsInDoc.forEach(h => {
+                            console.log(`showTocModal (debug): Found heading: ${h.tagName}, ID: ${h.id || 'NO_ID'}, Text: ${h.textContent.trim().substring(0, 50)}...`);
+                        });
+                    } else {
+                        console.log("showTocModal (debug): No headings found in document after applyAutoId.");
+                    }
+
+
+                    const doc = new DOMParser().parseFromString(currentContent, 'text/html');
+
+                    // Check for existing ToC section
+                    const existingTocSection = doc.getElementById('page-nav');
+                    let newTocHtml = generateToc(doc.body.innerHTML, tocType, selectedTocLanguage, selectedTocListType);
+                    console.log("showTocModal: Generated ToC HTML:", newTocHtml.substring(0, 500) + (newTocHtml.length > 500 ? '...' : ''));
+
+
+                    if (existingTocSection) {
+                        // Update existing ToC
+                        existingTocSection.outerHTML = newTocHtml;
+                        currentContent = doc.documentElement.outerHTML; // Get updated HTML
+                        console.log("showTocModal: Updated existing ToC. New content length:", currentContent.length);
+                    } else {
+                        // Find the insertion point: OUTSIDE the FIRST <section> containing an H2
+                        // Prioritize inserting before the first section that contains an h2
+                        const firstSectionWithH2 = doc.querySelector('section:has(h2)');
+                        let insertionNode = null;
+
+                        if (firstSectionWithH2 && firstSectionWithH2.parentNode) {
+                            insertionNode = firstSectionWithH2;
+                            console.log("showTocModal: Insertion point found: first section with h2.");
+                        } else {
+                            // If no section with H2, find the first H2 itself
+                            const firstH2 = doc.querySelector('h2');
+                            if (firstH2 && firstH2.parentNode) {
+                                insertionNode = firstH2;
+                                console.log("showTocModal: Insertion point found: first h2.");
+                            } else {
+                                // If no H2, find the special H1
+                                const specialH1 = doc.querySelector('h1[property="name"][id="wb-cont"]');
+                                if (specialH1 && specialH1.parentNode) {
+                                    insertionNode = specialH1;
+                                    console.log("showTocModal: Insertion point found: special h1.");
+                                }
+                            }
+                        }
+
+                        if (insertionNode && insertionNode.parentNode) {
+                            const tempDiv = document.createElement('div');
+                            tempDiv.innerHTML = newTocHtml;
+                            const tocNode = tempDiv.firstChild; // The <section id="page-nav"> element
+
+                            if (tocNode) {
+                                insertionNode.parentNode.insertBefore(tocNode, insertionNode);
+                                currentContent = doc.documentElement.outerHTML; // Get updated HTML
+                                console.log("showTocModal: Inserted new ToC at specific point. New content length:", currentContent.length);
+                            } else {
+                                console.warn("showTocModal: ToC node was null, unable to insert.");
+                                // Fallback to appending if no valid node
+                                doc.body.insertAdjacentHTML('beforeend', newTocHtml);
+                                currentContent = doc.documentElement.outerHTML; // Get updated HTML
+                                console.log("showTocModal: Fallback: Appended new ToC to body. New content length:", currentContent.length);
+                            }
+                        } else {
+                            // As a last resort if no specific insertion point is found, append to body
+                            doc.body.insertAdjacentHTML('beforeend', newTocHtml);
+                            currentContent = doc.documentElement.outerHTML; // Get updated HTML
+                            console.log("showTocModal: Fallback: Appended new ToC to body (no ideal insertion point). New content length:", currentContent.length);
+                        }
+                    }
+
+                    currentContent = restoreDataAttributes(currentContent);
+                    currentContent = convertAllEntitiesToNumeric(currentContent);
+
+                    monacoEditorInstance.setValue(currentContent);
+                    htmlOutputContent = currentContent;
+                    applyEntityHighlighting();
+                }
+
+                closeModalAndReEnableButtons();
+
+                const capturedOriginalText = originalButtonText;
+                triggeringButton.textContent = 'Updated!';
+                triggeringButton.classList.add('bg-green-500', 'hover:bg-green-600');
+                triggeringButton.classList.remove('bg-slate-600', 'hover:bg-slate-500');
+                setTimeout(() => {
+                    triggeringButton.textContent = capturedOriginalText;
+                    triggeringButton.classList.remove('bg-green-500', 'hover:bg-green-600');
+                    triggeringButton.classList.add('bg-slate-600', 'hover:bg-slate-500');
+                }, 1500);
+            });
+        }
+
+        /**
          * Function to set the content of the HugeRTE editor.
          * This is called from the parent window.
          */
@@ -2995,8 +3299,6 @@
 
                 // Run Auto-Encode and Auto-Indent when switching to HTML editor
                 autoEncodeBtn.click();
-                autoFormatBtn.click(); // This is already here, no change needed for this specific request.
-                                  // The user asked for "go to html" to run Auto-Indent, which is exactly this.
 
                 // 3. Switch panel visibility.
                 richtextOutputPanel.classList.remove('panel-visible');
@@ -3748,7 +4050,7 @@
                 function onMouseUp() {
                     isResizing = false;
                     document.removeEventListener('mousemove', onMouseMove);
-                    document.removeEventListener('mouseup', onMouseUp);
+                    document.removeEventListener('mouseup', onMouseup);
                     document.body.style.cursor = 'default';
                     document.body.style.userSelect = '';
                     // After resizing stops, call layout once to ensure final state is correct and stable.
@@ -3877,13 +4179,13 @@
                 exportHtmlBtn.setAttribute('data-temp-active', 'true'); // Mark as active
                 updateAllInteractiveButtonStates(); // Update all buttons
                 setTimeout(() => {
-                    exportHtmlBtn.textContent = originalText;
-                    exportHtmlBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-                    exportHtmlBtn.classList.add('bg-red-700', 'hover:bg-red-800'); /* Changed */
-                    exportHtmlBtn.disabled = false; // Re-enable the button
-                    exportHtmlBtn.removeAttribute('data-temp-active'); // Unmark as active
-                    updateAllInteractiveButtonStates(); // Update all buttons
-                }, 1500);
+                        exportHtmlBtn.textContent = originalText;
+                        exportHtmlBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                        exportHtmlBtn.classList.add('bg-red-700', 'hover:bg-red-800'); /* Changed */
+                        exportHtmlBtn.disabled = false; // Re-enable the button
+                        exportHtmlBtn.removeAttribute('data-temp-active'); // Unmark as active
+                        updateAllInteractiveButtonStates(); // Update all buttons
+                    }, 1500);
             });
 
             importHtmlBtn.addEventListener('click', () => htmlFileInput.click());
@@ -3949,7 +4251,7 @@
                     monacoEditorInstance.setValue(currentContent);
                     htmlOutputContent = currentContent;
                     applyEntityHighlighting();
-                    autoFormatBtn.click(); // Always call Auto-Indent at the end
+                    autoEncodeBtn.click();
 
                     const originalText = cleanMsoBtn.textContent;
                     cleanMsoBtn.textContent = 'Cleaned!';
@@ -4316,7 +4618,7 @@
                         const regexDayMonthYear = new RegExp(`(?<!\\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2})${spaceOrNBSPChar}\\b(${monthPattern})\\b,?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'i');
                         const regexMonthYear = new RegExp(`(?<!\\d)\\b(${monthPattern})\\b${spaceOrNBSPChar}(\\d{4})(?!\\d|${spaceOrNBSPChar}\\d{1,2})`, 'i');
                         const regexMonthDayNoYear = new RegExp(`(?<!\\d)\\b(${monthPattern})\\b${spaceOrNBSPChar}(\\d{1,2})(?!\\d|${spaceOrNBSPChar}\\d{4})(?!-)`, 'i');
-                        const regexDayMonthNoYear = new RegExp(`(?<!\\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2})${spaceOrNBSPChar}\\b(${monthPattern})\\b(?!\\d|${spaceOrNBSPChar}\\d{4})(?!-)`, 'i');
+                        const regexDayMonthNoYear = new RegExp(`(?<!\\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2})${spaceOrNBSPChar}\\b(${monthPattern})\\b(?!\d|${spaceOrNBSPChar}\\d{4})(?!-)`, 'i');
 
                         const reParsedDocForTimeTags = parser.parseFromString(contentToProcessForTimeTags, 'text/html');
                         const reParsedBodyForTimeTags = reParsedDocForTimeTags.body;
@@ -4369,7 +4671,7 @@
                                     const [, day, month, year] = match;
                                     const monthNum = getMonthNumber(month);
                                     const parsedDay = parseInt(day); // Ensure day is a number
-                                    if (!monthNum || isNaN(parsedDay) || parsedDay < 1 || parsedD.d > 31) return null;
+                                    if (!monthNum || isNaN(parsedDay) || parsedDay > 31) return null;
                                     return `${year}-${monthNum}-${String(parsedDay).padStart(2, '0')}`;
                                 }, priority: 2 },
                                 { name: 'MonthYear', regex: regexMonthYear, handler: (match) => {
@@ -4519,7 +4821,7 @@
                     monacoEditorInstance.setValue(currentContent);
                     htmlOutputContent = currentContent;
                     applyEntityHighlighting();
-                    autoFormatBtn.click(); // Always call Auto-Indent at the end
+                    autoEncodeBtn.click();
 
                     const originalText = formatSelectedBtn.textContent;
                     formatSelectedBtn.textContent = 'Formatted!';
@@ -4606,6 +4908,27 @@
                 showFootnoteModal(footnoteListBtn, originalText); // Pass original text
             });
 
+            // NEW: Page ToC button event listener
+            pageTocBtn.addEventListener('click', () => {
+                const originalText = pageTocBtn.textContent;
+                pageTocBtn.textContent = 'Opening...';
+                pageTocBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                pageTocBtn.classList.remove('bg-slate-600', 'hover:bg-slate-500');
+                pageTocBtn.setAttribute('data-temp-active', 'true');
+                updateAllInteractiveButtonStates();
+                showTocModal(pageTocBtn, originalText, 'page');
+            });
+
+            // NEW: Section ToC button event listener
+            sectionTocBtn.addEventListener('click', () => {
+                const originalText = sectionTocBtn.textContent;
+                sectionTocBtn.textContent = 'Opening...';
+                sectionTocBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                sectionTocBtn.classList.remove('bg-slate-600', 'hover:bg-slate-500');
+                sectionTocBtn.setAttribute('data-temp-active', 'true');
+                updateAllInteractiveButtonStates();
+                showTocModal(sectionTocBtn, originalText, 'section');
+            });
 
             // Initial call to set the state of the Clean Mso button on load
             updateCleanMsoButtonState();
