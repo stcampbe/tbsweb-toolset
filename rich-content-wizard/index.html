@@ -608,7 +608,7 @@
                     </label>
                     <span class="toggle-switch-label text-white text-sm">Auto-Clean MSO</span>
                 </div>
-                <!-- New Clean MSO Button -->
+                <!-- New Clean Mso Button -->
                 <button id="cleanMsoBtn" class="ml-4 px-4 py-2 text-base bg-blue-700 text-white rounded-md hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold">
                     Clean MSO
                 </button>
@@ -722,14 +722,6 @@
                         <button id="autoIdBtn" class="px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded-md">
                             Element ID's
                         </button>
-                        <!-- Page ToC Button -->
-                        <button id="pageTocBtn" class="px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded-md">
-                            Page ToC
-                        </button>
-                        <!-- Section ToC Button -->
-                        <button id="sectionTocBtn" class="px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded-md">
-                            Section ToC
-                        </button>
                         <!-- Footnote List Button -->
                         <button id="footnoteListBtn" class="px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded-md">
                             Footnote List
@@ -790,8 +782,7 @@
         const autoIdBtn = document.getElementById('autoIdBtn'); // New: Auto-ID button
         const colophonBtn = document.getElementById('colophonBtn'); // New: Colophon button
         const footnoteListBtn = document.getElementById('footnoteListBtn'); // New: Footnote List button
-        const pageTocBtn = document.getElementById('pageTocBtn'); // NEW: Page ToC button
-        const sectionTocBtn = document.getElementById('sectionTocBtn'); // NEW: Section ToC button
+        // REMOVED: pageTocBtn, sectionTocBtn
 
         // Monaco Resizer elements
         const monacoEditorContainer = document.getElementById('monacoEditorContainer');
@@ -811,8 +802,7 @@
             exportHtmlBtn,
             formatSelectedBtn, // Add the new Format button
             autoIdBtn,
-            pageTocBtn, // Added new button
-            sectionTocBtn, // Added new button
+            // REMOVED: pageTocBtn, sectionTocBtn
             footnoteListBtn,
             colophonBtn,
             clearAllBtn,
@@ -2626,6 +2616,9 @@
             const doc = parser.parseFromString(htmlString, 'text/html');
             const body = doc.body;
 
+            // Map to store oldId: newId pairs for updating anchor links
+            const idChangeMap = {};
+
             // Helper function to convert a number to an uppercase alphabetical string (A, B, C, ..., Z, AA, AB, ...)
             function toAlpha(num) {
                 let s = '';
@@ -2679,39 +2672,93 @@
             let sectionChildCounters = { 'root': 0 };
 
             if (currentOptions.idHeadings) {
-                // --- Pre-scan: Determine if any H2 is numerically prefaced ---
-                let hasAnyNumberedH2 = false;
-                const allH2s = Array.from(body.querySelectorAll('h2'));
-                const specialH1 = allH2s.find(h => h.tagName.toLowerCase() === 'h1' && h.getAttribute('property') === 'name' && h.id === 'wb-cont');
+                // --- Pre-scan: Determine if any H2 is numerically prefaced and global level adjustment ---
+                let hasAnyNumberedH2 = false; // Flag to track if *any* regular H2 starts with a number (influences other regular H2s)
+                let levelAdjustmentForGlobalShift = 0; // The numerical shift to apply to all relevant headings (+1 for H1->H2, -1 for H3->H2 etc.)
+                let foundFirstRegularH2ForAdjustment = false; // Flag to ensure global shift is based on the *very first* regular H2
 
-                for (const h2 of allH2s) {
-                    // Skip the special H1 for this check
-                    if (h2 === specialH1) continue;
+                const allHeadingsForPreScan = Array.from(body.querySelectorAll('h1, h2, h3, h4, h5, h6'));
+                const specialH1ForPreScan = allHeadingsForPreScan.find(h =>
+                    h.tagName.toLowerCase() === 'h1' &&
+                    h.getAttribute('property') === 'name' &&
+                    h.id === 'wb-cont'
+                );
 
-                    // Skip if inside an ignored parent like aside, caption, figure, figcaption, table
-                    const ignoredParents = ['aside', 'caption', 'figure', 'figcaption', 'table'];
-                    let isInsideIgnoredParent = false;
-                    let currentParent = h2.parentNode;
-                    while (currentParent && currentParent !== body) {
-                        if (ignoredParents.includes(currentParent.tagName.toLowerCase())) {
-                            isInsideIgnoredParent = true;
+                for (const h of allHeadingsForPreScan) {
+                    // Skip the special H1 in this pre-scan
+                    if (h === specialH1ForPreScan) continue;
+
+                    // Skip if inside an ignored parent
+                    const ignoredParentsPreScan = ['aside', 'caption', 'figure', 'figcaption', 'table'];
+                    let isInsideIgnoredParentPreScan = false;
+                    let currentParentPreScan = h.parentNode;
+                    while (currentParentPreScan && currentParentPreScan !== body) {
+                        if (ignoredParentsPreScan.includes(currentParentPreScan.tagName.toLowerCase())) {
+                            isInsideIgnoredParentPreScan = true;
                             break;
                         }
-                        currentParent = currentParent.parentNode;
+                        currentParentPreScan = currentParentPreScan.parentNode;
                     }
-                    if (isInsideIgnoredParent) continue;
+                    if (isInsideIgnoredParentPreScan) continue;
 
-                    const text = h2.textContent.trim();
-                    if (text.match(/^\s*(\d+)(?:\.|\s|\)|\-)?/)) {
+                    // Check if this is a potential "special first H2" (content-based or existing ID)
+                    const textContentLower = h.textContent.trim().toLowerCase();
+                    const isPotentialSpecialFirstH2 = (h.tagName.toLowerCase() === 'h2' && (h.hasAttribute('id') ||
+                        textContentLower.includes('on this page') ||
+                        textContentLower.includes('sur cette page') ||
+                        textContentLower.includes('in this section') ||
+                        textContentLower.includes('dans cette section') ||
+                        textContentLower.includes('table of contents') ||
+                        textContentLower.includes('table des matières') ||
+                        textContentLower.replace(/:/g, '').trim() === 'on this page' ||
+                        textContentLower.replace(/:/g, '').trim() === 'sur cette page' ||
+                        textContentLower.replace(/:/g, '').trim() === 'in this section' ||
+                        textContentLower.replace(/:/g, '').trim() === 'dans cette section' ||
+                        textContentLower.replace(/:/g, '').trim() === 'table of contents' ||
+                        textContentLower.replace(/:/g, '').trim() === 'table des matières'
+                    ));
+
+                    if (!foundFirstRegularH2ForAdjustment && isPotentialSpecialFirstH2) {
+                        // If the very first *relevant* H2 is special, we don't base the global shift on it.
+                        // We'll wait for the next *regular* H2.
+                        continue;
+                    }
+
+                    const currentActualLevel = parseInt(h.tagName.substring(1), 10);
+                    if (!foundFirstRegularH2ForAdjustment) {
+                        // This is the first *actual* regular heading that will receive a numbered/lettered ID.
+                        levelAdjustmentForGlobalShift = 2 - currentActualLevel;
+                        foundFirstRegularH2ForAdjustment = true; // Mark as found
+                    }
+
+                    // Check if this heading is numerically prefaced (for `hasAnyNumberedH2`)
+                    const text = h.textContent.trim();
+                    if (h.tagName.toLowerCase() === 'h2' && text.match(/^\s*(\d+)(?:\.|\s|\)|\-)?/)) {
                         hasAnyNumberedH2 = true;
-                        break;
                     }
                 }
                 // --- End Pre-scan ---
 
+                let initialH2ProcessedInLoop = false; // Flag to ensure the special 'toc' H2 logic runs only once for the first qualifying H2.
+
                 // Process all headings (H1, H2, H3, H4, H5, H6)
                 doc.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(heading => {
-                    // NEW: Check if the heading is inside an ignored parent
+                    const level = parseInt(heading.tagName.substring(1), 10);
+                    const text = heading.textContent.trim();
+                    const oldId = heading.id;
+                    let newId = oldId; // Initialize newId with oldId, only change if logic dictates
+
+                    // 1. Handle special H1 (wb-cont)
+                    if (level === 1 && heading.getAttribute('property') === 'name' && heading.id === 'wb-cont') {
+                        currentHeadingIdPathSegments = [];
+                        sub_num_counters.clear();
+                        sub_appendix_alpha_counters.clear();
+                        effectivePreviousLevel = 1;
+                        // Since this is an H1, it doesn't affect the `initialH2ProcessedInLoop` flag specifically for H2s.
+                        return;
+                    }
+
+                    // 2. Handle ignored parent
                     const ignoredParents = ['aside', 'caption', 'figure', 'figcaption', 'table'];
                     let isInsideIgnoredParent = false;
                     let currentParent = heading.parentNode;
@@ -2722,92 +2769,126 @@
                         }
                         currentParent = currentParent.parentNode;
                     }
-
                     if (isInsideIgnoredParent) {
-                        return; // Skip ID assignment for this heading
+                        return;
                     }
 
-                    const level = parseInt(heading.tagName.substring(1), 10);
-                    const text = heading.textContent.trim(); // Get raw text for pattern matching
+                    // 3. Special handling for the very first H2 that is not a special H1 and not in an ignored parent
+                    // This logic only applies to the *first* H2 encountered that passes the above checks.
+                    if (level === 2 && !initialH2ProcessedInLoop) {
+                        const textContentLower = heading.textContent.trim().toLowerCase();
+                        const textMatchesCriteria =
+                            textContentLower.includes('on this page') ||
+                            textContentLower.includes('sur cette page') ||
+                            textContentLower.includes('in this section') ||
+                            textContentLower.includes('dans cette section') ||
+                            textContentLower.includes('table of contents') ||
+                            textContentLower.includes('table des matières');
 
-                    // H1s are never ID'd, but reset path for subsequent headings
-                    if (level === 1) {
-                        currentHeadingIdPathSegments = [];
-                        // Clear all sub-level counters as a new main branch begins (for H3-H6)
-                        sub_num_counters.clear();
-                        sub_appendix_alpha_counters.clear();
-                        return; // Skip ID assignment for H1
+                        // Check for optional colon variants
+                        const textWithoutColon = textContentLower.replace(/:/g, '').trim();
+                        const textMatchesCriteriaWithoutColon =
+                            textWithoutColon === 'on this page' ||
+                            textWithoutColon === 'sur cette page' ||
+                            textWithoutColon === 'in this section' ||
+                            textWithoutColon === 'dans cette section' ||
+                            textWithoutColon === 'table of contents' ||
+                            textWithoutColon === 'table des matières';
+
+                        if (heading.hasAttribute('id') || textMatchesCriteria || textMatchesCriteriaWithoutColon) {
+                            // If it has an existing ID, keep it. Otherwise, set to "toc".
+                            if (!heading.hasAttribute('id')) {
+                                newId = 'toc';
+                            } else {
+                                newId = oldId; // Keep existing ID
+                            }
+                            // Only set ID if different or if it was empty
+                            if (oldId !== newId || !oldId) {
+                                heading.setAttribute('id', newId);
+                                idChangeMap[oldId] = newId; // Track the change
+                                existingIds.add(newId);
+                            }
+
+                            currentHeadingIdPathSegments = [newId]; // This sets the path for subsequent headings
+                            sub_num_counters.clear(); // Reset sub-counters as this is a new "root" for them
+                            sub_appendix_alpha_counters.clear();
+                            effectivePreviousLevel = 2; // Treat this as an H2 for subsequent level calculation
+                            initialH2ProcessedInLoop = true; // Mark as handled, so this block won't run again for another H2
+                            return; // Done with this heading, move to the next in the loop
+                        }
                     }
 
-                    let id_segment = ''; // The ID segment for the current heading's level
+                    // This block runs for all headings (H2, H3, H4, H5, H6) that are NOT the special 'toc' H2.
+                    // This is where regular numerical/alphabetical ID assignment occurs.
+
+                    let id_segment = '';
                     const isNumericHeading = text.match(/^\s*(\d+)(?:\.|\s|\)|\-)?/);
                     const isAppendixHeading = text.match(/^(?:Appendix|Annex|Annexe)\s*(?:([A-Z]))?/i);
 
                     if (level === 2) {
-                        // Determine H2 segment
+                        // This is a regular H2 (not the special 'toc' type).
+                        // If it's the very first *regular* H2, ensure counters are reset for its sequence.
+                        if (!initialH2ProcessedInLoop) { // This means it's the very first *actual* numbered/lettered H2.
+                            h2_num_counter = 0;
+                            h2_general_alpha_counter = 0;
+                            h2_appendix_alpha_counter = 0;
+                            initialH2ProcessedInLoop = true; // Mark that a *regular* H2 has now been processed
+                        }
+
                         if (isAppendixHeading) {
                             const letterFromText = getLetterFromAppendixText(text);
                             if (letterFromText) {
-                                // If letter exists in text (e.g., "Appendix A"), use it directly
-                                // No need to increment counter, as the letter dictates uniqueness
                                 id_segment = `app${letterFromText}`;
                             } else {
-                                // If "Appendix" but no letter provided, use a sequential letter for app H2s
-                                h2_appendix_alpha_counter++; // Only increment its own counter
+                                h2_appendix_alpha_counter++;
                                 id_segment = `app${toAlpha(h2_appendix_alpha_counter)}`;
                             }
-                        } else if (hasAnyNumberedH2) { // If there's *any* numbered H2 in the document
-                            if (isNumericHeading) { // This H2 is numeric (e.g., "1. Sample")
-                                h2_num_counter++; // Only increment its own counter
+                        } else if (hasAnyNumberedH2) { // Global check from pre-scan
+                            if (isNumericHeading) {
+                                h2_num_counter++;
                                 id_segment = `toc${h2_num_counter}`;
-                            } else { // This H2 is NOT numeric, but some H2s *are* numeric (e.g., "Sample Section Title")
-                                h2_general_alpha_counter++; // Only increment its own counter
+                            } else {
+                                h2_general_alpha_counter++;
                                 id_segment = `toc${toAlpha(h2_general_alpha_counter)}`;
                             }
-                        } else { // No numbered H2s in the document, so all H2s get numeric IDs (e.g., "toc1", "toc2")
-                            h2_num_counter++; // Only increment its own counter
+                        } else { // No numbered H2s in the document, all H2s get numeric IDs
+                            h2_num_counter++;
                             id_segment = `toc${h2_num_counter}`;
                         }
-                        // For H2, this starts a new path
                         currentHeadingIdPathSegments = [id_segment];
-                        // Reset all sub-level counters (for H3-H6) as a new main branch begins
                         sub_num_counters.clear();
                         sub_appendix_alpha_counters.clear();
-                    } else { // For H3, H4, H5, H6
-                        // Ensure the currentHeadingIdPathSegments correctly reflects the parent's path
-                        // Truncate path to parent's level's segment. E.g., if current is H4 (level 4), parent is H3 (level 3).
-                        // Path should be currentHeadingIdPathSegments up to index (level-1)-1 = level-2.
-                        // So, if level 3, we want path.length = 2.
-                        currentHeadingIdPathSegments.length = level - 2;
 
-                        const parent_id_path_string = currentHeadingIdPathSegments.join('-'); // The full ID of the immediate parent heading (e.g., "toc1" or "tocA-1")
+                    } else { // For H3, H4, H5, H6
+                        currentHeadingIdPathSegments.length = level - 2; // Trim path to parent's level
+                        const parent_id_path_string = currentHeadingIdPathSegments.join('-');
 
                         if (isAppendixHeading) {
                             const letterFromText = getLetterFromAppendixText(text);
                             if (letterFromText) {
                                 id_segment = `app${letterFromText}`;
                             } else {
-                                // If "Appendix" but no letter provided, use sequential letter within this parent's appendix scope
                                 const currentAppCount = (sub_appendix_alpha_counters.get(parent_id_path_string) || 0) + 1;
                                 sub_appendix_alpha_counters.set(parent_id_path_string, currentAppCount);
                                 id_segment = `app${toAlpha(currentAppCount)}`;
                             }
-                            // Reset numeric counter for this parent's scope to allow for a clean numeric sequence after an appendix
                             sub_num_counters.delete(parent_id_path_string);
-                        } else { // General sub-heading (numeric sequence)
+                        } else {
                             const currentNumCount = (sub_num_counters.get(parent_id_path_string) || 0) + 1;
                             sub_num_counters.set(parent_id_path_string, currentNumCount);
                             id_segment = String(currentNumCount);
-                            // Reset appendix alpha counter for this parent's scope
                             sub_appendix_alpha_counters.delete(parent_id_path_string);
                         }
                         currentHeadingIdPathSegments.push(id_segment);
                     }
 
-                    const newId = currentHeadingIdPathSegments.join('-');
-                    // Forcing re-assignment as per user request to re-number when pressed again.
+                    newId = currentHeadingIdPathSegments.join('-');
+                    if (oldId && oldId !== newId) {
+                        idChangeMap[oldId] = newId;
+                    }
                     heading.setAttribute('id', newId);
-                    existingIds.add(newId); // Add newly assigned ID to set, mainly for uniqueness tracking if not forcing overwrite
+                    existingIds.add(newId);
+                    effectivePreviousLevel = level;
                 });
             }
 
@@ -2817,6 +2898,7 @@
                 // The approach for sections already rebuilds IDs based on hierarchy on each run.
                 doc.querySelectorAll('section').forEach(section => {
                     const existingId = section.getAttribute('id');
+                    const oldId = section.id; // Capture old ID
 
                     // IMPORTANT CHANGE: If section already has an ID AND it does NOT match the "sec" pattern OR has a class, skip it.
                     // This allows manual section IDs to persist.
@@ -2846,6 +2928,10 @@
                     } else {
                         newId = `${parentSectionId}-${newSectionNum}`;
                     }
+
+                    if (oldId && oldId !== newId) {
+                        idChangeMap[oldId] = newId; // Store the ID change
+                    }
                     section.setAttribute('id', newId);
                     existingIds.add(newId); // Add newly assigned ID to set
                 });
@@ -2855,10 +2941,14 @@
             if (currentOptions.idFigures) {
                 doc.querySelectorAll('figure').forEach(figure => {
                     const existingId = figure.getAttribute('id');
+                    const oldId = figure.id; // Capture old ID
                     // Only assign a new ID if it doesn't already have one or if it's not a standard fig# ID.
                     if (!existingId || !/^fig\d+$/.test(existingId)) {
                         figureCounter++;
                         const newId = `fig${figureCounter}`;
+                        if (oldId && oldId !== newId) {
+                            idChangeMap[oldId] = newId; // Store the ID change
+                        }
                         figure.setAttribute('id', newId);
                         existingIds.add(newId);
                     }
@@ -2869,6 +2959,7 @@
                 // Process Tables
                 // Similar to sections, table IDing also rebuilds on each run.
                 doc.querySelectorAll('table').forEach(table => {
+                    const oldId = table.id; // Capture old ID
                     // For full re-numbering, we will re-assign table IDs.
                     const parentFigure = table.closest('figure');
                     let newId = null;
@@ -2884,308 +2975,38 @@
                     }
 
                     if (newId) {
+                        if (oldId && oldId !== newId) {
+                            idChangeMap[oldId] = newId; // Store the ID change
+                        }
                         table.setAttribute('id', newId);
                         existingIds.add(newId);
                     } else {
                         // If neither option is selected for this table type, ensure it has no ID.
-                        table.removeAttribute('id');
+                        // If oldId existed and is now removed, it should be noted, but for simplicity
+                        // we focus on changed IDs as per request.
+                        if (oldId) {
+                             table.removeAttribute('id'); // Explicitly remove ID if it was there and no new one assigned
+                        }
                     }
                 });
             }
 
+            // --- NEW: Update anchor links based on idChangeMap ---
+            const allLinks = doc.querySelectorAll('a[href^="#"]');
+            allLinks.forEach(link => {
+                const currentAnchor = link.getAttribute('href').substring(1); // Get the ID part without '#'
+                if (idChangeMap[currentAnchor]) {
+                    link.setAttribute('href', `#${idChangeMap[currentAnchor]}`);
+                }
+            });
+            // --- END NEW ANCHOR UPDATE ---
 
             return body.innerHTML;
         }
 
-        /**
-         * Generates a Table of Contents (ToC) dynamically from H2 headings in the document.
-         *
-         * @param {string} htmlString - The HTML content to parse.
-         * @param {string} tocType - 'page' for full page ToC, 'section' for current section ToC.
-         * @param {string} selectedLanguage - 'English' or 'French'.
-         * @param {string} listTypeOption - 'default', 'unordered', or 'ordered'.
-         * @returns {string} The generated ToC HTML.
-         */
-        function generateToc(htmlString, tocType, selectedLanguage, listTypeOption) {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(htmlString, 'text/html');
-            const headings = Array.from(doc.querySelectorAll('h2, h3, h4, h5, h6'));
+        // REMOVED: generateToc function
+        // REMOVED: showTocModal function
 
-            const tocTitle = selectedLanguage === 'English' ? 'On this page' : 'Sur cette page';
-            const defaultListTag = 'ul'; // Default for mixed/unordered
-            const orderedListTag = 'ol';
-
-            let currentTocHtml = '';
-            let currentListStack = [{ tag: defaultListTag, level: 1 }]; // Start with level 1 (H2) list
-
-            console.log(`generateToc: Starting ToC generation for ${tocType} type. Found ${headings.length} potential headings.`);
-
-            headings.forEach(heading => {
-                const id = heading.id;
-                const text = heading.textContent.trim();
-                const level = parseInt(heading.tagName.substring(1), 10); // H2 is level 2, H3 is level 3, etc.
-
-                if (!id) {
-                    console.warn(`generateToc: Heading "${text}" (${heading.tagName}) has no ID and will be skipped in ToC generation.`);
-                    return;
-                }
-                console.log(`generateToc: Processing heading: ${heading.tagName}, ID: ${id}, Text: "${text}"`);
-
-                // Adjust level relative to H2 as base (level 1 in ToC)
-                const tocLevel = level - 1;
-
-                while (currentListStack.length > tocLevel) {
-                    currentTocHtml += `</${currentListStack.pop().tag}>`; // Close previous lists if level is higher
-                }
-
-                while (currentListStack.length < tocLevel) {
-                    // Open new nested list
-                    const parentTag = currentListStack[currentListStack.length - 1].tag; // Inherit parent's list type for default
-                    const newListTag = (listTypeOption === 'ordered') ? orderedListTag : defaultListTag;
-                    currentTocHtml += `<${newListTag}>`;
-                    currentListStack.push({ tag: newListTag, level: currentListStack.length + 1 });
-                }
-
-                // If level is equal, just append li
-                currentTocHtml += `<li><a href="#${id}">${text}</a>`;
-
-                // If next heading is deeper, or this is the last one, close the li
-                const nextHeadingIndex = headings.indexOf(heading) + 1;
-                const nextHeading = headings[nextHeadingIndex];
-
-                if (!nextHeading || parseInt(nextHeading.tagName.substring(1), 10) > level) {
-                    // Close the current li, and potentially open a new list if next is deeper
-                    currentTocHtml += '</li>';
-                }
-            });
-
-            // Close any remaining open lists
-            while (currentListStack.length > 1) {
-                currentTocHtml += `</${currentListStack.pop().tag}>`;
-            }
-
-            console.log("generateToc: Final currentTocHtml before wrapping:", currentTocHtml.substring(0, 500) + (currentTocHtml.length > 500 ? '...' : ''));
-
-            return `
-<section id="page-nav">
-  <h2 id="toc">${tocTitle}</h2>
-  ${currentTocHtml ? `<${(listTypeOption === 'ordered') ? orderedListTag : defaultListTag}>${currentTocHtml}</${(listTypeOption === 'ordered') ? orderedListTag : defaultListTag}>` : `<p>${selectedLanguage === 'English' ? 'No headings found to generate Table of Contents.' : 'Aucun titre trouvé pour générer la table des matières.'}</p>`}
-</section>`;
-        }
-
-
-        /**
-         * Displays a modal dialog for Page/Section ToC options.
-         * @param {HTMLElement} triggeringButton - The button that opened this modal.
-         * @param {string} originalButtonText - The original text of the triggering button.
-         * @param {string} tocType - 'page' or 'section' to determine the modal title.
-         */
-        function showTocModal(triggeringButton, originalButtonText, tocType) {
-            const modalTitle = tocType === 'page' ? 'Insert Page Table of Contents' : 'Insert Section Table of Contents';
-            const tocContentHtml = `
-                <div class="flex flex-col space-y-4">
-                    <div>
-                        <span class="text-sm font-medium text-CBD5E1 mr-2">Language:</span>
-                        <div class="button-group inline-flex">
-                            <button id="tocLangEnglishBtn" class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50 font-bold">English</button>
-                            <button id="tocLangFrenchBtn" class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50 font-bold">French</button>
-                        </div>
-                    </div>
-                    <div>
-                        <span class="text-sm font-medium text-CBD5E1 mr-2">List type:</span>
-                        <div class="button-group inline-flex">
-                            <button id="tocListDefaultBtn" class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50 font-bold">Default/Mixed</button>
-                            <button id="tocListUnorderedBtn" class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50 font-bold">Unordered (ul)</button>
-                            <button id="tocListOrderedBtn" class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50 font-bold">Ordered (ol)</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            const modalOverlay = document.createElement('div');
-            modalOverlay.className = 'modal-overlay';
-            modalOverlay.innerHTML = `
-                <div class="modal-content">
-                    <h3>${modalTitle}</h3>
-                    <div id="modalBody">${tocContentHtml}</div>
-                    <div class="flex justify-end mt-4 space-x-2">
-                        <button id="modalCancelTocBtn" class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600">Cancel</button>
-                        <button id="modalInsertTocBtn" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">Update/Insert</button>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(modalOverlay);
-
-            function closeModalAndReEnableButtons() {
-                modalOverlay.remove();
-                triggeringButton.removeAttribute('data-temp-active');
-                triggeringButton.textContent = originalButtonText;
-                triggeringButton.classList.remove('bg-green-500', 'hover:bg-green-600');
-                triggeringButton.classList.add('bg-slate-600', 'hover:bg-slate-500');
-                updateAllInteractiveButtonStates();
-            }
-
-            document.getElementById('modalCancelTocBtn').addEventListener('click', closeModalAndReEnableButtons);
-
-            const tocLangEnglishBtn = document.getElementById('tocLangEnglishBtn');
-            const tocLangFrenchBtn = document.getElementById('tocLangFrenchBtn');
-            const tocListDefaultBtn = document.getElementById('tocListDefaultBtn');
-            const tocListUnorderedBtn = document.getElementById('tocListUnorderedBtn');
-            const tocListOrderedBtn = document.getElementById('tocListOrderedBtn');
-            const modalInsertTocBtn = document.getElementById('modalInsertTocBtn');
-
-            let selectedTocLanguage = 'English';
-            let selectedTocListType = 'default'; // 'default', 'unordered', 'ordered'
-
-            function updateTocButtonActiveState(buttons, activeBtn) {
-                buttons.forEach(btn => {
-                    btn.classList.remove('active', 'bg-indigo-600');
-                    btn.classList.add('bg-gray-600', 'hover:bg-gray-500');
-                });
-                activeBtn.classList.add('active', 'bg-indigo-600');
-                activeBtn.classList.remove('bg-gray-600', 'hover:bg-gray-500');
-            }
-
-            updateTocButtonActiveState([tocLangEnglishBtn, tocLangFrenchBtn], tocLangEnglishBtn);
-            updateTocButtonActiveState([tocListDefaultBtn, tocListUnorderedBtn, tocListOrderedBtn], tocListDefaultBtn);
-
-            tocLangEnglishBtn.addEventListener('click', () => {
-                selectedTocLanguage = 'English';
-                updateTocButtonActiveState([tocLangEnglishBtn, tocLangFrenchBtn], tocLangEnglishBtn);
-            });
-
-            tocLangFrenchBtn.addEventListener('click', () => {
-                selectedTocLanguage = 'French';
-                updateTocButtonActiveState([tocLangEnglishBtn, tocLangFrenchBtn], tocLangFrenchBtn);
-            });
-
-            tocListDefaultBtn.addEventListener('click', () => {
-                selectedTocListType = 'default';
-                updateTocButtonActiveState([tocListDefaultBtn, tocListUnorderedBtn, tocListOrderedBtn], tocListDefaultBtn);
-            });
-
-            tocListUnorderedBtn.addEventListener('click', () => {
-                selectedTocListType = 'unordered';
-                updateTocButtonActiveState([tocListDefaultBtn, tocListUnorderedBtn, tocListOrderedBtn], tocListUnorderedBtn);
-            });
-
-            tocListOrderedBtn.addEventListener('click', () => {
-                selectedTocListType = 'ordered';
-                updateTocButtonActiveState([tocListDefaultBtn, tocListUnorderedBtn, tocListOrderedBtn], tocListOrderedBtn);
-            });
-
-
-            modalInsertTocBtn.addEventListener('click', () => {
-                if (monacoEditorInstance) {
-                    let currentContent = monacoEditorInstance.getValue();
-                    console.log("showTocModal: Initial Monaco content length:", currentContent.length);
-
-                    currentContent = protectDataAttributes(currentContent);
-
-                    // First, ensure all headings are ID'd
-                    currentContent = applyAutoId(currentContent, {
-                        idHeadings: true,
-                        idSections: false, // Don't re-ID sections here
-                        idFigures: false,
-                        idTables: false,
-                        idFigureTables: false
-                    });
-                    console.log("showTocModal: Content after applyAutoId. Length:", currentContent.length);
-                    // Temporarily create a DOM object to query for headings and log their IDs
-                    const tempDocForDebug = new DOMParser().parseFromString(currentContent, 'text/html');
-                    const headingsInDoc = Array.from(tempDocForDebug.querySelectorAll('h1, h2, h3, h4, h5, h6'));
-                    if (headingsInDoc.length > 0) {
-                        headingsInDoc.forEach(h => {
-                            console.log(`showTocModal (debug): Found heading: ${h.tagName}, ID: ${h.id || 'NO_ID'}, Text: ${h.textContent.trim().substring(0, 50)}...`);
-                        });
-                    } else {
-                        console.log("showTocModal (debug): No headings found in document after applyAutoId.");
-                    }
-
-
-                    const doc = new DOMParser().parseFromString(currentContent, 'text/html');
-
-                    // Check for existing ToC section
-                    const existingTocSection = doc.getElementById('page-nav');
-                    let newTocHtml = generateToc(doc.body.innerHTML, tocType, selectedTocLanguage, selectedTocListType);
-                    console.log("showTocModal: Generated ToC HTML:", newTocHtml.substring(0, 500) + (newTocHtml.length > 500 ? '...' : ''));
-
-
-                    if (existingTocSection) {
-                        // Update existing ToC
-                        existingTocSection.outerHTML = newTocHtml;
-                        currentContent = doc.documentElement.outerHTML; // Get updated HTML
-                        console.log("showTocModal: Updated existing ToC. New content length:", currentContent.length);
-                    } else {
-                        // Find the insertion point: OUTSIDE the FIRST <section> containing an H2
-                        // Prioritize inserting before the first section that contains an h2
-                        const firstSectionWithH2 = doc.querySelector('section:has(h2)');
-                        let insertionNode = null;
-
-                        if (firstSectionWithH2 && firstSectionWithH2.parentNode) {
-                            insertionNode = firstSectionWithH2;
-                            console.log("showTocModal: Insertion point found: first section with h2.");
-                        } else {
-                            // If no section with H2, find the first H2 itself
-                            const firstH2 = doc.querySelector('h2');
-                            if (firstH2 && firstH2.parentNode) {
-                                insertionNode = firstH2;
-                                console.log("showTocModal: Insertion point found: first h2.");
-                            } else {
-                                // If no H2, find the special H1
-                                const specialH1 = doc.querySelector('h1[property="name"][id="wb-cont"]');
-                                if (specialH1 && specialH1.parentNode) {
-                                    insertionNode = specialH1;
-                                    console.log("showTocModal: Insertion point found: special h1.");
-                                }
-                            }
-                        }
-
-                        if (insertionNode && insertionNode.parentNode) {
-                            const tempDiv = document.createElement('div');
-                            tempDiv.innerHTML = newTocHtml;
-                            const tocNode = tempDiv.firstChild; // The <section id="page-nav"> element
-
-                            if (tocNode) {
-                                insertionNode.parentNode.insertBefore(tocNode, insertionNode);
-                                currentContent = doc.documentElement.outerHTML; // Get updated HTML
-                                console.log("showTocModal: Inserted new ToC at specific point. New content length:", currentContent.length);
-                            } else {
-                                console.warn("showTocModal: ToC node was null, unable to insert.");
-                                // Fallback to appending if no valid node
-                                doc.body.insertAdjacentHTML('beforeend', newTocHtml);
-                                currentContent = doc.documentElement.outerHTML; // Get updated HTML
-                                console.log("showTocModal: Fallback: Appended new ToC to body. New content length:", currentContent.length);
-                            }
-                        } else {
-                            // As a last resort if no specific insertion point is found, append to body
-                            doc.body.insertAdjacentHTML('beforeend', newTocHtml);
-                            currentContent = doc.documentElement.outerHTML; // Get updated HTML
-                            console.log("showTocModal: Fallback: Appended new ToC to body (no ideal insertion point). New content length:", currentContent.length);
-                        }
-                    }
-
-                    currentContent = restoreDataAttributes(currentContent);
-                    currentContent = convertAllEntitiesToNumeric(currentContent);
-
-                    monacoEditorInstance.setValue(currentContent);
-                    htmlOutputContent = currentContent;
-                    applyEntityHighlighting();
-                }
-
-                closeModalAndReEnableButtons();
-
-                const capturedOriginalText = originalButtonText;
-                triggeringButton.textContent = 'Updated!';
-                triggeringButton.classList.add('bg-green-500', 'hover:bg-green-600');
-                triggeringButton.classList.remove('bg-slate-600', 'hover:bg-slate-500');
-                setTimeout(() => {
-                    triggeringButton.textContent = capturedOriginalText;
-                    triggeringButton.classList.remove('bg-green-500', 'hover:bg-green-600');
-                    triggeringButton.classList.add('bg-slate-600', 'hover:bg-slate-500');
-                }, 1500);
-            });
-        }
 
         /**
          * Function to set the content of the HugeRTE editor.
@@ -3783,7 +3604,7 @@
                 // Provide visual feedback for the button after successful insert
                 triggeringButton.textContent = 'Inserted!';
                 triggeringButton.classList.add('bg-green-500', 'hover:bg-green-600');
-                triggeringButton.classList.remove('bg-slate-600', 'hover:bg-slate-500');
+                triggeringButton.classList.remove('bg-slate-600', 'hover:bg-slate-500'); /* Changed */
                 // The disabled state is managed by updateAllInteractiveButtonStates()
                 setTimeout(() => {
                     triggeringButton.textContent = capturedOriginalText; // Use the captured variable
@@ -4866,68 +4687,46 @@
                         <div>
                             <span class="text-sm font-medium text-CBD5E1 mr-2">Language:</span> <!-- Changed text color -->
                             <div class="button-group inline-flex">
-                                <button id="langEnglishBtn" class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50 font-bold">English</button> <!-- Changed bg -->
-                                <button id="langFrenchBtn" class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50 font-bold">French</button> <!-- Changed bg -->
+                                <button id="langEnglishBtn" class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50 font-bold">English</button>
+                                <button id="langFrenchBtn" class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50 font-bold">French</button>
                             </div>
                         </div>
                         <div>
-                            <span class="text-sm font-medium text-CBD5E1 mr-2">Monarch:</span> <!-- Changed text color -->
+                            <span class="text-sm font-medium text-CBD5E1 mr-2">Monarch:</span>
                             <div class="button-group inline-flex">
-                                <button id="monarchKingBtn" class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50 font-bold">King</button> <!-- Changed bg -->
-                                <button id="monarchQueenBtn" class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50 font-bold">Queen</button> <!-- Changed bg -->
+                                <button id="monarchKingBtn" class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50 font-bold">King</button>
+                                <button id="monarchQueenBtn" class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50 font-bold">Queen</button>
                             </div>
                         </div>
                         <div>
-                            <span class="text-sm font-medium text-CBD5E1 mr-2">Identifier:</span> <!-- Changed text color -->
+                            <span class="text-sm font-medium text-CBD5E1 mr-2">Identifier Type:</span>
                             <div class="button-group inline-flex">
-                                <button id="idISBNBtn" class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50 font-bold">ISBN</button> <!-- Changed bg -->
-                                <button id="idISSNBtn" class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50 font-bold">ISSN</button> <!-- Changed bg -->
+                                <button id="idISBNBtn" class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50 font-bold">ISBN</button>
+                                <button id="idISSNBtn" class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50 font-bold">ISSN</button>
                             </div>
                         </div>
                         <div>
-                            <label for="colophonYear" class="block text-sm font-medium text-CBD5E1">Year (optional):</label> <!-- Changed text color -->
-                            <input type="number" id="colophonYear" class="w-full px-3 py-2 border border-475569 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="${new Date().getFullYear()}" min="1900" max="2100"> <!-- Changed border and focus color -->
+                            <label for="colophonYear" class="block text-sm font-medium text-gray-200">Year (optional, defaults to current year):</label>
+                            <input type="number" id="colophonYear" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., 2024" min="1900" max="2100">
                         </div>
                         <div>
-                            <label for="colophonNumber" class="block text-sm font-medium text-CBD5E1">Number (optional, e.g., for ISBN/ISSN):</label> <!-- Changed text color -->
-                            <input type="text" id="colophonNumber" class="w-full px-3 py-2 border border-475569 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="###-##-####-#" pattern="[0-9X-]*"> <!-- Changed border and focus color -->
+                            <label for="colophonNumber" class="block text-sm font-medium text-gray-200">Identifier Number (optional, defaults to ###):</label>
+                            <input type="text" id="colophonNumber" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., 123-456-789-X">
                         </div>
                     </div>
                 `;
                 showModal('Insert Colophon', colophonHtmlContent, colophonBtn, originalText); // Pass original text
             });
 
-            // New: Footnote List button event listener
+            // Footnote List button event listener
             footnoteListBtn.addEventListener('click', () => {
                 const originalText = footnoteListBtn.textContent;
                 footnoteListBtn.textContent = 'Opening...';
                 footnoteListBtn.classList.add('bg-green-500', 'hover:bg-green-600');
-                footnoteListBtn.classList.remove('bg-slate-600', 'hover:bg-slate-500'); /* Changed */
-                footnoteListBtn.setAttribute('data-temp-active', 'true'); // Set the flag
-                updateAllInteractiveButtonStates(); // Disable all buttons
+                footnoteListBtn.classList.remove('bg-slate-600', 'hover:bg-slate-500');
+                footnoteListBtn.setAttribute('data-temp-active', 'true');
+                updateAllInteractiveButtonStates();
                 showFootnoteModal(footnoteListBtn, originalText); // Pass original text
-            });
-
-            // NEW: Page ToC button event listener
-            pageTocBtn.addEventListener('click', () => {
-                const originalText = pageTocBtn.textContent;
-                pageTocBtn.textContent = 'Opening...';
-                pageTocBtn.classList.add('bg-green-500', 'hover:bg-green-600');
-                pageTocBtn.classList.remove('bg-slate-600', 'hover:bg-slate-500');
-                pageTocBtn.setAttribute('data-temp-active', 'true');
-                updateAllInteractiveButtonStates();
-                showTocModal(pageTocBtn, originalText, 'page');
-            });
-
-            // NEW: Section ToC button event listener
-            sectionTocBtn.addEventListener('click', () => {
-                const originalText = sectionTocBtn.textContent;
-                sectionTocBtn.textContent = 'Opening...';
-                sectionTocBtn.classList.add('bg-green-500', 'hover:bg-green-600');
-                sectionTocBtn.classList.remove('bg-slate-600', 'hover:bg-slate-500');
-                sectionTocBtn.setAttribute('data-temp-active', 'true');
-                updateAllInteractiveButtonStates();
-                showTocModal(sectionTocBtn, originalText, 'section');
             });
 
             // Initial call to set the state of the Clean Mso button on load
