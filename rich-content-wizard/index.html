@@ -1133,10 +1133,33 @@
                 }
             });
 
-            // Re-serialize and re-parse to handle previous DOM manipulations affecting string content for regex
+            // NEW: Remove empty text nodes (representing empty lines/excess whitespace)
+            const walker = doc.createTreeWalker(
+                body,
+                NodeFilter.SHOW_TEXT,
+                {
+                    acceptNode: function(node) {
+                        // Accept text nodes that are purely whitespace
+                        return node.nodeValue.trim() === '' ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+                    }
+                },
+                false
+            );
+
+            const nodesToRemove = [];
+            let currentNode;
+            while (currentNode = walker.nextNode()) {
+                nodesToRemove.push(currentNode);
+            }
+
+            nodesToRemove.forEach(node => {
+                if (node.parentNode) {
+                    node.parentNode.removeChild(node);
+                }
+            });
+
+            // Re-serialize to string to apply regex-based cleaning
             let cleanedHtml = body.innerHTML;
-            doc = parser.parseFromString(cleanedHtml, 'text/html'); // Re-parse after initial DOM changes
-            const currentBody = doc.body; // Use current body reference
 
             // 3. Condense multiple non-breaking spaces (&#160; or its Unicode char)
             // Replace multiple &#160; sequences (numeric or named entity)
@@ -1548,26 +1571,11 @@
                         const clonedChild = child.cloneNode(false);
                         clonedChild.innerHTML = cleanAndPreserveAllowedContent(child, doc); // Still clean content inside
                         tempContainer.appendChild(clonedChild);
-                    } else if (tagName === 'div') {
-                        // <div> ONLY if they have a class or ID that DON'T contain "Mso" or "Word" or "BCX0"
+                    } else if (tagName === 'div' || tagName === 'span' || tagName === 'ins') {
+                        // <div>, <span>, <ins> ONLY if they have a class or ID that DON'T contain "Mso" or "Word" or "BCX0"
                         if ((child.hasAttribute('class') || child.hasAttribute('id')) && !containsDisallowedPattern(child)) {
                             const clonedChild = child.cloneNode(false);
                             clonedChild.innerHTML = cleanAndPreserveAllowedContent(child, doc);
-                            tempContainer.appendChild(clonedChild);
-                        } else {
-                            // Unwrap if it doesn't meet the criteria
-                            const unwrappedContentHtml = cleanAndPreserveAllowedContent(child, doc);
-                            const tempUnwrapDiv = doc.createElement('div'); // Temporary div to parse HTML string
-                            tempUnwrapDiv.innerHTML = unwrappedContentHtml;
-                            while (tempUnwrapDiv.firstChild) {
-                                tempContainer.appendChild(tempUnwrapDiv.firstChild);
-                            }
-                        }
-                    } else if (tagName === 'span') {
-                        // <span> ONLY if they have a class or ID that DON'T match the ones mentioned (Mso/Word/BCX0)
-                        if ((child.hasAttribute('class') || child.hasAttribute('id')) && !containsDisallowedPattern(child)) {
-                            const clonedChild = child.cloneNode(false);
-                            clonedChild.innerHTML = cleanAndPreserveAllowedContent(clonedChild, doc);
                             tempContainer.appendChild(clonedChild);
                         } else {
                             // Unwrap if it doesn't meet the criteria
@@ -1648,7 +1656,7 @@
 
                         if (tagName === 'br' || tagName === 'strong' || tagName === 'a' || tagName === 'em' || tagName === 'u' || tagName === 'sup' || tagName === 'sub' || tagName === 'section') {
                             contentHtml += child.outerHTML;
-                        } else if ((tagName === 'span' || tagName === 'div') && hasClassOrId && !containsDisallowedPattern(child)) {
+                        } else if ((tagName === 'span' || tagName === 'div' || tagName === 'ins') && hasClassOrId && !containsDisallowedPattern(child)) {
                             const clonedChild = child.cloneNode(false);
                             clonedChild.innerHTML = extractAllowedContentForLists(clonedChild);
                             contentHtml += clonedChild.outerHTML;
@@ -4316,8 +4324,10 @@
                 const parentLabel = event.target.closest('.toggle-switch');
                 if (isChecked) {
                     parentLabel.classList.add('is-checked');
+                    toggleAutoCleanMsoOnSwitchCode.checked = true;
                 } else {
                     parentLabel.classList.remove('is-checked');
+                    toggleAutoCleanMsoOnSwitchCode.checked = false;
                 }
                 toggleAutoCleanMsoOnSwitchRichText.checked = isChecked; // Sync state
                 toggleAutoCleanMsoOnSwitchRichText.closest('.toggle-switch').classList.toggle('is-checked', isChecked);
@@ -4329,7 +4339,7 @@
             // Set initial checked states and add event listeners for new pill toggles in "Quick Formatting"
             quickFormattingToggles.forEach(toggle => {
                 // Set initial checked state based on requirements
-                if (toggle.id === 'toggleCleanSingleBreaks' || toggle.id === 'toggleCleanFormattingTags' || toggle.id === 'toggleCleanPTables') { // Added toggleCleanPTables
+                if (toggle.id === 'toggleCleanSingleBreaks' || toggle.id === 'toggleCleanFormattingTags' || toggle.id === 'toggleCleanPTables') {
                     toggle.checked = false;
                     toggle.closest('.toggle-switch').classList.remove('is-checked');
                 } else {
@@ -4365,7 +4375,7 @@
                         currentContent = applyCleanSingleBreaks(currentContent);
                         console.log("Clean Single Breaks applied.");
                     }
-                    if (toggleCleanPTables.checked) { // NEW: Apply Clean <p> in Tables
+                    if (toggleCleanPTables.checked) {
                         currentContent = applyCleanPTagsInTables(currentContent);
                         console.log("Clean <p> in Tables applied.");
                     }
