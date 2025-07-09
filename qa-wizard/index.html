@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BeforeYouPost&#8482; - QA/Prototype Wizard</title>
+    <title>BeforeYouPost™ - QA/Prototype Wizard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/dracula.min.css">
@@ -374,6 +374,56 @@
         #wetGcdsToggleBtn {
             font-family: monospace;
         }
+
+        /* Validation Results Section */
+        #validationResultsContainer {
+            background-color: #2d3748; /* Slightly lighter dark background for panels */
+            border-radius: 0.75rem; /* rounded-xl */
+            /* Removed box-shadow */
+            margin-top: 0.5rem;
+			margin-bottom: 0.5rem;
+            height: 200px; /* Fixed height for scrollable area */
+            color: #ffffff; /* White text */
+        }
+
+        #validationResults {
+            /* Removed min-height */
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem; /* text-sm */
+            line-height: 1.5;
+            /* Ensure no overflow-y: auto; or max-height here to prevent double scrollbars */
+        }
+
+        /* Specific styles for validation results based on success/error */
+        #validationResults.bg-green-100 {
+            background-color: #d1fae5; /* Green-100 */
+            color: #065f46; /* Green-800 */
+            border: 1px solid #34d399; /* Green-300 */
+        }
+        #validationResults.bg-red-100 {
+            background-color: #fee2e2; /* Red-100 */
+            color: #991b1b; /* Red-800 */
+            border: 1px solid #f87171; /* Red-300 */
+        }
+
+        /* Styling for clickable error list items */
+        #validationResults ul li {
+            cursor: pointer;
+            padding: 4px 0;
+            transition: background-color 0.2s ease;
+        }
+
+        #validationResults ul li:hover {
+            background-color: rgba(255, 255, 255, 0.1); /* Light hover effect for dark theme */
+            text-decoration: underline;
+        }
+
+        /* Highlighted line in CodeMirror */
+        .highlighted-line {
+            background-color: rgba(255, 255, 0, 0.3); /* Semi-transparent yellow */
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -409,6 +459,19 @@
                         Fix FN ID's
                     </button>
                     <button id="colophonBtn" class="bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">Colophon</button>
+                    <button id="validateBtn" class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-semibold">
+                        Validate
+                    </button>
+                </div>
+            </div>
+            <!-- Validation Results Section -->
+            <div id="validationResultsContainer" class="hidden mt-4">
+                <h3 class="text-lg font-semibold text-white mb-2 flex justify-between items-center">
+                    Validation Results:
+                    <button id="dismissValidationBtn" class="text-sm bg-gray-600 text-white px-2 py-1 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">Dismiss</button>
+                </h3>
+                <div id="validationResults" class="bg-gray-50 p-4 border border-gray-200 rounded-lg min-h-[50px] max-h-[150px] overflow-y-auto text-gray-700 text-sm leading-relaxed">
+                    <p class="text-gray-500">Click "Validate" to see errors here.</p>
                 </div>
             </div>
             <textarea id="htmlCode" class="focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out" placeholder="Start typing your HTML body content here!">
@@ -516,6 +579,10 @@
         <p>Ready to learn more?</a></p>
         <a href="#" class="btn btn-primary">Primary Action</a>
         <button type="button" class="btn btn-default">Secondary Action</button>
+        <a href="#nonExistentId">Broken Link Example</a>
+        <a href="#toc1">Valid Link Example</a>
+        <div id="myNamedDiv">This is a named div.</div>
+        <a href="#myNamedDiv">Link to Named Div</a>
     </section>
         <h3 id="toc2-2">Good well stuff</h3>
         <div class="well">
@@ -738,6 +805,11 @@
         const clearAllBtn = document.getElementById('clearAllBtn');
         // New WET/GCDS toggle button
         const wetGcdsToggleBtn = document.getElementById('wetGcdsToggleBtn');
+        // New Validate button and results elements
+        const validateBtn = document.getElementById('validateBtn');
+        const validationResultsDiv = document.getElementById('validationResults');
+        const validationResultsContainer = document.getElementById('validationResultsContainer');
+        const dismissValidationBtn = document.getElementById('dismissValidationBtn');
 
 
         let editor; // Declare editor globally
@@ -771,6 +843,42 @@
         const NBSP_ENTITY_PLACEHOLDER = '__NBSP_ENTITY_PLACEHOLDER__';
         const NUMERIC_NBSP_ENTITY_PLACEHOLDER = '__NUMERIC_NBSP_ENTITY_PLACEHOLDER__';
         const LITERAL_NBSP_CHAR_PLACEHOLDER = '__LITERAL_NBSP_CHAR_PLACEHOLDER__'; // For \u00A0
+
+        // Sets of elements for validation - MOVED TO GLOBAL SCOPE
+        const selfClosingTags = new Set([
+            'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input',
+            'link', 'meta', 'param', 'source', 'track', 'wbr'
+        ]);
+
+        const deprecatedTags = new Set([
+            'acronym', 'applet', 'basefont', 'big', 'center', 'dir', 'font',
+            'frame', 'frameset', 'noframes', 'strike', 'tt', 'u'
+        ]);
+
+        const blockElements = new Set([
+            'address', 'article', 'aside', 'blockquote', 'canvas', 'dd', 'div', 'dl', 'dt',
+            'fieldset', 'figcaption', 'figure', 'footer', 'form', 'h1', 'h2', 'h3', 'h4',
+            'h5', 'h6', 'header', 'hr', 'li', 'main', 'nav', 'noscript', 'ol', 'p',
+            'pre', 'section', 'table', 'tfoot', 'ul', 'video'
+        ]);
+
+        const inlineElements = new Set([
+            'a', 'abbr', 'b', 'bdo', 'br', 'button', 'cite', 'code',
+            'dfn', 'em', 'i', 'img', 'input', 'kbd', 'label', 'map', 'object', 'q',
+            'samp', 'script', 'select', 'small', 'span', 'strong', 'sub', 'sup',
+            'textarea', 'time', 'var'
+        ]);
+
+        // Elements that can legitimately have width/height attributes
+        const mediaSizingElements = new Set([
+            'img', 'iframe', 'video', 'canvas', 'object', 'embed'
+        ]);
+
+        // Attributes that are only valid on <a> or <form>
+        const targetValidElements = new Set(['a', 'form']);
+
+        // Variable to keep track of the currently highlighted line handle in CodeMirror
+        let currentHighlightedLineHandle = null;
 
         /**
          * Helper function to apply placeholders for &nbsp;, &#160;, and literal non-breaking space character.
@@ -1345,7 +1453,7 @@
             background-color: rgba(255, 255, 0, 0.1);
             padding: 5px;
             margin-bottom: 5px;
-            box-sizing: border-box;
+            box-sizing: border-sizing;
         }
         .show-headings-outline h4,
         .show-headings-outline gcds-heading[tag="h4"] {
@@ -1758,6 +1866,403 @@
             return tempDiv.innerHTML;
         }
 
+        // HTML Validation functions and logic from temp.html
+        function isBlockElement(tagName) {
+            return blockElements.has(tagName);
+        }
+
+        function isInlineElement(tagName) {
+            return inlineElements.has(tagName);
+        }
+
+        function getLineNumber(index, code) {
+            let lineNumber = 1;
+            for (let i = 0; i < index; i++) {
+                if (code[i] === '\n') {
+                    lineNumber++;
+                }
+            }
+            return lineNumber;
+        }
+
+        function validateHtml(showResults = false) { // Added showResults parameter
+            const htmlCode = editor.getValue();
+            const errors = [];
+
+            // Clear any existing highlight in CodeMirror if showing results
+            if (showResults && currentHighlightedLineHandle) {
+                editor.removeLineClass(currentHighlightedLineHandle, 'background', 'highlighted-line');
+                currentHighlightedLineHandle = null;
+            }
+
+            // --- Collect all valid anchor targets (IDs and Names) ---
+            const validAnchors = new Set();
+            const tempDocForAnchors = new DOMParser().parseFromString(htmlCode, 'text/html');
+
+            // Collect IDs
+            tempDocForAnchors.querySelectorAll('[id]').forEach(el => {
+                if (el.id) { // Ensure id is not empty
+                    validAnchors.add(el.id);
+                }
+            });
+
+            // Collect Names (for a, map, form, img, input, select, textarea, button, iframe)
+            // The 'name' attribute can be used as a fragment identifier target in some contexts,
+            // especially for older HTML or specific elements like <map> and form controls.
+            tempDocForAnchors.querySelectorAll('[name]').forEach(el => {
+                const nameAttr = el.getAttribute('name');
+                if (nameAttr) { // Ensure name is not empty
+                    validAnchors.add(nameAttr);
+                }
+            });
+
+            // --- ID Validation ---
+            const idRegex = /\bid\s*=\s*(["'])(.*?)\1/g;
+            const foundIds = new Map();
+
+            let idMatch;
+            while ((idMatch = idRegex.exec(htmlCode)) !== null) {
+                const idValue = idMatch[2];
+                const idLineNumber = getLineNumber(idMatch.index, htmlCode);
+                const idInfo = { lineNumber: idLineNumber, index: idMatch.index };
+
+                if (foundIds.has(idValue)) {
+                    foundIds.get(idValue).push(idInfo);
+                } else {
+                    foundIds.set(idValue, [idInfo]);
+                }
+            }
+
+            for (const [idValue, idInfos] of foundIds.entries()) {
+                if (idInfos.length > 1) {
+                    const lineNumbers = idInfos.map(info => info.lineNumber).join(', ');
+                    errors.push({
+                        message: `Duplicate ID: "${idValue}" found on lines: ${lineNumbers}.`,
+                        lineNumber: idInfos[0].lineNumber
+                    });
+                }
+            }
+
+            // --- Tag Validation (Nesting, Self-Closing, Deprecated, Attributes, Block-in-Inline, Table Accessibility, Improper Attributes) ---
+            const tagRegex = /<\/?([a-zA-Z0-9]+)(?:\s+([^>]*?))?(\/?)>/g;
+            let match;
+            const tagStack = [];
+
+            // Create a temporary DOM to check for improper list nesting
+            const parser = new DOMParser();
+            const tempDoc = parser.parseFromString(htmlCode, 'text/html');
+
+            // --- New: Improper List Nesting (<li> within <li>) ---
+            const liElements = tempDoc.querySelectorAll('li');
+            liElements.forEach(li => {
+                if (li.parentNode && li.parentNode.tagName.toLowerCase() === 'li') {
+                    // Find the line number for this specific li element
+                    // This is a best-effort attempt to map DOM element back to source line
+                    const liHtml = li.outerHTML;
+                    let startIndex = htmlCode.indexOf(liHtml);
+                    if (startIndex === -1) { // Fallback if outerHTML doesn't match perfectly
+                        startIndex = htmlCode.indexOf(`<${li.tagName.toLowerCase()}`);
+                    }
+                    const liLineNumber = startIndex !== -1 ? getLineNumber(startIndex, htmlCode) : 'unknown';
+
+                    errors.push({
+                        message: `Line ${liLineNumber}: Improper list nesting: &lt;li&gt; cannot be directly nested within another &lt;li&gt;. It must be inside a &lt;ul&gt; or &lt;ol&gt;.`,
+                        lineNumber: liLineNumber
+                    });
+                }
+            });
+
+            // --- Orphan '<' and '>' character validation ---
+            const tagBoundaries = [];
+            const fullTagRegex = /<\/?[\w-]+(?:\s+[^>]*?)?>/g; // Regex to find any complete HTML tag
+            let tagMatchForBoundaries;
+            while ((tagMatchForBoundaries = fullTagRegex.exec(htmlCode)) !== null) {
+                tagBoundaries.push({
+                    start: tagMatchForBoundaries.index,
+                    end: tagMatchForBoundaries.index + tagMatchForBoundaries[0].length - 1
+                });
+            }
+
+            const entityBoundaries = [];
+            const entityRegex = /&(?:[a-zA-Z]+|#\d+);/g; // Regex to find any HTML entity
+            let entityMatch;
+            while ((entityMatch = entityRegex.exec(htmlCode)) !== null) {
+                entityBoundaries.push({
+                    start: entityMatch.index,
+                    end: entityMatch.index + entityMatch[0].length - 1
+                });
+            }
+
+            // Helper to check if an index is within any given range array
+            function isWithinAnyRange(index, ranges) {
+                for (const range of ranges) {
+                    if (index >= range.start && index <= range.end) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            // Helper to check if an index is the *start* of a valid tag
+            function isStartOfValidTag(index, tagRanges) {
+                for (const range of tagRanges) {
+                    if (index === range.start) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            // Helper to check if an index is the *end* of a valid tag
+            function isEndOfValidTag(index, tagRanges) {
+                for (const range of tagRanges) {
+                    if (index === range.end) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            for (let i = 0; i < htmlCode.length; i++) {
+                const char = htmlCode[i];
+                const lineNumber = getLineNumber(i, htmlCode);
+
+                if (char === '<') {
+                    // Check if this '<' is the start of a valid tag OR part of an HTML entity like '&lt;'
+                    const isTagStart = isStartOfValidTag(i, tagBoundaries);
+                    const isEntityPart = isWithinAnyRange(i, entityBoundaries);
+
+                    if (!isTagStart && !isEntityPart) {
+                        // It's an orphan '<'
+                        let context = htmlCode.substring(i, Math.min(i + 20, htmlCode.length)).split('\n')[0].trim();
+                        errors.push({
+                            message: `Line ${lineNumber}: Orphan '<' found. Possible malformed tag or extra character near: "${context}..."`,
+                            lineNumber: lineNumber
+                        });
+                    }
+                } else if (char === '>') {
+                    // Check if this '>' is the end of a valid tag OR part of an HTML entity like '&gt;'
+                    const isTagEnd = isEndOfValidTag(i, tagBoundaries);
+                    const isEntityPart = isWithinAnyRange(i, entityBoundaries);
+
+                    if (!isTagEnd && !isEntityPart) {
+                        // It's an orphan '>'
+                        let contextStart = Math.max(0, i - 20);
+                        let context = htmlCode.substring(contextStart, i + 1).split('\n').pop().trim();
+                        errors.push({
+                            message: `Line ${lineNumber}: Orphan '>' found. Possible malformed tag or extra character near: "...${context}"`,
+                            lineNumber: lineNumber
+                        });
+                    }
+                }
+            }
+
+            // Reset tagRegex lastIndex before reuse
+            tagRegex.lastIndex = 0;
+
+            while ((match = tagRegex.exec(htmlCode)) !== null) {
+                const fullTag = match[0];
+                const tagName = match[1].toLowerCase();
+                const attributesString = match[2] || '';
+                const isSelfClosingSyntax = match[3] === '/';
+                const lineNumber = getLineNumber(match.index, htmlCode);
+
+                if (fullTag.startsWith('</')) { // Closing tag
+                    if (tagStack.length === 0) {
+                        errors.push({
+                            message: `Line ${lineNumber}: Unmatched closing tag: &lt;/${tagName}&gt;`,
+                            lineNumber: lineNumber
+                        });
+                    } else {
+                        const lastOpenTag = tagStack.pop();
+                        if (lastOpenTag.tagName !== tagName) {
+                            errors.push({
+                                message: `Line ${lineNumber}: Mismatched closing tag: Expected &lt;/${lastOpenTag.tagName}&gt; (opened on line ${lastOpenTag.lineNumber}), but found &lt;/${tagName}&gt;.`,
+                                lineNumber: lineNumber
+                            });
+                        }
+                    }
+                } else { // Opening tag
+                    // Check for non-standard self-closing syntax on non-self-closing tags
+                    if (isSelfClosingSyntax && !selfClosingTags.has(tagName)) {
+                        errors.push({
+                            message: `Line ${lineNumber}: Invalid self-closing syntax for &lt;${tagName}&gt;. This tag should not be self-closed with '/>'.`,
+                            lineNumber: lineNumber
+                        });
+                    }
+
+                    // Check for Deprecated Tags
+                    if (deprecatedTags.has(tagName)) {
+                        errors.push({
+                            message: `Line ${lineNumber}: Deprecated tag: &lt;${tagName}&gt;. Consider using modern alternatives.`,
+                            lineNumber: lineNumber
+                        });
+                    }
+
+                    // Check for missing required attributes
+                    if (tagName === 'img') {
+                        if (!/\balt\b/i.test(attributesString)) {
+                            errors.push({
+                                message: `Line ${lineNumber}: &lt;img&gt; tag is missing the required 'alt' attribute for accessibility.`,
+                                lineNumber: lineNumber
+                            });
+                        }
+                        if (!/\bsrc\b/i.test(attributesString)) {
+                            errors.push({
+                                message: `Line ${lineNumber}: &lt;img&gt; tag is missing the required 'src' attribute.`,
+                                lineNumber: lineNumber
+                            });
+                        }
+                    } else if (tagName === 'th') {
+                        // Check if <th> has either a scope or id attribute
+                        if (!/\bscope\b/i.test(attributesString) && !/\bid\b/i.test(attributesString)) {
+                            errors.push({
+                                message: `Line ${lineNumber}: &lt;th&gt; tag should have either a 'scope' or an 'id' attribute for accessibility.`,
+                                lineNumber: lineNumber
+                            });
+                        }
+                    } else if (tagName === 'tr') {
+                        // Check if <tr> has colspan or rowspan (which are invalid here)
+                        if (/\bcolspan\b/i.test(attributesString) || /\browspan\b/i.test(attributesString)) {
+                            errors.push({
+                                message: `Line ${lineNumber}: Invalid attribute: 'colspan' or 'rowspan' found on a &lt;tr&gt; tag. These attributes are only valid on &lt;th&gt; or &lt;td&gt; tags.`,
+                                lineNumber: lineNumber
+                            });
+                        }
+                    }
+
+                    // --- New improper attribute checks ---
+
+                    // Check for deprecated 'align' attribute on any tag
+                    if (/\balign\b/i.test(attributesString)) {
+                        errors.push({
+                            message: `Line ${lineNumber}: Deprecated attribute: 'align' found on &lt;${tagName}&gt;. Use CSS for alignment instead.`,
+                            lineNumber: lineNumber
+                        });
+                    }
+
+                    // Check for 'width' or 'height' on elements that shouldn't have them (e.g., div, p, span)
+                    if ((/\bwidth\b/i.test(attributesString) || /\bheight\b/i.test(attributesString)) && !mediaSizingElements.has(tagName)) {
+                        errors.push({
+                            message: `Line ${lineNumber}: Improper attribute: 'width' or 'height' found on &lt;${tagName}&gt;. Consider using CSS for sizing this element.`,
+                            lineNumber: lineNumber
+                        });
+                    }
+
+                    // Check for 'target' attribute on elements other than <a> or <form>
+                    if (/\btarget\b/i.test(attributesString) && !targetValidElements.has(tagName)) {
+                        errors.push({
+                            message: `Line ${lineNumber}: Improper attribute: 'target' found on &lt;${tagName}&gt;. The 'target' attribute is only valid on &lt;a&gt; or &lt;form&gt; tags.`,
+                            lineNumber: lineNumber
+                        });
+                    }
+
+
+                    // --- New: Broken Anchor Link Validation (for <a> tags) ---
+                    if (tagName === 'a') {
+                        const hrefMatch = attributesString.match(/\bhref\s*=\s*(["'])(.*?)\1/i);
+                        if (hrefMatch) {
+                            const href = hrefMatch[2];
+                            // Ignore href="#" or empty href
+                            if (href.startsWith('#') && href.length > 1) {
+                                const anchorId = href.substring(1);
+                                if (!validAnchors.has(anchorId)) {
+                                    errors.push({
+                                        message: `Line ${lineNumber}: Broken anchor link: &lt;a href="#${anchorId}"&gt; points to a non-existent ID or name attribute.`,
+                                        lineNumber: lineNumber
+                                    });
+                                }
+                            }
+                        }
+                    }
+
+                    // Check for Block-level elements inside Inline elements
+                    if (tagStack.length > 0) {
+                        const parentTag = tagStack[tagStack.length - 1];
+                        if (isInlineElement(parentTag.tagName) && isBlockElement(tagName)) {
+                            errors.push({
+                                message: `Line ${lineNumber}: Invalid nesting: Block-level element &lt;${tagName}&gt; cannot be nested inside inline element &lt;${parentTag.tagName}&gt; (opened on line ${parentTag.lineNumber}).`,
+                                lineNumber: lineNumber
+                            });
+                        }
+                    }
+
+                    // Push to stack if not a self-closing tag (standard or invalid syntax)
+                    if (!selfClosingTags.has(tagName) && !isSelfClosingSyntax) {
+                        tagStack.push({ tagName: tagName, lineNumber: lineNumber, index: match.index });
+                    }
+                }
+            }
+
+            // Check for unclosed tags remaining in the stack
+            while (tagStack.length > 0) {
+                const unclosedTag = tagStack.pop();
+                errors.push({
+                    message: `Line ${unclosedTag.lineNumber}: Unclosed tag: &lt;${unclosedTag.tagName}&gt;.`,
+                    lineNumber: unclosedTag.lineNumber
+                });
+            }
+
+            // --- Update Button Color (Real-time) ---
+            validateBtn.classList.remove('bg-blue-600', 'bg-green-600', 'bg-red-600');
+            validateBtn.classList.remove('hover:bg-blue-700', 'hover:bg-green-700', 'hover:bg-red-700');
+            validateBtn.classList.remove('focus:ring-blue-500', 'focus:ring-green-500', 'focus:ring-red-500');
+            validateBtn.classList.remove('focus:ring-opacity-50'); // Remove this as it's common
+
+            if (errors.length === 0) {
+                validateBtn.classList.add('bg-green-600', 'hover:bg-green-700', 'focus:ring-green-500', 'focus:ring-opacity-50');
+            } else {
+                validateBtn.classList.add('bg-red-600', 'hover:bg-red-700', 'focus:ring-red-500', 'focus:ring-opacity-50');
+            }
+
+
+            // --- Display Results (Only if showResults is true) ---
+            if (showResults) {
+                validationResultsContainer.classList.remove('hidden'); // Show the results container
+                validationResultsDiv.innerHTML = ''; // Clear previous results
+
+                if (errors.length === 0) {
+                    validationResultsDiv.classList.remove('bg-red-100', 'text-red-800', 'border-red-300');
+                    validationResultsDiv.classList.add('bg-green-100', 'text-green-800', 'border-green-300');
+                    validationResultsDiv.innerHTML = '<p class="font-semibold text-center">🎉 HTML is valid! No further adjustment needed. 🎉</p>';
+                } else {
+                    validationResultsDiv.classList.remove('bg-green-100', 'text-green-800', 'border-green-300');
+                    validationResultsDiv.classList.add('bg-red-100', 'text-red-800', 'border-red-300');
+                    const errorList = document.createElement('ul');
+                    errorList.classList.add('list-disc', 'pl-5');
+                    errors.forEach(error => {
+                        const listItem = document.createElement('li');
+                        listItem.innerHTML = error.message;
+                        listItem.dataset.lineNumber = error.lineNumber; // Store line number for click handling
+                        errorList.appendChild(listItem);
+                    });
+                    validationResultsDiv.appendChild(errorList);
+                }
+            }
+        }
+
+        // Handles clicks on the error list items
+        function handleResultClick(event) {
+            const listItem = event.target.closest('li[data-line-number]');
+            if (listItem) {
+                const lineNumber = parseInt(listItem.dataset.lineNumber, 10);
+
+                // Remove previous highlight if any
+                if (currentHighlightedLineHandle) {
+                    editor.removeLineClass(currentHighlightedLineHandle, 'background', 'highlighted-line');
+                }
+
+                // Add new highlight to the line (CodeMirror lines are 0-indexed)
+                currentHighlightedLineHandle = editor.addLineClass(lineNumber - 1, 'background', 'highlighted-line');
+
+                // Set cursor to the beginning of the line and scroll it into view
+                editor.setCursor(lineNumber - 1, 0);
+                editor.focus();
+                // Scroll into view with some padding (50 pixels)
+                editor.scrollIntoView({ line: lineNumber - 1, ch: 0 }, 50);
+            }
+        }
+
 
         // Initialize CodeMirror and set up event listeners on window load
         window.onload = function() {
@@ -2129,7 +2634,7 @@
                                         return NodeFilter.FILTER_REJECT; // Reject if inside these tags
                                     }
                                     parent = parent.parentNode;
-                                }
+                                    }
                                 return NodeFilter.FILTER_ACCEPT; // Accept other text nodes
                             }
                         },
@@ -2229,7 +2734,7 @@
                         let nonOverlappingMatches = [];
                         let processedRanges = []; // To keep track of text ranges already covered by a tag
 
-                        allMatches.forEach(match => {
+                        allMatches.forEach(match => { // Changed from nonOverlappingMatches.forEach to allMatches.forEach
                             let isOverlapping = false;
                             for (const range of processedRanges) {
                                 // Check if the current match overlaps with any already processed range
@@ -2514,9 +3019,20 @@
                 }
             });
 
+            // Validate button event listener
+            validateBtn.addEventListener('click', () => validateHtml(true)); // Pass true to show results on click
+            validationResultsDiv.addEventListener('click', handleResultClick);
+            dismissValidationBtn.addEventListener('click', () => {
+                validationResultsContainer.classList.add('hidden'); // Hide the results container
+                // The validateHtml(false) call on editor change will ensure the button color is correct.
+                // No need to manually reset it to blue here.
+            });
+
+
             editor.on('change', () => {
                 updatePreview();
                 updateUndoRedoButtonStates(); // Update button states on any change
+                validateHtml(false); // Run validation silently on change to update button color
             });
 
             // Add beforeunload event listener for warning
@@ -2545,7 +3061,7 @@
             updateWetGcdsButtonState(); // Initial state for WET/GCDS button
             // Set initial visibility of H1 title input container
             h1TitleInputContainer.style.display = showTitle ? 'block' : 'none';
-
+            validateHtml(false); // Initial validation to set button color
 
             window.addEventListener('resize', () => {
                 editor.refresh();
