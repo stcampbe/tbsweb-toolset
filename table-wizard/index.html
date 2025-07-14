@@ -22,10 +22,24 @@
             flex-direction: column;
             background-color: #09090b; /* Very dark zinc */
         }
+        .table-wizard-header {
+            padding: 1rem;
+            display: flex; /* Use flexbox for alignment */
+            align-items: center; /* Vertically align items */
+            gap: 1rem; /* Space between title and buttons */
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+        }
+
+        .table-wizard-header h1 {
+            font-size: 1.25rem; /* text-4xl */
+            font-weight: bold;
+            color: #ffffff;
+            margin-right: auto; /* Push buttons to the right */
+        }
         .editor-container { /* This will now be the main-wrapper, similar to Rich Text Editor */
             display: flex;
             flex-grow: 1; /* Allow container to grow and fill available space */
-            padding: 1rem; /* Apply padding to all sides */
+            padding: 0 1rem 1rem 1rem;
             gap: 1rem; /* Space between editor and sidebar (now removed, but gap remains for consistency) */
             margin: 0;
             width: 100%; /* Full width */
@@ -422,8 +436,6 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            margin-top: 1rem; /* Added margin-top to separate from editor */
-            padding-top: 0.5rem; /* Added padding-top */
             color: #d4d4d8;
         }
 
@@ -542,29 +554,43 @@
             /* Removed min-width: 280px; */
         }
         
-        /* New styles for the interaction mode toggle */
-        .interaction-mode-toggle {
+        /* New styles for the interaction mode toggle (now removed) */
+        /* .interaction-mode-toggle {
             margin-bottom: 0.5rem;
             padding: 0 0.5rem;
         }
 
         .interaction-mode-toggle .button-group {
             max-width: 300px;
-        }
+        } */
 
         /* End of New/Modified styles for Customize Modal Layout */
 
     </style>
 </head>
 <body>
+    <header class="table-wizard-header">
+        <h1 class="text-left">AutoTabler™ - HTML Table Wizard</h1>
+        <a href="/tbsweb-toolset/rich-content-wizard/" class="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold">Content Wizard</a>
+        <a href="/tbsweb-toolset/table-wizard/" class="px-3 py-1 text-sm text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold bg-gray-400 cursor-not-allowed opacity-60" disabled="">Table Wizard</a>
+        <a href="/tbsweb-toolset/qa-wizard/" class="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold">QA Wizard</a></header>
     <div class="editor-container">
         <!-- Main Content Area (Monaco Editor and Action Buttons) -->
         <div class="code-panel">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-semibold text-white">Table Code Editor</h2>
-                <button id="open-options-modal-btn" class="ml-4 px-4 py-2 text-base bg-blue-700 text-white rounded-md hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-semibold">
+                <button id="open-options-modal-btn" class="px-4 py-2 text-base bg-blue-700 text-white rounded-md hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-semibold">
                     Universal Format
                 </button>
+                <!-- Moved Table Select Dropdown and Customize Button here -->
+                <div class="table-select-container ml-4">
+                    <label for="table-search-dropdown" class="text-sm font-medium">Table Select:</label>
+                    <select id="table-search-dropdown" class="text-sm">
+                        <option value="">-- Select a table --</option>
+                    </select>
+                    <button id="customize-button" class="px-3 py-1 text-sm bg-blue-800 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-opacity-50 font-bold" disabled>
+                        Customize
+                    </button>
+                </div>
                 <div class="inline-flex space-x-2 ml-auto mt-2 sm:mt-0">
                     <button id="importHtmlBtn" class="px-3 py-1 text-sm bg-purple-700 text-white rounded-md hover:bg-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-opacity-50 font-bold">Import HTML</button>
                     <button id="exportHtmlBtn" class="px-3 py-1 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-bold">Export HTML</button>
@@ -578,8 +604,8 @@
             <!-- Monaco Editor takes full remaining space -->
             <div id="editor-container"></div>
 
-            <!-- New: Table Select Dropdown and Customize Button at the bottom -->
-            <div class="table-select-container">
+            <!-- Removed: New: Table Select Dropdown and Customize Button at the bottom -->
+            <!-- <div class="table-select-container">
                 <label for="table-search-dropdown" class="text-sm font-medium">Table Select:</label>
                 <select id="table-search-dropdown" class="text-sm">
                     <option value="">-- Select a table --</option>
@@ -587,7 +613,7 @@
                 <button id="customize-button" class="px-3 py-1 text-sm bg-blue-800 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-opacity-50 font-bold" disabled>
                     Customize
                 </button>
-            </div>
+            </div> -->
 
             <!-- Action Buttons at the bottom of the code-panel -->
             <div class="mt-auto pt-4 flex justify-center space-x-2">
@@ -899,13 +925,13 @@
             <div class="customize-main-content-wrapper">
                 <!-- Preview Wrapper (3/4 width on md and up) -->
                 <div class="customize-preview-wrapper flex flex-col">
-                    <!-- NEW: Interaction Mode Toggle -->
-                    <div class="interaction-mode-toggle">
+                    <!-- Removed: NEW: Interaction Mode Toggle -->
+                    <!-- <div class="interaction-mode-toggle">
                         <div id="interaction-mode-group" class="button-group">
                             <button id="select-mode-btn" data-mode="select" class="active">Select Mode</button>
                             <button id="type-mode-btn" data-mode="type">Type Mode</button>
                         </div>
-                    </div>
+                    </div> -->
                     <iframe id="customize-preview-iframe" class="flex-grow"></iframe>
                 </div>
 
@@ -1136,7 +1162,7 @@
         let messageTimeoutId; // Timeout for message box
         let tableDataMap = new Map(); // Stores {optionValue: {startIndex: ...}} for jump functionality
         let currentHighlightDecorationId = []; // Stores the ID of the current highlight decoration
-        let previewInteractionMode = 'select'; // 'select' or 'type'
+        // Removed: let previewInteractionMode = 'select'; // 'select' or 'type'
 
         // Initialize global state variables for alignment options
         // These are for the UNIVERSAL format modal
@@ -2135,7 +2161,7 @@
             // This ensures correct precedence if it's both a column header and a row header.
             console.log('Applying Row Headers Alignment. Current rowHeaderAlignment:', options.currentRowHeaderAlignment);
             if (options.applyRowHeader && newThead.firstElementChild && newThead.firstElementChild.firstElementChild && newThead.firstElementChild.firstElementChild.tagName.toLowerCase() === 'th') {
-                applyAlignment(newThead.firstElementChild.firstElementChild, options.currentRowHeaderAlignment, alignmentClasses);
+                applyAlignment(newThead.firstElementChild.firstElementChild, alignmentClasses);
             }
 
 
@@ -2429,7 +2455,7 @@
     <script>
         // JavaScript to be injected into the iframe
         document.addEventListener('DOMContentLoaded', () => {
-            let currentMode = 'select'; // Default mode
+            // Removed: let currentMode = 'select'; // Default mode
             const table = document.querySelector('table');
             if (!table) return;
 
@@ -2442,22 +2468,7 @@
                 document.querySelectorAll('.highlighted-column').forEach(hCol => hCol.classList.remove('highlighted-column'));
             }
 
-            function updateCellBehavior() {
-                allCells.forEach(cell => {
-                    if (currentMode === 'type') {
-                        cell.setAttribute('contenteditable', 'true');
-                        cell.style.cursor = 'text';
-                        // In type mode, remove highlight and hover to avoid confusion
-                        cell.classList.remove('highlighted-cell', 'hovered-cell', 'highlighted-column');
-                        if (cell.parentNode) { // Check if parent exists before trying to remove class
-                            cell.parentNode.classList.remove('highlighted-row'); // Also clear row highlight
-                        }
-                    } else { // 'select' mode
-                        cell.setAttribute('contenteditable', 'false');
-                        cell.style.cursor = 'pointer';
-                    }
-                });
-            }
+            // Removed: function updateCellBehavior() { ... }
 
             // Helper to get all cells in a specific visual column index (accounting for colspans/rowspans)
             function getCellsInVisualColumn(table, targetVisualColIndex) {
@@ -2506,80 +2517,78 @@
                 return Array.from(columnCells);
             }
 
-            // Handle clicks on cells
+            // Handle clicks on cells (simplified as there's no mode toggle)
             allCells.forEach(cell => {
                 cell.addEventListener('click', function(event) {
-                    if (currentMode === 'select') {
-                        event.stopPropagation(); // Prevent event from bubbling to document
-                        clearAllHighlights(); // Clear all existing highlights
+                    event.stopPropagation(); // Prevent event from bubbling to document
+                    clearAllHighlights(); // Clear all existing highlights
 
-                        const row = this.closest('tr');
-                        const table = this.closest('table');
+                    const row = this.closest('tr');
+                    const table = this.closest('table');
 
-                        // Do not select cells within tfoot or if their containing row is tfoot
-                        if (row.closest('tfoot') || this.closest('tfoot')) {
-                            return;
-                        }
+                    // Do not select cells within tfoot or if their containing row is tfoot
+                    if (row.closest('tfoot') || this.closest('tfoot')) {
+                        return;
+                    }
 
-                        if ((event.ctrlKey || event.metaKey) && event.shiftKey) { // Ctrl/Cmd + Shift + Click: Select WHOLE COLUMN
-                            // Determine the visual column index of the clicked cell
-                            let clickedCellVisualColIndex = 0;
-                            let currentRowVisualCol = 0;
-                            const currentRowCells = Array.from(row.cells);
-                            for (let i = 0; i < currentRowCells.length; i++) {
-                                const currentCell = currentRowCells[i];
-                                const colspan = parseInt(currentCell.getAttribute('colspan') || '1', 10);
-                                if (currentCell === this) {
-                                    clickedCellVisualColIndex = currentRowVisualCol;
-                                    break;
-                                }
-                                currentRowVisualCol += colspan;
+                    if ((event.ctrlKey || event.metaKey) && event.shiftKey) { // Ctrl/Cmd + Shift + Click: Select WHOLE COLUMN
+                        // Determine the visual column index of the clicked cell
+                        let clickedCellVisualColIndex = 0;
+                        let currentRowVisualCol = 0;
+                        const currentRowCells = Array.from(row.cells);
+                        for (let i = 0; i < currentRowCells.length; i++) {
+                            const currentCell = currentRowCells[i];
+                            const colspan = parseInt(currentCell.getAttribute('colspan') || '1', 10);
+                            if (currentCell === this) {
+                                clickedCellVisualColIndex = currentRowVisualCol;
+                                break;
                             }
-                            
-                            const cellsInColumn = getCellsInVisualColumn(table, clickedCellVisualColIndex);
-                            cellsInColumn.forEach(c => c.classList.add('highlighted-column', 'highlighted-cell'));
+                            currentRowVisualCol += colspan;
+                        }
+                        
+                        const cellsInColumn = getCellsInVisualColumn(table, clickedCellVisualColIndex);
+                        cellsInColumn.forEach(c => c.classList.add('highlighted-column', 'highlighted-cell'));
 
-                        } else if (event.shiftKey) { // Shift + Click: Select WHOLE ROW
+                    } else if (event.shiftKey) { // Shift + Click: Select WHOLE ROW
+                        row.classList.add('highlighted-row');
+                        Array.from(row.cells).forEach(c => c.classList.add('highlighted-cell'));
+                    }
+                    else if (this.tagName.toLowerCase() === 'th') { // Original header selection logic for THs (if no modifiers)
+                        // Check if it's a row header (first cell in a tbody row)
+                        if (row.parentNode.tagName.toLowerCase() === 'tbody' && row.firstElementChild === this) {
+                            // Select whole row
                             row.classList.add('highlighted-row');
                             Array.from(row.cells).forEach(c => c.classList.add('highlighted-cell'));
-                        }
-                        else if (this.tagName.toLowerCase() === 'th') { // Original header selection logic for THs (if no modifiers)
-                            // Check if it's a row header (first cell in a tbody row)
-                            if (row.parentNode.tagName.toLowerCase() === 'tbody' && row.firstElementChild === this) {
-                                // Select whole row
-                                row.classList.add('highlighted-row');
-                                Array.from(row.cells).forEach(c => c.classList.add('highlighted-cell'));
-                            } 
-                            // Check if it's a column header (in thead or first row of tbody if no thead)
-                            else if (row.parentNode.tagName.toLowerCase() === 'thead' || (row.parentNode.tagName.toLowerCase() === 'tbody' && row === table.rows[0])) {
-                                // Select whole column based on original header logic
-                                let headerVisualColIndex = 0;
-                                const headerCellsInRow = Array.from(row.cells);
-                                for (let i = 0; i < headerCellsInRow.length; i++) {
-                                    const currentCell = headerCellsInRow[i];
-                                    const colspan = parseInt(currentCell.getAttribute('colspan') || '1', 10);
-                                    if (currentCell === this) {
-                                        headerVisualColIndex = currentVisualCol; // Corrected to use currentVisualCol which is accurate for this loop
-                                        break;
-                                    }
-                                    headerVisualColIndex += colspan;
+                        } 
+                        // Check if it's a column header (in thead or first row of tbody if no thead)
+                        else if (row.parentNode.tagName.toLowerCase() === 'thead' || (row.parentNode.tagName.toLowerCase() === 'tbody' && row === table.rows[0])) {
+                            // Select whole column based on original header logic
+                            let headerVisualColIndex = 0;
+                            const headerCellsInRow = Array.from(row.cells);
+                            for (let i = 0; i < headerCellsInRow.length; i++) {
+                                const currentCell = headerCellsInRow[i];
+                                const colspan = parseInt(currentCell.getAttribute('colspan') || '1', 10);
+                                if (currentCell === this) {
+                                    headerVisualColIndex = currentVisualCol; // Corrected to use currentVisualCol which is accurate for this loop
+                                    break;
                                 }
-                                
-                                const cellsInColumn = getCellsInVisualColumn(table, headerVisualColIndex);
-                                cellsInColumn.forEach(c => c.classList.add('highlighted-column', 'highlighted-cell'));
+                                headerVisualColIndex += colspan;
                             }
-                            else { // fallback to single cell if header but not clearly row/col header
-                                this.classList.add('highlighted-cell');
-                            }
-                        } else { // Regular cell selection (no modifier keys, not a specific header type)
+                            
+                            const cellsInColumn = getCellsInVisualColumn(table, headerVisualColIndex);
+                            cellsInColumn.forEach(c => c.classList.add('highlighted-column', 'highlighted-cell'));
+                        }
+                        else { // fallback to single cell if header but not clearly row/col header
                             this.classList.add('highlighted-cell');
                         }
+                    } else { // Regular cell selection (no modifier keys, not a specific header type)
+                        this.classList.add('highlighted-cell');
                     }
                 });
 
-                // Add hover state for 'select' mode
+                // Add hover state for all cells (since type mode is removed)
                 cell.addEventListener('mouseover', function() {
-                    if (currentMode === 'select' && !this.classList.contains('highlighted-cell') &&
+                    if (!this.classList.contains('highlighted-cell') &&
                         !this.classList.contains('highlighted-row') && !this.classList.contains('highlighted-column')) {
                         this.classList.add('hovered-cell');
                     }
@@ -2591,30 +2600,23 @@
 
                  // Update parent editor on blur (when typing stops)
                 cell.addEventListener('blur', function() {
-                    if (currentMode === 'type') {
-                        const updatedTableHtml = table.outerHTML;
-                        window.parent.postMessage({
-                            type: 'updateTableContent',
-                            tableHtml: updatedTableHtml
-                        }, '*');
-                    }
+                    // Always treat as type mode for content updates
+                    const updatedTableHtml = table.outerHTML;
+                    window.parent.postMessage({
+                        type: 'updateTableContent',
+                        tableHtml: updatedTableHtml
+                    }, '*');
                 });
             });
 
-            // Clear highlight when clicking anywhere outside a cell in select mode
+            // Clear highlight when clicking anywhere outside a cell
             document.body.addEventListener('click', function() {
-                if (currentMode === 'select') {
-                    clearAllHighlights();
-                }
+                clearAllHighlights();
             });
 
             // Listen for messages from the parent
             window.addEventListener('message', (event) => {
-                if (event.data && event.data.type === 'setInteractionMode') {
-                    currentMode = event.data.mode;
-                    updateCellBehavior();
-                    clearAllHighlights(); // Clear highlights when mode changes
-                } else if (event.data && event.data.type === 'updateTableId' && table) {
+                if (event.data && event.data.type === 'updateTableId' && table) {
                     const newId = event.data.newId;
                     if (newId) {
                         table.id = newId;
@@ -2624,15 +2626,18 @@
                 } else if (event.data && event.data.type === 'resetCellStates') {
                     // Reset contenteditable and styling
                     allCells.forEach(cell => {
-                        cell.setAttribute('contenteditable', 'false');
-                        cell.style.cursor = 'default'; // Reset cursor
+                        cell.setAttribute('contenteditable', 'true'); // Always contenteditable
+                        cell.style.cursor = 'text'; // Always text cursor
                     });
                     clearAllHighlights(); // Clear all highlights on reset
                 }
             });
 
-            // Initial setup
-            updateCellBehavior();
+            // Initial setup: all cells are contenteditable by default
+            allCells.forEach(cell => {
+                cell.setAttribute('contenteditable', 'true');
+                cell.style.cursor = 'text';
+            });
 
              // Notify parent that iframe is ready to receive mode
             window.parent.postMessage({ type: 'iframeReady' }, '*');
@@ -2751,8 +2756,8 @@
         const closeCustomizeModalButton = document.getElementById('close-customize-modal-btn');
         const formatSpecificTableButton = document.getElementById('format-specific-table-button');
         const customizePreviewIframe = document.getElementById('customize-preview-iframe'); // New iframe reference
-        const selectModeBtn = document.getElementById('select-mode-btn');
-        const typeModeBtn = document.getElementById('type-mode-btn');
+        // Removed: const selectModeBtn = document.getElementById('select-mode-btn');
+        // Removed: const typeModeBtn = document.getElementById('type-mode-btn');
 
         // Customize Modal controls (all prefixed with customize-)
         const customizePageIdPrefixInput = document.getElementById('customize-page-id-prefix-input'); // Renamed to Custom ID
@@ -2786,9 +2791,9 @@
             importHtmlBtn,
             exportHtmlBtn,
             customizeButton,
-            formatSpecificTableButton, // Add the new customize modal's format button
-            selectModeBtn,
-            typeModeBtn
+            formatSpecificTableButton // Add the new customize modal's format button
+            // Removed: selectModeBtn,
+            // Removed: typeModeBtn
         );
 
         // Event listeners for modals
@@ -3249,11 +3254,11 @@
         // Listen for messages from the iframe (for content updates)
         window.addEventListener('message', (event) => {
             if (event.data && event.data.type === 'iframeReady') {
-                // When iframe is ready, send the initial mode
-                customizePreviewIframe.contentWindow.postMessage({
-                    type: 'setInteractionMode',
-                    mode: previewInteractionMode
-                }, '*');
+                // When iframe is ready, send the initial mode (no longer needed, but keeping for general iframe communication)
+                // Removed: customizePreviewIframe.contentWindow.postMessage({
+                //     type: 'setInteractionMode',
+                //     mode: previewInteractionMode
+                // }, '*');
             } else if (event.data && event.data.type === 'updateTableContent') {
                 const updatedTableHtml = event.data.tableHtml;
                 const selectedValue = tableSearchDropdown.value;
@@ -3293,20 +3298,20 @@
             }
         });
 
-        // Event Listeners for Interaction Mode Toggle
-        selectModeBtn.addEventListener('click', () => {
-            previewInteractionMode = 'select';
-            selectModeBtn.classList.add('active');
-            typeModeBtn.classList.remove('active');
-            customizePreviewIframe.contentWindow.postMessage({ type: 'setInteractionMode', mode: 'select' }, '*');
-        });
+        // Removed: Event Listeners for Interaction Mode Toggle
+        // selectModeBtn.addEventListener('click', () => {
+        //     previewInteractionMode = 'select';
+        //     selectModeBtn.classList.add('active');
+        //     typeModeBtn.classList.remove('active');
+        //     customizePreviewIframe.contentWindow.postMessage({ type: 'setInteractionMode', mode: 'select' }, '*');
+        // });
 
-        typeModeBtn.addEventListener('click', () => {
-            previewInteractionMode = 'type';
-            typeModeBtn.classList.add('active');
-            selectModeBtn.classList.remove('active');
-            customizePreviewIframe.contentWindow.postMessage({ type: 'setInteractionMode', mode: 'type' }, '*');
-        });
+        // typeModeBtn.addEventListener('click', () => {
+        //     previewInteractionMode = 'type';
+        //     typeModeBtn.classList.add('active');
+        //     selectModeBtn.classList.remove('active');
+        //     customizePreviewIframe.contentWindow.postMessage({ type: 'setInteractionMode', mode: 'type' }, '*');
+        // });
 
 
         // Wrap Monaco editor initialization and main event listener attachments in window.onload
