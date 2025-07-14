@@ -22,10 +22,25 @@
             flex-direction: column;
             background-color: #0F172A; /* Dark slate */
         }
+        /* New header for the QA Wizard title */
+        .content-wizard-header {
+            padding: 1rem;
+            display: flex; /* Use flexbox for alignment */
+            align-items: center; /* Vertically align items */
+            gap: 1rem; /* Space between title and buttons */
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+        }
+
+        .content-wizard-header h1 {
+            font-size: 1.25rem; /* text-4xl */
+            font-weight: bold;
+            color: #ffffff;
+            margin-right: auto; /* Push buttons to the right */
+        }
         .editor-container {
             display: flex;
             flex-grow: 1; /* Allow container to grow and fill available space */
-            padding: 1rem; /* Apply padding to all sides */
+            padding: 0 1rem 1rem 1rem;
             gap: 1rem; /* Space between editor and richtext-output */
             margin: 0;
             width: 100%; /* Full width */
@@ -34,7 +49,18 @@
             overflow-y: hidden; /* Prevent editor container from scrolling its children */
             overflow-x: hidden; /* Prevent horizontal scrolling */
         }
-        .code-panel, .richtext-output-panel {
+        
+        /* New container for the Monaco editor and the sidebar */
+        .main-editor-area {
+            display: flex;
+            flex-grow: 1; /* Allow this area to take up remaining horizontal space */
+            gap: 1rem; /* Space between code-panel and sidebar-panel */
+            height: 100%; /* Take full height of editor-container */
+            box-sizing: border-box;
+            overflow: hidden; /* Prevent horizontal scroll in this container */
+        }
+
+        .code-panel, .richtext-output-panel, .sidebar-panel {
             background-color: #1E293B; /* Darker slate */
             border-radius: 0.75rem; /* rounded-xl */
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); /* Darker shadow */
@@ -50,25 +76,11 @@
             overflow-x: hidden; /* Prevent horizontal scrollbar on panels unless explicitly needed */
         }
 
-        /* Resizer bar styling */
-        .resizer {
-            width: 10px; /* Width of the draggable bar */
-            background-color: #475569; /* Medium slate */
-            cursor: ew-resize; /* East-west resize cursor */
-            flex-shrink: 0; /* Prevent resizer from shrinking */
-            border-radius: 0.25rem; /* Slightly rounded corners */
-            transition: background-color 0.2s ease; /* Smooth transition on hover */
-        }
-        .resizer:hover {
-            background-color: #64748B; /* Lighter slate on hover */
-        }
-
         /* Monaco Editor specific styling */
         #monacoEditorContainer {
             min-height: 200px; /* Ensure it has a minimum height */
-            flex-basis: 75%; /* Initial basis: 75% */
-            flex-grow: 0;   /* Controlled by JS */
-            flex-shrink: 0; /* Controlled by JS */
+            flex-grow: 1;   /* Monaco will fill its parent (code-panel) */
+            flex-shrink: 1;
             height: 100%; /* Make Monaco take full height of its flex parent */
             /* Monaco editor will handle its own internal scrolling due to automaticLayout: true */
         }
@@ -85,10 +97,10 @@
         }
 
         /* Sidebar styling */
-        #sidebar {
-            flex-basis: 25%; /* Initial basis: 25% */
-            flex-grow: 1;   /* Allow it to grow horizontally */
-            flex-shrink: 1; /* Allow it to shrink horizontally */
+        .sidebar-panel { /* Changed from #sidebar to .sidebar-panel */
+            flex-basis: 300px; /* Fixed width for sidebar */
+            flex-grow: 0;   /* Prevent sidebar from growing */
+            flex-shrink: 0; /* Prevent sidebar from shrinking */
             overflow-y: auto; /* Enable vertical scrolling for sidebar content */
             overflow-x: hidden; /* Prevent horizontal scrolling on sidebar */
             min-height: 0; /* Crucial for flex items to scroll correctly if content overflows */
@@ -148,56 +160,34 @@
             flex-shrink: 0;
         }
 
-        /* The main content area within the code panel (Monaco + Sidebar) */
-        /* This div needs to correctly take up remaining vertical space */
-        .code-panel > .flex.flex-grow.gap-4 {
-            flex-grow: 1; /* Ensures it takes all remaining vertical space */
-            height: 100%; /* Explicit height is often helpful in nested flex */
-            display: flex; /* Already a flex container */
-            gap: 1rem; /* Space between Monaco and Sidebar */
-            overflow: hidden; /* Prevent this container from scrolling */
-        }
-
-
         /* Responsive adjustments */
         @media (max-width: 768px) {
             .editor-container {
                 flex-direction: column; /* Stack vertically on small screens */
                 height: 100%; /* Ensure it occupies full height */
             }
-            .resizer {
-                width: 100%; /* Full width for vertical resizer on small screens */
-                height: 10px; /* Height for vertical resizer */
-                cursor: ns-resize; /* North-south resize cursor */
+            .main-editor-area {
+                flex-direction: column; /* Stack code-panel and sidebar-panel vertically */
+                height: auto; /* Allow content to dictate height */
+                flex-grow: 1; /* Allow it to grow vertically */
             }
-            .code-panel, .richtext-output-panel {
+            .code-panel, .richtext-output-panel, .sidebar-panel {
                 height: auto; /* Allow content to dictate height, but flex-grow will ensure it fills space */
                 flex-basis: auto; /* Reset flex-basis set by JS for horizontal layout */
                 flex-grow: 1; /* Each panel should grow to fill vertical space */
                 overflow-y: hidden; /* Main panel should not scroll, its children will */
             }
 
-            /* Stack editor and sidebar vertically on small screens */
-            .code-panel > .flex.flex-grow.gap-4 { /* Target the div containing Monaco and Sidebar */
-                flex-direction: column;
-                height: auto; /* Allow this container to take necessary height */
-                flex-grow: 1; /* Make this container grow to fill vertical space within code-panel */
-                overflow-y: hidden; /* Its children will handle overflow */
-                overflow-x: hidden;
-            }
-
             #monacoEditorContainer {
                 width: 100%; /* Full width on small screens */
                 flex-grow: 1; /* Allow Monaco to grow vertically */
                 flex-shrink: 1; /* Allow Monaco to shrink */
-                /* Removed height: 50%; to allow flex-grow to work better */
                 min-height: 250px; /* Minimum height for editor usability */
             }
-            #sidebar {
+            .sidebar-panel { /* Changed from #sidebar */
                 width: 100%; /* Full width on small screens */
                 flex-grow: 1; /* Allow sidebar to grow vertically */
                 flex-shrink: 1; /* Allow sidebar to shrink */
-                /* Removed height: 50%; to allow flex-grow to work better */
                 min-height: 250px; /* Minimum height for sidebar usability */
                 overflow-y: auto; /* This is crucial for scrolling sidebar content */
                 overflow-x: hidden;
@@ -575,11 +565,15 @@
     </style>
 </head>
 <body>
+    <header class="content-wizard-header">
+        <h1 class="text-left">WordToCode™ - Rich Content Wizard</h1>
+        <a href="#" class="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold">Table Wizard</a>
+        <a href="#" class="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold">QA Wizard</a>
+    </header>
     <div class="editor-container">
         <div id="richtextOutputPanel" class="richtext-output-panel panel-visible">
             <div class="flex items-center mb-4">
-                <h2 class="text-xl font-semibold text-white">Rich-Text Editor</h2>
-                <button id="toggleEditorViewBtnRichText" class="ml-4 px-4 py-2 text-base font-semibold bg-cyan-700 text-white rounded-md hover:bg-cyan-800 focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:ring-opacity-50 font-bold">
+                <button id="toggleEditorViewBtnRichText" class="px-4 py-2 text-base font-semibold bg-cyan-700 text-white rounded-md hover:bg-cyan-800 focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:ring-opacity-50 font-bold">
                     Go to HTML
                 </button>
                 <!-- Auto-Clean MSO toggle for Rich-Text Editor -->
@@ -594,159 +588,157 @@
             <iframe id="default_ifr"></iframe>
         </div>
 
-        <div id="codePanel" class="code-panel panel-hidden">
-            <div class="flex items-center mb-4 flex-wrap">
-                <h2 class="text-xl font-semibold text-white">HTML Editor</h2>
-                <button id="toggleEditorViewBtnCode" class="ml-4 px-4 py-2 text-base font-semibold bg-cyan-700 text-white rounded-md hover:bg-cyan-800 focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:ring-opacity-50 font-bold">
-                    Go to Rich-Text
-                </button>
-                <!-- Auto-Clean MSO toggle for HTML Editor -->
-                <div class="ml-4 p-2 bg-slate-700 rounded-lg flex items-center gap-2">
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="toggleAutoCleanMsoOnSwitchCode">
-                        <span class="toggle-switch-slider"></span>
-                    </label>
-                    <span class="toggle-switch-label text-white text-sm">Auto-Clean MSO</span>
-                </div>
-                <!-- New Clean Mso Button -->
-                <button id="cleanMsoBtn" class="ml-4 px-4 py-2 text-base bg-blue-700 text-white rounded-md hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold">
-                    Clean MSO
-                </button>
-                <div class="inline-flex space-x-2 ml-auto mt-2 sm:mt-0">
-                    <button id="importHtmlBtn" class="px-3 py-1 text-sm bg-purple-700 text-white rounded-md hover:bg-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-opacity-50 font-bold">Import HTML</button>
-                    <button id="exportHtmlBtn" class="px-3 py-1 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-bold">Export HTML</button>
-                    <input type="file" id="htmlFileInput" accept=".html" style="display: none;">
-                </div>
-            </div>
-
-            <div class="flex flex-grow gap-4">
-                <div id="monacoEditorContainer" class="flex-grow border border-slate-700 rounded-lg overflow-hidden"></div>
-
-                <!-- Resizer for Monaco and Sidebar -->
-                <div id="monacoResizer" class="resizer"></div>
-
-                <div id="sidebar">
-                    <h3 class="text-lg font-semibold text-white mb-4">Quick Formatting</h3>
-
-                    <div class="button-list">
-                        <!-- Clean Spaces Toggle -->
-                        <div class="toggle-switch-container">
-                            <label class="toggle-switch is-checked" for="toggleCleanSpaces">
-                                <input type="checkbox" id="toggleCleanSpaces" checked>
-                                <span class="toggle-switch-slider"></span>
-                            </label>
-                            <span class="toggle-switch-label text-white text-sm">Clean Spaces</span>
-                        </div>
-
-                        <!-- Clean URLs Toggle -->
-                        <div class="toggle-switch-container">
-                            <label class="toggle-switch is-checked" for="toggleCleanUrls">
-                                <input type="checkbox" id="toggleCleanUrls" checked>
-                                <span class="toggle-switch-slider"></span>
-                            </label>
-                            <span class="toggle-switch-label text-white text-sm">Clean URLs</span>
-                        </div>
-                        
-                        <!-- Set Time Tags Toggle -->
-                        <div class="toggle-switch-container">
-                            <label class="toggle-switch is-checked" for="toggleTimeTags">
-                                <input type="checkbox" id="toggleTimeTags" checked>
-                                <span class="toggle-switch-slider"></span>
-                            </label>
-                            <span class="toggle-switch-label text-white text-sm">Set Time Tags</span>
-                        </div>
-
-                        <!-- Fix FN ID's Toggle -->
-                        <div class="toggle-switch-container">
-                            <label class="toggle-switch is-checked" for="toggleFixFnIds">
-                                <input type="checkbox" id="toggleFixFnIds" checked>
-                                <span class="toggle-switch-slider"></span>
-                            </label>
-                            <span class="toggle-switch-label text-white text-sm">Fix FN ID's</span>
-                        </div>
-
-                        <!-- Auto-Level Headings Toggle -->
-                        <div class="toggle-switch-container">
-                            <label class="toggle-switch is-checked" for="toggleAutoLevelHeadings">
-                                <input type="checkbox" id="toggleAutoLevelHeadings" checked>
-                                <span class="toggle-switch-slider"></span>
-                            </label>
-                            <span class="toggle-switch-label text-white text-sm">Auto-Level Headings</span>
-                        </div>
-
-                        <!-- Auto-Section Toggle -->
-                        <div class="toggle-switch-container">
-                            <label class="toggle-switch is-checked" for="toggleAutoSection">
-                                <input type="checkbox" id="toggleAutoSection" checked>
-                                <span class="toggle-switch-slider"></span>
-                            </label>
-                            <span class="toggle-switch-label text-white text-sm">Auto-Section</span>
-                        </div>
-                        
-                        <!-- Clean Single Breaks Toggle -->
-                        <div class="toggle-switch-container">
-                            <label class="toggle-switch" for="toggleCleanSingleBreaks">
-                                <input type="checkbox" id="toggleCleanSingleBreaks">
-                                <span class="toggle-switch-slider"></span>
-                            </label>
-                            <span class="toggle-switch-label text-white text-sm">Clean Single Breaks</span>
-                        </div>
-
-                        <!-- NEW: Clean <p> in Tables Toggle -->
-                        <div class="toggle-switch-container">
-                            <label class="toggle-switch" for="toggleCleanPTables">
-                                <input type="checkbox" id="toggleCleanPTables">
-                                <span class="toggle-switch-slider"></span>
-                            </label>
-                            <span class="toggle-switch-label text-white text-sm">Clean &lt;p&gt; in Tables</span>
-                        </div>
-
-                        <!-- Clean <u> | <b> | <i> Toggle -->
-                        <div class="toggle-switch-container">
-                            <label class="toggle-switch" for="toggleCleanFormattingTags">
-                                <input type="checkbox" id="toggleCleanFormattingTags">
-                                <span class="toggle-switch-slider"></span>
-                            </label>
-                            <span class="toggle-switch-label text-white text-sm">Clean &lt;u&gt; | &lt;b&gt; | &lt;i&gt;</span>
-                        </div>
-                    </div>
-                    <!-- New Format Button for Quick Formatting Toggles -->
-                    <button id="formatSelectedBtn" class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold mb-4" disabled>
-                        Format
+        <!-- Main Editor Area: Contains Code Panel and Sidebar Panel -->
+        <div id="mainEditorArea" class="main-editor-area panel-hidden">
+            <div id="codePanel" class="code-panel">
+                <div class="flex items-center mb-4 flex-wrap">
+                    <button id="toggleEditorViewBtnCode" class="px-4 py-2 text-base font-semibold bg-cyan-700 text-white rounded-md hover:bg-cyan-800 focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:ring-opacity-50 font-bold">
+                        Go to Rich-Text
                     </button>
-
-
-                    <h3 class="text-lg font-semibold text-white mb-4">Quick Insert</h3>
-                    <div class="button-list">
-                        <!-- Auto-ID Button -->
-                        <button id="autoIdBtn" class="px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded-md">
-                            Element ID's
+                    <!-- Auto-Clean MSO toggle for HTML Editor -->
+                    <div class="ml-4 p-2 bg-slate-700 rounded-lg flex items-center gap-2">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="toggleAutoCleanMsoOnSwitchCode">
+                            <span class="toggle-switch-slider"></span>
+                        </label>
+                        <span class="toggle-switch-label text-white text-sm">Auto-Clean MSO</span>
+                    </div>
+                    <!-- New Clean Mso Button -->
+                    <button id="cleanMsoBtn" class="ml-4 px-4 py-2 text-base bg-blue-700 text-white rounded-md hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold">
+                        Clean MSO
+                    </button>
+                </div>
+                <!-- New row for Copy, Clear, Import, Export buttons -->
+                <div class="flex items-center mb-4 flex-wrap">
+                    <div class="inline-flex rounded-md shadow-sm" role="group">
+                        <button id="copyCodeBtn" class="px-4 py-1 text-sm bg-gray-700 text-white rounded-l-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-semibold">
+                            Copy Code
                         </button>
-                        <!-- Footnote List Button -->
-                        <button id="footnoteListBtn" class="px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded-md">
-                            Footnote List
-                        </button>
-                        <!-- Colophon Button -->
-                        <button id="colophonBtn" class="px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded-md">
-                            Colophon
+                        <button id="clearAllBtn" class="px-4 py-1 text-sm bg-gray-700 text-white rounded-r-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">
+                            Clear All
                         </button>
                     </div>
-
+                    <div class="inline-flex space-x-2 ml-4">
+                        <button id="importHtmlBtn" class="px-3 py-1 text-sm bg-purple-700 text-white rounded-md hover:bg-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-opacity-50 font-bold">Import HTML</button>
+                        <button id="exportHtmlBtn" class="px-3 py-1 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-bold">Export HTML</button>
+                        <input type="file" id="htmlFileInput" accept=".html" style="display: none;">
+                    </div>
                 </div>
 
+                <div id="monacoEditorContainer" class="flex-grow border border-slate-700 rounded-lg overflow-hidden"></div>
             </div>
 
-            <div class="mt-auto pt-4 flex justify-center space-x-2">
-                <button id="clearAllBtn" class="px-4 py-2 text-sm bg-slate-600 text-white rounded-md hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-semibold">Clear All</button>
-                <button id="autoEncodeBtn" class="px-4 py-2 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold">
+            <div id="sidebarPanel" class="sidebar-panel">
+                <h3 class="text-lg font-semibold text-white mb-4">Quick Formatting</h3>
+
+                <div class="button-list">
+                    <!-- Clean Spaces Toggle -->
+                    <div class="toggle-switch-container">
+                        <label class="toggle-switch is-checked" for="toggleCleanSpaces">
+                            <input type="checkbox" id="toggleCleanSpaces" checked>
+                            <span class="toggle-switch-slider"></span>
+                        </label>
+                        <span class="toggle-switch-label text-white text-sm">Clean Spaces</span>
+                    </div>
+
+                    <!-- Clean URLs Toggle -->
+                    <div class="toggle-switch-container">
+                        <label class="toggle-switch is-checked" for="toggleCleanUrls">
+                            <input type="checkbox" id="toggleCleanUrls" checked>
+                            <span class="toggle-switch-slider"></span>
+                        </label>
+                        <span class="toggle-switch-label text-white text-sm">Clean URLs</span>
+                    </div>
+                    
+                    <!-- Set Time Tags Toggle -->
+                    <div class="toggle-switch-container">
+                        <label class="toggle-switch is-checked" for="toggleTimeTags">
+                            <input type="checkbox" id="toggleTimeTags" checked>
+                            <span class="toggle-switch-slider"></span>
+                        </label>
+                        <span class="toggle-switch-label text-white text-sm">Set Time Tags</span>
+                    </div>
+
+                    <!-- Fix FN ID's Toggle -->
+                    <div class="toggle-switch-container">
+                        <label class="toggle-switch is-checked" for="toggleFixFnIds">
+                            <input type="checkbox" id="toggleFixFnIds" checked>
+                            <span class="toggle-switch-slider"></span>
+                        </label>
+                        <span class="toggle-switch-label text-white text-sm">Fix FN ID's</span>
+                    </div>
+
+                    <!-- Auto-Level Headings Toggle -->
+                    <div class="toggle-switch-container">
+                        <label class="toggle-switch is-checked" for="toggleAutoLevelHeadings">
+                            <input type="checkbox" id="toggleAutoLevelHeadings" checked>
+                            <span class="toggle-switch-slider"></span>
+                        </label>
+                        <span class="toggle-switch-label text-white text-sm">Auto-Level Headings</span>
+                    </div>
+
+                    <!-- Auto-Section Toggle -->
+                    <div class="toggle-switch-container">
+                        <label class="toggle-switch is-checked" for="toggleAutoSection">
+                            <input type="checkbox" id="toggleAutoSection" checked>
+                            <span class="toggle-switch-slider"></span>
+                        </label>
+                        <span class="toggle-switch-label text-white text-sm">Auto-Section</span>
+                    </div>
+                    
+                    <!-- Clean Single Breaks Toggle -->
+                    <div class="toggle-switch-container">
+                        <label class="toggle-switch" for="toggleCleanSingleBreaks">
+                            <input type="checkbox" id="toggleCleanSingleBreaks">
+                            <span class="toggle-switch-slider"></span>
+                        </label>
+                        <span class="toggle-switch-label text-white text-sm">Clean Single Breaks</span>
+                    </div>
+
+                    <!-- NEW: Clean <p> in Tables Toggle -->
+                    <div class="toggle-switch-container">
+                        <label class="toggle-switch" for="toggleCleanPTables">
+                            <input type="checkbox" id="toggleCleanPTables">
+                            <span class="toggle-switch-slider"></span>
+                        </label>
+                        <span class="toggle-switch-label text-white text-sm">Clean &lt;p&gt; in Tables</span>
+                    </div>
+
+                    <!-- Clean <u> | <b> | <i> Toggle -->
+                    <div class="toggle-switch-container">
+                        <label class="toggle-switch" for="toggleCleanFormattingTags">
+                            <input type="checkbox" id="toggleCleanFormattingTags">
+                            <span class="toggle-switch-slider"></span>
+                        </label>
+                        <span class="toggle-switch-label text-white text-sm">Clean &lt;u&gt; | &lt;b&gt; | &lt;i&gt;</span>
+                    </div>
+                </div>
+                <!-- New Format Button for Quick Formatting Toggles -->
+                <button id="formatSelectedBtn" class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold mb-4" disabled>
+                    Format
+                </button>
+                <button id="autoEncodeBtn" class="px-4 py-2 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50  font-bold mb-4">
                     Auto-Encode
                 </button>
-                <button id="autoFormatBtn" class="px-4 py-2 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold">
+                <button id="autoFormatBtn" class="px-4 py-2 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50  font-bold mb-4">
                     Auto-Indent
                 </button>
-                <button id="copyCodeBtn" class="px-4 py-2 text-sm bg-slate-600 text-white rounded-md hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-semibold">
-                    Copy Code
-                </button>
+
+                <h3 class="text-lg font-semibold text-white mb-4">Quick Insert</h3>
+                <div class="button-list">
+                    <!-- Auto-ID Button -->
+                    <button id="autoIdBtn" class="px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded-md">
+                        Element ID's
+                    </button>
+                    <!-- Footnote List Button -->
+                    <button id="footnoteListBtn" class="px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded-md">
+                        Footnote List
+                    </button>
+                    <!-- Colophon Button -->
+                    <button id="colophonBtn" class="px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded-md">
+                        Colophon
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -756,6 +748,7 @@
         const default_ifr = document.getElementById('default_ifr');
         const codePanel = document.getElementById('codePanel');
         const richtextOutputPanel = document.getElementById('richtextOutputPanel');
+        const mainEditorArea = document.getElementById('mainEditorArea'); // New: Reference to the main editor area
         const toggleEditorViewBtnRichText = document.getElementById('toggleEditorViewBtnRichText');
         const toggleEditorViewBtnCode = document.getElementById('toggleEditorViewBtnCode');
         const copyCodeBtn = document.getElementById('copyCodeBtn');
@@ -784,10 +777,10 @@
         const footnoteListBtn = document.getElementById('footnoteListBtn'); // New: Footnote List button
         // REMOVED: pageTocBtn, sectionTocBtn
 
-        // Monaco Resizer elements
+        // Monaco Resizer elements - now applies to panels
         const monacoEditorContainer = document.getElementById('monacoEditorContainer');
-        const monacoResizer = document.getElementById('monacoResizer');
-        const sidebar = document.getElementById('sidebar');
+        // const panelResizer = document.getElementById('panelResizer'); // Removed: Resizer element
+        const sidebarPanel = document.getElementById('sidebarPanel'); // Changed from sidebar
 
         // Auto-Clean MSO when switching toggles
         const toggleAutoCleanMsoOnSwitchRichText = document.getElementById('toggleAutoCleanMsoOnSwitchRichText');
@@ -1348,7 +1341,7 @@
          */
         function removeEmptyParagraphsOutsideTablesAndLists(htmlString) {
             const parser = new DOMParser();
-            const doc = parser.parseFromString(htmlString, 'text/html');
+            const doc = doc.parseFromString(htmlString, 'text/html');
             const paragraphs = doc.querySelectorAll('p');
 
             for (let i = paragraphs.length - 1; i >= 0; i--) {
@@ -1711,7 +1704,7 @@
                 // Condition 1: Check for existing MsoListParagraph classes
                 const isMsoListParagraphClass = classList.some(cls =>
                     cls === 'MsoListParagraphCxSpFirst' ||
-                    cls === 'MsoListParagraphCxSpMiddle' ||
+                    cls === 'MsoListParagraphCxSpSpMiddle' ||
                     cls === 'MsoListParagraphCxSpLast' ||
                     cls === 'MsoListParagraph'
                 );
@@ -3132,8 +3125,8 @@
                 // 3. Switch panel visibility.
                 richtextOutputPanel.classList.remove('panel-visible');
                 richtextOutputPanel.classList.add('panel-hidden');
-                codePanel.classList.remove('panel-hidden');
-                codePanel.classList.add('panel-visible');
+                mainEditorArea.classList.remove('panel-hidden'); // Show main editor area
+                mainEditorArea.classList.add('panel-visible');
 
                 // 4. Update button styles.
                 // "Go to HTML" button (toggleEditorViewBtnRichText) is now inactive/hidden.
@@ -3175,8 +3168,8 @@
                 }
 
                 // 3. Switch panel visibility.
-                codePanel.classList.remove('panel-visible');
-                codePanel.classList.add('panel-hidden');
+                mainEditorArea.classList.remove('panel-visible'); // Hide main editor area
+                mainEditorArea.classList.add('panel-hidden');
                 richtextOutputPanel.classList.remove('panel-hidden');
                 richtextOutputPanel.classList.add('panel-visible');
 
@@ -3478,7 +3471,7 @@
 					<div>
                         <label for="fnIdPrefix" class="block text-sm font-medium text-gray-200">ID Prefix (optional):</label>
                         <input type="text" id="fnIdPrefix" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., mydoc-">
-                    </div>
+					</div>
                 </div>
             `;
 
@@ -3785,12 +3778,25 @@
             }
         }
 
+        /**
+         * Performs auto-encoding of HTML entities to numeric entities.
+         * This function is now reusable by both the "Auto-Encode" button and the "Format" button.
+         * @param {string} htmlContent - The HTML content to encode.
+         * @returns {string} The encoded HTML content.
+         */
+        function doAutoEncode(htmlContent) {
+            let processedContent = protectDataAttributes(htmlContent);
+            processedContent = convertAllEntitiesToNumeric(processedContent);
+            processedContent = restoreDataAttributes(processedContent);
+            return processedContent;
+        }
+
         // Initialize and set up event listeners on window load
         window.onload = function() {
             console.log("Parent window.onload triggered.");
             // Initial setup: Ensure rich text panel is visible and code panel is hidden
             richtextOutputPanel.classList.add('panel-visible');
-            codePanel.classList.add('panel-hidden');
+            mainEditorArea.classList.add('panel-hidden'); // Hide main editor area initially
 
             // Set initial button styles based on default view (richtext)
             // The "Go to HTML" button is visible initially, so its color depends on the Mso toggle.
@@ -3830,63 +3836,6 @@
 
                 // Ensure Monaco refreshes layout on window resize
                 window.addEventListener('resize', debouncedMonacoLayout);
-
-                // Monaco Resizer Logic
-                let isResizing = false;
-                let initialMonacoWidth; // Keep track of pixel widths for calculations
-                let initialSidebarWidth;
-                let initialMouseX;
-
-                monacoResizer.addEventListener('mousedown', (e) => {
-                    isResizing = true;
-                    initialMonacoWidth = monacoEditorContainer.offsetWidth;
-                    initialSidebarWidth = sidebar.offsetWidth;
-                    initialMouseX = e.clientX;
-                    document.addEventListener('mousemove', onMouseMove);
-                    document.addEventListener('mouseup', onMouseUp);
-                    document.body.style.cursor = 'ew-resize';
-                    document.body.style.userSelect = 'none';
-                });
-
-                function onMouseMove(e) {
-                    if (!isResizing) return;
-                    const dx = e.clientX - initialMouseX;
-
-                    let newMonacoWidth = initialMonacoWidth + dx;
-                    let newSidebarWidth = initialSidebarWidth - dx;
-
-                    const minWidth = 200; // Minimum size in pixels for each panel
-                    
-                    // Ensure minimum widths
-                    if (newMonacoWidth < minWidth) {
-                        newMonacoWidth = minWidth;
-                        // Adjust sidebar width to maintain total space if Monaco hits min
-                        newSidebarWidth = initialMonacoWidth + initialSidebarWidth - newMonacoWidth;
-                    }
-                    if (newSidebarWidth < minWidth) {
-                        newMonacoWidth = minWidth;
-                        // Adjust Monaco width to maintain total space if Monaco hits min
-                        newMonacoWidth = initialMonacoWidth + initialSidebarWidth - newMonacoWidth;
-                    }
-
-                    // Apply the new widths directly to flex-basis
-                    monacoEditorContainer.style.flexBasis = `${newMonacoWidth}px`;
-                    sidebar.style.flexBasis = `${newSidebarWidth}px`;
-
-                    // No explicit layout call needed here for Monaco, automaticLayout should handle it.
-                }
-
-                function onMouseUp() {
-                    isResizing = false;
-                    document.removeEventListener('mousemove', onMouseMove);
-                    document.removeEventListener('mouseup', onMouseup);
-                    document.body.style.cursor = 'default';
-                    document.body.style.userSelect = '';
-                    // After resizing stops, call layout once to ensure final state is correct and stable.
-                    if (monacoEditorInstance) {
-                        monacoEditorInstance.layout();
-                    }
-                }
             });
 
             copyCodeBtn.addEventListener('click', async () => {
@@ -3897,7 +3846,6 @@
                     document.body.appendChild(tempTextArea);
                     tempTextArea.select();
                     document.execCommand('copy');
-                    document.body.removeChild(tempTextArea);
                     const originalText = copyCodeBtn.textContent;
                     copyCodeBtn.textContent = 'Copied!';
                     copyCodeBtn.classList.add('bg-green-500', 'hover:bg-green-600');
@@ -3958,14 +3906,7 @@
             autoEncodeBtn.addEventListener('click', () => {
                 if (monacoEditorInstance) {
                     let currentContent = monacoEditorInstance.getValue();
-                    // Do NOT decodeHtmlEntities here. Protect attributes directly from Monaco's value.
-                    currentContent = protectDataAttributes(currentContent); // Protect attributes (string replacement)
-
-                    let encodedContent = convertAllEntitiesToNumeric(currentContent); // Apply the encoding
-
-                    encodedContent = restoreDataAttributes(encodedContent); // Restore attributes
-                    // convertAllEntitiesToNumeric is the LAST step here, so no need to call it again after restore.
-                    // This is intentional as this button's purpose is to ensure all entities are numeric.
+                    let encodedContent = doAutoEncode(currentContent); // Call the new auto-encode function
 
                     monacoEditorInstance.setValue(encodedContent);
                     htmlOutputContent = encodedContent; // Keep the main content variable updated
@@ -4364,8 +4305,12 @@
 
             // New "Format" button event listener for Quick Formatting toggles
             formatSelectedBtn.addEventListener('click', async () => {
+                console.log("Format button clicked.");
                 if (monacoEditorInstance) {
+                    console.log("Monaco instance is valid.");
                     let currentContent = monacoEditorInstance.getValue();
+                    console.log("Content before processing (length):", currentContent.length);
+
                     currentContent = protectDataAttributes(currentContent);
 
                     // Apply NBSP placeholders early for spacing and time tagging
@@ -4373,31 +4318,31 @@
 
                     if (toggleCleanSingleBreaks.checked) {
                         currentContent = applyCleanSingleBreaks(currentContent);
-                        console.log("Clean Single Breaks applied.");
+                        console.log("Clean Single Breaks applied. Content length:", currentContent.length);
                     }
                     if (toggleCleanPTables.checked) {
                         currentContent = applyCleanPTagsInTables(currentContent);
-                        console.log("Clean <p> in Tables applied.");
+                        console.log("Clean <p> in Tables applied. Content length:", currentContent.length);
                     }
                     if (toggleCleanSpaces.checked) {
                         currentContent = applyAutoSpacing(currentContent);
-                        console.log("Clean Spaces applied.");
+                        console.log("Clean Spaces applied. Content length:", currentContent.length);
                     }
                     if (toggleCleanUrls.checked) {
                         currentContent = applyUrlCleaning(currentContent);
-                        console.log("Clean URLs applied.");
+                        console.log("Clean URLs applied. Content length:", currentContent.length);
                     }
                     if (toggleCleanFormattingTags.checked) {
                         currentContent = applyCleanFormattingTags(currentContent);
-                        console.log("Clean <U> | <B> | <I> applied.");
+                        console.log("Clean <U> | <B> | <I> applied. Content length:", currentContent.length);
                     }
                     if (toggleAutoLevelHeadings.checked) {
                         currentContent = applyAutoLevelHeadings(currentContent);
-                        console.log("Auto-Level Headings applied.");
+                        console.log("Auto-Level Headings applied. Content length:", currentContent.length);
                     }
                     if (toggleAutoSection.checked) {
                         currentContent = applyAutoSectioning(currentContent);
-                        console.log("Auto-Section applied.");
+                        console.log("Auto-Section applied. Content length:", currentContent.length);
                     }
                     if (toggleTimeTags.checked) {
                         // Time tags functionality - copied from original timeTagsBtn.click()
@@ -4490,41 +4435,36 @@
                                     return yearMonthDay;
                                 }, priority: 3 },
                                 { name: 'MonthDayYear', regex: regexMonthDayYear, handler: (match) => {
-                                    // Group 1: Month, Group 2: Day, Group 3: Year
                                     const [, month, day, year] = match;
                                     const monthNum = getMonthNumber(month);
-                                    const parsedDay = parseInt(day); // Ensure day is a number
+                                    const parsedDay = parseInt(day);
                                     if (!monthNum || isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) return null;
                                     return `${year}-${monthNum}-${String(parsedDay).padStart(2, '0')}`;
                                 }, priority: 2 },
                                 { name: 'DayMonthYear', regex: regexDayMonthYear, handler: (match) => {
-                                    // Group 1: Day, Group 2: Month, Group 3: Year
                                     const [, day, month, year] = match;
                                     const monthNum = getMonthNumber(month);
-                                    const parsedDay = parseInt(day); // Ensure day is a number
+                                    const parsedDay = parseInt(day);
                                     if (!monthNum || isNaN(parsedDay) || parsedDay > 31) return null;
                                     return `${year}-${monthNum}-${String(parsedDay).padStart(2, '0')}`;
                                 }, priority: 2 },
                                 { name: 'MonthYear', regex: regexMonthYear, handler: (match) => {
-                                    // Group 1: Month, Group 2: Year
                                     const [, month, year] = match;
                                     const monthNum = getMonthNumber(month);
                                     if (!monthNum) return null;
                                     return `${year}-${monthNum}`;
                                 }, priority: 2 },
                                 { name: 'MonthDayNoYear', regex: regexMonthDayNoYear, handler: (match) => {
-                                    // Group 1: Month, Group 2: Day
                                     const [, month, day] = match;
                                     const monthNum = getMonthNumber(month);
-                                    const parsedDay = parseInt(day); // Ensure day is a number
+                                    const parsedDay = parseInt(day);
                                     if (!monthNum || isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) return null;
                                     return `${monthNum}-${String(parsedDay).padStart(2, '0')}`;
                                 }, priority: 1 },
                                 { name: 'DayMonthNoYear', regex: regexDayMonthNoYear, handler: (match) => {
-                                    // Group 1: Day, Group 2: Month
                                     const [, day, month] = match;
                                     const monthNum = getMonthNumber(month);
-                                    const parsedDay = parseInt(day); // Ensure day is a number
+                                    const parsedDay = parseInt(day);
                                     if (!monthNum || isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) return null;
                                     return `${monthNum}-${String(parsedDay).padStart(2, '0')}`;
                                 }, priority: 1 }
@@ -4592,7 +4532,7 @@
                             }
                         });
                         currentContent = reParsedBodyForTimeTags.innerHTML; // Update currentContent after time tag processing
-                        console.log("Time Tags applied.");
+                        console.log("Time Tags applied. Content length:", currentContent.length);
                     }
                     if (toggleFixFnIds.checked) {
                         // Fix FN ID's functionality - copied from original fixFnIdsBtn.click()
@@ -4641,18 +4581,19 @@
                             }
                         });
                         currentContent = doc.body.innerHTML; // Update currentContent after FN ID processing
-                        console.log("Fix FN ID's applied.");
+                        console.log("Fix FN ID's applied. Content length:", currentContent.length);
                     }
 
 
                     currentContent = revertNBSPPlaceholders(currentContent); // Revert placeholders after all spacing/time tagging
                     currentContent = restoreDataAttributes(currentContent);
-                    currentContent = convertAllEntitiesToNumeric(currentContent);
+                    currentContent = doAutoEncode(currentContent); // Call the new auto-encode function
+                    console.log("Auto-Encode applied. Content length:", currentContent.length);
+
 
                     monacoEditorInstance.setValue(currentContent);
                     htmlOutputContent = currentContent;
                     applyEntityHighlighting();
-                    autoEncodeBtn.click();
 
                     const originalText = formatSelectedBtn.textContent;
                     formatSelectedBtn.textContent = 'Formatted!';
@@ -4669,6 +4610,8 @@
                         formatSelectedBtn.removeAttribute('data-temp-active');
                         updateAllInteractiveButtonStates();
                     }, 1500);
+                } else {
+                    console.error("Monaco editor instance is not available.");
                 }
             });
 
@@ -4741,6 +4684,15 @@
 
             // Initial call to set the state of the Clean Mso button on load
             updateCleanMsoButtonState();
+
+            // Add browser warning for unsaved changes
+            window.onbeforeunload = function() {
+                // You can add a condition here if you only want to warn if the editor content is not empty
+                if (monacoEditorInstance && monacoEditorInstance.getValue().trim() !== '') {
+                    return "You have unsaved changes. Are you sure you want to leave?";
+                }
+                // If you return nothing or undefined, the browser will not show a warning.
+            };
         };
     </script>
 </body>
