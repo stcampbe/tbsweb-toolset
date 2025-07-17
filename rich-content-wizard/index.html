@@ -715,17 +715,17 @@
                     </div>
                 </div>
                 <!-- New Format Button for Quick Formatting Toggles -->
-                <button id="formatSelectedBtn" class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold mb-4" disabled>
+                <button id="formatSelectedBtn" class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold mb-2" disabled>
                     Format
                 </button>
-                <button id="autoEncodeBtn" class="px-4 py-2 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50  font-bold mb-4">
+                <button id="autoEncodeBtn" class="px-4 py-2 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50  font-bold mb-2">
                     Auto-Encode
                 </button>
-                <button id="autoFormatBtn" class="px-4 py-2 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50  font-bold mb-4">
+                <button id="autoFormatBtn" class="px-4 py-2 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50  font-bold mb-2">
                     Auto-Indent
                 </button>
 
-                <h3 class="text-lg font-semibold text-white mb-4">Quick Insert</h3>
+                <h3 class="text-lg font-semibold text-white mb-4 mt-4">Quick Insert</h3>
                 <div class="button-list">
                     <!-- Auto-ID Button -->
                     <button id="autoIdBtn" class="px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded-md">
@@ -1130,14 +1130,18 @@
             // NEW: Remove empty text nodes (representing empty lines/excess whitespace)
             const walker = doc.createTreeWalker(
                 body,
-                NodeFilter.SHOW_TEXT,
-                {
-                    acceptNode: function(node) {
-                        // Accept text nodes that are purely whitespace
-                        return node.nodeValue.trim() === '' ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
-                    }
-                },
-                false
+				  NodeFilter.SHOW_TEXT,
+				  {
+					acceptNode: function(node) {
+					  const txt = node.nodeValue;
+					  // Only remove if it’s pure whitespace AND more than a single space (or contains newline/tab)
+					  if (txt.trim() === '' && (txt.length > 1 || /[\r\n\t]/.test(txt))) {
+						return NodeFilter.FILTER_ACCEPT;
+					  }
+					  return NodeFilter.FILTER_REJECT;
+					}
+				  },
+				  false
             );
 
             const nodesToRemove = [];
@@ -1565,7 +1569,7 @@
                         const clonedChild = child.cloneNode(false);
                         clonedChild.innerHTML = cleanAndPreserveAllowedContent(child, doc); // Still clean content inside
                         tempContainer.appendChild(clonedChild);
-                    } else if (tagName === 'div' || tagName === 'span' || tagName === 'ins') {
+                    } else if (tagName === 'div' || tagName === 'span') {
                         // <div>, <span>, <ins> ONLY if they have a class or ID that DON'T contain "Mso" or "Word" or "BCX0"
                         if ((child.hasAttribute('class') || child.hasAttribute('id')) && !containsDisallowedPattern(child)) {
                             const clonedChild = child.cloneNode(false);
@@ -1604,6 +1608,20 @@
             const parser = new DOMParser();
             const doc = parser.parseFromString(htmlString, 'text/html');
             const body = doc.body;
+			
+			  // ——— SPECIAL-CASE HEADINGS WITH MSO-LIST ———
+			  // Turn them back into plain headings with only their text
+			  doc.querySelectorAll(
+				'h1[style*="mso-list"],h2[style*="mso-list"],h3[style*="mso-list"],' +
+				'h4[style*="mso-list"],h5[style*="mso-list"],h6[style*="mso-list"]'
+			  ).forEach(h => {
+				const tag = h.tagName.toLowerCase();
+				// collapse whitespace so you don’t get accidental newlines/tabs
+				const text = h.textContent.trim().replace(/\s+/g, ' ');
+				const cleanH = doc.createElement(tag);
+				cleanH.textContent = text;
+				h.replaceWith(cleanH);
+			  });
 
             // Helper to get the level from style attribute for lists
             function getLevel(styleAttr) {
@@ -1648,13 +1666,14 @@
                             return false;
                         };
 
-                        if (tagName === 'br' || tagName === 'strong' || tagName === 'a' || tagName === 'em' || tagName === 'u' || tagName === 'sup' || tagName === 'sub' || tagName === 'section') {
+                        if (tagName === 'br' || tagName === 'strong' || tagName === 'a' || tagName === 'em' || tagName === 'u' || tagName === 'sup' || tagName === 'sub' || tagName === 'section' || tagName === 'ins') {
                             contentHtml += child.outerHTML;
-                        } else if ((tagName === 'span' || tagName === 'div' || tagName === 'ins') && hasClassOrId && !containsDisallowedPattern(child)) {
-                            const clonedChild = child.cloneNode(false);
-                            clonedChild.innerHTML = extractAllowedContentForLists(clonedChild);
-                            contentHtml += clonedChild.outerHTML;
-                        } else if (tagName === 'a' && child.hasAttribute('href')) { // Explicitly handle <a> with href
+                        } else if ((tagName === 'span' || tagName === 'div') && !containsDisallowedPattern(child)) {
+    const clonedChild = child.cloneNode(false);
+    // PASS THE ORIGINAL NODE INTO THE RECURSION, NOT THE EMPTY CLONE:
+    clonedChild.innerHTML = extractAllowedContentForLists(child);
+    contentHtml += clonedChild.outerHTML;
+} else if (tagName === 'a' && child.hasAttribute('href')) { // Explicitly handle <a> with href
                             contentHtml += child.outerHTML;
                         }
                         else {
@@ -2042,7 +2061,29 @@
         function applyCleanMsoCode(htmlString) {
             const parser = new DOMParser();
             const doc = parser.parseFromString(htmlString, 'text/html');
-
+			
+			// —— REMOVE ALL DELETED WORD MARKUP ——
+			  // drop any <del> plus any wrapper <span class="msoDel">
+			  doc.querySelectorAll('del, span.msoDel').forEach(node => {
+				node.remove();
+			});
+			doc.querySelectorAll('span.msoIns').forEach(ins => {
+				// Move all children out of the span, then delete the span
+				const parent = ins.parentNode;
+				while (ins.firstChild) parent.insertBefore(ins.firstChild, ins);
+				parent.removeChild(ins);
+			  });
+			doc.querySelectorAll('ins').forEach(ins => {
+				const parent = ins.parentNode;
+				while (ins.firstChild) parent.insertBefore(ins.firstChild, ins);
+				parent.removeChild(ins);
+			});
+			   // 3. UNWRAP EVERY other Word/style wrapper but KEEP ITS TEXT NODES
+			  doc.querySelectorAll('span[style*="mso-"]').forEach(span => {
+				const p = span.parentNode;
+				while (span.firstChild) p.insertBefore(span.firstChild, span);
+				p.removeChild(span);
+			  });
             // --- Start of Clean IMGs Logic (Moved from applyCleanImgs) ---
             doc.querySelectorAll('img').forEach(img => {
                 const src = img.getAttribute('src');
@@ -2245,12 +2286,11 @@
                 // Check if ID contains "Mso", "Word", or "BCX0" (case-sensitive)
                 const hasMsoWordBcx0Id = idAttr.includes('Mso') || idAttr.includes('Word') || idAttr.includes('BCX0');
 
-                // NEW: Check for classes that trigger complete unwrapping (eop, eoc, eocx, textrun, or any class containing "mso")
+                // NEW: Check for classes that trigger complete unwrapping
                 const shouldUnwrapCompletely = classAttr.split(/\s+/).some(cls =>
                     cls.includes('eop') ||
                     cls.includes('eoc') ||
                     cls.includes('eocx') ||
-                    cls.includes('mso') || // Broad check: any class containing "mso"
                     cls.includes('textrun')
                 );
 
