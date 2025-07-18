@@ -524,7 +524,6 @@
             flex-direction: column; /* Stack buttons vertically */
             width: 100%;
             /* Removed border and border-radius from button-list container */
-            margin-bottom: 1rem; /* Space below button list */
         }
 
         .button-list button {
@@ -543,9 +542,6 @@
             background-color: #64748B; /* Lighter slate on hover */
         }
 
-        .button-list button:last-child {
-            margin-bottom: 0; /* No margin after the last button */
-        }
 
         /* The two-button group in modals uses a different style, which is fine */
         .modal-content .button-group.inline-flex {
@@ -715,7 +711,7 @@
                     </div>
                 </div>
                 <!-- New Format Button for Quick Formatting Toggles -->
-                <button id="formatSelectedBtn" class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold mb-2" disabled>
+                <button id="formatSelectedBtn" class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold mb-2 mt-2" disabled>
                     Format
                 </button>
                 <button id="autoEncodeBtn" class="px-4 py-2 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50  font-bold mb-2">
@@ -726,11 +722,12 @@
                 </button>
 
                 <h3 class="text-lg font-semibold text-white mb-4 mt-4">Quick Insert</h3>
-                <div class="button-list">
+                <div class="button-list mb-2">
                     <!-- Auto-ID Button -->
                     <button id="autoIdBtn" class="px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded-md">
                         Element ID's
                     </button>
+				
                     <!-- Footnote List Button -->
                     <button id="footnoteListBtn" class="px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded-md">
                         Footnote List
@@ -740,7 +737,38 @@
                         Colophon
                     </button>
                 </div>
-            </div>
+				<h4 class="text-md text-white mb-2">Page ToC ("On this page")</h3>
+				<div class="button-list">
+				  <div class="flex space-x-2 mb-2">
+					<button
+					  id="enPageToCBtn"
+					  class="flex-1 px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 rounded-md mb-1"
+					>English
+					</button>
+					<button
+					  id="frPageToCBtn"
+					  class="flex-1 px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 rounded-md mb-1"
+					>French
+					</button>
+				  </div>
+				</div>
+				<h4 class="text-md text-white mb-2">Section ToC ("In this section")</h4>
+				<div class="button-list">
+					<div class="flex space-x-2">
+						<button id="enSecToCBtn" class="flex-1 px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 rounded-md mb-1">ENG</button>
+						<button id="enSecToCH4Btn" class="flex-1 px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 rounded-md mb-1">+H4</button>
+						<button id="enSecToCH5Btn" class="flex-1 px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 rounded-md mb-1">+H5</button>
+						<button id="enSecToCH6Btn" class="flex-1 px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 rounded-md mb-1">+H6</button>
+					</div>
+				</div>
+				<div class="button-list">
+					<div class="flex space-x-2">
+						<button id="frSecToCBtn" class="flex-1 px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 rounded-md mb-1">FRA</button>
+						<button id="frSecToCH4Btn" class="flex-1 px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 rounded-md mb-1">+H4</button>
+						<button id="frSecToCH5Btn" class="flex-1 px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 rounded-md mb-1">+H5</button>
+						<button id="frSecToCH6Btn" class="flex-1 px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 rounded-md mb-1">+H6</button>
+					</div>
+				</div>
         </div>
     </div>
 
@@ -776,8 +804,10 @@
         const autoIdBtn = document.getElementById('autoIdBtn'); // New: Auto-ID button
         const colophonBtn = document.getElementById('colophonBtn'); // New: Colophon button
         const footnoteListBtn = document.getElementById('footnoteListBtn'); // New: Footnote List button
-        // REMOVED: pageTocBtn, sectionTocBtn
+		const enPageToCBtn = document.getElementById('enPageToCBtn');
+		const frPageToCBtn = document.getElementById('frPageToCBtn');
 
+		
         // Monaco Resizer elements - now applies to panels
         const monacoEditorContainer = document.getElementById('monacoEditorContainer');
         // const panelResizer = document.getElementById('panelResizer'); // Removed: Resizer element
@@ -1215,7 +1245,15 @@
                     if (['div', 'span', 'section'].includes(tagName) && element.attributes.length > 0) {
                         continue; // Skip this element, keep it intact
                     }
-
+					if (element.textContent === ' ' &&
+						  ['strong','em','u','b','i'].includes(tagName)
+					  ) {
+						element.parentNode.replaceChild(
+						  doc.createTextNode(' '),
+						  element
+						);
+						continue;
+					  }
                     if (trimmedContent === '' || containsOnlyNBSP) {
                         if (element.parentNode) {
                             element.parentNode.removeChild(element);
@@ -2062,28 +2100,26 @@
             const parser = new DOMParser();
             const doc = parser.parseFromString(htmlString, 'text/html');
 			
-			// —— REMOVE ALL DELETED WORD MARKUP ——
-			  // drop any <del> plus any wrapper <span class="msoDel">
-			  doc.querySelectorAll('del, span.msoDel').forEach(node => {
+			doc.querySelectorAll('span[style*="mso-"]').forEach(span => {
+				const p = span.parentNode;
+				while (span.firstChild) p.insertBefore(span.firstChild, span);
+				p.removeChild(span);
+				
+			});
+			doc.querySelectorAll('del, span.msoDel').forEach(node => {
 				node.remove();
 			});
 			doc.querySelectorAll('span.msoIns').forEach(ins => {
-				// Move all children out of the span, then delete the span
 				const parent = ins.parentNode;
 				while (ins.firstChild) parent.insertBefore(ins.firstChild, ins);
 				parent.removeChild(ins);
-			  });
+			});
 			doc.querySelectorAll('ins').forEach(ins => {
 				const parent = ins.parentNode;
 				while (ins.firstChild) parent.insertBefore(ins.firstChild, ins);
 				parent.removeChild(ins);
 			});
-			   // 3. UNWRAP EVERY other Word/style wrapper but KEEP ITS TEXT NODES
-			  doc.querySelectorAll('span[style*="mso-"]').forEach(span => {
-				const p = span.parentNode;
-				while (span.firstChild) p.insertBefore(span.firstChild, span);
-				p.removeChild(span);
-			  });
+			  
             // --- Start of Clean IMGs Logic (Moved from applyCleanImgs) ---
             doc.querySelectorAll('img').forEach(img => {
                 const src = img.getAttribute('src');
@@ -3845,8 +3881,7 @@
             toggleEditorViewBtnCode.classList.add('bg-cyan-700', 'hover:bg-cyan-800');
             toggleEditorViewBtnCode.classList.remove('bg-cyan-700', 'hover:bg-cyan-800', 'bg-slate-800', 'hover:bg-slate-700'); /* Changed */
             updateGoToHtmlButtonColor(); // Call to set initial color for "Go to HTML" button
-
-
+			
             // Initialize Monaco Editor
             require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.49.0/min/vs' } });
             require(['vs/editor/editor.main'], function () {
@@ -4722,6 +4757,256 @@
                 updateAllInteractiveButtonStates();
                 showFootnoteModal(footnoteListBtn, originalText); // Pass original text
             });
+			// EN Page ToC — insert/update above the first <section>
+			enPageToCBtn.addEventListener('click', () => {
+			  // parse current editor HTML
+			  const html = monacoEditorInstance.getValue();
+			  const doc  = new DOMParser().parseFromString(html, 'text/html');
+
+			  // 1) remove any existing ToC
+			  const oldToc = doc.getElementById('page-nav');
+			  if (oldToc) oldToc.remove();
+
+			  // 2) collect all <h2>
+			  const h2s = Array.from(doc.querySelectorAll('h2'));
+			  if (!h2s.length) return;
+
+			  // 3) build list items
+			  const items = h2s.map(h2 => {
+				const txt = h2.textContent.trim();
+				const id  = h2.id || '';
+				return `<li><a href="#${id}">${txt}</a></li>`;
+			  }).join('\n        ');
+
+			  // 4) assemble new ToC with an ID
+			  const toc = `
+			<section id="page-nav">
+			  <h2 id="toc">On this page</h2>
+			  <ul>
+				${items}
+			  </ul>
+			</section>`;
+
+			  // 5) find first <section> or fallback to top of body
+			  const firstSection = doc.querySelector('section');
+			  if (firstSection) {
+				firstSection.insertAdjacentHTML('beforebegin', toc);
+			  } else {
+				doc.body.insertAdjacentHTML('afterbegin', toc);
+			  }
+
+			  // 6) write back updated HTML
+			  monacoEditorInstance.setValue(doc.body.innerHTML);
+			});
+
+			// FR Page ToC — same logic, French heading
+			frPageToCBtn.addEventListener('click', () => {
+			  const html = monacoEditorInstance.getValue();
+			  const doc  = new DOMParser().parseFromString(html, 'text/html');
+
+			  const oldToc = doc.getElementById('page-nav');
+			  if (oldToc) oldToc.remove();
+
+			  const h2s = Array.from(doc.querySelectorAll('h2'));
+			  if (!h2s.length) return;
+
+			  const items = h2s.map(h2 => {
+				const txt = h2.textContent.trim();
+				const id  = h2.id || '';
+				return `<li><a href="#${id}">${txt}</a></li>`;
+			  }).join('\n        ');
+
+			  const toc = `
+			<section id="page-nav">
+			  <h2 id="toc">Sur cette page</h2>
+			  <ul>
+				${items}
+			  </ul>
+			</section>`;
+
+			  const firstSection = doc.querySelector('section');
+			  if (firstSection) {
+				firstSection.insertAdjacentHTML('beforebegin', toc);
+			  } else {
+				doc.body.insertAdjacentHTML('afterbegin', toc);
+			  }
+
+			  monacoEditorInstance.setValue(doc.body.innerHTML);
+			});
+			// Helper function to generate a valid, unique ID for HTML elements.
+// It sanitizes baseText, and ensures the generated ID is not already present in the document.
+function generateUniqueId(baseText, existingIds) {
+    let id = baseText.toLowerCase()
+                     .replace(/[^a-z0-9\s-]/g, '') // Remove characters not allowed in IDs (keep letters, numbers, spaces, hyphens)
+                     .replace(/\s+/g, '-')       // Replace spaces with single hyphens
+                     .replace(/^-+|-+$/g, '');   // Trim hyphens from start/end
+
+    if (!id) { // If the baseText was empty or only special characters, use a generic fallback
+        id = 'auto-id';
+    }
+
+    let counter = 1;
+    let uniqueId = id;
+    // Check if the generated ID already exists. If so, append a counter until unique.
+    while (existingIds.has(uniqueId)) {
+        uniqueId = `${id}-${counter}`;
+        counter++;
+    }
+    existingIds.add(uniqueId); // Add the newly generated unique ID to our set of existing IDs
+    return uniqueId;
+}
+
+function insertSectionToc(maxLevel, lang) {
+  // 1) parse the editor’s current HTML
+  const html = monacoEditorInstance.getValue();
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+
+  // Step 1: Collect all existing IDs in the document.
+  // This set will be used by generateUniqueId to ensure all new IDs are truly unique.
+  const existingIds = new Set();
+  doc.querySelectorAll('[id]').forEach(el => existingIds.add(el.id));
+
+  // Step 2: Ensure all H-level elements (H2, H3, H4, H5, H6) have unique IDs.
+  // This is crucial for:
+  // - Creating a unique ID for the 'details' block (based on H2 ID).
+  // - Creating valid 'a' (anchor) links inside the ToC.
+  doc.querySelectorAll('h2, h3, h4, h5, h6').forEach(heading => {
+      if (!heading.id) {
+          // If a heading doesn't have an ID, generate one based on its text content.
+          heading.id = generateUniqueId(heading.textContent || `heading-${heading.tagName.toLowerCase()}`, existingIds);
+      }
+  });
+
+  // Step 3: Remove any existing Section ToCs.
+  // We identify them by their ID starting with "sec-nav-".
+  doc.querySelectorAll('details[id^="sec-nav-"]').forEach(oldDetails => {
+    oldDetails.remove();
+  });
+
+  // Step 4: Process each H2 to build and insert its new TOC
+  Array.from(doc.querySelectorAll('h2')).forEach(h2 => {
+    const items = [];
+    let currentElement = h2.nextElementSibling; // Start with the sibling immediately after the H2
+
+    // Traverse siblings of the H2 until an H1 or another H2 is encountered
+    while (currentElement && !['h1', 'h2'].includes(currentElement.tagName.toLowerCase())) {
+      // Find all relevant headings (H3, H4, H5, H6) that are descendants within this current scope
+      Array.from(currentElement.querySelectorAll('h3, h4, h5, h6')).forEach(subHeading => {
+        const subLevel = parseInt(subHeading.tagName.substring(1), 10);
+        if (subLevel <= maxLevel) { // subHeading.id is guaranteed to exist now
+          items.push(subHeading);
+        }
+      });
+      currentElement = currentElement.nextElementSibling; // Move to the next sibling of the H2
+    }
+
+    if (!items.length) return; // skip H2s with no matching headings up to maxLevel
+
+    // Sort items by their position in the document to ensure correct order
+    items.sort((a, b) => a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1);
+
+    // Build the new details block
+    const details = doc.createElement('details');
+    // Assign a unique ID to the details tag, prefixed by 'sec-nav-'
+    details.id = 'sec-nav-' + h2.id;
+    
+    const summary = doc.createElement('summary');
+    summary.className = 'wb-toggle';
+    summary.setAttribute('data-toggle', '{"print":"on"}');
+    summary.textContent = lang === 'en'
+      ? 'In this section'
+      : 'Dans cette section';
+    details.appendChild(summary);
+
+    const ul = doc.createElement('ul');
+    // FIX: Initialize stack with the correct level for the UL's direct children.
+    // The root 'ul' will contain H3s (level 3), so its associated level should be 3.
+    let currentListStack = [{ domElement: ul, level: 3 }]; 
+
+    items.forEach(el => {
+      const elLevel = parseInt(el.tagName.substring(1), 10);
+      const li = doc.createElement('li');
+      const a = doc.createElement('a');
+      a.href = `#${el.id}`; // el.id is guaranteed to exist from Step 2.
+      a.textContent = el.textContent.trim();
+      li.appendChild(a);
+
+      let currentParentListContainer = currentListStack[currentListStack.length - 1];
+      let currentParentList = currentParentListContainer.domElement;
+      let currentParentLevel = currentParentListContainer.level;
+
+      if (elLevel > currentParentLevel) {
+        // Descend: Create new nested lists until the correct level is reached
+        // The new UL should be appended to the *last LI* of the current parent list.
+        // This ensures the nesting is always LI > UL > LI.
+        while (elLevel > currentParentLevel) {
+          const newUl = doc.createElement('ul');
+          // It's critical that the new UL is appended to the *last LI* of the current UL.
+          // This ensures the nesting hierarchy (LI > UL > LI).
+          if (currentParentList.lastElementChild && currentParentList.lastElementChild.tagName.toLowerCase() === 'li') {
+            currentParentList.lastElementChild.appendChild(newUl);
+          } else {
+             // This case should ideally not happen if the list is constructed correctly,
+             // as an LI should always precede a nested UL in this context.
+             // If it does, it might indicate a level jump (e.g., H2 followed by H4 directly),
+             // which would flatten the structure slightly.
+             console.warn(`Unexpected structure: Attempted to append a new UL to a UL without a preceding LI for heading ${el.id}.`);
+             currentParentList.appendChild(newUl);
+          }
+          currentListStack.push({ domElement: newUl, level: currentParentLevel + 1 });
+          currentParentList = newUl;
+          currentParentLevel++;
+        }
+        currentParentList.appendChild(li); // Append the li to the newly established list at the correct level
+      } else if (elLevel < currentParentLevel) {
+        // Ascend: Pop from stack until appropriate parent is found or root ul is reached
+        while (currentListStack.length > 1 && elLevel < currentListStack[currentListStack.length - 1].level) { // Changed <= to <
+          currentListStack.pop();
+        }
+        // After popping, if we are at the same level as the new element, we should use that parent.
+        // If we popped too far (e.g., trying to put H3 under H2's root UL, but we popped the root), re-add it.
+        // This check ensures we land on the correct parent UL's level.
+        if (currentListStack[currentListStack.length - 1].level > elLevel) {
+             // This can happen if, for example, we're at level 5, pop to level 3, and next element is level 4.
+             // We need to ensure we land on the correct parent.
+             // For simplicity, for now, we'll assume a direct pop works and rely on the next push.
+             // The main issue here is if the target list isn't the root `ul` and we jumped over its level.
+             // Let's refine the stack checking. The target must be currentParentListContainer.level <= elLevel
+             // We stop when the current parent list is either at the target level, or one level above it.
+             while (currentListStack.length > 1 && currentListStack[currentListStack.length - 1].level > elLevel) {
+                 currentListStack.pop();
+             }
+        }
+        currentParentListContainer = currentListStack[currentListStack.length - 1];
+        currentParentList = currentParentListContainer.domElement;
+        currentParentList.appendChild(li); // Append the li to the appropriate parent list
+      } else {
+        // Same level: Append to current parent list
+        currentParentList.appendChild(li);
+      }
+    });
+    details.appendChild(ul); // The root ul is appended to the details element
+
+    // Insert the new details block right after the H2
+    h2.parentNode.insertBefore(details, h2.nextSibling);
+  });
+
+  // Step 5: Write the modified HTML back to the editor
+  // IMPORTANT: This function only *adds* new `details` elements.
+  // It does NOT modify classes or other attributes on existing `ul` elements in your original HTML.
+  monacoEditorInstance.setValue(doc.body.innerHTML);
+  monacoEditorInstance.trigger('insertSectionToc', 'editor.action.formatDocument', null);
+}
+
+			// now wire your buttons (you may already have these listeners; just point them at our new function)
+			enSecToCBtn.addEventListener('click', () => insertSectionToc(3, 'en'));
+			frSecToCBtn.addEventListener('click', () => insertSectionToc(3, 'fr'));
+			enSecToCH4Btn.addEventListener('click', () => insertSectionToc(4, 'en'));
+			frSecToCH4Btn.addEventListener('click', () => insertSectionToc(4, 'fr'));
+			enSecToCH5Btn.addEventListener('click', () => insertSectionToc(5, 'en'));
+			frSecToCH5Btn.addEventListener('click', () => insertSectionToc(5, 'fr'));
+			enSecToCH6Btn.addEventListener('click', () => insertSectionToc(6, 'en'));
+			frSecToCH6Btn.addEventListener('click', () => insertSectionToc(6, 'fr'));
 
             // Initial call to set the state of the Clean Mso button on load
             updateCleanMsoButtonState();
