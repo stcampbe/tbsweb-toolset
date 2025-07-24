@@ -22,6 +22,37 @@
             flex-direction: column;
             background-color: #0F172A; /* Dark slate */
         }
+		 /* Highlight styles for headings */
+    .highlight-h1 {
+        background-color: #FFD700; /* Gold */
+        padding: 2px 5px;
+        border-radius: 3px;
+    }
+    .highlight-h2 {
+        background-color: #ADD8E6; /* Light Blue */
+        padding: 2px 5px;
+        border-radius: 3px;
+    }
+    .highlight-h3 {
+        background-color: #90EE90; /* Light Green */
+        padding: 2px 5px;
+        border-radius: 3px;
+    }
+    .highlight-h4 {
+        background-color: #FFB6C1; /* Light Pink */
+        padding: 2px 5px;
+        border-radius: 3px;
+    }
+    .highlight-h5 {
+        background-color: #FF7F50; /* Coral */
+        padding: 2px 5px;
+        border-radius: 3px;
+    }
+    .highlight-h6 {
+        background-color: #DA70D6; /* Orchid */
+        padding: 2px 5px;
+        border-radius: 3px;
+    }
         /* New header for the QA Wizard title */
         .content-wizard-header {
             padding: 1rem;
@@ -739,16 +770,28 @@
                 </div>
 				<h4 class="text-md text-white mb-2">Page ToC ("On this page")</h3>
 				<div class="button-list">
-				  <div class="flex space-x-2 mb-2">
+				  <div class="flex space-x-2">
 					<button
 					  id="enPageToCBtn"
 					  class="flex-1 px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 rounded-md mb-1"
 					>English
 					</button>
 					<button
+					  id="enPageToCH3Btn"
+					  class="flex-1 px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 rounded-md mb-1"
+					>+H3
+					</button>
+				  </div>
+				  <div class="flex space-x-2 mb-2">
+					<button
 					  id="frPageToCBtn"
 					  class="flex-1 px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 rounded-md mb-1"
 					>French
+					</button>
+					<button
+					  id="frPageToCH3Btn"
+					  class="flex-1 px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 rounded-md mb-1"
+					>+H3
 					</button>
 				  </div>
 				</div>
@@ -804,8 +847,6 @@
         const autoIdBtn = document.getElementById('autoIdBtn'); // New: Auto-ID button
         const colophonBtn = document.getElementById('colophonBtn'); // New: Colophon button
         const footnoteListBtn = document.getElementById('footnoteListBtn'); // New: Footnote List button
-		const enPageToCBtn = document.getElementById('enPageToCBtn');
-		const frPageToCBtn = document.getElementById('frPageToCBtn');
 
 		
         // Monaco Resizer elements - now applies to panels
@@ -4226,6 +4267,7 @@
                         .nowrap {
                             white-space: nowrap;
                         }
+						
                     </style>
                 </head>
                 <body>
@@ -4291,10 +4333,10 @@
 									aligncenter: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img', classes: 'text-center', exact: true },
 									alignright: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img', classes: 'text-right', exact: true },
 								},
-								
-                                extended_valid_elements: 'dl[class|id],dt[class|id],dd[class|id]',
-								valid_children: '+body[dl],+dl[dt|dd],+dt[a|abbr|acronym|b|bdo|big|br|button|cite|code|del|dfn|em|i|img|input|ins|kbd|label|map|q|samp|select|small|span|strike|strong|sub|sup|textarea|tt|var|p],+dd[a|abbr|acronym|b|bdo|big|br|button|cite|code|del|dfn|em|i|img|input|ins|kbd|label|map|q|samp|select|small|span|strike|strong|sub|sup|textarea|tt|var|p|ul|ol|dl]',
-								custom_elements: 'dl,dt,dd',
+								content_style: 'body { max-width: 1170px; margin-left: auto; margin-right: auto; padding: 15px; box-sizing: border-box; } h1 { background-color: #FF6347; padding: 2px 5px; border-radius: 3px; display: inline-block; } h2 { background-color: #FE9900; padding: 2px 5px; border-radius: 3px; display: inline-block; } h3 { background-color: #FFDE59; padding: 2px 5px; border-radius: 3px; display: inline-block; } h4 { background-color: #7DDA58; padding: 2px 5px; border-radius: 3px; display: inline-block; } h5 { background-color: #5DE2E7; padding: 2px 5px; border-radius: 3px; display: inline-block; } h6 { background-color: #E7DDFF; padding: 2px 5px; border-radius: 3px; display: inline-block; } section { border: #060270 2px dashed; margin: 5px; padding: 5px;} div, aside { border: #8D6F64 2px solid; margin: 5px; padding: 5px;} details > *:not(summary) { display: block !important; } details summary { cursor: default !important; font-weight: bold; margin-bottom: 5px; color: #333; }',
+                                extended_valid_elements: 'dl[class|id],dt[class|id],dd[class|id],details[open],summary',
+								valid_children: '+body[dl],+dl[dt|dd],+dt[a|abbr|acronym|b|bdo|big|br|button|cite|code|del|dfn|em|i|img|input|ins|kbd|label|map|q|samp|select|small|span|strike|strong|sub|sup|textarea|tt|var|p],+dd[a|abbr|acronym|b|bdo|big|br|button|cite|code|del|dfn|em|i|img|input|ins|kbd|label|map|q|samp|select|small|span|strike|strong|sub|sup|textarea|tt|var|p|ul|ol|dl],+details[summary|p|div|ul|ol|table|h1|h2|h3|h4|h5|h6]',
+								custom_elements: 'dl,dt,dd,details,summary',
 								init_instance_callback: function(editorInstance) {
                                     console.log('Iframe: HugeRTE editor initialized inside iframe.');
                                     richTextEditorInstance = editorInstance; // Store the instance globally
@@ -4779,107 +4821,6 @@
                 updateAllInteractiveButtonStates();
                 showFootnoteModal(footnoteListBtn, originalText); // Pass original text
             });
-			// EN Page ToC — insert/update above the first <section>
-			enPageToCBtn.addEventListener('click', () => {
-			  // parse current editor HTML
-			  const html = monacoEditorInstance.getValue();
-			  const doc  = new DOMParser().parseFromString(html, 'text/html');
-
-			  // 1) remove any existing ToC
-			  const oldToc = doc.getElementById('page-nav');
-			  if (oldToc) oldToc.remove();
-
-			  // 2) collect all <h2>
-			  const h2s = Array.from(doc.querySelectorAll('h2'));
-			  if (!h2s.length) return;
-
-			  // 3) build list items
-			  const items = h2s.map(h2 => {
-				const txt = h2.textContent.trim();
-				const id  = h2.id || '';
-				return `<li><a href="#${id}">${txt}</a></li>`;
-			  }).join('\n        ');
-
-			  // 4) assemble new ToC with an ID
-			  const toc = `
-			<section id="page-nav">
-			  <h2 id="toc">On this page</h2>
-			  <ul>
-				${items}
-			  </ul>
-			</section>`;
-
-			  // 5) find first <section> or fallback to top of body
-			  const firstSection = doc.querySelector('section');
-			  if (firstSection) {
-				firstSection.insertAdjacentHTML('beforebegin', toc);
-			  } else {
-				doc.body.insertAdjacentHTML('afterbegin', toc);
-			  }
-
-			  // 6) write back updated HTML
-			  monacoEditorInstance.setValue(doc.body.innerHTML);
-			  autoFormatBtn.click();
-			});
-
-			// FR Page ToC — same logic, French heading
-			frPageToCBtn.addEventListener('click', () => {
-			  const html = monacoEditorInstance.getValue();
-			  const doc  = new DOMParser().parseFromString(html, 'text/html');
-
-			  const oldToc = doc.getElementById('page-nav');
-			  if (oldToc) oldToc.remove();
-
-			  const h2s = Array.from(doc.querySelectorAll('h2'));
-			  if (!h2s.length) return;
-
-			  const items = h2s.map(h2 => {
-				const txt = h2.textContent.trim();
-				const id  = h2.id || '';
-				return `<li><a href="#${id}">${txt}</a></li>`;
-			  }).join('\n        ');
-
-			  const toc = `
-			<section id="page-nav">
-			  <h2 id="toc">Sur cette page</h2>
-			  <ul>
-				${items}
-			  </ul>
-			</section>`;
-
-			  const firstSection = doc.querySelector('section');
-			  if (firstSection) {
-				firstSection.insertAdjacentHTML('beforebegin', toc);
-			  } else {
-				doc.body.insertAdjacentHTML('afterbegin', toc);
-			  }
-
-			  monacoEditorInstance.setValue(doc.body.innerHTML);
-			  autoFormatBtn.click();
-			});
-			// Helper function to generate a valid, unique ID for HTML elements.
-// It sanitizes baseText, and ensures the generated ID is not already present in the document.
-function generateUniqueId(baseText, existingIds) {
-    let id = baseText.toLowerCase()
-                     .replace(/[^a-z0-9\s-]/g, '') // Remove characters not allowed in IDs (keep letters, numbers, spaces, hyphens)
-                     .replace(/\s+/g, '-')       // Replace spaces with single hyphens
-                     .replace(/^-+|-+$/g, '');   // Trim hyphens from start/end
-
-    if (!id) { // If the baseText was empty or only special characters, use a generic fallback
-        id = 'auto-id';
-    }
-
-    let counter = 1;
-    let uniqueId = id;
-    // Check if the generated ID already exists. If so, append a counter until unique.
-    while (existingIds.has(uniqueId)) {
-        uniqueId = `${id}-${counter}`;
-        counter++;
-    }
-    existingIds.add(uniqueId); // Add the newly generated unique ID to our set of existing IDs
-    return uniqueId;
-}
-
 // Helper function to generate a valid, unique ID for HTML elements.
 // It sanitizes baseText, and ensures the generated ID is not already present in the document.
 function generateUniqueId(baseText, existingIds) {
@@ -4905,8 +4846,7 @@ function generateUniqueId(baseText, existingIds) {
 
 /**
  * Helper function to recursively collect classes from existing list items.
- * This version focuses on li and a classes, and the root list type.
- * It does NOT store types of arbitrary nested ul/ol as they won't have unique IDs.
+ * This version focuses on li and a classes.
  * @param {HTMLElement} listElement - The current ul/ol element to traverse.
  * @param {Map} liClassMap - Map to store li classes.
  * @param {Map} aClassMap - Map to store a classes.
@@ -4915,7 +4855,6 @@ function collectExistingListClasses(listElement, liClassMap, aClassMap) {
     Array.from(listElement.children).forEach(child => {
         if (child.tagName.toLowerCase() === 'li') {
             const li = child;
-            // Key for li classes will be based on its a.href target ID
             const a = li.querySelector('a');
             const hrefTargetId = a ? a.getAttribute('href')?.substring(1) : null;
 
@@ -4923,26 +4862,179 @@ function collectExistingListClasses(listElement, liClassMap, aClassMap) {
                 if (li.className) {
                     liClassMap.set(hrefTargetId, li.className);
                 }
-                if (a.className) {
+                if (a && a.className) {
                     aClassMap.set(hrefTargetId, a.className);
-                }
-            } else {
-                // Fallback for li without a link (shouldn't happen in a TOC, but for robustness)
-                if (li.className) {
-                    const liKey = generateUniqueId('li-orphan', new Set()); // Temporary ID for mapping
-                    liClassMap.set(liKey, li.className);
                 }
             }
 
             // Recursively collect classes from any nested lists within this li
             Array.from(li.children).forEach(liChild => {
                 if (liChild.tagName.toLowerCase() === 'ul' || liChild.tagName.toLowerCase() === 'ol') {
-                    collectExistingListClasses(liChild, liClassMap, aClassMap); // No `nestedListTypeMap` here
+                    collectExistingListClasses(liChild, liClassMap, aClassMap);
                 }
             });
         }
     });
 }
+
+/**
+ * Inserts or updates the "On this page" / "Sur cette page" Table of Contents.
+ * It removes any existing Page ToC and regenerates it based on H2 (and optionally H3) headings,
+ * preserving any manually added classes on the ToC elements.
+ *
+ * @param {number} maxLevel - The maximum heading level to include (2 for H2 only, 3 for H2 and H3).
+ * @param {string} lang - The language ('en' for English, 'fr' for French).
+ */
+function insertPageToc(maxLevel, lang) {
+    const html = monacoEditorInstance.getValue();
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const existingIds = new Set();
+    doc.querySelectorAll('[id]').forEach(el => existingIds.add(el.id));
+
+    // Ensure all H-level headings have unique IDs before generating links
+    doc.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(heading => {
+        if (!heading.id) {
+            heading.id = generateUniqueId(heading.textContent || `heading-${heading.tagName.toLowerCase()}`, existingIds);
+        }
+    });
+
+    let pageTocSectionClass = '';
+    let pageTocH2Class = '';
+    let pageTocUlClass = '';
+    let initialListTagName = 'ul'; // Default to ul
+    const pageTocLiClassMap = new Map();
+    const pageTocALinkClassMap = new Map();
+
+    // 1) Find and remove any existing Page ToC, and collect its classes
+    let oldToc = doc.getElementById('page-nav');
+    if (oldToc) {
+        pageTocSectionClass = oldToc.getAttribute('class') || '';
+        const existingH2 = oldToc.querySelector('h2');
+        if (existingH2) {
+            pageTocH2Class = existingH2.getAttribute('class') || '';
+        }
+        const existingUlOrOl = oldToc.querySelector('ul, ol');
+        if (existingUlOrOl) {
+            pageTocUlClass = existingUlOrOl.getAttribute('class') || '';
+            initialListTagName = existingUlOrOl.tagName.toLowerCase();
+            collectExistingListClasses(existingUlOrOl, pageTocLiClassMap, pageTocALinkClassMap);
+        }
+        oldToc.remove();
+    } else {
+        const existingH2ByContent = Array.from(doc.querySelectorAll('h2')).find(h =>
+            h.textContent.trim().toLowerCase() === 'on this page' || h.textContent.trim().toLowerCase() === 'sur cette page'
+        );
+        if (existingH2ByContent && existingH2ByContent.parentNode && existingH2ByContent.parentNode.tagName.toLowerCase() === 'section') {
+            const potentialOldTocSection = existingH2ByContent.parentNode;
+            pageTocSectionClass = potentialOldTocSection.getAttribute('class') || '';
+            pageTocH2Class = existingH2ByContent.getAttribute('class') || '';
+            const existingUlOrOl = potentialOldTocSection.querySelector('ul, ol');
+            if (existingUlOrOl) {
+                pageTocUlClass = existingUlOrOl.getAttribute('class') || '';
+                initialListTagName = existingUlOrOl.tagName.toLowerCase();
+                collectExistingListClasses(existingUlOrOl, pageTocLiClassMap, pageTocALinkClassMap);
+            }
+            potentialOldTocSection.remove();
+        }
+    }
+
+    // 2) Collect all relevant headings, filtering out those within <aside> tags
+    const relevantHeadings = Array.from(doc.querySelectorAll('h1, h2, h3, h4, h5, h6')).filter(h => {
+        return parseInt(h.tagName.substring(1), 10) <= maxLevel && !h.closest('aside');
+    });
+
+    if (!relevantHeadings.length) return;
+
+    // --- DOM-based List Building Logic (Mirroring insertSectionToc directly) ---
+
+    // Create the root UL/OL element for the Page TOC
+    const rootUl = doc.createElement(initialListTagName);
+    if (pageTocUlClass) rootUl.setAttribute('class', pageTocUlClass);
+
+    // The stack holds references to actual DOM ul/ol elements.
+    // Each item: { domElement: HTMLUListElement | HTMLOListElement, level: number, tagName: 'ul' | 'ol' }
+    // The `level` here represents the heading level that this `domElement` is meant to contain.
+    // Start with the rootUl, which will contain H2s (level 2).
+    let currentListStack = [{ domElement: rootUl, level: 2, tagName: initialListTagName }];
+    let currentListDomElement = rootUl; // The actual DOM element to append LIs to
+
+    relevantHeadings.forEach(h => {
+        const hLevel = parseInt(h.tagName.substring(1), 10);
+        const txt = h.textContent.trim();
+        const id = h.id;
+        const liClass = pageTocLiClassMap.get(id) || '';
+        const aClass = pageTocALinkClassMap.get(id) || '';
+
+        // Create the <li> and <a> elements for the current heading
+        const li = doc.createElement('li');
+        if (liClass) li.setAttribute('class', liClass);
+        const a = doc.createElement('a');
+        a.setAttribute('href', `#${id}`);
+        a.textContent = txt;
+        if (aClass) a.setAttribute('class', aClass);
+        li.appendChild(a);
+
+        // Adjust stack based on heading level
+        // IMPORTANT FIX: Changed hLevel <= to hLevel < in the while condition,
+        // mirroring insertSectionToc's working logic.
+        while (currentListStack.length > 1 && hLevel < currentListStack[currentListStack.length - 1].level) {
+            currentListStack.pop();
+        }
+        currentListDomElement = currentListStack[currentListStack.length - 1].domElement; // Update current list DOM element
+
+        if (hLevel > currentListStack[currentListStack.length - 1].level) {
+            // New, deeper level: Create a new nested <ul>/ol.
+            // This new list will be a child of the *last <li>* added to the currentListDomElement.
+            const parentLiElement = currentListDomElement.lastElementChild; // Get the last <li> appended
+
+            if (parentLiElement && parentLiElement.tagName.toLowerCase() === 'li') {
+                const newNestedListDomElement = doc.createElement(initialListTagName); // Use initialListTagName for consistency
+                parentLiElement.appendChild(newNestedListDomElement); // Append new <ul> to the last <li>
+
+                // Push this new list DOM element onto the stack
+                currentListStack.push({ domElement: newNestedListDomElement, level: hLevel, tagName: initialListTagName });
+                currentListDomElement = newNestedListDomElement; // Update current list DOM element
+            } else {
+                // This scenario means an H3 (or deeper) appeared without a preceding H2/LI to nest under.
+                // It indicates a malformed heading structure or an issue with heading collection.
+                // For robustness, add the LI directly to the current (likely root) UL.
+                console.warn(`H${hLevel} (${txt}) found with no valid parent LI to nest under. Appending to current UL.`);
+            }
+        }
+        
+        // Add the current <li> to the current active <ul>/ol DOM element
+        currentListDomElement.appendChild(li);
+    });
+
+    // 3) Get the final HTML string from the constructed DOM tree
+    const finalHtmlListContent = rootUl.outerHTML;
+
+    // 4) Assemble new ToC HTML
+    const tocTitle = lang === 'en' ? 'On this page' : 'Sur cette page';
+    const toc = `
+    <section id="page-nav"${pageTocSectionClass ? ` class="${pageTocSectionClass}"` : ''}>
+        <h2 id="toc"${pageTocH2Class ? ` class="${pageTocH2Class}"` : ''}>${tocTitle}</h2>
+        ${finalHtmlListContent}
+    </section>`;
+
+    // 5) Find insertion point: first <section> or fallback to top of body
+    const firstSection = doc.querySelector('section');
+    if (firstSection) {
+        firstSection.insertAdjacentHTML('beforebegin', toc);
+    } else {
+        doc.body.insertAdjacentHTML('afterbegin', toc);
+    }
+
+    // 6) Write back updated HTML
+    monacoEditorInstance.setValue(doc.body.innerHTML);
+    autoFormatBtn.click(); // Format the new HTML
+}
+
+// Update your button event listeners to use the new insertPageToc function:
+document.getElementById('enPageToCBtn').addEventListener('click', () => insertPageToc(2, 'en')); // H2 only
+document.getElementById('frPageToCBtn').addEventListener('click', () => insertPageToc(2, 'fr')); // H2 only
+document.getElementById('enPageToCH3Btn').addEventListener('click', () => insertPageToc(3, 'en')); // H2 and H3
+document.getElementById('frPageToCH3Btn').addEventListener('click', () => insertPageToc(3, 'fr')); // H2 and H3
 
 
 function insertSectionToc(maxLevel, lang) {
@@ -4991,23 +5083,55 @@ function insertSectionToc(maxLevel, lang) {
             currentElement = currentElement.nextElementSibling;
         }
 
-        if (!items.length) {
-            const existingDetailsId = 'sec-nav-' + h2.id;
-            const existingDetails = doc.getElementById(existingDetailsId);
-            if (existingDetails) existingDetails.remove();
-            return;
-        }
-
-        items.sort((a, b) => a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1);
-
         const detailsId = 'sec-nav-' + h2.id;
         let details = doc.getElementById(detailsId);
         let summary, ulOrOl;
         let oldDetailsClasses = details ? details.getAttribute('class') || '' : '';
         let oldSummaryClasses = details ? (details.querySelector('summary') ? details.querySelector('summary').getAttribute('class') || '' : '') : '';
         let oldListClasses = details ? (details.querySelector('ul, ol') ? details.querySelector('ul, ol').getAttribute('class') || '' : '') : '';
-        // Use stored root type, default to 'ul' for new sections
         let initialListTagName = rootListTypeMap.get(detailsId) || 'ul';
+
+        // NEW LOGIC START: Check for un-ID'd details elements to adopt
+        if (!details) {
+            // Look for a sibling <details> element that doesn't have an ID
+            // and whose summary content matches the expected ToC titles.
+            // THIS IS THE CRUCIAL CHANGE: `child === h2.nextElementSibling`
+            const potentialDetails = Array.from(h2.parentNode.children).find(child => {
+                return child.tagName.toLowerCase() === 'details' &&
+                       !child.id &&
+                       child === h2.nextElementSibling && // The potential details element MUST immediately follow the h2
+                       child.querySelector('summary') &&
+                       (child.querySelector('summary').textContent.trim().toLowerCase() === 'in this section' ||
+                        child.querySelector('summary').textContent.trim().toLowerCase() === 'dans cette section');
+            });
+
+            if (potentialDetails) {
+                details = potentialDetails;
+                // Assign the correct ID to the adopted details element
+                details.id = detailsId;
+                existingIds.add(detailsId); // Add to our set of known IDs
+                // Capture its existing classes, if any
+                oldDetailsClasses = details.getAttribute('class') || '';
+                oldSummaryClasses = details.querySelector('summary') ? details.querySelector('summary').getAttribute('class') || '' : '';
+                oldListClasses = details.querySelector('ul, ol') ? details.querySelector('ul', 'ol').getAttribute('class') || '' : '';
+                const existingUl = details.querySelector('ul');
+                const existingOl = details.querySelector('ol');
+                if (existingUl) initialListTagName = 'ul';
+                else if (existingOl) initialListTagName = 'ol';
+            }
+        }
+        // NEW LOGIC END
+
+        if (!items.length && (!details || !details.id || !details.id.startsWith('sec-nav-'))) {
+            // If no items found, and no existing *section toc* details, just return.
+            // If a generic un-ID'd details was found but doesn't map to a section TOC, it's ignored.
+            return;
+        }
+        if (!items.length && details) { // If there were items previously but no longer, remove the old ToC
+            details.remove();
+            return;
+        }
+
 
         if (details) {
             summary = details.querySelector('summary');
@@ -5038,18 +5162,16 @@ function insertSectionToc(maxLevel, lang) {
         summary.textContent = lang === 'en' ? 'In this section' : 'Dans cette section';
 
         // Initialize stack with the root list element for this section TOC
-        // Propagate the actual tag name ('ul' or 'ol') of this current list
         let currentListStack = [{ domElement: ulOrOl, level: 3, tagName: initialListTagName }];
 
         items.forEach(el => {
             const elLevel = parseInt(el.tagName.substring(1), 10);
             const li = doc.createElement('li');
             const a = doc.createElement('a');
-            const hrefTargetId = el.id; // The ID of the heading, used as key for classes
+            const hrefTargetId = el.id;
             a.href = `#${hrefTargetId}`;
             a.textContent = el.textContent.trim();
 
-            // Apply stored classes to new li and a elements
             if (liClassMap.has(hrefTargetId)) {
                 li.setAttribute('class', liClassMap.get(hrefTargetId));
             }
@@ -5062,20 +5184,14 @@ function insertSectionToc(maxLevel, lang) {
             let currentParentListContainer = currentListStack[currentListStack.length - 1];
             let currentParentList = currentParentListContainer.domElement;
             let currentParentLevel = currentParentListContainer.level;
-            let currentParentListType = currentParentListContainer.tagName; // Get the type of the current parent list
+            let currentParentListType = currentParentListContainer.tagName;
 
             if (elLevel > currentParentLevel) {
                 while (elLevel > currentParentLevel) {
-                    let newNestedListTagName = 'ul'; // Default to UL for *newly created* nested lists
-                    
-                    // If the immediate parent list is an OL, the new nested list should also be an OL
+                    let newNestedListTagName = 'ul';
                     if (currentParentListType === 'ol') {
                         newNestedListTagName = 'ol';
                     }
-                    // NOTE: Without IDs on nested ul/ol, we cannot preserve
-                    // if a user manually changes a specific deeper nested UL to OL.
-                    // It will revert to default/parent inheritance on regeneration.
-
                     const newNestedList = doc.createElement(newNestedListTagName);
 
                     if (currentParentList.lastElementChild && currentParentList.lastElementChild.tagName.toLowerCase() === 'li') {
@@ -5087,7 +5203,7 @@ function insertSectionToc(maxLevel, lang) {
                     currentListStack.push({ domElement: newNestedList, level: currentParentLevel + 1, tagName: newNestedListTagName });
                     currentParentList = newNestedList;
                     currentParentLevel++;
-                    currentParentListType = newNestedListTagName; // Update parent type for next iteration
+                    currentParentListType = newNestedListTagName;
                 }
                 currentParentList.appendChild(li);
             } else if (elLevel < currentParentLevel) {
@@ -5102,7 +5218,8 @@ function insertSectionToc(maxLevel, lang) {
             }
         });
 
-        if (!doc.getElementById(detailsId)) {
+        // Only insert if it was newly created and not already in the DOM (e.g., adopted)
+        if (!doc.getElementById(detailsId)) { // This check ensures we don't re-insert an adopted element
             h2.parentNode.insertBefore(details, h2.nextSibling);
         }
     });
