@@ -768,7 +768,7 @@
                         Colophon
                     </button>
                 </div>
-				<h4 class="text-md text-white mb-2">Page ToC ("On this page")</h3>
+				<h4 class="text-md text-white mb-2">Page ToC ("On this page")</h4>
 				<div class="button-list">
 				  <div class="flex space-x-2">
 					<button
@@ -865,15 +865,26 @@
             cleanMsoBtn,
             importHtmlBtn,
             exportHtmlBtn,
-            formatSelectedBtn, // Add the new Format button
+            formatSelectedBtn,
             autoIdBtn,
-            // REMOVED: pageTocBtn, sectionTocBtn
             footnoteListBtn,
             colophonBtn,
             clearAllBtn,
             autoEncodeBtn,
             autoFormatBtn,
             copyCodeBtn,
+			enPageToCBtn,
+			enPageToCH3Btn,
+			frPageToCBtn,
+			frPageToCH3Btn,
+			enSecToCBtn,
+			enSecToCH4Btn,
+			enSecToCH5Btn,
+			enSecToCH6Btn,
+			frSecToCBtn,
+			frSecToCH4Btn,
+			frSecToCH5Btn,
+			frSecToCH6Btn,
         ];
 
         // Add the toggle inputs themselves to the list if their parent elements need to be disabled
@@ -2435,7 +2446,12 @@
                     }
                 }
             }
-
+			
+			// Remove 'title' attribute from all <a> tags
+            doc.querySelectorAll('a[title]').forEach(aTag => {
+                aTag.removeAttribute('title');
+            });
+			
             return doc.body.innerHTML;
         }
 
@@ -3991,7 +4007,6 @@
                     setTimeout(() => {
                         copyCodeBtn.textContent = originalText;
                         copyCodeBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-                        copyCodeBtn.classList.add('bg-slate-600', 'hover:bg-slate-500'); // Changed
                         copyCodeBtn.disabled = false; // Re-enable the button
                         copyCodeBtn.removeAttribute('data-temp-active'); // Unmark as active
                         updateAllInteractiveButtonStates(); // Update all buttons
@@ -4195,7 +4210,6 @@
                 setTimeout(() => {
                     clearAllBtn.textContent = originalText;
                     clearAllBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-                    clearAllBtn.classList.add('bg-slate-600', 'hover:bg-slate-500'); // Changed
                     clearAllBtn.disabled = false; // Re-enable the button
                     clearAllBtn.removeAttribute('data-temp-active'); // Unmark as active
                     updateAllInteractiveButtonStates();
@@ -4529,12 +4543,15 @@
 
                         // Add word boundaries (\b) to month patterns to prevent partial word matches (e.g., 'mai' in 'maintaining')
                         // And robustly check for non-digits before/after the full match
+
+                        // UPDATED REGEX FOR DayMonthYear and MonthDayYear to include 'er' / '<sup>er</sup>'
+                        const daySuffixPattern = '(?:er|<sup>er<\\/sup>)?'; // NEW PATTERN
                         const regexIsoDateFull = /(?<!\d)(\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01]))(?!\d)/g;
-                        const regexMonthDayYear = new RegExp(`(?<!\\d)\\b(${monthPattern})\\b${spaceOrNBSPChar}(\\d{1,2}),?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'i');
-                        const regexDayMonthYear = new RegExp(`(?<!\\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2})${spaceOrNBSPChar}\\b(${monthPattern})\\b,?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'i');
+                        const regexMonthDayYear = new RegExp(`(?<!\\d)\\b(${monthPattern})\\b${spaceOrNBSPChar}(\\d{1,2})${daySuffixPattern},?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'i'); // ADDED daySuffixPattern
+                        const regexDayMonthYear = new RegExp(`(?<!\\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2})${daySuffixPattern}${spaceOrNBSPChar}\\b(${monthPattern})\\b,?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'i'); // ADDED daySuffixPattern
                         const regexMonthYear = new RegExp(`(?<!\\d)\\b(${monthPattern})\\b${spaceOrNBSPChar}(\\d{4})(?!\\d|${spaceOrNBSPChar}\\d{1,2})`, 'i');
-                        const regexMonthDayNoYear = new RegExp(`(?<!\\d)\\b(${monthPattern})\\b${spaceOrNBSPChar}(\\d{1,2})(?!\\d|${spaceOrNBSPChar}\\d{4})(?!-)`, 'i');
-                        const regexDayMonthNoYear = new RegExp(`(?<!\\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2})${spaceOrNBSPChar}\\b(${monthPattern})\\b(?!\d|${spaceOrNBSPChar}\\d{4})(?!-)`, 'i');
+                        const regexMonthDayNoYear = new RegExp(`(?<!\\d)\\b(${monthPattern})\\b${spaceOrNBSPChar}(\\d{1,2})${daySuffixPattern}(?!\\d|${spaceOrNBSPChar}\\d{4})(?!-)`, 'i'); // ADDED daySuffixPattern
+                        const regexDayMonthNoYear = new RegExp(`(?<!\\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2})${daySuffixPattern}${spaceOrNBSPChar}\\b(${monthPattern})\\b(?!\d|${spaceOrNBSPChar}\\d{4})(?!-)`, 'i'); // ADDED daySuffixPattern
 
                         const reParsedDocForTimeTags = parser.parseFromString(contentToProcessForTimeTags, 'text/html');
                         const reParsedBodyForTimeTags = reParsedDocForTimeTags.body;
@@ -4575,17 +4592,21 @@
                                     return yearMonthDay;
                                 }, priority: 3 },
                                 { name: 'MonthDayYear', regex: regexMonthDayYear, handler: (match) => {
-                                    const [, month, day, year] = match;
+                                    // UPDATED HANDLER: Extract day part based on its captured group, then clean it
+                                    const [, month, dayPart, year] = match; // capture dayPart
                                     const monthNum = getMonthNumber(month);
-                                    const parsedDay = parseInt(day);
+                                    let cleanDay = dayPart.replace(/er|<sup>er<\/sup>/gi, '').trim(); // Clean day part
+                                    const parsedDay = parseInt(cleanDay); // Parse cleaned day
                                     if (!monthNum || isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) return null;
                                     return `${year}-${monthNum}-${String(parsedDay).padStart(2, '0')}`;
                                 }, priority: 2 },
                                 { name: 'DayMonthYear', regex: regexDayMonthYear, handler: (match) => {
-                                    const [, day, month, year] = match;
+                                    // UPDATED HANDLER: Extract day part based on its captured group, then clean it
+                                    const [, dayPart, month, year] = match; // capture dayPart
                                     const monthNum = getMonthNumber(month);
-                                    const parsedDay = parseInt(day);
-                                    if (!monthNum || isNaN(parsedDay) || parsedDay > 31) return null;
+                                    let cleanDay = dayPart.replace(/er|<sup>er<\/sup>/gi, '').trim(); // Clean day part
+                                    const parsedDay = parseInt(cleanDay); // Parse cleaned day
+                                    if (!monthNum || isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) return null;
                                     return `${year}-${monthNum}-${String(parsedDay).padStart(2, '0')}`;
                                 }, priority: 2 },
                                 { name: 'MonthYear', regex: regexMonthYear, handler: (match) => {
@@ -4595,16 +4616,20 @@
                                     return `${year}-${monthNum}`;
                                 }, priority: 2 },
                                 { name: 'MonthDayNoYear', regex: regexMonthDayNoYear, handler: (match) => {
-                                    const [, month, day] = match;
+                                    // UPDATED HANDLER: Extract day part based on its captured group, then clean it
+                                    const [, month, dayPart] = match; // capture dayPart
                                     const monthNum = getMonthNumber(month);
-                                    const parsedDay = parseInt(day);
+                                    let cleanDay = dayPart.replace(/er|<sup>er<\/sup>/gi, '').trim(); // Clean day part
+                                    const parsedDay = parseInt(cleanDay); // Parse cleaned day
                                     if (!monthNum || isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) return null;
                                     return `${monthNum}-${String(parsedDay).padStart(2, '0')}`;
                                 }, priority: 1 },
                                 { name: 'DayMonthNoYear', regex: regexDayMonthNoYear, handler: (match) => {
-                                    const [, day, month] = match;
+                                    // UPDATED HANDLER: Extract day part based on its captured group, then clean it
+                                    const [, dayPart, month] = match; // capture dayPart
                                     const monthNum = getMonthNumber(month);
-                                    const parsedDay = parseInt(day);
+                                    let cleanDay = dayPart.replace(/er|<sup>er<\/sup>/gi, '').trim(); // Clean day part
+                                    const parsedDay = parseInt(cleanDay); // Parse cleaned day
                                     if (!monthNum || isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) return null;
                                     return `${monthNum}-${String(parsedDay).padStart(2, '0')}`;
                                 }, priority: 1 }
