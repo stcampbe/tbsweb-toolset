@@ -366,6 +366,38 @@
             align-items: center;
             z-index: 1000;
         }
+		/* Specific styles for the Regex Guide Modal content */
+.regex-guide-modal-content {
+    /* Override or set specific width for the Regex Guide */
+    width: 90%;
+    max-width: 700px; /* Adjust as desired for the regex guide */
+    min-width: 300px; /* Adjust as desired */
+    
+    /* Override or set specific height for the Regex Guide */
+    height: auto;
+    max-height: 90vh; /* Adjust as desired for the regex guide */
+    overflow-y: auto;
+}
+
+/* Specific styling for list items and code within the Regex Guide Modal */
+.regex-guide-modal-content ul {
+    margin-left: 1.5rem;
+}
+
+.regex-guide-modal-content li {
+    margin-bottom: 0.5rem;
+}
+
+.regex-guide-modal-content code {
+    display: inline-block;
+    background-color: #334155;
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+    font-size: 0.9em;
+    color: #e0f2f7;
+    white-space: nowrap;
+}
 
         .modal-content {
             background-color: #1E293B; /* Darker slate */
@@ -422,6 +454,58 @@
             color: white;
             border-color: #4338CA;
         }
+		
+.message-box { /* This is probably not needed if you have your own system */
+    position: fixed;
+    top: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    padding: 1rem 2rem;
+    font-weight: bold;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    animation: fadeInOut 4s ease-in-out forwards;
+    color: white;
+    background-color: #38a169; /* Default to green for success */
+}
+.message-box.error { /* This is probably not needed if you have your own system */
+    background-color: #f56565; /* Red for errors */
+}
+@keyframes fadeInOut { /* This is probably not needed if you have your own system */
+    0% { opacity: 0; transform: translateX(-50%) scale(0.9); }
+    10% { opacity: 1; transform: translateX(-50%) scale(1); }
+    90% { opacity: 1; transform: translateX(-50%) scale(1); }
+    100% { opacity: 0; transform: translateX(-50%) scale(0.9); }
+}
+/* Custom class for highlighting a single match when "Highlight all" is off */
+.find-highlight {
+    background-color: rgba(255, 255, 0, 0.6);
+    color: #000000 !important;
+}
+/* Custom class for highlighting all matches in magenta */
+.highlight-all-magenta {
+    background-color: rgba(255, 0, 255, 0.5);
+    color: #ffffff !important;
+}
+/* Custom class for highlighting the CURRENT match when "Highlight all" is ON */
+.find-current-match-highlight {
+    box-shadow: 0 0 0 2px #f97316; /* Bright orange outline */
+    background-color: rgba(255, 165, 0, 0.8); /* More opaque orange background */
+    z-index: 10;
+}
+/* Custom class for highlighting the entire ID tag block with a subtle border */
+.id-highlight {
+	border-bottom: 1px solid rgba(0, 255, 255, 1);
+	z-index: 1;
+}
+.tag-highlight {
+	border-bottom: 2px solid rgba(255, 0, 255, 1);
+}
+/* New CSS for Regex active border */
+.regex-active-border {
+    border: 2px solid #3498db !important; /* A distinct blue color */
+}
 
         /* Styles for collapsible sections */
         .collapsible-section {
@@ -654,6 +738,137 @@
                 </div>
 
                 <div id="monacoEditorContainer" class="flex-grow border border-slate-700 rounded-lg overflow-hidden"></div>
+				<div id="betterSearchContainer" class="w-full">
+<!-- Match Count / Status Message -->
+							<div class="w-full text-left mb-2 mt-2">
+								<span id="match-count" class="text-white text-sm">Find something...</span>
+							</div>
+					<!-- Controls for Find & Replace -->
+						<!-- Dropdowns and Checkboxes -->
+						<div class="flex flex-wrap items-center space-x-4 mb-1">
+							<!-- ID Dropdown -->
+							<select
+								id="target-id-dropdown"
+								class="w-32 p-3 rounded-md bg-gray-900 text-white font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+							>
+								<option value="all">All ID's</option>
+							</select>
+							<!-- Tag Dropdown -->
+							<select
+								id="target-tag-dropdown"
+								class="w-32 p-3 rounded-md bg-gray-900 text-white font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+							>
+								<option value="all">All Tags</option>
+							</select>
+							<!-- Checkbox Options moved to the right of the dropdowns -->
+							<div class="flex items-center space-x-4 text-white ml-auto">
+								<!-- REGEX Checkbox -->
+								<label for="enable-regex" class="flex items-center space-x-2">
+									<input type="checkbox" id="enable-regex" class="form-checkbox h-5 w-5 text-blue-600 rounded">
+									<span>REGEX</span>
+								</label>
+								<!-- Match Case Checkbox -->
+								<label for="match-case" class="flex items-center space-x-2">
+									<input type="checkbox" id="match-case" class="form-checkbox h-5 w-5 text-blue-600 rounded">
+									<span>Match case</span>
+								</label>
+								<!-- Highlight all Checkbox -->
+								<label for="highlight-all" class="flex items-center space-x-2">
+									<input type="checkbox" id="highlight-all" class="form-checkbox h-5 w-5 text-blue-600 rounded">
+									<span>Highlight all</span>
+								</label>
+								
+							</div>
+						</div>
+						
+						<!-- Sequencing Options -->
+						<div
+							id="sequence-container"
+							class="flex flex-wrap items-center space-x-4 text-white overflow-hidden max-h-40 opacity-100 transition-all duration-300 ease-in-out mb-1 mt-1"
+						>
+							<!-- Sequence Checkbox -->
+							<label for="sequence" class="flex items-center space-x-2">
+								<input type="checkbox" id="sequence" class="form-checkbox h-5 w-5 text-blue-600 rounded">
+								<span>Sequence <span class="text-gray-300 text-sm">(To use: Insert <strong><code>{$#+}</code></strong> OR <strong><code>{$#-}</code></strong> in replace field)</span></span>
+							</label>
+							<!-- Range Inputs -->
+							<div id="sequence-range-container" class="flex items-center space-x-2 flex-grow justify-end opacity-0 pointer-events-none transition-opacity duration-300 ease-in-out">
+								<label for="start-index">Start:</label>
+								<input
+									type="number"
+									id="start-index"
+									value="1"
+									class="w-20 p-2 rounded-md bg-gray-900 text-white font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+								>
+								<label for="end-index">End:</label>
+								<input
+									type="number"
+									id="end-index"
+									placeholder="all"
+									class="w-20 p-2 rounded-md bg-gray-900 text-white font-mono placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+								>
+							</div>
+						</div>
+
+						<!-- Inputs and Buttons are now in separate rows -->
+						<div class="flex flex-col space-y-4 mt-1">
+							<!-- Find/Replace Inputs -->
+							<div class="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-4">
+								<input
+									id="find-input"
+									type="text"
+									placeholder="Find"
+									class="w-full flex-1 p-3 rounded-md bg-gray-900 text-white font-mono placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+								>
+								<input
+									id="replace-input"
+									type="text"
+									placeholder="Replace"
+									class="w-full flex-1 p-3 rounded-md bg-gray-900 text-white font-mono placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+								>
+							</div>
+							<!-- Action Buttons -->
+							<div class="flex flex-wrap justify-between items-center space-x-2">
+								<div class="flex items-center space-x-2">
+									<button
+										id="find-previous-button"
+										class="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold"
+									>
+										&#x2191;
+									</button>
+									<button
+										id="find-next-button"
+										class="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold"
+									>
+										Next &#x2193;
+									</button>
+									
+									<!-- REGEX Guide Button moved here -->
+									<button
+										id="regex-guide-button"
+										class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold"
+									>
+										Regex Guide
+									</button>
+								</div>
+								<div class="flex items-center space-x-2">
+									<button
+										id="replace-one-button"
+										class="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold"
+									>
+										Replace
+									</button>
+									<button
+										id="replace-all-button"
+										class="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold"
+									>
+										Replace All
+									</button>
+								</div>
+							</div>
+							
+						</div>
+				</div>
             </div>
 
             <div id="sidebarPanel" class="sidebar-panel">
@@ -3770,7 +3985,80 @@
                 }, 1500);
             });
         }
+		/**
+ * Displays the Regex Guide modal dialog.
+ * @param {HTMLElement} triggeringButton - The button that opened this modal.
+ * @param {string} originalButtonText - The original text of the triggering button.
+ */
+function showRegexGuideModal(triggeringButton, originalButtonText) {
+    const regexGuideContentHtml = `
+        <p class="mb-4">Regular expressions are patterns used to match character combinations in strings. Here are some common metacharacters:</p>
+        
+            <p><code class="font-bold">.</code> : Matches any single character (except newline).</p>
+            <p><code class="font-bold">\\d</code> : Matches any digit (0-9).</p>
+            <p><code class="font-bold">\\D</code> : Matches any non-digit character.</p>
+            <p><code class="font-bold">\\w</code> : Matches any word character (alphanumeric and underscore).</p>
+            <p><code class="font-bold">\\W</code> : Matches any non-word character.</p>
+            <p><code class="font-bold">\\s</code> : Matches any whitespace character (space, tab, newline).</p>
+            <p><code class="font-bold">\\S</code> : Matches any non-whitespace character.</p>
+            <p><code class="font-bold">\\b</code> : Matches a word boundary.</p>
+            <p><code class="font-bold">\\B</code> : Matches a non-word boundary.</p>
+            <p><code class="font-bold">^</code> : Matches the beginning of the string.</p>
+            <p><code class="font-bold">$</code> : Matches the end of the string.</p>
+            <p><code class="font-bold">*</code> : Matches the previous character zero or more times.</p>
+            <p><code class="font-bold">+</code> : Matches the previous character one or more times.</p>
+            <p><code class="font-bold">?</code> : Matches the previous character zero or one time (also for non-greedy matching).</p>
+            <p><code class="font-bold">{n}</code> : Matches the previous character exactly 'n' times.</p>
+            <p><code class="font-bold">{n,}</code> : Matches the previous character 'n' or more times.</p>
+            <p><code class="font-bold">{n,m}</code> : Matches the previous character between 'n' and 'm' times.</p>
+            <p><code class="font-bold">[abc]</code> : Matches any one of the characters inside the brackets.</p>
+            <p><code class="font-bold">[^abc]</code> : Matches any character NOT inside the brackets.</p>
+            <p><code class="font-bold">(x|y)</code> : Matches either 'x' or 'y'.</p>
+            <p><code class="font-bold">(...)</code> : Capturing group.</p>
+            <p><code class="font-bold">\\n</code> : Backreference to the n-th capturing group.</p>
+            <p><code class="font-bold">|</code> : OR operator.</p>
+            <p><code class="font-bold">\\\\</code> : Escapes a special character (e.g., '\.' to match a literal dot).</p>
+    `;
 
+    const modalOverlay = document.createElement('div');
+    modalOverlay.className = 'modal-overlay'; // Use your existing modal-overlay class
+    modalOverlay.innerHTML = `
+        <div class="modal-content regex-guide-modal-content">
+            <h3>Regex Guide</h3> <!-- Changed from h2 to h3 to match other modals' titles -->
+            <div id="modalBody">${regexGuideContentHtml}</div>
+            <div class="flex justify-end mt-4 space-x-2">
+                <button id="modalCloseRegexBtn" class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600">Close</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modalOverlay);
+
+    // Function to clean up and re-enable buttons
+    function closeModalAndReEnableButtons() {
+        modalOverlay.remove();
+        triggeringButton.removeAttribute('data-temp-active'); // Crucial: Remove flag
+        triggeringButton.textContent = originalButtonText; // Revert immediately
+        triggeringButton.classList.remove('bg-green-500', 'hover:bg-green-600');
+        triggeringButton.classList.add('bg-gray-600', 'hover:bg-gray-700'); // Revert to original gray button style
+        updateAllInteractiveButtonStates(); // Re-enable all buttons
+    }
+
+    document.getElementById('modalCloseRegexBtn').addEventListener('click', closeModalAndReEnableButtons);
+    
+    // Close modal if clicked outside content
+    modalOverlay.addEventListener('click', (event) => {
+        if (event.target === modalOverlay) {
+            closeModalAndReEnableButtons();
+        }
+    });
+
+    // Provide immediate visual feedback for the triggering button
+    triggeringButton.textContent = 'Opening...';
+    triggeringButton.classList.add('bg-green-500', 'hover:bg-green-600');
+    triggeringButton.classList.remove('bg-gray-600', 'hover:bg-gray-700'); // Change to green immediately
+    triggeringButton.setAttribute('data-temp-active', 'true'); // Set the flag
+    updateAllInteractiveButtonStates(); // Disable all buttons
+}
         /**
          * Displays a modal dialog for Auto-ID options.
          * @param {HTMLElement} triggeringButton - The button that opened this modal.
@@ -3991,6 +4279,836 @@
 
                 // Ensure Monaco refreshes layout on window resize
                 window.addEventListener('resize', debouncedMonacoLayout);
+				
+				// --- START PASTED JAVASCRIPT FROM BETTER-SEARCH.HTML ---
+                // Get references to the DOM elements (adjust 'editor' to 'monacoEditorInstance')
+                const findInput = document.getElementById('find-input');
+                const replaceInput = document.getElementById('replace-input');
+                const findNextButton = document.getElementById('find-next-button');
+                const findPreviousButton = document.getElementById('find-previous-button');
+                const replaceOneButton = document.getElementById('replace-one-button');
+                const replaceAllButton = document.getElementById('replace-all-button');
+                const tagDropdown = document.getElementById('target-tag-dropdown');
+                const idDropdown = document.getElementById('target-id-dropdown');
+                const enableRegexCheckbox = document.getElementById('enable-regex');
+                const matchCaseCheckbox = document.getElementById('match-case');
+                const highlightAllCheckbox = document.getElementById('highlight-all');
+                const sequenceCheckbox = document.getElementById('sequence');
+                const sequenceContainer = document.getElementById('sequence-container');
+                const sequenceRangeContainer = document.getElementById('sequence-range-container');
+                const startIndexInput = document.getElementById('start-index');
+                const endIndexInput = document.getElementById('end-index');
+                const matchCountSpan = document.getElementById('match-count');
+                const regexGuideButton = document.getElementById('regex-guide-button');
+				// NOW, PUSH regexGuideButton onto the array here, after it's defined
+				allInteractiveButtons.push(regexGuideButton);
+
+                let allDecorations = [];
+                let allMatches = [];
+                let currentMatchIndex = -1;
+                let currentFindText = '';
+                let currentSelectedId = 'all';
+                let currentSelectedTag = 'all';
+                let currentIsRegex = false;
+                let currentMatchCase = false;
+                
+                /**
+             * Populates the dropdown menu with unique HTML tags from the editor's content.
+             * Preserves the currently selected tag if it still exists.
+             */
+            function populateTagDropdown() {
+                const currentSelection = tagDropdown.value; // Store current selection
+                const editorValue = editor.getValue();
+                const tagRegex = /<(\w+)(?=\s|>)/g;
+                const uniqueTags = new Set();
+                let match;
+
+                while ((match = tagRegex.exec(editorValue)) !== null) {
+                    uniqueTags.add(match[1]);
+                }
+
+                tagDropdown.innerHTML = '';
+                const defaultOption = document.createElement('option');
+                defaultOption.value = 'all';
+                defaultOption.textContent = 'All Tags';
+                tagDropdown.appendChild(defaultOption);
+
+                const sortedTags = [...uniqueTags].sort();
+
+                sortedTags.forEach(tag => {
+                    const option = document.createElement('option');
+                    option.value = tag;
+                    option.textContent = `<${tag}>`;
+                    tagDropdown.appendChild(option);
+                });
+
+                // Restore previous selection if it's still a valid option
+                if (Array.from(tagDropdown.options).some(option => option.value === currentSelection)) {
+                    tagDropdown.value = currentSelection;
+                } else {
+                    tagDropdown.value = 'all'; // Fallback if old selection is gone
+                }
+            }
+            
+            /**
+             * Populates the dropdown menu with unique HTML IDs from the editor's content.
+             * Preserves the currently selected ID if it still exists.
+             */
+                function populateTagDropdown() {
+                    const currentSelection = tagDropdown.value;
+                    const editorValue = monacoEditorInstance.getValue(); // Use monacoEditorInstance
+                    const tagRegex = /<(\w+)(?=\s|>)/g;
+                    const uniqueTags = new Set();
+                    let match;
+
+                    while ((match = tagRegex.exec(editorValue)) !== null) {
+                        uniqueTags.add(match[1]);
+                    }
+
+                    tagDropdown.innerHTML = '';
+                    const defaultOption = document.createElement('option');
+                    defaultOption.value = 'all';
+                    defaultOption.textContent = 'All Tags';
+                    tagDropdown.appendChild(defaultOption);
+
+                    const sortedTags = [...uniqueTags].sort();
+
+                    sortedTags.forEach(tag => {
+                        const option = document.createElement('option');
+                        option.value = tag;
+                        option.textContent = `<${tag}>`;
+                        tagDropdown.appendChild(option);
+                    });
+
+                    if (Array.from(tagDropdown.options).some(option => option.value === currentSelection)) {
+                        tagDropdown.value = currentSelection;
+                    } else {
+                        tagDropdown.value = 'all';
+                    }
+                }
+                
+                /**
+                 * Populates the dropdown menu with unique HTML IDs from the editor's content.
+                 */
+                function populateIdDropdown() {
+                    const currentSelection = idDropdown.value;
+                    const editorValue = monacoEditorInstance.getValue(); // Use monacoEditorInstance
+                    const idRegex = /id="([^"]+)"/g;
+                    const uniqueIds = [];
+                    const seenIds = new Set();
+
+                    let match;
+                    while ((match = idRegex.exec(editorValue)) !== null) {
+                        const id = match[1];
+                        if (!seenIds.has(id)) {
+                            uniqueIds.push(id);
+                            seenIds.add(id);
+                        }
+                    }
+
+                    idDropdown.innerHTML = '';
+                    const defaultOption = document.createElement('option');
+                    defaultOption.value = 'all';
+                    defaultOption.textContent = 'All ID\'s';
+                    idDropdown.appendChild(defaultOption);
+
+                    uniqueIds.forEach(id => {
+                        const option = document.createElement('option');
+                        option.value = id;
+                        option.textContent = `#${id}`;
+                        idDropdown.appendChild(option);
+                    });
+
+                    if (Array.from(idDropdown.options).some(option => option.value === currentSelection)) {
+                        idDropdown.value = currentSelection;
+                    } else {
+                        idDropdown.value = 'all';
+                    }
+                }
+
+                populateTagDropdown();
+                populateIdDropdown();
+
+                // Update the dropdowns whenever the editor content changes
+                monacoEditorInstance.onDidChangeModelContent(() => { // Use monacoEditorInstance
+                    populateTagDropdown();
+                    populateIdDropdown();
+                    resetSearchState(true);
+                });
+                
+                // Function to handle the visibility of the sequence options container
+                function toggleSequenceVisibility() {
+                    if (enableRegexCheckbox.checked) {
+                        sequenceContainer.classList.remove('max-h-0', 'opacity-0', 'pointer-events-none');
+                        sequenceContainer.classList.add('max-h-40', 'opacity-100');
+                    } else {
+                        sequenceContainer.classList.remove('max-h-40', 'opacity-0', 'pointer-events-none');
+                        sequenceContainer.classList.add('max-h-0', 'opacity-0', 'pointer-events-none');
+                    }
+                }
+
+                // Toggle visibility of the sequence range inputs based on the sequence checkbox
+                sequenceCheckbox.addEventListener('change', () => {
+                    if (sequenceCheckbox.checked) {
+                        sequenceRangeContainer.classList.remove('opacity-0', 'pointer-events-none');
+                    } else {
+                        sequenceRangeContainer.classList.add('opacity-0', 'pointer-events-none');
+                    }
+                });
+
+                // Function to toggle the regex active border
+                function toggleRegexBorder() {
+                    if (enableRegexCheckbox.checked) {
+                        findInput.classList.add('regex-active-border');
+                        replaceInput.classList.add('regex-active-border');
+                    } else {
+                        findInput.classList.remove('regex-active-border');
+                        replaceInput.classList.remove('regex-active-border');
+                    }
+                }
+
+                // Toggle visibility of the entire sequence container based on the regex checkbox
+                enableRegexCheckbox.addEventListener('change', () => {
+                    toggleSequenceVisibility();
+                    toggleRegexBorder();
+                    resetSearchState(true);
+                });
+                
+                // Initial check for sequence container visibility and regex border
+                toggleSequenceVisibility();
+                toggleRegexBorder();
+
+                /**
+                 * Generates a context string based on selected ID and Tag.
+                 */
+                function getContextString() {
+                    const selectedId = idDropdown.value;
+                    const selectedTag = tagDropdown.value;
+                    let contextText = '';
+
+                    if (selectedId !== 'all' && selectedTag !== 'all') {
+                        contextText = ` in selected <span class="text-blue-400 font-bold">#${selectedId}</span> and <span class="text-purple-400 font-bold">&lt;${selectedTag}&gt;</span> tags only`;
+                    } else if (selectedId !== 'all') {
+                        contextText = ` in selected <span class="text-blue-400 font-bold">#${selectedId}</span> only`;
+                    } else if (selectedTag !== 'all') {
+                        contextText = ` in selected <span class="text-purple-400 font-bold">&lt;${selectedTag}&gt;</span> tags only`;
+                    }
+                    return contextText;
+                }
+
+                  /**
+                 * Finds and returns a list of all matches based on the current search criteria.
+                 */
+                function findMatches() {
+    const findText = findInput.value;
+    if (!findText) return [];
+
+    const selectedId = idDropdown.value;
+    const selectedTag = tagDropdown.value;
+    const isRegex = enableRegexCheckbox.checked;
+    const matchCase = matchCaseCheckbox.checked;
+    const isCaseSensitive = matchCase;
+    const model = monacoEditorInstance.getModel();
+    const editorValue = model.getValue();
+    let matches = [];
+    let searchScopeRange = null; // This will define the overall range for the search
+
+    // --- Determine the ID-based search scope first ---
+    if (selectedId !== 'all') {
+        const idAttributeRegex = new RegExp(`<(\\w+)([^>]*id="${selectedId}"[^>]*)>`, 'i'); // Capture tagName
+        const idMatch = idAttributeRegex.exec(editorValue);
+
+        if (idMatch) {
+            const startOffset = idMatch.index;
+            const tagName = idMatch[1];
+            const tagContent = idMatch[2];
+
+            const isSelfClosing = tagContent.endsWith('/') || ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'].includes(tagName.toLowerCase());
+
+            if (isSelfClosing) {
+                searchScopeRange = new monaco.Range(
+                    model.getPositionAt(startOffset).lineNumber,
+                    model.getPositionAt(startOffset).column,
+                    model.getPositionAt(startOffset + idMatch[0].length).lineNumber,
+                    model.getPositionAt(startOffset + idMatch[0].length).column
+                );
+            } else {
+                searchScopeRange = findFullElementRange(model, startOffset);
+            }
+        } else {
+            return []; // ID not found, so no search scope
+        }
+    }
+
+    // --- Now, refine the search scope further if a tag is selected ---
+    if (selectedTag !== 'all') {
+        let currentSearchAreaRange = searchScopeRange; // Start with ID scope if present, else full document
+        let allRangesToSearch = []; // Collect all ranges for selected tag within the current scope
+
+        const tagOpeningRegex = new RegExp(`<${selectedTag}([^>]*)>`, 'gi');
+        tagOpeningRegex.lastIndex = currentSearchAreaRange ? model.getOffsetAt(currentSearchAreaRange.getStartPosition()) : 0;
+
+        let match;
+        while ((match = tagOpeningRegex.exec(editorValue)) !== null) {
+            const matchStartOffset = match.index;
+            const matchEndOffset = match.index + match[0].length;
+
+            // If a broader scope (like ID scope) is active, ensure this tag is within it
+            if (currentSearchAreaRange) {
+                const matchStartPos = model.getPositionAt(matchStartOffset);
+                if (!currentSearchAreaRange.containsPosition(matchStartPos) && matchStartOffset >= model.getOffsetAt(currentSearchAreaRange.getEndPosition())) {
+                    // Optimization: if we've passed the end of the current search area, stop.
+                    break;
+                }
+                if (!currentSearchAreaRange.containsPosition(matchStartPos)) {
+                    continue; // Skip if this match is outside the defined scope
+                }
+            }
+
+            const elementFullRange = findFullElementRange(model, matchStartOffset);
+            if (elementFullRange) {
+                allRangesToSearch.push(elementFullRange);
+            }
+        }
+
+        // If specific tags are selected, concatenate all matches found within those tag ranges
+        if (allRangesToSearch.length > 0) {
+            allRangesToSearch.forEach(range => {
+                matches.push(...model.findMatches(findText, range, isRegex, isCaseSensitive, null, true));
+            });
+        } else {
+            return []; // No elements of the selected tag type found in the scope
+        }
+
+    } else {
+        // If only ID is selected, or no filters are applied, perform a search within searchScopeRange
+        matches = model.findMatches(findText, searchScopeRange, isRegex, isCaseSensitive, null, true);
+    }
+
+    return matches;
+}
+
+// Helper function to find the full range of an HTML element given its opening tag's start offset
+function findFullElementRange(model, initialStartOffset) {
+    const editorValue = model.getValue();
+    const startPos = model.getPositionAt(initialStartOffset);
+
+    // 1. Find the opening tag and extract its name and whether it's self-closing
+    // Regex for an opening tag (e.g., <div id="x"> or <img src="y"/>)
+    const openTagMatch = editorValue.substring(initialStartOffset).match(/^<(\w+)([^>]*)>/);
+    if (!openTagMatch) {
+        return null; // Not a valid opening tag at this position
+    }
+
+    const tagName = openTagMatch[1];
+    const tagContent = openTagMatch[2]; // Attributes and closing part
+    const openTagLength = openTagMatch[0].length;
+    const isSelfClosing = tagContent.endsWith('/') || ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'].includes(tagName.toLowerCase());
+
+    if (isSelfClosing) {
+        // For self-closing tags, the range is just the tag itself
+        return new monaco.Range(
+            startPos.lineNumber,
+            startPos.column,
+            model.getPositionAt(initialStartOffset + openTagLength).lineNumber,
+            model.getPositionAt(initialStartOffset + openTagLength).column
+        );
+    }
+
+    // 2. For paired tags, scan to find the matching closing tag
+    let balance = 1; // Start with 1 for the initial opening tag
+    let currentOffset = initialStartOffset + openTagLength;
+
+    const openingTagRegex = new RegExp(`<${tagName}([^>]*)>`, 'gi');
+    const closingTagRegex = new RegExp(`<\/${tagName}>`, 'gi');
+
+    // Reset regex lastIndex to search from currentOffset
+    openingTagRegex.lastIndex = currentOffset;
+    closingTagRegex.lastIndex = currentOffset;
+
+    let nextOpenMatch = openingTagRegex.exec(editorValue);
+    let nextCloseMatch = closingTagRegex.exec(editorValue);
+
+    while (balance > 0 && (nextOpenMatch || nextCloseMatch)) {
+        if (nextCloseMatch && (!nextOpenMatch || nextCloseMatch.index < nextOpenMatch.index)) {
+            // Found a closing tag before the next opening tag (or no more opening tags)
+            balance--;
+            currentOffset = nextCloseMatch.index + nextCloseMatch[0].length;
+            if (balance === 0) {
+                // Found the matching closing tag
+                return new monaco.Range(
+                    startPos.lineNumber,
+                    startPos.column,
+                    model.getPositionAt(currentOffset).lineNumber,
+                    model.getPositionAt(currentOffset).column
+                );
+            }
+            // Continue searching from after this closing tag
+            openingTagRegex.lastIndex = currentOffset;
+            closingTagRegex.lastIndex = currentOffset;
+            nextOpenMatch = openingTagRegex.exec(editorValue);
+            nextCloseMatch = closingTagRegex.exec(editorValue);
+        } else if (nextOpenMatch) {
+            // Found an opening tag (nested) before the next closing tag
+            balance++;
+            currentOffset = nextOpenMatch.index + nextOpenMatch[0].length;
+            // Continue searching from after this opening tag
+            openingTagRegex.lastIndex = currentOffset;
+            closingTagRegex.lastIndex = currentOffset;
+            nextOpenMatch = openingTagRegex.exec(editorValue);
+            nextCloseMatch = closingTagRegex.exec(editorValue);
+        } else {
+            // No more opening or closing tags, but balance > 0 (unclosed tag)
+            break;
+        }
+    }
+
+    // If we reach here, the tag was unclosed or an error occurred.
+    // Highlight from the start of the opening tag to the end of the document
+    // or to the end of the line if that's more appropriate.
+    // For now, let's just highlight the opening tag itself as a fallback
+    return new monaco.Range(
+        startPos.lineNumber,
+        startPos.column,
+        model.getPositionAt(initialStartOffset + openTagLength).lineNumber,
+        model.getPositionAt(initialStartOffset + openTagLength).column
+    );
+}
+
+                  /**
+                 * Updates all decorations (ID highlight and find matches) based on the current state.
+                 */
+                function updateDecorations() {
+    const newDecorations = [];
+    const selectedId = idDropdown.value;
+    const selectedTag = tagDropdown.value;
+    const editorValue = monacoEditorInstance.getModel().getValue();
+    const model = monacoEditorInstance.getModel();
+
+    let idBlockRange = null;
+
+    // --- ID Highlight Logic ---
+    if (selectedId !== 'all') {
+        const idAttributeRegex = new RegExp(`<(\\w+)([^>]*id="${selectedId}"[^>]*)>`, 'i'); // Capture tagName
+        const idMatch = idAttributeRegex.exec(editorValue);
+
+        if (idMatch) {
+            const startOffset = idMatch.index;
+            const tagName = idMatch[1]; // Get the tag name (e.g., 'section', 'div')
+            const tagContent = idMatch[2]; // Attributes and closing part (needed for self-closing check)
+
+            const isSelfClosing = tagContent.endsWith('/') || ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'].includes(tagName.toLowerCase());
+
+            if (isSelfClosing) {
+                // For self-closing tags with ID, just highlight the tag itself
+                idBlockRange = new monaco.Range(
+                    model.getPositionAt(startOffset).lineNumber,
+                    model.getPositionAt(startOffset).column,
+                    model.getPositionAt(startOffset + idMatch[0].length).lineNumber,
+                    model.getPositionAt(startOffset + idMatch[0].length).column
+                );
+            } else {
+                // Use the tag balancing function for paired tags
+                idBlockRange = findFullElementRange(model, startOffset);
+            }
+        }
+    }
+
+    if (idBlockRange) {
+        newDecorations.push({
+            range: idBlockRange,
+            options: { inlineClassName: 'id-highlight' }
+        });
+    }
+
+    // --- Tag Highlight Logic (with ID scope awareness) ---
+    if (selectedTag !== 'all') {
+        let contentToSearchForTags = editorValue;
+        let baseOffsetForTags = 0;
+        let searchStartOffset = 0; // Where to start searching in editorValue
+
+        // If an ID is selected AND its block was successfully found,
+        // restrict the tag search to that block's content and adjust baseOffset.
+        if (selectedId !== 'all' && idBlockRange) {
+            searchStartOffset = model.getOffsetAt(new monaco.Position(idBlockRange.startLineNumber, idBlockRange.startColumn));
+            contentToSearchForTags = model.getValueInRange(idBlockRange); // This might not be strictly needed for findFullElementRange
+            baseOffsetForTags = searchStartOffset; // Base offset for ranges found within this content
+        }
+
+        // Find all occurrences of the selectedTag
+        const tagOpeningRegex = new RegExp(`<${selectedTag}([^>]*)>`, 'gi'); // Find all opening tags
+        tagOpeningRegex.lastIndex = searchStartOffset; // Start search from the correct position
+
+        let match;
+        while ((match = tagOpeningRegex.exec(editorValue)) !== null) {
+            // Ensure this match is within the current ID scope if one is active
+            if (selectedId !== 'all' && idBlockRange) {
+                 const matchStartPos = model.getPositionAt(match.index);
+                 if (!idBlockRange.containsPosition(matchStartPos)) {
+                     // If the match is outside the ID scope, skip it.
+                     // This can happen if regex.lastIndex goes past idBlockRange end.
+                     // To prevent infinite loops or missing tags, it's safer to break if outside current scope.
+                     if (match.index >= model.getOffsetAt(idBlockRange.getEndPosition())) {
+                         break;
+                     }
+                     continue; // Skip current match, continue searching
+                 }
+            }
+
+            const currentElementFullRange = findFullElementRange(model, match.index);
+            if (currentElementFullRange) {
+                newDecorations.push({
+                    range: currentElementFullRange,
+                    options: { inlineClassName: 'tag-highlight' }
+                });
+            }
+        }
+    }
+
+    // --- Existing Find Match Highlighting Logic ---
+    if (allMatches.length > 0) {
+        if (highlightAllCheckbox.checked) {
+            allMatches.forEach(match => {
+                newDecorations.push({
+                    range: match.range,
+                    options: { inlineClassName: 'highlight-all-magenta' }
+                });
+            });
+            if (currentMatchIndex !== -1) {
+                newDecorations.push({
+                    range: allMatches[currentMatchIndex].range,
+                    options: { inlineClassName: 'find-current-match-highlight' }
+                });
+            }
+        } else if (currentMatchIndex !== -1) {
+            newDecorations.push({
+                range: allMatches[currentMatchIndex].range,
+                options: { inlineClassName: 'find-highlight' }
+            });
+        }
+
+        if (currentMatchIndex !== -1) {
+             monacoEditorInstance.revealRangeInCenterIfOutsideViewport(allMatches[currentMatchIndex].range, 0);
+             const position = allMatches[currentMatchIndex].range.getStartPosition();
+             monacoEditorInstance.setPosition(position);
+
+             matchCountSpan.innerHTML = `${currentMatchIndex + 1} of ${allMatches.length}${getContextString()}`;
+        }
+    } else {
+        const matchCase = matchCaseCheckbox.checked;
+        let statusMessage = "No matches";
+        let optionsDescription = [];
+
+        if (findInput.value === '') {
+            matchCountSpan.innerHTML = "Find something...";
+            allDecorations = monacoEditorInstance.deltaDecorations(allDecorations, newDecorations);
+            return;
+        }
+
+        if (matchCase) {
+            optionsDescription.push("case-sensitive");
+        }
+
+        if (optionsDescription.length > 0) {
+            statusMessage = `No ${optionsDescription.join(' ')} matches`;
+        }
+        matchCountSpan.innerHTML = `${statusMessage}${getContextString()}`;
+    }
+
+    allDecorations = monacoEditorInstance.deltaDecorations(allDecorations, newDecorations);
+}
+
+                /**
+                 * Resets the search state and decorations when search criteria change,
+                 * or forces a re-index if 'force' is true.
+                 */
+                function resetSearchState(force = false) {
+                    const newFindText = findInput.value;
+                    const newSelectedId = idDropdown.value;
+                    const newSelectedTag = tagDropdown.value;
+                    const newIsRegex = enableRegexCheckbox.checked;
+                    const newMatchCase = matchCaseCheckbox.checked;
+
+                    const criteriaChanged = (
+                        newFindText !== currentFindText ||
+                        newSelectedId !== currentSelectedId ||
+                        newSelectedTag !== currentSelectedTag ||
+                        newIsRegex !== currentIsRegex ||
+                        newMatchCase !== currentMatchCase
+                    );
+
+                    if (force || criteriaChanged) {
+                        currentFindText = newFindText;
+                        currentSelectedId = newSelectedId;
+                        currentSelectedTag = newSelectedTag;
+                        currentIsRegex = newIsRegex;
+                        currentMatchCase = newMatchCase;
+
+                        allMatches = findMatches();
+                        currentMatchIndex = -1;
+
+                        if (allMatches.length > 0 && newFindText !== '') {
+                            currentMatchIndex = 0;
+                        }
+                    }
+                    
+                    updateDecorations();
+                }
+
+                // Helper function to process replacement text for a single match
+                function processReplacement(originalMatchText, replaceText, isRegex, isSequencing, sequenceCurrentValue) {
+                    let finalReplacement = replaceText;
+
+                    // Handle sequencing
+                    if (isSequencing) {
+                        if (finalReplacement.includes('{$#+}')) {
+                            finalReplacement = finalReplacement.replaceAll('{$#+}', sequenceCurrentValue.toString());
+                        } else if (finalReplacement.includes('{$#-}' )) {
+                            finalReplacement = finalReplacement.replaceAll('{$#-}', sequenceCurrentValue.toString());
+                        }
+                    }
+
+                    // Handle backreferences ($1, $2, etc.) and $& if regex is enabled
+                    if (isRegex) {
+                        const findText = findInput.value;
+                        const matchCase = matchCaseCheckbox.checked;
+                        const pattern = isRegex ? findText : escapeRegExp(findText);
+                        const regexForGroups = new RegExp(pattern, matchCase ? '' : 'i');
+
+                        const groupMatch = regexForGroups.exec(originalMatchText);
+
+                        if (groupMatch) {
+                            finalReplacement = finalReplacement.replaceAll('$&', groupMatch[0] || '');
+                            for (let i = 1; i < groupMatch.length; i++) {
+                                const placeholder = `$${i}`;
+                                finalReplacement = finalReplacement.replaceAll(placeholder, groupMatch[i] || '');
+                            }
+                        }
+                    }
+                    return finalReplacement;
+                }
+
+                // Event listeners for UI elements
+                findNextButton.addEventListener('click', () => {
+                    resetSearchState();
+                    if (allMatches.length > 0) {
+                        currentMatchIndex = (currentMatchIndex + 1) % allMatches.length;
+                        updateDecorations();
+                    } else {
+                        // Message already handled by updateDecorations
+                    }
+                });
+
+                findPreviousButton.addEventListener('click', () => {
+                    resetSearchState();
+                    if (allMatches.length > 0) {
+                        currentMatchIndex = (currentMatchIndex - 1 + allMatches.length) % allMatches.length;
+                        updateDecorations();
+                    } else {
+                        // Message already handled by updateDecorations
+                    }
+                });
+
+                // Logic for the new "Replace" button
+                replaceOneButton.addEventListener('click', () => {
+                    const findText = findInput.value;
+                    const replaceText = replaceInput.value;
+                    const isRegex = enableRegexCheckbox.checked;
+                    const isSequencing = sequenceCheckbox.checked && (replaceText.includes('{$#+}') || replaceText.includes('{$#-}') );
+                    let startIndex = parseInt(startIndexInput.value, 10);
+
+                    if (!findText) {
+                        updateDecorations();
+                        return;
+                    }
+
+                    if (isSequencing && isNaN(startIndex)) {
+                        showMessageBox("Please enter a valid number for 'Start' index when sequencing.", true);
+                        return;
+                    }
+
+                    if (allMatches.length === 0 || currentMatchIndex === -1 || currentMatchIndex >= allMatches.length) {
+                        resetSearchState();
+                        if (allMatches.length === 0) {
+                            updateDecorations();
+                            return;
+                        }
+                    }
+                    
+                    const matchToReplace = allMatches[currentMatchIndex];
+                    const originalMatchRange = matchToReplace.range;
+                    const originalMatchText = monacoEditorInstance.getModel().getValueInRange(originalMatchRange); // Use monacoEditorInstance
+                    
+                    const processedReplaceText = processReplacement(
+                        originalMatchText,
+                        replaceText,
+                        isRegex,
+                        isSequencing,
+                        startIndex
+                    );
+
+                    monacoEditorInstance.executeEdits( // Use monacoEditorInstance
+                        null,
+                        [{
+                            range: originalMatchRange,
+                            text: processedReplaceText,
+                            forceMoveMarkers: true
+                        }]
+                    );
+                    
+                    if (isSequencing) {
+                        if (replaceText.includes('{$#+}')) {
+                            startIndexInput.value = (startIndex + 1).toString();
+                        } else if (replaceText.includes('{$#-}' )) {
+                            startIndexInput.value = (startIndex - 1).toString();
+                        }
+                    }
+
+                    const oldEndPosition = originalMatchRange.getEndPosition();
+
+                    resetSearchState(true);
+
+                    let newCurrentMatchIndex = -1;
+
+                    for (let i = 0; i < allMatches.length; i++) {
+                        const newMatchRange = allMatches[i].range;
+                        if (monaco.Position.compare(newMatchRange.getStartPosition(), oldEndPosition) >= 0) {
+                            newCurrentMatchIndex = i;
+                            break;
+                        }
+                    }
+
+                    if (newCurrentMatchIndex !== -1) {
+                        currentMatchIndex = newCurrentMatchIndex;
+                    } else if (allMatches.length > 0) {
+                        currentMatchIndex = 0;
+                    } else {
+                        currentMatchIndex = -1;
+                    }
+                    
+                    allDecorations = monacoEditorInstance.deltaDecorations(allDecorations, []); // Use monacoEditorInstance
+                    updateDecorations();
+                });
+
+                idDropdown.addEventListener('change', () => resetSearchState(true)); 
+                tagDropdown.addEventListener('change', () => resetSearchState(true)); 
+                matchCaseCheckbox.addEventListener('change', () => resetSearchState(true)); 
+                highlightAllCheckbox.addEventListener('change', updateDecorations);
+                findInput.addEventListener('input', () => resetSearchState(true));
+				
+                // The original replace button is now Replace All
+                replaceAllButton.addEventListener('click', () => {
+    const findText = findInput.value;
+    const replaceText = replaceInput.value;
+    const isRegex = enableRegexCheckbox.checked;
+    const matchCase = matchCaseCheckbox.checked;
+    const isSequencing = sequenceCheckbox.checked && (replaceText.includes('{$#+}') || replaceText.includes('{$#-}') );
+
+    if (!findText) {
+        // If find input is empty, clear decorations and show a message
+        resetSearchState(); // This will effectively clear old matches and decorations
+        matchCountSpan.innerHTML = "Enter text to find.";
+        return;
+    }
+
+    let startIndex = parseInt(startIndexInput.value, 10);
+    if (isSequencing && (isNaN(startIndex) || startIndex < 0)) { // Added check for negative startIndex
+        showMessageBox("Please enter a valid non-negative number for 'Start' index when sequencing.", true);
+        return;
+    }
+    
+    // Find all matches *before* starting replacements, as replacements can change offsets
+    let matchesToReplace = findMatches(); 
+    
+    if (matchesToReplace.length === 0) {
+        resetSearchState(); // Show "No matches"
+        return;
+    }
+
+    const edits = [];
+    let replacementCount = 0;
+    let sequenceCounter = startIndex; // Start sequence from the input value
+
+    // Important: endIndex should only be considered if sequence is enabled.
+    // Also, ensure endIndex is treated as inclusive if user intends it that way.
+    const endIndex = parseInt(endIndexInput.value, 10);
+    const hasEndIndex = isSequencing && !isNaN(endIndex);
+
+    const pattern = isRegex ? findText : escapeRegExp(findText);
+
+    // Filter matches based on the end index if sequencing is active and an end index is provided
+    let filteredMatches = matchesToReplace;
+    if (hasEndIndex) {
+        filteredMatches = matchesToReplace.filter((match, index) => {
+            const currentMatchSequenceValue = sequenceCounter + index;
+            return currentMatchSequenceValue <= endIndex;
+        });
+    }
+
+    filteredMatches.forEach((match, index) => {
+        // Use `sequenceCounter + index` for calculation, as `sequenceCounter` is the base for the *first* item
+        // and `index` is its offset within the `filteredMatches` array.
+        const effectiveSequenceValue = sequenceCounter + index; 
+
+        let finalReplacement = replaceText;
+
+        if (isSequencing) {
+            // Apply sequencing tokens
+            if (finalReplacement.includes('{$#+}')) {
+                finalReplacement = finalReplacement.replaceAll('{$#+}', effectiveSequenceValue.toString());
+            } else if (finalReplacement.includes('{$#-}' )) {
+                finalReplacement = finalReplacement.replaceAll('{$#-}', effectiveSequenceValue.toString());
+            }
+        }
+
+        if (isRegex) {
+            const originalMatchText = monacoEditorInstance.getModel().getValueInRange(match.range);
+            const regexForGroups = new RegExp(pattern, matchCase ? '' : 'i');
+            const groupMatch = regexForGroups.exec(originalMatchText);
+
+            if (groupMatch) { 
+                finalReplacement = finalReplacement.replaceAll('$&', groupMatch[0] || '');
+
+                for (let i = 1; i < groupMatch.length; i++) { 
+                    const placeholder = `$${i}`;
+                    finalReplacement = finalReplacement.replaceAll(placeholder, groupMatch[i] || '');
+                }
+            }
+        }
+
+        edits.push({
+            range: match.range,
+            text: finalReplacement
+        });
+        replacementCount++;
+    });
+
+    if (edits.length === 0) {
+        // This case should ideally be caught by matchesToReplace.length === 0,
+        // but if `hasEndIndex` filters everything out, this handles it.
+        matchCountSpan.innerHTML = "No matches found within the specified sequence range.";
+        return;
+    }
+
+    monacoEditorInstance.getModel().pushEditOperations(
+        [],
+        edits,
+        () => null // This function is called to compute new selections after edits.
+                   // Returning `null` means selections are not automatically adjusted.
+                   // You might want to adjust this if you need specific cursor placement.
+    );
+
+    // After replacement, clear old decorations and re-run findMatches to update current state
+    matchCountSpan.innerHTML = `Replaced ${replacementCount} occurrences.`;
+    resetSearchState(true); // Force a re-search and re-decoration
+});
+
+                // NEW Regex Guide button event listener:
+				regexGuideButton.addEventListener('click', () => {
+					const originalText = regexGuideButton.textContent;
+					showRegexGuideModal(regexGuideButton, originalText);
+				});
+				updateAllInteractiveButtonStates();
             });
 
             copyCodeBtn.addEventListener('click', async () => {
@@ -4867,6 +5985,10 @@ function generateUniqueId(baseText, existingIds) {
     }
     existingIds.add(uniqueId); // Add the newly generated unique ID to our set of existing IDs
     return uniqueId;
+}
+
+function escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the matched substring
 }
 
 /**
