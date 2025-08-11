@@ -673,6 +673,24 @@
             padding: 0.3rem 0.6rem; /* Smaller padding for modal buttons */
             font-size: 0.8rem; /* Smaller font size for modal buttons */
         }
+		
+/* Apply these classes to the new #searchControlsContent div */
+.search-controls-hidden {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+    pointer-events: none; /* Disable interaction when hidden */
+    padding-top: 0 !important; /* Remove any top/bottom padding when hidden */
+    padding-bottom: 0 !important;
+}
+
+.search-controls-visible {
+    max-height: 500px; /* A value large enough to contain all controls */
+    opacity: 1;
+    transition: max-height 0.3s ease-in, opacity 0.3s ease-in;
+    pointer-events: auto;
+}
     </style>
 </head>
 <body>
@@ -738,11 +756,14 @@
                 </div>
 
                 <div id="monacoEditorContainer" class="flex-grow border border-slate-700 rounded-lg overflow-hidden"></div>
-				<div id="betterSearchContainer" class="w-full">
-<!-- Match Count / Status Message -->
-							<div class="w-full text-left mb-2 mt-2">
-								<span id="match-count" class="text-white text-sm">Find something...</span>
-							</div>
+				<div id="betterSearchContainer" class="w-full hidden">
+				<div class="w-full text-left mb-2 mt-2 flex items-center justify-between">
+    <span id="match-count" class="text-white text-sm"></span>
+    <button id="toggleSearchControlsBtn" class="px-3 py-1 text-xs bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">
+        Hide Search Panel
+    </button>
+</div>
+    <div id="searchControlsContent">
 					<!-- Controls for Find & Replace -->
 						<!-- Dropdowns and Checkboxes -->
 						<div class="flex flex-wrap items-center space-x-4 mb-1">
@@ -762,11 +783,7 @@
 							</select>
 							<!-- Checkbox Options moved to the right of the dropdowns -->
 							<div class="flex items-center space-x-4 text-white ml-auto">
-								<!-- REGEX Checkbox -->
-								<label for="enable-regex" class="flex items-center space-x-2">
-									<input type="checkbox" id="enable-regex" class="form-checkbox h-5 w-5 text-blue-600 rounded">
-									<span>REGEX</span>
-								</label>
+								
 								<!-- Match Case Checkbox -->
 								<label for="match-case" class="flex items-center space-x-2">
 									<input type="checkbox" id="match-case" class="form-checkbox h-5 w-5 text-blue-600 rounded">
@@ -777,7 +794,11 @@
 									<input type="checkbox" id="highlight-all" class="form-checkbox h-5 w-5 text-blue-600 rounded">
 									<span>Highlight all</span>
 								</label>
-								
+								<!-- REGEX Checkbox -->
+								<label for="enable-regex" class="flex items-center space-x-2">
+									<input type="checkbox" id="enable-regex" class="form-checkbox h-5 w-5 text-blue-600 rounded">
+									<span>REGEX</span>
+								</label>
 							</div>
 						</div>
 						
@@ -868,6 +889,7 @@
 							</div>
 							
 						</div>
+				</div>
 				</div>
             </div>
 
@@ -4300,6 +4322,12 @@ function showRegexGuideModal(triggeringButton, originalButtonText) {
                 const endIndexInput = document.getElementById('end-index');
                 const matchCountSpan = document.getElementById('match-count');
                 const regexGuideButton = document.getElementById('regex-guide-button');
+// Get a reference to the new toggle button
+const toggleSearchControlsBtn = document.getElementById('toggleSearchControlsBtn');
+// Get a reference to the container holding all search controls content
+const searchControlsContent = document.getElementById('searchControlsContent'); // Changed ID here!
+// Get a reference to the outer panel div (for show/hide logic related to the panel itself)
+const betterSearchPanel = document.getElementById('betterSearchContainer'); // Keep reference to outer panel
 				// NOW, PUSH regexGuideButton onto the array here, after it's defined
 				allInteractiveButtons.push(regexGuideButton);
 
@@ -4312,6 +4340,48 @@ function showRegexGuideModal(triggeringButton, originalButtonText) {
                 let currentIsRegex = false;
                 let currentMatchCase = false;
                 
+
+
+// State variable for search controls visibility
+let searchControlsVisible = true; // Initial state
+
+// Function to toggle search controls visibility
+function toggleSearchControls() {
+    searchControlsVisible = !searchControlsVisible;
+
+    if (searchControlsVisible) {
+        // Show the inner content
+        searchControlsContent.classList.remove('search-controls-hidden');
+        searchControlsContent.classList.add('search-controls-visible');
+        
+        // Show the outer panel (if it was hidden)
+        betterSearchPanel.classList.remove('hidden'); 
+        betterSearchPanel.classList.remove('search-controls-hidden'); // In case it was hidden by the previous logic
+        betterSearchPanel.classList.add('search-controls-visible'); // Ensure it's visible for the inner content to animate
+        
+        toggleSearchControlsBtn.textContent = 'Hide Search Panel';
+    } else {
+        // Hide the inner content
+        searchControlsContent.classList.remove('search-controls-visible');
+        searchControlsContent.classList.add('search-controls-hidden');
+        
+        // You might want to delay hiding the outer panel's background slightly
+        // or just ensure its padding collapses.
+        // For simplicity, let's just make sure it doesn't take up too much space.
+        // The CSS for search-controls-hidden with !important padding handles this well.
+        
+        toggleSearchControlsBtn.textContent = 'Show Search Panel';
+    }
+}
+
+// Add event listener to the toggle button
+toggleSearchControlsBtn.addEventListener('click', toggleSearchControls);
+
+// Apply initial state when the page loads
+// Ensure the main panel is visible if it was initially set to 'hidden' in HTML
+betterSearchPanel.classList.remove('hidden'); // Remove the initial 'hidden' class from betterSearchContainer
+searchControlsContent.classList.add('search-controls-visible'); // Ensure inner content starts visible
+				
                 /**
              * Populates the dropdown menu with unique HTML tags from the editor's content.
              * Preserves the currently selected tag if it still exists.
@@ -4800,7 +4870,7 @@ function findFullElementRange(model, initialStartOffset) {
         let optionsDescription = [];
 
         if (findInput.value === '') {
-            matchCountSpan.innerHTML = "Find something...";
+            matchCountSpan.innerHTML = "";
             allDecorations = monacoEditorInstance.deltaDecorations(allDecorations, newDecorations);
             return;
         }
@@ -5620,19 +5690,26 @@ function findFullElementRange(model, initialStartOffset) {
                         // Time tags functionality - copied from original timeTagsBtn.click()
                         const parser = new DOMParser();
                         const doc = parser.parseFromString(currentContent, 'text/html');
-                        const body = doc.body;
+                        let htmlToProcessForTimeTags = doc.body.innerHTML; // Directly use innerHTML
 
-                        // Step 1: Remove existing <time> tags and extract their text content
-                        const existingTimeElements = doc.querySelectorAll('time');
+// Step 1: Remove existing <time> tags and extract their text content.
+// This is crucial to prevent re-processing already tagged dates and infinite loops.
+                        const tempDoc = parser.parseFromString(htmlToProcessForTimeTags, 'text/html');
+                        const existingTimeElements = tempDoc.querySelectorAll('time');
                         existingTimeElements.forEach(timeEl => {
-                            // Replace the <time> element with its text content
-                            const textNode = doc.createTextNode(timeEl.textContent);
+                            // Replace the <time> element with its innerHTML to retain any nested tags like sup.
+                            // Create a temporary element to hold the innerHTML for correct node insertion.
+                            const tempDiv = tempDoc.createElement('div');
+                            tempDiv.innerHTML = timeEl.innerHTML;
                             if (timeEl.parentNode) {
-                                timeEl.parentNode.replaceChild(textNode, timeEl);
+                                while (tempDiv.firstChild) {
+                                    timeEl.parentNode.insertBefore(tempDiv.firstChild, timeEl);
+                                }
+                                timeEl.parentNode.removeChild(timeEl);
                             }
                         });
+                        htmlToProcessForTimeTags = tempDoc.body.innerHTML; // Update with untagged content
 
-                        let contentToProcessForTimeTags = body.innerHTML;
 
                         const monthMap = {
                             'january': '01', 'jan': '01', 'janvier': '01',
@@ -5653,170 +5730,159 @@ function findFullElementRange(model, initialStartOffset) {
                             return monthMap[monthName.toLowerCase()] || null;
                         }
 
-                        // Sort month keys by length descending to match longer names first (e.g., 'september' before 'sep')
+                        // Sort month keys by length descending to match longer names first
                         const sortedMonthKeys = Object.keys(monthMap).sort((a, b) => b.length - a.length);
                         // Escape special characters in month names for regex
                         const monthPattern = sortedMonthKeys.map(m => m.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|');
+                        // Assuming NBSP_PLACEHOLDER is defined elsewhere, or replace with actual NBSP.
                         const spaceOrNBSPChar = `(?:\\s|${NBSP_PLACEHOLDER})+`;
 
-                        // Add word boundaries (\b) to month patterns to prevent partial word matches (e.g., 'mai' in 'maintaining')
-                        // And robustly check for non-digits before/after the full match
+                        // NEW: Prioritize matching HTML-tag suffixes first in the OR group.
+                        const daySuffixPattern = '(?:<sup>er<\\/sup>|<sup>st<\\/sup>|<sup>nd<\\/sup>|<sup>rd<\\/sup>|<sup>th<\\/sup>|er|st|nd|rd|th)?';
 
-                        // UPDATED REGEX FOR DayMonthYear and MonthDayYear to include 'er' / '<sup>er</sup>'
-                        const daySuffixPattern = '(?:er|<sup>er<\\/sup>)?'; // NEW PATTERN
+
                         const regexIsoDateFull = /(?<!\d)(\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01]))(?!\d)/g;
-                        const regexMonthDayYear = new RegExp(`(?<!\\d)\\b(${monthPattern})\\b${spaceOrNBSPChar}(\\d{1,2})${daySuffixPattern},?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'i'); // ADDED daySuffixPattern
-                        const regexDayMonthYear = new RegExp(`(?<!\\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2})${daySuffixPattern}${spaceOrNBSPChar}\\b(${monthPattern})\\b,?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'i'); // ADDED daySuffixPattern
-                        const regexMonthYear = new RegExp(`(?<!\\d)\\b(${monthPattern})\\b${spaceOrNBSPChar}(\\d{4})(?!\\d|${spaceOrNBSPChar}\\d{1,2})`, 'i');
-                        const regexMonthDayNoYear = new RegExp(`(?<!\\d)\\b(${monthPattern})\\b${spaceOrNBSPChar}(\\d{1,2})${daySuffixPattern}(?!\\d|${spaceOrNBSPChar}\\d{4})(?!-)`, 'i'); // ADDED daySuffixPattern
-                        const regexDayMonthNoYear = new RegExp(`(?<!\\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2})${daySuffixPattern}${spaceOrNBSPChar}\\b(${monthPattern})\\b(?!\d|${spaceOrNBSPChar}\\d{4})(?!-)`, 'i'); // ADDED daySuffixPattern
 
-                        const reParsedDocForTimeTags = parser.parseFromString(contentToProcessForTimeTags, 'text/html');
-                        const reParsedBodyForTimeTags = reParsedDocForTimeTags.body;
+                        // Regexes now correctly capture day with its suffix (HTML or plain)
+                        // and handle optional comma with spaces around it
+                        const regexMonthDayYear = new RegExp(`(?<!\\d)\\b(${monthPattern})\\b${spaceOrNBSPChar}(\\d{1,2}${daySuffixPattern})\\s*,?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'i');
+                        const regexDayMonthYear = new RegExp(`(?<!\\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2}${daySuffixPattern})${spaceOrNBSPChar}\\b(${monthPattern})\\b\\s*,?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'i');
 
-                        const textNodesToModifyForTimeTags = [];
-                        const walkerForTimeTags = reParsedDocForTimeTags.createTreeWalker(
-                            reParsedBodyForTimeTags,
-                            NodeFilter.SHOW_TEXT,
-                            {
-                                acceptNode: function(node) {
-                                    let parent = node.parentNode;
-                                    while (parent) {
-                                        const tagName = parent.tagName ? parent.tagName.toLowerCase() : '';
-                                        if (tagName === 'script' || tagName === 'style' || tagName === 'time') {
-                                            return NodeFilter.FILTER_REJECT;
-                                        }
-                                        parent = parent.parentNode;
-                                    }
-                                    return NodeFilter.FILTER_ACCEPT;
-                                }
-                            },
-                            false
-                        );
+                        const regexMonthYear = new RegExp(`(?<!\\d)\\b(${monthPattern})\\b${spaceOrNBSPChar}(\\d{4})(?!\\d|(?:${spaceOrNBSPChar}\\d{1,2}))`, 'i');
 
-                        let currentNodeForTimeTags;
-                        while (currentNodeForTimeTags = walkerForTimeTags.nextNode()) {
-                            textNodesToModifyForTimeTags.push(currentNodeForTimeTags);
-                        }
+                        // Lookahead ensures it doesn't match if a year is present after the day/month.
+                        const regexMonthDayNoYear = new RegExp(`(?<!\\d)\\b(${monthPattern})\\b${spaceOrNBSPChar}(\\d{1,2}${daySuffixPattern})(?!\\d|(?:${spaceOrNBSPChar}\\d{4}))(?!-)`, 'i');
+                        const regexDayMonthNoYear = new RegExp(`(?<!\\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2}${daySuffixPattern})${spaceOrNBSPChar}\\b(${monthPattern})\\b(?!\d|(?:${spaceOrNBSPChar}\\d{4}))(?!-)`, 'i');
 
-                        textNodesToModifyForTimeTags.forEach(textNode => {
-                            let text = textNode.nodeValue;
-                            let currentText = text;
 
-                            let allMatches = [];
-                            const patternsToTest = [
-                                { name: 'IsoDateFull', regex: regexIsoDateFull, handler: (match) => {
-                                    const [fullMatch, yearMonthDay] = match;
-                                    return yearMonthDay;
-                                }, priority: 3 },
-                                { name: 'MonthDayYear', regex: regexMonthDayYear, handler: (match) => {
-                                    // UPDATED HANDLER: Extract day part based on its captured group, then clean it
-                                    const [, month, dayPart, year] = match; // capture dayPart
-                                    const monthNum = getMonthNumber(month);
-                                    let cleanDay = dayPart.replace(/er|<sup>er<\/sup>/gi, '').trim(); // Clean day part
-                                    const parsedDay = parseInt(cleanDay); // Parse cleaned day
-                                    if (!monthNum || isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) return null;
-                                    return `${year}-${monthNum}-${String(parsedDay).padStart(2, '0')}`;
-                                }, priority: 2 },
-                                { name: 'DayMonthYear', regex: regexDayMonthYear, handler: (match) => {
-                                    // UPDATED HANDLER: Extract day part based on its captured group, then clean it
-                                    const [, dayPart, month, year] = match; // capture dayPart
-                                    const monthNum = getMonthNumber(month);
-                                    let cleanDay = dayPart.replace(/er|<sup>er<\/sup>/gi, '').trim(); // Clean day part
-                                    const parsedDay = parseInt(cleanDay); // Parse cleaned day
-                                    if (!monthNum || isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) return null;
-                                    return `${year}-${monthNum}-${String(parsedDay).padStart(2, '0')}`;
-                                }, priority: 2 },
-                                { name: 'MonthYear', regex: regexMonthYear, handler: (match) => {
-                                    const [, month, year] = match;
-                                    const monthNum = getMonthNumber(month);
-                                    if (!monthNum) return null;
-                                    return `${year}-${monthNum}`;
-                                }, priority: 2 },
-                                { name: 'MonthDayNoYear', regex: regexMonthDayNoYear, handler: (match) => {
-                                    // UPDATED HANDLER: Extract day part based on its captured group, then clean it
-                                    const [, month, dayPart] = match; // capture dayPart
-                                    const monthNum = getMonthNumber(month);
-                                    let cleanDay = dayPart.replace(/er|<sup>er<\/sup>/gi, '').trim(); // Clean day part
-                                    const parsedDay = parseInt(cleanDay); // Parse cleaned day
-                                    if (!monthNum || isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) return null;
-                                    return `${monthNum}-${String(parsedDay).padStart(2, '0')}`;
-                                }, priority: 1 },
-                                { name: 'DayMonthNoYear', regex: regexDayMonthNoYear, handler: (match) => {
-                                    // UPDATED HANDLER: Extract day part based on its captured group, then clean it
-                                    const [, dayPart, month] = match; // capture dayPart
-                                    const monthNum = getMonthNumber(month);
-                                    let cleanDay = dayPart.replace(/er|<sup>er<\/sup>/gi, '').trim(); // Clean day part
-                                    const parsedDay = parseInt(cleanDay); // Parse cleaned day
-                                    if (!monthNum || isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) return null;
-                                    return `${monthNum}-${String(parsedDay).padStart(2, '0')}`;
-                                }, priority: 1 }
-                            ];
+                        // Instead of iterating text nodes, we will apply regex to the whole HTML string.
+                        let allMatches = [];
+                        const patternsToTest = [
+                            { name: 'IsoDateFull', regex: regexIsoDateFull, handler: (match) => {
+                                const [fullMatch, yearMonthDay] = match;
+                                return yearMonthDay;
+                            }, priority: 3 },
+                            { name: 'MonthDayYear', regex: regexMonthDayYear, handler: (match) => {
+                                const [, month, dayPart, year] = match;
+                                const monthNum = getMonthNumber(month);
+                                // Clean all possible suffixes, including `<sup>` tags
+                                let cleanDay = dayPart.replace(/(?:<sup>er<\/sup>|<sup>st<\/sup>|<sup>nd<\/sup>|<sup>rd<\/sup>|<sup>th<\/sup>|er|st|nd|rd|th)/gi, '').trim();
+                                const parsedDay = parseInt(cleanDay);
+                                if (!monthNum || isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) return null;
+                                return `${year}-${monthNum}-${String(parsedDay).padStart(2, '0')}`;
+                            }, priority: 2 },
+                            { name: 'DayMonthYear', regex: regexDayMonthYear, handler: (match) => {
+                                const [, dayPart, month, year] = match;
+                                const monthNum = getMonthNumber(month);
+                                // Clean all possible suffixes, including `<sup>` tags
+                                let cleanDay = dayPart.replace(/(?:<sup>er<\/sup>|<sup>st<\/sup>|<sup>nd<\/sup>|<sup>rd<\/sup>|<sup>th<\/sup>|er|st|nd|rd|th)/gi, '').trim();
+                                const parsedDay = parseInt(cleanDay);
+                                if (!monthNum || isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) return null;
+                                return `${year}-${monthNum}-${String(parsedDay).padStart(2, '0')}`;
+                            }, priority: 2 },
+                            { name: 'MonthYear', regex: regexMonthYear, handler: (match) => {
+                                const [, month, year] = match;
+                                const monthNum = getMonthNumber(month);
+                                if (!monthNum) return null;
+                                return `${year}-${monthNum}`;
+                            }, priority: 2 },
+                            { name: 'MonthDayNoYear', regex: regexMonthDayNoYear, handler: (match) => {
+                                const [, month, dayPart] = match;
+                                const monthNum = getMonthNumber(month);
+                                // Clean all possible suffixes, including `<sup>` tags
+                                let cleanDay = dayPart.replace(/(?:<sup>er<\/sup>|<sup>st<\/sup>|<sup>nd<\/sup>|<sup>rd<\/sup>|<sup>th<\/sup>|er|st|nd|rd|th)/gi, '').trim();
+                                const parsedDay = parseInt(cleanDay);
+                                if (!monthNum || isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) return null;
+                                return `${monthNum}-${String(parsedDay).padStart(2, '0')}`;
+                            }, priority: 1 },
+                            { name: 'DayMonthNoYear', regex: regexDayMonthNoYear, handler: (match) => {
+                                const [, dayPart, month] = match;
+                                const monthNum = getMonthNumber(month);
+                                // Clean all possible suffixes, including `<sup>` tags
+                                let cleanDay = dayPart.replace(/(?:<sup>er<\/sup>|<sup>st<\/sup>|<sup>nd<\/sup>|<sup>rd<\/sup>|<sup>th<\/sup>|er|st|nd|rd|th)/gi, '').trim();
+                                const parsedDay = parseInt(cleanDay);
+                                if (!monthNum || isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) return null;
+                                return `${monthNum}-${String(parsedDay).padStart(2, '0')}`;
+                            }, priority: 1 }
+                        ];
 
-                            patternsToTest.forEach(pattern => {
-                                let localRegex = new RegExp(pattern.regex.source, pattern.regex.flags);
-                                if (!localRegex.flags.includes('g')) {
-                                    localRegex = new RegExp(localRegex.source, localRegex.flags + 'g');
-                                }
-
-                                let match;
-                                while ((match = localRegex.exec(currentText)) !== null) {
-                                    const datetimeValue = pattern.handler(match);
-                                    if (datetimeValue) {
-                                        allMatches.push({
-                                            start: match.index,
-                                            end: match.index + match[0].length,
-                                            original: match[0],
-                                            datetime: datetimeValue,
-                                            priority: pattern.priority
-                                        });
-                                    }
-                                }
-                            });
-
-                            allMatches.sort((a, b) => {
-                                if (a.start !== b.start) {
-                                    return a.start - b.start;
-                                }
-                                if (a.priority !== b.priority) {
-                                    return b.priority - a.priority;
-                                }
-                                return b.original.length - a.original.length;
-                            });
-
-                            let nonOverlappingMatches = [];
-                            if (allMatches.length > 0) {
-                                nonOverlappingMatches.push(allMatches[0]);
-                                for (let i = 1; i < allMatches.length; i++) {
-                                    const currentMatch = allMatches[i];
-                                    const lastAddedMatch = nonOverlappingMatches[nonOverlappingMatches.length - 1];
-
-                                    if (currentMatch.start >= lastAddedMatch.end) {
-                                        nonOverlappingMatches.push(currentMatch);
-                                    }
-                                }
+                        patternsToTest.forEach(pattern => {
+                            let localRegex = new RegExp(pattern.regex.source, pattern.regex.flags);
+                            if (!localRegex.flags.includes('g')) {
+                                localRegex = new RegExp(localRegex.source, localRegex.flags + 'g');
                             }
 
-                            if (nonOverlappingMatches.length > 0) {
-                                let resultParts = [];
-                                let currentIndex = 0;
-                                nonOverlappingMatches.forEach(match => {
-                                    resultParts.push(currentText.substring(currentIndex, match.start));
-                                    resultParts.push(`<time class="nowrap" datetime="${match.datetime}">${match.original}</time>`);
-                                    currentIndex = match.end;
-                                });
-                                resultParts.push(currentText.substring(currentIndex));
-                                const newHtmlContent = resultParts.join('');
+                            let match;
+                            // Apply regex to the entire HTML string.
+                            // Reset lastIndex for global regex in a loop when called on the same string
+                            localRegex.lastIndex = 0;
+                            while ((match = localRegex.exec(htmlToProcessForTimeTags)) !== null) {
+                                // To avoid issues with nested time tags or matches within already-processed ones,
+                                // we should ensure the current match doesn't contain a <time> tag within itself.
+                                // This is a simple check, more robust would be a DOM-based approach.
+                                // However, our `nonOverlappingMatches` logic should largely handle this.
+                                if (match[0].includes('<time') && match[0].includes('</time>')) {
+                                    continue; // Skip if it matched an already-wrapped time tag
+                                }
 
-                                const fragment = reParsedDocForTimeTags.createRange().createContextualFragment(newHtmlContent);
-                                if (textNode.parentNode) {
-                                    textNode.parentNode.replaceChild(fragment, textNode);
+                                const datetimeValue = pattern.handler(match);
+                                if (datetimeValue) {
+                                    allMatches.push({
+                                        start: match.index,
+                                        end: match.index + match[0].length,
+                                        original: match[0], // match[0] is the full matched string, including any HTML
+                                        datetime: datetimeValue,
+                                        priority: pattern.priority
+                                    });
                                 }
                             }
                         });
-                        currentContent = reParsedBodyForTimeTags.innerHTML; // Update currentContent after time tag processing
+
+                        allMatches.sort((a, b) => {
+                            // Primary sort: by start position (earlier first)
+                            if (a.start !== b.start) {
+                                return a.start - b.start;
+                            }
+                            // Secondary sort: if same start, longest match first (more specific)
+                            if (a.original.length !== b.original.length) {
+                                return b.original.length - a.original.length;
+                            }
+                            // Tertiary sort: if same start and length, higher priority first
+                            return b.priority - a.priority;
+                        });
+
+                        let nonOverlappingMatches = [];
+                        if (allMatches.length > 0) {
+                            nonOverlappingMatches.push(allMatches[0]);
+                            for (let i = 1; i < allMatches.length; i++) {
+                                const currentMatch = allMatches[i];
+                                const lastAddedMatch = nonOverlappingMatches[nonOverlappingMatches.length - 1];
+
+                                // Only add if it doesn't overlap with the last added match.
+                                // The sorting (longest first for same start) should mean we don't need to replace.
+                                if (currentMatch.start >= lastAddedMatch.end) {
+                                    nonOverlappingMatches.push(currentMatch);
+                                }
+                            }
+                        }
+
+                        if (nonOverlappingMatches.length > 0) {
+                            let resultParts = [];
+                            let currentIndex = 0;
+                            nonOverlappingMatches.forEach(match => {
+                                resultParts.push(htmlToProcessForTimeTags.substring(currentIndex, match.start));
+                                resultParts.push(`<time class="nowrap" datetime="${match.datetime}">${match.original}</time>`);
+                                currentIndex = match.end;
+                            });
+                            resultParts.push(htmlToProcessForTimeTags.substring(currentIndex));
+                            htmlToProcessForTimeTags = resultParts.join('');
+                        }
+
+                        currentContent = htmlToProcessForTimeTags; // Update currentContent after time tag processing
                         console.log("Time Tags applied. Content length:", currentContent.length);
                     }
+					
+					
                     if (toggleFixFnIds.checked) {
                         // Fix FN ID's functionality - copied from original fixFnIdsBtn.click()
                         const parser = new DOMParser();
