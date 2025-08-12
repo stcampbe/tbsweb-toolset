@@ -447,7 +447,6 @@
             padding: 0.4rem 0.6rem;
             font-size: 0.875rem;
             flex-grow: 1;
-            cursor: pointer;
         }
 
         .table-select-container select:focus {
@@ -577,9 +576,15 @@
     <div class="editor-container">
         <!-- Main Content Area (Monaco Editor and Action Buttons) -->
         <div class="code-panel">
-            <div class="flex justify-between items-center mb-4">
+            <div class="flex items-center mb-4 flex-wrap space-x-2">
                 <button id="open-options-modal-btn" class="px-4 py-2 text-base bg-blue-700 text-white rounded-md hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-semibold">
                     Universal Format
+                </button>
+				<button id="autoEncodeBtn" class="px-4 py-2 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold">
+                    Auto-Encode
+                </button>
+                <button id="autoFormatBtn" class="px-4 py-2 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold">
+                    Auto-Indent
                 </button>
                 <!-- Moved Table Select Dropdown and Customize Button here -->
                 <div class="table-select-container ml-4">
@@ -591,45 +596,30 @@
                         Customize
                     </button>
                 </div>
-                <div class="inline-flex space-x-2 ml-auto mt-2 sm:mt-0">
-                    <button id="importHtmlBtn" class="px-3 py-1 text-sm bg-purple-700 text-white rounded-md hover:bg-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-opacity-50 font-bold">Import HTML</button>
-                    <button id="exportHtmlBtn" class="px-3 py-1 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-bold">Export HTML</button>
-                    <input type="file" id="htmlFileInput" accept=".html" style="display: none;">
-                </div>
             </div>
+			<div class="flex items-center mb-4 flex-wrap">
+                    <div class="inline-flex rounded-md shadow-sm" role="group">
+                        <button id="copyCodeBtn" class="px-4 py-1 text-sm bg-gray-700 text-white rounded-l-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-semibold">
+                            Copy Code
+                        </button>
+                        <button id="clearAllBtn" class="px-4 py-1 text-sm bg-gray-700 text-white rounded-r-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">
+                            Clear All
+                        </button>
+                    </div>
+                    <div class="inline-flex space-x-2 ml-4">
+                        <button id="importHtmlBtn" class="px-3 py-1 text-sm bg-purple-700 text-white rounded-md hover:bg-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-opacity-50 font-bold">Import HTML</button>
+                        <button id="exportHtmlBtn" class="px-3 py-1 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-bold">Export HTML</button>
+                        <input type="file" id="htmlFileInput" accept=".html" style="display: none;">
+                    </div>
+                </div>
 
-            <!-- Message Box for alerts/errors - Moved ABOVE editor -->
-            <div id="message-box" class="hidden p-4 rounded-lg text-sm text-center transition-all duration-300 ease-in-out mb-4" role="alert"></div>
+            
 
             <!-- Monaco Editor takes full remaining space -->
             <div id="editor-container"></div>
+			<!-- Message Box for alerts/errors -->
+            <div id="message-box" class="hidden p-4 rounded-lg text-sm text-center transition-all duration-300 ease-in-out mb-4" role="alert"></div>
 
-            <!-- Removed: New: Table Select Dropdown and Customize Button at the bottom -->
-            <!-- <div class="table-select-container">
-                <label for="table-search-dropdown" class="text-sm font-medium">Table Select:</label>
-                <select id="table-search-dropdown" class="text-sm">
-                    <option value="">-- Select a table --</option>
-                </select>
-                <button id="customize-button" class="px-3 py-1 text-sm bg-blue-800 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-opacity-50 font-bold" disabled>
-                    Customize
-                </button>
-            </div> -->
-
-            <!-- Action Buttons at the bottom of the code-panel -->
-            <div class="mt-auto pt-4 flex justify-center space-x-2">
-                <button id="clearAllBtn" class="px-4 py-2 text-sm bg-zinc-700 text-white rounded-md hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-opacity-50 font-semibold">
-                    Clear All
-                </button>
-                <button id="autoEncodeBtn" class="px-4 py-2 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold">
-                    Auto-Encode
-                </button>
-                <button id="autoFormatBtn" class="px-4 py-2 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold">
-                    Auto-Indent
-                </button>
-                <button id="copyCodeBtn" class="px-4 py-2 text-sm bg-zinc-700 text-white rounded-md hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-opacity-50 font-semibold">
-                    Copy Code
-                </button>
-            </div>
         </div>
     </div>
 
@@ -2161,7 +2151,10 @@
             // This ensures correct precedence if it's both a column header and a row header.
             console.log('Applying Row Headers Alignment. Current rowHeaderAlignment:', options.currentRowHeaderAlignment);
             if (options.applyRowHeader && newThead.firstElementChild && newThead.firstElementChild.firstElementChild && newThead.firstElementChild.firstElementChild.tagName.toLowerCase() === 'th') {
-                applyAlignment(newThead.firstElementChild.firstElementChild, alignmentClasses);
+                // *** FIX STARTS HERE ***
+                // The original call was missing the alignment and alignmentClasses arguments.
+                applyAlignment(newThead.firstElementChild.firstElementChild, options.currentRowHeaderAlignment, alignmentClasses);
+                // *** FIX ENDS HERE ***
             }
 
 
@@ -2418,23 +2411,9 @@
     <link rel="stylesheet" href="https://www.canada.ca/etc/designs/canada/wet-boew/css/theme.min.css">
     <link rel="stylesheet" href="https://cdn.design-system.alpha.canada.ca/@cdssnc/gcds-components@latest/dist/gcds/gcds.css">
     <style>
-        /* Styles for interactive cells in the iframe preview */
-        td, th, caption {
-            border: 1px solid #ccc;
-            padding: 8px;
-            min-width: 50px;
-        }
         td.highlighted-cell, th.highlighted-cell, caption.highlighted-cell {
             background-color: #add8e6 !important; /* Light blue highlight, use !important to override theme styles */
             border: 2px solid #3b82f6;
-        }
-        td.hovered-cell, th.hovered-cell, caption.hovered-cell {
-            background-color: #e0e0e0 !important; /* Lighter background on hover */
-            cursor: pointer;
-        }
-        /* Make sure cells have a visible border for editing */
-        table.table-bordered td, table.table-bordered th {
-            border-color: #666 !important; /* Make borders visible */
         }
         /* New styles for row/column highlights */
         .highlighted-row {
@@ -2598,15 +2577,6 @@
                 });
 
 
-                 // Update parent editor on blur (when typing stops)
-                cell.addEventListener('blur', function() {
-                    // Always treat as type mode for content updates
-                    const updatedTableHtml = table.outerHTML;
-                    window.parent.postMessage({
-                        type: 'updateTableContent',
-                        tableHtml: updatedTableHtml
-                    }, '*');
-                });
             });
 
             // Clear highlight when clicking anywhere outside a cell
@@ -2624,20 +2594,10 @@
                         table.removeAttribute('id');
                     }
                 } else if (event.data && event.data.type === 'resetCellStates') {
-                    // Reset contenteditable and styling
-                    allCells.forEach(cell => {
-                        cell.setAttribute('contenteditable', 'true'); // Always contenteditable
-                        cell.style.cursor = 'text'; // Always text cursor
-                    });
                     clearAllHighlights(); // Clear all highlights on reset
                 }
             });
 
-            // Initial setup: all cells are contenteditable by default
-            allCells.forEach(cell => {
-                cell.setAttribute('contenteditable', 'true');
-                cell.style.cursor = 'text';
-            });
 
              // Notify parent that iframe is ready to receive mode
             window.parent.postMessage({ type: 'iframeReady' }, '*');
