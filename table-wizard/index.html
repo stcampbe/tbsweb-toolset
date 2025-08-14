@@ -385,7 +385,7 @@
             display: grid; /* Changed to grid for better column control */
             grid-template-columns: repeat(3, 1fr); /* Three equal columns */
             gap: 1rem; /* Gap between option sections */
-            margin-bottom: 1.5rem; /* Space before modal buttons */
+            margin-bottom: 0.5rem; /* Space before modal buttons */
             flex-grow: 1; /* Allow this row to grow and push buttons to bottom */
         }
 
@@ -660,7 +660,7 @@
         <button id="force-scope-button" class="px-3 py-1 text-sm bg-green-700 text-white rounded-l-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-opacity-50 font-bold">
             Force Scope
         </button>
-        <button id="force-id-button" class="px-3 py-1 text-sm bg-green-700 text-white rounded-r-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-opacity-50 font-bold">
+        <button id="force-id-button" class="px-3 py-1 text-sm bg-green-700 text-white hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-opacity-50 font-bold">
             Force ID/Headers
         </button>
         <button id="reset-tablescopeid-btn" class="trash-button bg-green-800 text-white rounded-r-md hover:bg-green-900 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-opacity-50 font-semibold" title="Reset Table Scope/IDs">
@@ -726,7 +726,14 @@
                             <input type="text" id="figure-data-id-prefix-input" class="w-auto" style="width: 60px;" placeholder="ftbl">
                             <label for="figure-data-id-prefix-input" class="text-gray-200">Figure Table ID Prefix</label>
                         </div>
-                        
+                        <!-- Fix Empty Cells -->
+                        <div class="toggle-switch-container">
+                            <label class="toggle-switch is-checked" for="fix-empty-cells-checkbox">
+                                <input type="checkbox" id="fix-empty-cells-checkbox" class="hidden" checked>
+                                <span class="toggle-switch-slider"></span>
+                            </label>
+                            <span class="toggle-switch-label text-gray-200">Fix Empty Cells</span>
+                        </div>
                         <!-- Make TFOOT from LAST COLSPAN -->
                         <div class="toggle-switch-container">
                             <label class="toggle-switch is-checked" for="make-tfoot-from-colspan-checkbox">
@@ -735,13 +742,21 @@
                             </label>
                             <span class="toggle-switch-label text-gray-200">TFOOT from LAST COLSPAN</span>
                         </div>
+						<!-- TFOOT before TBODY -->
+                        <div class="toggle-switch-container">
+                            <label class="toggle-switch is-checked" for="make-tfoot-before-tbody-checkbox">
+                                <input type="checkbox" id="make-tfoot-before-tbody-checkbox" class="hidden" checked>
+                                <span class="toggle-switch-slider"></span>
+                            </label>
+                            <span class="toggle-switch-label text-gray-200">TFOOT before TBODY</span>
+                        </div>
                         <!-- Captions (placeholder) Toggle -->
                         <div class="toggle-switch-container">
                             <label class="toggle-switch is-checked" for="caption-checkbox">
                                 <input type="checkbox" id="caption-checkbox" class="hidden" checked>
                                 <span class="toggle-switch-slider"></span>
                             </label>
-                            <span class="toggle-switch-label text-gray-200">Captions (placeholder)</span>
+                            <span class="toggle-switch-label text-gray-200">Caption (set manually)</span>
                         </div>
                         <!-- Auto-Caption Toggle -->
                         <div class="toggle-switch-container">
@@ -751,14 +766,15 @@
                             </label>
                             <span class="toggle-switch-label text-gray-200">Auto-Caption</span>
                         </div>
-                        <!-- Fix Empty Cells -->
+						<!-- Auto-Caption Toggle -->
                         <div class="toggle-switch-container">
-                            <label class="toggle-switch is-checked" for="fix-empty-cells-checkbox">
-                                <input type="checkbox" id="fix-empty-cells-checkbox" class="hidden" checked>
+                            <label class="toggle-switch" for="inv-caption-checkbox">
+                                <input type="checkbox" id="inv-caption-checkbox" class="hidden">
                                 <span class="toggle-switch-slider"></span>
                             </label>
-                            <span class="toggle-switch-label text-gray-200">Fix Empty Cells</span>
+                            <span class="toggle-switch-label text-gray-200">Invisible Captions</span>
                         </div>
+                        
                         <!-- Remove p tags -->
                         <div class="toggle-switch-container">
                             <label class="toggle-switch" for="remove-p-tags-checkbox">
@@ -990,6 +1006,15 @@
                                 <label for="customize-page-id-prefix-input" class="text-gray-200">Custom ID</label>
                                 <input type="text" id="customize-page-id-prefix-input" class="flex-grow bg-zinc-700 text-white border border-zinc-500 rounded-md p-1" placeholder="my-custom-id">
                             </div>
+							<!-- Fix Empty Cells -->
+                            <div class="toggle-switch-container">
+                                <label class="toggle-switch" for="customize-fix-empty-cells-checkbox">
+                                    <input type="checkbox" id="customize-fix-empty-cells-checkbox" class="hidden" checked>
+                                    <span class="toggle-switch-slider"></span>
+                                </label>
+                                <span class="toggle-switch-label text-gray-200">Fix Empty Cells</span>
+                            </div>
+
                             <!-- Make TFOOT from LAST COLSPAN -->
                             <div class="toggle-switch-container">
                                 <label class="toggle-switch" for="customize-make-tfoot-from-colspan-checkbox">
@@ -998,6 +1023,14 @@
                                 </label>
                                 <span class="toggle-switch-label text-gray-200">TFOOT from LAST COLSPAN</span>
                             </div>
+							<!-- TFOOT before TBODY -->
+                        <div class="toggle-switch-container">
+                            <label class="toggle-switch is-checked" for="customize-make-tfoot-before-tbody-checkbox">
+                                <input type="checkbox" id="customize-make-tfoot-before-tbody-checkbox" class="hidden">
+                                <span class="toggle-switch-slider"></span>
+                            </label>
+                            <span class="toggle-switch-label text-gray-200">TFOOT before TBODY</span>
+                        </div>
 							<!-- Captions (placeholder) Toggle -->
                         <div class="toggle-switch-container">
                             <label class="toggle-switch" for="customize-caption-checkbox">
@@ -1006,14 +1039,14 @@
                             </label>
                             <span class="toggle-switch-label text-gray-200">Caption</span>
                         </div>
-                            <!-- Fix Empty Cells -->
-                            <div class="toggle-switch-container">
-                                <label class="toggle-switch" for="customize-fix-empty-cells-checkbox">
-                                    <input type="checkbox" id="customize-fix-empty-cells-checkbox" class="hidden" checked>
-                                    <span class="toggle-switch-slider"></span>
-                                </label>
-                                <span class="toggle-switch-label text-gray-200">Fix Empty Cells</span>
-                            </div>
+                            <!-- Auto-Caption Toggle -->
+                        <div class="toggle-switch-container">
+                            <label class="toggle-switch" for="customize-inv-caption-checkbox">
+                                <input type="checkbox" id="customize-inv-caption-checkbox" class="hidden">
+                                <span class="toggle-switch-slider"></span>
+                            </label>
+                            <span class="toggle-switch-label text-gray-200">Invisible Captions</span>
+                        </div>
                             <!-- Remove p tags -->
                             <div class="toggle-switch-container">
                                 <label class="toggle-switch" for="customize-remove-p-tags-checkbox">
@@ -1622,75 +1655,101 @@
          * It also stores the starting character index of each table in the Monaco editor content
          * for efficient jumping.
          */
-        function populateTableSearchDropdown() {
-            if (!monacoEditor || !tableSearchDropdown) return;
+        function populateTableSearchDropdown(keepSelectionValue) {
+    if (!monacoEditor || !tableSearchDropdown) return;
 
-            const htmlContent = monacoEditor.getValue();
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(htmlContent, 'text/html');
-            const tables = Array.from(doc.querySelectorAll('table'));
+    // Store the currently selected value if not provided
+    const currentSelectedValue = keepSelectionValue !== undefined ? keepSelectionValue : tableSearchDropdown.value;
 
-            // Clear existing options and map
-            tableSearchDropdown.innerHTML = '<option value="">-- Select a table --</option>';
-            tableDataMap = new Map();
+    const htmlContent = monacoEditor.getValue();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlContent, 'text/html');
+    const tables = Array.from(doc.querySelectorAll('table'));
 
-            let unidCounter = 1;
-            tables.forEach((table, originalTableIndex) => {
-                let tableId = table.id;
-                let tableCaption = '';
+    // Clear existing options and map
+    tableSearchDropdown.innerHTML = '<option value="">-- Select a table --</option>';
+    tableDataMap = new Map();
 
-                const captionElement = table.querySelector('caption');
-                if (captionElement && captionElement.textContent.trim()) {
-                    tableCaption = captionElement.textContent.trim();
-                }
+    let unidCounter = 1;
+    tables.forEach((table, originalTableIndex) => {
+        let tableId = table.id;
+        let tableCaption = '';
 
-                let optionValue;
-                let startIndex = -1;
-
-                if (tableId) {
-                    optionValue = `id:${tableId}`;
-                    // Attempt to find the table by its ID in the raw content
-                    const idRegex = new RegExp(`<table[^>]*id=["']${tableId}["'][^>]*>`, 'i'); // More precise regex for ID
-                    const idMatch = htmlContent.match(idRegex);
-                    if (idMatch) {
-                        startIndex = idMatch.index;
-                    }
-                } else {
-                    optionValue = `unid:${unidCounter}`; // Unique ID for this dropdown option
-                    // For tables without an ID, find their starting index by counting `<table>` tags
-                    let tempHtml = htmlContent;
-                    let count = 0;
-                    let regex = /<table/gi; // Case-insensitive search for <table> tag
-                    let match;
-                    while ((match = regex.exec(tempHtml)) !== null) {
-                        if (count === originalTableIndex) {
-                            startIndex = match.index;
-                            break;
-                        }
-                        count++;
-                    }
-                    unidCounter++; // Increment only if successfully assigned an unid
-                }
-
-                if (startIndex !== -1) {
-                    const option = document.createElement('option');
-                    option.value = optionValue;
-                    option.textContent = `${tableCaption ? captionElement.textContent.trim() + ' ' : ''}${tableId ? '(ID: ' + tableId + ')' : '(Table ' + (originalTableIndex + 1) + ')'}`;
-                    tableSearchDropdown.appendChild(option);
-
-                    // Store the start index and original outerHTML for later lookup and modification
-                    const tableOuterHtml = table.outerHTML;
-                    tableDataMap.set(optionValue, {
-                        startIndex: startIndex,
-                        outerHTML: tableOuterHtml,
-                        length: tableOuterHtml.length
-                    });
-                } else {
-                    console.warn(`Could not find table "${tableId || ('Table ' + (originalTableIndex + 1))}" in editor content by regex.`);
-                }
-            });
-
+        const captionElement = table.querySelector('caption');
+        if (captionElement && captionElement.textContent.trim()) {
+            tableCaption = captionElement.textContent.trim();
         }
+
+        let optionValue;
+        let startIndex = -1;
+
+        if (tableId) {
+            optionValue = `id:${tableId}`;
+            const idRegex = new RegExp(`<table[^>]*id=["']${tableId}["'][^>]*>`, 'i');
+            const idMatch = htmlContent.match(idRegex);
+            if (idMatch) {
+                startIndex = idMatch.index;
+            }
+        } else {
+            optionValue = `unid:${unidCounter}`; // Unique ID for this dropdown option
+            let tempHtml = htmlContent;
+            let count = 0;
+            let regex = /<table/gi;
+            let match;
+            while ((match = regex.exec(tempHtml)) !== null) {
+                if (count === originalTableIndex) {
+                    startIndex = match.index;
+                    break;
+                }
+                count++;
+            }
+            unidCounter++;
+        }
+
+        if (startIndex !== -1) {
+            const option = document.createElement('option');
+            option.value = optionValue;
+            option.textContent = `${tableCaption ? captionElement.textContent.trim() + ' ' : ''}${tableId ? '(ID: ' + tableId + ')' : '(Table ' + (originalTableIndex + 1) + ')'}`;
+            tableSearchDropdown.appendChild(option);
+
+            const tableOuterHtml = table.outerHTML;
+            tableDataMap.set(optionValue, {
+                startIndex: startIndex,
+                outerHTML: tableOuterHtml,
+                length: tableOuterHtml.length
+            });
+        } else {
+            console.warn(`Could not find table "${tableId || ('Table ' + (originalTableIndex + 1))}" in editor content by regex.`);
+        }
+    });
+
+    // --- NEW: Re-select the previously selected value ---
+    if (currentSelectedValue) {
+        // Check if the option still exists after re-population
+        const optionExists = Array.from(tableSearchDropdown.options).some(
+            option => option.value === currentSelectedValue
+        );
+        if (optionExists) {
+            tableSearchDropdown.value = currentSelectedValue;
+            // If the selected value is re-applied, and the modal is open, update preview
+            if (!customizeModalOverlay.classList.contains('hidden') && customizeButton.disabled === false) {
+                 // Check if customize button is not disabled to ensure it's an active interaction
+                // and not just a background update.
+                updateCustomizeModalPreview();
+            }
+        } else {
+            // If the previously selected option no longer exists (e.g., table was removed),
+            // reset to default and clear any highlights
+            tableSearchDropdown.value = '';
+            clearMonacoHighlight();
+            updateCustomizeModalPreview(''); // Clear preview if table removed
+        }
+    } else {
+        // If nothing was selected before, clear any highlights
+        clearMonacoHighlight();
+        updateCustomizeModalPreview(''); // Clear preview
+    }
+}
 
         /**
          * Contains the core logic for formatting a single HTML table.
@@ -1699,323 +1758,419 @@
          * @param {object} options - An object containing all formatting options (checkbox states, alignment values).
          */
         function formatTableLogic(table, options) {
-            console.log(`--- Applying formatting logic to table ---`);
+    console.log(`--- Applying formatting logic to table ---`);
 
-            const financeRegex = /^\s*[-+]?(?:\d+|\d{1,3}(?:\s\d{3})*)(?:[.,]\d+)?\s*$/;
-            const smallClass = 'small';
-            const alignmentClasses = ['text-left', 'text-center', 'text-right'];
+    const financeRegex = /^\s*[-+]?(?:\d+|\d{1,3}(?:\s\d{3})*)(?:[.,]\d+)?\s*$/;
+    const smallClass = 'small';
+    const alignmentClasses = ['text-left', 'text-center', 'text-right'];
 
-            // --- UNCONDITIONALLY REMOVE ALL IDs, HEADERS, AND SCOPES AT THE START from cells ---
-            Array.from(table.querySelectorAll('*')).forEach(el => {
-				if (el.hasAttribute('class') && el.classList.length === 0) {
-					el.removeAttribute('class');
-					console.log(`Removed empty class attribute from ${el.tagName} during final cleanup.`);
-				}
-			});
-			console.log('Removed empty class attributes from elements.');
-            // --- END UNCONDITIONAL REMOVAL from cells ---
+    // --- 1. Initial Cleanup: Remove all IDs, HEADERS, SCOPES, and all class attributes ---
+    // Remove all classes initially to ensure a clean slate, especially alignment classes
+    Array.from(table.querySelectorAll('*')).forEach(el => {
+        el.removeAttribute('id');
+        el.removeAttribute('headers');
+        el.removeAttribute('scope');
+        // Clear all classes at the very beginning to prevent inherited issues
+        if (el.hasAttribute('class')) {
+            el.removeAttribute('class');
+            console.log(`Removed all class attributes from ${el.tagName} during initial cleanup.`);
+        }
+    });
+    console.log('Removed empty class attributes from elements initially.');
 
-            // Clear existing active, centering, and alignment classes from all cells
-            Array.from(table.querySelectorAll('th, tr, td, caption')).forEach(el => {
-                el.classList.remove('active');
-                el.classList.remove('nowrap'); // Also clear nowrap for finance
-            });
-            console.log('Classes cleared from all relevant elements for current table.');
+    // --- 2. Apply Table-level ID and Classes ---
+    if (options.specificTableId) {
+        let customId = options.tableIdPrefix;
+        if (customId && customId.trim() !== '') {
+            table.id = customId.trim();
+        } else {
+            table.removeAttribute('id');
+        }
+    } else if (options.applyId) {
+        let prefix = options.tableIdPrefix || 'tbl';
+        if (options.isFigureTable) {
+            prefix = options.figureDataIdPrefix || 'ftbl';
+        }
+        table.id = `${prefix}${options.assignedIdCounter}`;
+    } else {
+        table.removeAttribute('id');
+    }
 
-            // ID Assignment Logic (Table ID)
-            if (options.specificTableId) { // This block is for the "Customize Table" modal
-                let customId = options.tableIdPrefix; // This now holds the value from the "Custom ID" input
-                if (customId && customId.trim() !== '') {
-                    table.id = customId.trim();
-                    console.log(`Customized table ID set to: ${table.id}`);
-                } else {
-                    table.removeAttribute('id'); // Remove ID if input is empty
-                    console.log('Customized table ID removed as input was empty.');
+    let currentClasses = table.className.split(' ').filter(c => c.trim() !== '');
+    const newClasses = new Set();
+    const controlledUniversalClasses = ['table', 'table-bordered', 'table-striped', 'table-hover', 'table-condensed', smallClass];
+
+    if (options.specificTableId) {
+        currentClasses.forEach(cls => newClasses.add(cls));
+    } else {
+        currentClasses.filter(c => !controlledUniversalClasses.includes(c)).forEach(cls => newClasses.add(cls));
+    }
+    
+    if (options.applyClassTables) {
+        newClasses.add('table');
+        newClasses.add('table-condensed');
+    } else {
+        newClasses.delete('table');
+        newClasses.delete('table-condensed');
+    }
+
+    if (options.applyBordered) newClasses.add('table-bordered'); else newClasses.delete('table-bordered');
+    if (options.applyStriped) newClasses.add('table-striped'); else newClasses.delete('table-striped');
+    if (options.applyHover) newClasses.add('table-hover'); else newClasses.delete('table-hover');
+    if (options.applyClassSmall) newClasses.add(smallClass); else newClasses.delete(smallClass);
+
+    table.className = Array.from(newClasses).join(' ');
+    if (table.hasAttribute('class') && table.classList.length === 0) {
+        table.removeAttribute('class');
+    }
+
+    // --- 3. Handle Caption ---
+    let existingCaptionElement = table.querySelector('caption');
+    let existingCaptionContent = existingCaptionElement ? existingCaptionElement.innerHTML : '';
+    let existingCaptionClasses = existingCaptionElement ? Array.from(existingCaptionElement.classList) : [];
+
+    const shouldHaveCaption = options.applyCaption || options.applyAutoCaption;
+
+    if (shouldHaveCaption) {
+        if (!existingCaptionElement) {
+            existingCaptionElement = document.createElement('caption');
+            if (table.firstChild) table.insertBefore(existingCaptionElement, table.firstChild);
+            else table.appendChild(existingCaptionElement);
+        }
+        
+        if (existingCaptionClasses.length > 0) existingCaptionElement.className = existingCaptionClasses.join(' ');
+        else existingCaptionElement.removeAttribute('class');
+        
+        applyAlignment(existingCaptionElement, options.currentCaptionAlignment, alignmentClasses);
+
+        if (options.applyAutoCaption) {
+            let extractedContent = '';
+            if (options.specificTableId) {
+                const firstRow = table.querySelector('tr');
+                if (firstRow) {
+                    const firstCell = firstRow.firstElementChild;
+                    if (firstCell && (firstCell.tagName.toLowerCase() === 'th' || firstCell.tagName.toLowerCase() === 'td')) {
+                        const colspan = parseInt(firstCell.getAttribute('colspan') || '1', 10);
+                        const totalColumns = getEffectiveColumnCount(firstRow);
+                        if (colspan === totalColumns && firstCell.textContent.trim() !== '') {
+                            extractedContent = firstCell.textContent.trim();
+                        }
+                    }
                 }
-            } else if (options.applyId) { // This block is for the "Universal Format" modal
-                let prefix = options.tableIdPrefix || 'tbl';
-                if (options.isFigureTable) {
-                    prefix = options.figureDataIdPrefix || 'ftbl';
-                }
-                table.id = `${prefix}${options.assignedIdCounter}`;
-                console.log(`Universal format assigned ID: ${table.id} (isFigureTable: ${options.isFigureTable})`);
-            } else { // For Universal Format when "ID Tables" checkbox is OFF
-                table.removeAttribute('id');
-                console.log('Removed ID from table as "ID Tables" option (Universal) is off.');
-            }
-
-            let currentClasses = table.className.split(' ').filter(c => c.trim() !== '');
-            const newClasses = new Set();
-            const controlledUniversalClasses = ['table', 'table-bordered', 'table-striped', 'table-hover', 'table-condensed', smallClass];
-
-            if (options.specificTableId) { // CUSTOMIZE flow: preserve all existing classes
-                currentClasses.forEach(cls => newClasses.add(cls));
-                console.log('Customize flow: Retaining all original classes.');
-            } else { // UNIVERSAL flow: filter out controlled classes
-                currentClasses.filter(c => !controlledUniversalClasses.includes(c)).forEach(cls => newClasses.add(cls));
-                console.log('Universal flow: Filtering controlled classes.');
-            }
-            
-            // Apply Basic Classes
-            if (options.applyClassTables) {
-                newClasses.add('table');
-                newClasses.add('table-condensed');
             } else {
-                newClasses.delete('table');
-                newClasses.delete('table-condensed');
-            }
-
-            // Apply other classes based on options
-            if (options.applyBordered) newClasses.add('table-bordered'); else newClasses.delete('table-bordered');
-            if (options.applyStriped) newClasses.add('table-striped'); else newClasses.delete('table-striped');
-            if (options.applyHover) newClasses.add('table-hover'); else newClasses.delete('table-hover');
-            if (options.applyClassSmall) newClasses.add(smallClass); else newClasses.delete(smallClass);
-
-            table.className = Array.from(newClasses).join(' ');
-
-
-            const originalTableRows = Array.from(table.querySelectorAll('tr'));
-
-            let headerRowCount = 0;
-            if (options.applyHeader) {
-                let maxRowSpanEnd = -1;
-
-                for (let i = 0; i < originalTableRows.length; i++) {
-                    const currentRow = originalTableRows[i];
-                    headerRowCount = i + 1;
-
-                    const cellsInCurrentRow = Array.from(currentRow.querySelectorAll('th, td'));
-                    cellsInCurrentRow.forEach(cell => {
-                        const rowspan = parseInt(cell.getAttribute('rowspan') || '1', 10);
-                        maxRowSpanEnd = Math.max(maxRowSpanEnd, i + rowspan - 1);
-                    });
-
-                    if (i >= maxRowSpanEnd) {
+                let prevSibling = (table.parentNode.classList.contains('table-responsive') ? table.parentNode : table).previousElementSibling;
+                while (prevSibling) {
+                    if (['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'].includes(prevSibling.tagName)) {
+                        extractedContent = prevSibling.textContent.trim();
+                        prevSibling.remove();
                         break;
                     }
+                    if (prevSibling.nodeType === Node.TEXT_NODE && prevSibling.textContent.trim() !== '') break;
+                    prevSibling = prevSibling.previousElementSibling;
                 }
             }
-
-            let existingCaptionElement = table.querySelector('caption');
-            let existingCaptionContent = existingCaptionElement ? existingCaptionElement.innerHTML : '';
-            let existingCaptionClasses = existingCaptionElement ? Array.from(existingCaptionElement.classList) : [];
-
-            table.querySelectorAll('thead, tbody, tfoot, colgroup').forEach(el => el.remove());
-
-            const newThead = document.createElement('thead');
-            let newTbody = document.createElement('tbody');
-
-            originalTableRows.forEach((row, index) => {
-                if (index < headerRowCount) {
-                    const clonedRow = row.cloneNode(true);
-                    Array.from(clonedRow.querySelectorAll('td')).forEach(td => {
-                        const newTh = document.createElement('th');
-                        Array.from(td.attributes).forEach(attr => newTh.setAttribute(attr.name, attr.value));
-                        newTh.innerHTML = td.innerHTML;
-                        td.parentNode.replaceChild(newTh, td);
-                    });
-                    newThead.appendChild(clonedRow);
-                } else {
-                    newTbody.appendChild(row);
-                }
-            });
-
-            if (newThead.children.length > 0) table.appendChild(newThead);
-            table.appendChild(newTbody);
-
-            let captionElement = table.querySelector('caption');
-            const shouldHaveCaption = options.applyCaption || options.applyAutoCaption;
-
-            if (shouldHaveCaption) {
-                if (!captionElement) {
-                    captionElement = document.createElement('caption');
-                    if (table.firstChild) table.insertBefore(captionElement, table.firstChild);
-                    else table.appendChild(captionElement);
-                }
-                
-                if (existingCaptionClasses.length > 0) captionElement.className = existingCaptionClasses.join(' ');
-                else captionElement.removeAttribute('class');
-                
-                applyAlignment(captionElement, options.currentCaptionAlignment, alignmentClasses);
-
-                if (options.applyAutoCaption) {
-                    let extractedContent = '';
-                    if (options.specificTableId) { // Simplified auto-caption for customize modal
-                        const firstRow = table.querySelector('tr');
-                        if (firstRow) {
-                            const firstCell = firstRow.firstElementChild;
-                            if (firstCell && (firstCell.tagName.toLowerCase() === 'th' || firstCell.tagName.toLowerCase() === 'td')) {
-                                const colspan = parseInt(firstCell.getAttribute('colspan') || '1', 10);
-                                const totalColumns = getEffectiveColumnCount(firstRow);
-                                if (colspan === totalColumns && firstCell.textContent.trim() !== '') {
-                                    extractedContent = firstCell.textContent.trim();
-                                }
-                            }
-                        }
-                    } else { // Universal auto-caption logic
-                        let prevSibling = (table.parentNode.classList.contains('table-responsive') ? table.parentNode : table).previousElementSibling;
-                        while (prevSibling) {
-                            if (['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'].includes(prevSibling.tagName)) {
-                                extractedContent = prevSibling.textContent.trim();
-                                prevSibling.remove();
-                                break;
-                            }
-                            if (prevSibling.nodeType === Node.TEXT_NODE && prevSibling.textContent.trim() !== '') break;
-                            prevSibling = prevSibling.previousElementSibling;
-                        }
-                    }
-                    captionElement.textContent = extractedContent || `[insert table caption]`;
-                } else if (!captionElement.textContent.trim() || captionElement.textContent.trim() === '[insert table caption]') {
-                    captionElement.textContent = existingCaptionContent || `[insert table caption]`;
-                }
-            } else {
-                if (captionElement) captionElement.remove();
-            }
-
-
-            const currentCaption = table.querySelector('caption');
-            const currentThead = table.querySelector('thead');
-            if (currentCaption && currentThead) {
-                let currentNode = currentCaption.nextSibling;
-                while (currentNode && currentNode !== currentThead) {
-                    const next = currentNode.nextSibling;
-                    if (currentNode.nodeType === Node.TEXT_NODE && currentNode.nodeValue.trim() === '') {
-                        currentNode.parentNode.removeChild(currentNode);
-                    } else if (currentNode.nodeType === Node.ELEMENT_NODE && ['BR', 'P', 'DIV'].includes(currentNode.tagName.toUpperCase()) && currentNode.textContent.trim() === '') {
-                        currentNode.parentNode.removeChild(currentNode);
-                    }
-                    currentNode = next;
-                }
-            }
-
-            if (options.applyMakeTfootFromColspan) {
-                const currentTbody = table.querySelector('tbody');
-                if (currentTbody && currentTbody.rows.length > 0) {
-                    const lastRow = currentTbody.rows[currentTbody.rows.length - 1];
-                    let totalColumns = 0;
-                    const firstRowForColCount = table.querySelector('tr');
-                    if(firstRowForColCount) totalColumns = getEffectiveColumnCount(firstRowForColCount);
-                    
-                    if (totalColumns > 0 && lastRow.cells.length === 1) {
-                        const singleCell = lastRow.firstElementChild;
-                        const colspan = parseInt(singleCell.getAttribute('colspan') || '1', 10);
-                        if (colspan >= totalColumns) { // Use >= to be more robust
-                            let tfoot = table.querySelector('tfoot');
-                            if (!tfoot) {
-                                tfoot = document.createElement('tfoot');
-                                table.appendChild(tfoot);
-                            }
-                            tfoot.appendChild(lastRow);
-                            if (currentTbody.rows.length === 0) currentTbody.remove();
-                        }
-                    }
-                }
-            }
-
-            const tbodyRows = Array.from(newTbody.querySelectorAll('tr'));
-            tbodyRows.forEach(row => {
-                const firstCell = row.firstElementChild;
-                if (firstCell) {
-                    const existingClasses = Array.from(firstCell.classList).join(' ');
-                    if (options.applyRowHeader) {
-                        if (firstCell.tagName.toLowerCase() !== 'th') {
-                            const newTh = document.createElement('th');
-                            Array.from(firstCell.attributes).forEach(attr => { if (attr.name !== 'class') newTh.setAttribute(attr.name, attr.value); });
-                            newTh.innerHTML = firstCell.innerHTML;
-                            newTh.className = existingClasses;
-                            row.replaceChild(newTh, firstCell);
-                            applyAlignment(newTh, options.currentRowHeaderAlignment, alignmentClasses);
-                        } else {
-                            applyAlignment(firstCell, options.currentRowHeaderAlignment, alignmentClasses);
-                        }
-                    } else {
-                        if (firstCell.tagName.toLowerCase() !== 'td') {
-                            const newTd = document.createElement('td');
-                            Array.from(firstCell.attributes).forEach(attr => { if (attr.name !== 'class') newTd.setAttribute(attr.name, attr.value); });
-                            newTd.innerHTML = firstCell.innerHTML;
-                            newTd.className = existingClasses;
-                            row.replaceChild(newTd, firstCell);
-                            applyAlignment(newTd, 'none', alignmentClasses);
-                        } else {
-                            applyAlignment(firstCell, 'none', alignmentClasses);
-                        }
-                    }
-                }
-            });
-
-            if (options.applyAddSmallToTr) {
-                Array.from(table.querySelectorAll('tr')).forEach(tr => tr.classList.add(smallClass));
-            } else {
-                Array.from(table.querySelectorAll('tr')).forEach(tr => tr.classList.remove(smallClass));
-            }
-
-            Array.from(table.querySelectorAll('th, td')).forEach(cell => {
-                if (options.applyFixEmptyCells) {
-                    const containsNBSP = cell.innerHTML.includes('&nbsp;') || cell.innerHTML.includes('&#160;');
-                    if (cell.textContent.trim() === '' && !containsNBSP) {
-                        cell.innerHTML = '&#160;';
-                    }
-                }
-                if (options.applyRemovePTags) {
-                    Array.from(cell.querySelectorAll('p')).forEach(p => {
-                        while (p.firstChild) p.parentNode.insertBefore(p.firstChild, p);
-                        p.remove();
-                    });
-                }
-                if (cell.tagName.toLowerCase() === 'td') {
-                    if (options.applyFinanceTable && financeRegex.test(cell.textContent.trim())) {
-                        applyAlignment(cell, 'right', alignmentClasses);
-                        cell.classList.add('nowrap');
-                    } else {
-                        applyAlignment(cell, options.currentDataCellsAlignment, alignmentClasses);
-                        cell.classList.remove('nowrap');
-                    }
-                }
-            });
-
-            Array.from(table.querySelectorAll('tbody tr')).forEach(row => {
-                const thInRow = row.querySelector('th');
-                let isTotalRow = thInRow && (thInRow.textContent.trim().toLowerCase() === 'total' || thInRow.textContent.trim().toLowerCase() === 'subtotal');
-                Array.from(row.querySelectorAll('td')).forEach(td => {
-                    if (options.applyBoldTotals && isTotalRow) {
-                        if (!td.querySelector('strong')) {
-                            td.innerHTML = `<strong>${td.innerHTML}</strong>`;
-                        }
-                    } else {
-                        if (td.querySelector('strong')) {
-                            td.innerHTML = td.querySelector('strong').innerHTML;
-                        }
-                    }
-                });
-            });
-
-            Array.from(table.querySelectorAll('thead tr')).forEach(tr => tr.classList.remove('active'));
-            if (options.applyActiveColHeaders) {
-                Array.from(newThead.querySelectorAll('tr')).forEach(tr => tr.classList.add('active'));
-            }
-
-            if (options.activeColspanHeadersCheckboxValue) {
-                Array.from(newTbody.querySelectorAll('th[colspan]')).forEach(th => th.classList.add('active'));
-            }
-            if (options.activeRowHeadersCheckboxValue) {
-                Array.from(newTbody.querySelectorAll('tr > th:first-child')).forEach(th => th.classList.add('active'));
-            }
-
-            Array.from(newThead.querySelectorAll('th')).forEach(th => {
-                applyAlignment(th, options.currentColHeaderAlignment, alignmentClasses);
-            });
-            Array.from(newTbody.querySelectorAll('th[colspan]')).forEach(th => {
-                applyAlignment(th, options.currentColspanHeaderAlignment, alignmentClasses);
-            });
-            if (options.applyRowHeader && newThead.rows.length > 0 && newThead.rows[0].cells.length > 0) {
-                 applyAlignment(newThead.rows[0].cells[0], options.currentRowHeaderAlignment, alignmentClasses);
-            }
-
-            Array.from(table.querySelectorAll('*')).forEach(el => {
-                if (el.hasAttribute('class') && el.classList.length === 0) el.removeAttribute('class');
-            });
-            return table;
+            existingCaptionElement.textContent = extractedContent || `[insert table caption]`;
+        } else if (!existingCaptionElement.textContent.trim() || existingCaptionElement.textContent.trim() === '[insert table caption]') {
+            existingCaptionElement.textContent = existingCaptionContent || `[insert table caption]`;
         }
+        if (existingCaptionElement.hasAttribute('class') && existingCaptionElement.classList.length === 0) {
+            existingCaptionElement.removeAttribute('class');
+        }
+    } else {
+        if (existingCaptionElement) existingCaptionElement.remove();
+    }
+
+    const currentCaption = table.querySelector('caption');
+    if (currentCaption) {
+        let currentNode = currentCaption.nextSibling;
+        while (currentNode) {
+            const next = currentNode.nextSibling;
+            if (currentNode.nodeType === Node.TEXT_NODE && currentNode.nodeValue.trim() === '') {
+                currentNode.parentNode.removeChild(currentNode);
+            } else if (currentNode.nodeType === Node.ELEMENT_NODE && ['BR', 'P', 'DIV'].includes(currentNode.tagName.toUpperCase()) && currentNode.textContent.trim() === '') {
+                currentNode.parentNode.removeChild(currentNode);
+            } else if (currentNode.nodeType === Node.ELEMENT_NODE && ['THEAD', 'TBODY', 'TFOOT', 'COLGROUP'].includes(currentNode.tagName.toUpperCase())) {
+                break;
+            }
+            currentNode = next;
+        }
+    }
+
+    // --- 4. Reconstruct thead, tbody, tfoot (populate lists of rows, but don't append yet) ---
+    table.querySelectorAll('thead, tbody, tfoot, colgroup').forEach(el => el.remove());
+
+    const originalTableRows = Array.from(table.querySelectorAll('tr'));
+    let headerRowCount = 0;
+    if (options.applyHeader) {
+        let maxRowSpanEnd = -1;
+        for (let i = 0; i < originalTableRows.length; i++) {
+            const currentRow = originalTableRows[i];
+            headerRowCount = i + 1;
+            const cellsInCurrentRow = Array.from(currentRow.querySelectorAll('th, td'));
+            cellsInCurrentRow.forEach(cell => {
+                const rowspan = parseInt(cell.getAttribute('rowspan') || '1', 10);
+                maxRowSpanEnd = Math.max(maxRowSpanEnd, i + rowspan - 1);
+            });
+            if (i >= maxRowSpanEnd) {
+                break;
+            }
+        }
+    }
+
+    const rowsForThead = [];
+    const rowsForTbody = [];
+    const rowsForTfoot = [];
+
+    originalTableRows.forEach((row, index) => {
+        if (index < headerRowCount) {
+            const clonedRow = row.cloneNode(true);
+            Array.from(clonedRow.querySelectorAll('td')).forEach(td => {
+                const newTh = document.createElement('th');
+                Array.from(td.attributes).forEach(attr => newTh.setAttribute(attr.name, attr.value));
+                newTh.innerHTML = td.innerHTML;
+                td.parentNode.replaceChild(newTh, td);
+            });
+            rowsForThead.push(clonedRow);
+        } else {
+            rowsForTbody.push(row);
+        }
+    });
+
+    if (options.applyMakeTfootFromColspan && rowsForTbody.length > 0) {
+        const lastRowInTbodyTemp = rowsForTbody[rowsForTbody.length - 1];
+        let totalColumns = 0;
+        const firstRowForColCount = rowsForThead.length > 0 ? rowsForThead[0] : (rowsForTbody.length > 0 ? rowsForTbody[0] : null);
+        if(firstRowForColCount) totalColumns = getEffectiveColumnCount(firstRowForColCount);
+        
+        if (totalColumns > 0 && lastRowInTbodyTemp.cells.length === 1) {
+            const singleCell = lastRowInTbodyTemp.firstElementChild;
+            const colspan = parseInt(singleCell.getAttribute('colspan') || '1', 10);
+            if (colspan >= totalColumns) {
+                rowsForTfoot.push(rowsForTbody.pop());
+            }
+        }
+    }
+
+    const newTheadElement = document.createElement('thead');
+    rowsForThead.forEach(row => newTheadElement.appendChild(row));
+
+    const newTbodyElement = document.createElement('tbody');
+    rowsForTbody.forEach(row => newTbodyElement.appendChild(row));
+
+    const newTfootElement = document.createElement('tfoot');
+    rowsForTfoot.forEach(row => newTfootElement.appendChild(row));
+
+
+    // --- 5. Apply Row Header and its Alignment (only to newTbodyElement rows) ---
+    Array.from(newTbodyElement.querySelectorAll('tr')).forEach(row => {
+        const firstCell = row.firstElementChild;
+        if (firstCell) {
+            const existingClasses = Array.from(firstCell.classList).join(' ');
+            if (options.applyRowHeader) {
+                if (firstCell.tagName.toLowerCase() !== 'th') {
+                    const newTh = document.createElement('th');
+                    Array.from(firstCell.attributes).forEach(attr => { if (attr.name !== 'class') newTh.setAttribute(attr.name, attr.value); });
+                    newTh.innerHTML = firstCell.innerHTML;
+                    newTh.className = existingClasses;
+                    row.replaceChild(newTh, firstCell);
+                    applyAlignment(newTh, options.currentRowHeaderAlignment, alignmentClasses);
+                } else {
+                    applyAlignment(firstCell, options.currentRowHeaderAlignment, alignmentClasses);
+                }
+            } else {
+                if (firstCell.tagName.toLowerCase() !== 'td') {
+                    const newTd = document.createElement('td');
+                    Array.from(firstCell.attributes).forEach(attr => { if (attr.name !== 'class') newTd.setAttribute(attr.name, attr.value); });
+                    newTd.innerHTML = firstCell.innerHTML;
+                    newTd.className = existingClasses;
+                    row.replaceChild(newTd, firstCell);
+                    applyAlignment(newTd, 'none', alignmentClasses);
+                } else {
+                    applyAlignment(firstCell, 'none', alignmentClasses);
+                }
+            }
+            if (firstCell.hasAttribute('class') && firstCell.classList.length === 0) {
+                firstCell.removeAttribute('class');
+            }
+        }
+    });
+
+    // --- 6. Apply Data Cells Alignment, Fix Empty Cells, Remove P Tags (ONLY to thead and tbody cells) ---
+    // The previous implementation used separate loops for thead and tbody.
+    // Let's combine them and add the explicit tfoot check at the beginning of the loop
+    // to ensure NO td in tfoot gets processed for data cell alignment.
+    
+    // Process cells in thead
+    Array.from(newTheadElement.querySelectorAll('th, td')).forEach(cell => {
+        // --- NEW CRITICAL CHECK for TFOOT TD ---
+        // This should not be strictly necessary for thead, but as a robust example
+        // to show how we can completely skip if an element somehow gets here.
+        if (cell.closest('tfoot') && cell.tagName.toLowerCase() === 'td') {
+            console.log('Skipping TD in TFOOT (Thead loop).');
+            return; // Skip this cell entirely
+        }
+
+        if (options.applyFixEmptyCells) {
+            const containsNBSP = cell.innerHTML.includes('&nbsp;') || cell.innerHTML.includes('&#160;');
+            if (cell.textContent.trim() === '' && !containsNBSP) {
+                cell.innerHTML = '&#160;';
+            }
+        }
+        if (options.applyRemovePTags) {
+            Array.from(cell.querySelectorAll('p')).forEach(p => {
+                while (p.firstChild) p.parentNode.insertBefore(p.firstChild, p);
+                p.remove();
+            });
+        }
+        
+        if (cell.tagName.toLowerCase() === 'td') {
+            if (options.applyFinanceTable && financeRegex.test(cell.textContent.trim())) {
+                applyAlignment(cell, 'right', alignmentClasses);
+                cell.classList.add('nowrap');
+            }
+        } else if (cell.tagName.toLowerCase() === 'th' && options.applyFinanceTable && financeRegex.test(cell.textContent.trim())) {
+            applyAlignment(cell, 'right', alignmentClasses);
+            cell.classList.add('nowrap');
+        }
+
+        if (cell.hasAttribute('class') && cell.classList.length === 0) {
+            cell.removeAttribute('class');
+        }
+    });
+
+    // Process cells in tbody
+    Array.from(newTbodyElement.querySelectorAll('th, td')).forEach(cell => {
+        // --- NEW CRITICAL CHECK for TFOOT TD ---
+        // This is where the problematic TD might still be getting processed
+        if (cell.closest('tfoot') && cell.tagName.toLowerCase() === 'td') {
+            console.log('Skipping TD in TFOOT (Tbody loop).');
+            // Explicitly remove any alignment classes that might have been applied by other means
+            cell.classList.remove(...alignmentClasses);
+            cell.classList.remove('nowrap');
+            if (cell.hasAttribute('class') && cell.classList.length === 0) {
+                cell.removeAttribute('class');
+            }
+            return; // Skip this cell entirely from further processing in this loop
+        }
+
+        if (options.applyFixEmptyCells) {
+            const containsNBSP = cell.innerHTML.includes('&nbsp;') || cell.innerHTML.includes('&#160;');
+            if (cell.textContent.trim() === '' && !containsNBSP) {
+                cell.innerHTML = '&#160;';
+            }
+        }
+        if (options.applyRemovePTags) {
+            Array.from(cell.querySelectorAll('p')).forEach(p => {
+                while (p.firstChild) p.parentNode.insertBefore(p.firstChild, p);
+                p.remove();
+            });
+        }
+        
+        if (cell.tagName.toLowerCase() === 'td') {
+            if (options.applyFinanceTable && financeRegex.test(cell.textContent.trim())) {
+                applyAlignment(cell, 'right', alignmentClasses);
+                cell.classList.add('nowrap');
+            } else {
+                applyAlignment(cell, options.currentDataCellsAlignment, alignmentClasses);
+                cell.classList.remove('nowrap');
+            }
+        } else if (cell.tagName.toLowerCase() === 'th' && options.applyFinanceTable && financeRegex.test(cell.textContent.trim())) {
+            applyAlignment(cell, 'right', alignmentClasses);
+            cell.classList.add('nowrap');
+        }
+        
+        if (cell.hasAttribute('class') && cell.classList.length === 0) {
+            cell.removeAttribute('class');
+        }
+    });
+
+    // --- 7. Apply Bold Totals (only to newTbodyElement rows) ---
+    Array.from(newTbodyElement.querySelectorAll('tr')).forEach(row => {
+        const thInRow = row.querySelector('th');
+        let isTotalRow = thInRow && (thInRow.textContent.trim().toLowerCase() === 'total' || thInRow.textContent.trim().toLowerCase() === 'subtotal');
+        Array.from(row.querySelectorAll('td')).forEach(td => {
+            if (options.applyBoldTotals && isTotalRow) {
+                if (!td.querySelector('strong')) {
+                    td.innerHTML = `<strong>${td.innerHTML}</strong>`;
+                }
+            } else {
+                if (td.querySelector('strong')) {
+                    td.innerHTML = td.querySelector('strong').innerHTML;
+                }
+            }
+        });
+        if (row.hasAttribute('class') && row.classList.length === 0) {
+            row.removeAttribute('class');
+        }
+    });
+
+    // --- 8. Append the structural elements to the table ---
+    if (newTheadElement.children.length > 0) table.appendChild(newTheadElement);
+    if (newTbodyElement.children.length > 0) table.appendChild(newTbodyElement);
+    if (newTfootElement.children.length > 0) table.appendChild(newTfootElement);
+
+    // --- 9. Apply Small Class to TRs ---
+    if (options.applyAddSmallToTr) {
+        Array.from(table.querySelectorAll('tr')).forEach(tr => tr.classList.add(smallClass));
+    } else {
+        Array.from(table.querySelectorAll('tr')).forEach(tr => tr.classList.remove(smallClass));
+    }
+
+    // --- 10. Apply Active Classes and Header Alignments ---
+    Array.from(table.querySelectorAll('thead tr')).forEach(tr => tr.classList.remove('active'));
+    if (options.applyActiveColHeaders) {
+        Array.from(newTheadElement.querySelectorAll('tr')).forEach(tr => tr.classList.add('active'));
+    }
+
+    if (options.activeColspanHeadersCheckboxValue) {
+        Array.from(newTbodyElement.querySelectorAll('th[colspan]')).forEach(th => th.classList.add('active'));
+    }
+    if (options.activeRowHeadersCheckboxValue) {
+        Array.from(newTbodyElement.querySelectorAll('tr > th:first-child')).forEach(th => th.classList.add('active'));
+    }
+
+    Array.from(newTheadElement.querySelectorAll('th')).forEach(th => {
+        applyAlignment(th, options.currentColHeaderAlignment, alignmentClasses);
+        if (th.hasAttribute('class') && th.classList.length === 0) {
+            th.removeAttribute('class');
+        }
+    });
+    Array.from(newTbodyElement.querySelectorAll('th[colspan]')).forEach(th => {
+        applyAlignment(th, options.currentColspanHeaderAlignment, alignmentClasses);
+        if (th.hasAttribute('class') && th.classList.length === 0) {
+            th.removeAttribute('class');
+        }
+    });
+    if (options.applyRowHeader && newTheadElement.rows.length > 0 && newTheadElement.rows[0].cells.length > 0) {
+         applyAlignment(newTheadElement.rows[0].cells[0], options.currentRowHeaderAlignment, alignmentClasses);
+         if (newTheadElement.rows[0].cells[0].hasAttribute('class') && newTheadElement.rows[0].cells[0].classList.length === 0) {
+            newTheadElement.rows[0].cells[0].removeAttribute('class');
+         }
+    }
+
+    // --- NEW MOST AGGRESSIVE FINAL TFOOT TD CLEANUP ---
+    // This targets ONLY TDs within tfoot elements and removes all alignment classes.
+    // This is the last possible place for this class to be removed.
+    Array.from(table.querySelectorAll('tfoot td')).forEach(td => {
+        console.log(`Final AGGRESSIVE TFOOT TD cleanup: Cleaning cell with content: "${td.textContent.trim()}"`);
+        td.classList.remove(...alignmentClasses); // Explicitly remove all alignment classes
+        td.classList.remove('nowrap'); // Explicitly remove nowrap
+        if (td.hasAttribute('class') && td.classList.length === 0) {
+            td.removeAttribute('class');
+            console.log(`Removed empty class attribute from tfoot td.`);
+        }
+    });
+
+    // --- 11. FINAL GENERAL CLASS CLEANUP: Remove any remaining empty class attributes ---
+    Array.from(table.querySelectorAll('*')).forEach(el => {
+        if (el.hasAttribute('class') && el.classList.length === 0) {
+            el.removeAttribute('class');
+            console.log(`Final overall cleanup: Removed empty class attribute from ${el.tagName}.`);
+        }
+    });
+
+    return table;
+}
 
 
         /**
@@ -2082,18 +2237,20 @@
                 formattedContent = restoreDataAttributes(formattedContent);
                 formattedContent = convertAllEntitiesToNumeric(formattedContent);
                 setEditorContent(formattedContent);
-                applyEntityHighlighting();
+                const prevSelectedTable = tableSearchDropdown.value; // Capture BEFORE update
+    applyEntityHighlighting();
+    populateTableSearchDropdown(prevSelectedTable); // Pass it here!
 
             } catch (e) {
                 console.error("Error formatting HTML tables:", e);
                 showMessage('An error occurred during formatting.', 'error');
             } finally {
                 setTimeout(() => {
-                    formatButton.textContent = 'Format Tables';
-                    formatButton.removeAttribute('data-temp-active');
-                    updateAllInteractiveButtonStates();
-                    showMessage('HTML tables formatted successfully!', 'success');
-                }, 1500);
+        formatButton.textContent = 'Format Tables';
+        formatButton.removeAttribute('data-temp-active');
+        updateAllInteractiveButtonStates();
+        showMessage('HTML tables formatted successfully!', 'success');
+    }, 1500);
             }
         }
 		
@@ -2666,20 +2823,24 @@ function cleanEmptyHeadersAttribute(htmlString) {
                 return;
             }
 
-            const classesToRemove = ['table', 'table-bordered', 'table-striped', 'table-hover', 'table-condensed', 'small'];
-            const alignmentClasses = ['text-left', 'text-center', 'text-right'];
-            
-            tables.forEach(table => {
-                table.removeAttribute('id');
-                table.classList.remove(...classesToRemove);
+            const classesToRemove = ['table', 'table-bordered', 'table-striped', 'table-hover', 'table-condensed', 'small', 'text-left', 'text-center', 'text-right', 'nowrap']; // Added text-align classes and nowrap
+    const alignmentClasses = ['text-left', 'text-center', 'text-right']; // Still needed for specific alignment handling
 
-                table.querySelectorAll('tr, th, td, caption').forEach(el => {
-                    el.classList.remove('active', ...alignmentClasses);
-                    if (el.tagName === 'TR') {
-                        el.classList.remove('small');
-                    }
-                });
-            });
+    tables.forEach(table => {
+        table.removeAttribute('id');
+        table.classList.remove(...classesToRemove);
+
+        table.querySelectorAll('tr, th, td, caption').forEach(el => {
+            el.classList.remove('active', ...alignmentClasses);
+            if (el.tagName === 'TR') {
+                el.classList.remove('small');
+            }
+            // Add removal of 'nowrap' for individual cells
+            if (el.tagName === 'TD' || el.tagName === 'TH') {
+                el.classList.remove('nowrap');
+            }
+        });
+    });
             
             // Clean up any empty class attributes left behind
             tempDiv.querySelectorAll('*').forEach(el => {
@@ -2765,50 +2926,415 @@ function cleanEmptyHeadersAttribute(htmlString) {
          * Resets formatting for a single, selected table.
          */
         function resetTableFormatting() {
-            const selectedValue = tableSearchDropdown.value;
-            if (!selectedValue) {
-                showMessage('Please select a table to reset.', 'info');
-                return;
-            }
-            const tableInfo = tableDataMap.get(selectedValue);
-            if (!tableInfo) { return; }
+    const selectedValue = tableSearchDropdown.value;
+    if (!selectedValue) {
+        showMessage('Please select a table to reset.', 'info');
+        return;
+    }
+    const tableInfo = tableDataMap.get(selectedValue);
+    if (!tableInfo) { return; }
 
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = tableInfo.outerHTML;
-            const table = tempDiv.querySelector('table');
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = tableInfo.outerHTML;
+    const table = tempDiv.querySelector('table');
 
-            // FIX: remove ID
-            table.removeAttribute('id');
+    // FIX: remove ID
+    table.removeAttribute('id');
 
-            const classesToRemove = ['table', 'table-bordered', 'table-striped', 'table-hover', 'table-condensed', 'small'];
-            const alignmentClasses = ['text-left', 'text-center', 'text-right'];
+    const classesToRemove = ['table', 'table-bordered', 'table-striped', 'table-hover', 'table-condensed', 'small', 'text-left', 'text-center', 'text-right', 'nowrap'];
+    const alignmentClasses = ['text-left', 'text-center', 'text-right'];
 
-            table.classList.remove(...classesToRemove);
-            table.querySelectorAll('tr, th, td, caption').forEach(el => {
-                el.classList.remove('active', ...alignmentClasses);
-                if (el.tagName === 'TR') el.classList.remove('small');
-            });
+    table.classList.remove(...classesToRemove);
+    if (table.hasAttribute('class') && table.classList.length === 0) {
+        table.removeAttribute('class');
+    }
 
-            // FIX: Clean up empty class attributes
-            tempDiv.querySelectorAll('*').forEach(el => {
-                if (el.hasAttribute('class') && el.classList.length === 0) {
-                    el.removeAttribute('class');
-                }
-            });
-
-            let modifiedTableHtml = tempDiv.innerHTML;
-            modifiedTableHtml = html_beautify(modifiedTableHtml, { indent_size: 4, space_in_paren: true });
-
-            const currentEditorContent = getEditorContent();
-            const newEditorContent = currentEditorContent.substring(0, tableInfo.startIndex) +
-                                     modifiedTableHtml +
-                                     currentEditorContent.substring(tableInfo.startIndex + tableInfo.length);
-            
-            setEditorContent(newEditorContent);
-            applyEntityHighlighting();
-            populateTableSearchDropdown();
-            showMessage(`Formatting for table "${selectedValue}" has been reset.`, 'success');
+    table.querySelectorAll('tr, th, td, caption').forEach(el => {
+        el.classList.remove('active', ...alignmentClasses);
+        if (el.tagName === 'TR') el.classList.remove('small');
+        if (el.tagName === 'TD' || el.tagName === 'TH') {
+            el.classList.remove('nowrap');
         }
+        // NEW: Check and remove empty class attributes on cells, rows, and caption
+        if (el.hasAttribute('class') && el.classList.length === 0) {
+            el.removeAttribute('class');
+        }
+    });
+
+    let modifiedTableHtml = tempDiv.innerHTML;
+    modifiedTableHtml = html_beautify(modifiedTableHtml, { indent_size: 4, space_in_paren: true });
+
+    const currentEditorContent = getEditorContent();
+    const newEditorContent = currentEditorContent.substring(0, tableInfo.startIndex) +
+                             modifiedTableHtml +
+                             currentEditorContent.substring(tableInfo.startIndex + tableInfo.length);
+    
+    setEditorContent(newEditorContent);
+    applyEntityHighlighting();
+    populateTableSearchDropdown();
+    showMessage(`Formatting for table "${selectedValue}" has been reset.`, 'success');
+}
+
+// Ensure the `formatTableLogic` function also performs a final cleanup of empty class attributes.
+// This is important because it's called by both universal and specific formatting.
+function formatTableLogic(table, options) {
+    console.log(`--- Applying formatting logic to table ---`);
+
+    const financeRegex = /^\s*[-+]?(?:\d+|\d{1,3}(?:\s\d{3})*)(?:[.,]\d+)?\s*$/;
+    const smallClass = 'small';
+    const alignmentClasses = ['text-left', 'text-center', 'text-right'];
+
+    // --- UNCONDITIONALLY REMOVE ALL IDs, HEADERS, AND SCOPES AT THE START from cells ---
+    // This existing block is good for clearing prior states but not specifically for empty classes
+    Array.from(table.querySelectorAll('*')).forEach(el => {
+        el.removeAttribute('id');
+        el.removeAttribute('headers');
+        el.removeAttribute('scope');
+        // This line attempts to remove empty class, but can be reinforced at the end.
+        if (el.hasAttribute('class') && el.classList.length === 0) {
+            el.removeAttribute('class');
+            console.log(`Removed empty class attribute from ${el.tagName} during initial cleanup.`);
+        }
+    });
+    console.log('Removed empty class attributes from elements initially.');
+
+    // Clear existing active, centering, and alignment classes from all cells
+    Array.from(table.querySelectorAll('th, tr, td, caption')).forEach(el => {
+        el.classList.remove('active');
+        el.classList.remove('nowrap'); // Also clear nowrap for finance
+    });
+    console.log('Classes cleared from all relevant elements for current table.');
+
+    // ID Assignment Logic (Table ID)
+    if (options.specificTableId) {
+        let customId = options.tableIdPrefix;
+        if (customId && customId.trim() !== '') {
+            table.id = customId.trim();
+            console.log(`Customized table ID set to: ${table.id}`);
+        } else {
+            table.removeAttribute('id');
+            console.log('Customized table ID removed as input was empty.');
+        }
+    } else if (options.applyId) {
+        let prefix = options.tableIdPrefix || 'tbl';
+        if (options.isFigureTable) {
+            prefix = options.figureDataIdPrefix || 'ftbl';
+        }
+        table.id = `${prefix}${options.assignedIdCounter}`;
+        console.log(`Universal format assigned ID: ${table.id} (isFigureTable: ${options.isFigureTable})`);
+    } else {
+        table.removeAttribute('id');
+        console.log('Removed ID from table as "ID Tables" option (Universal) is off.');
+    }
+
+    let currentClasses = table.className.split(' ').filter(c => c.trim() !== '');
+    const newClasses = new Set();
+    const controlledUniversalClasses = ['table', 'table-bordered', 'table-striped', 'table-hover', 'table-condensed', smallClass];
+
+    if (options.specificTableId) {
+        currentClasses.forEach(cls => newClasses.add(cls));
+        console.log('Customize flow: Retaining all original classes.');
+    } else {
+        currentClasses.filter(c => !controlledUniversalClasses.includes(c)).forEach(cls => newClasses.add(cls));
+        console.log('Universal flow: Filtering controlled classes.');
+    }
+    
+    // Apply Basic Classes
+    if (options.applyClassTables) {
+        newClasses.add('table');
+        newClasses.add('table-condensed');
+    } else {
+        newClasses.delete('table');
+        newClasses.delete('table-condensed');
+    }
+
+    // Apply other classes based on options
+    if (options.applyBordered) newClasses.add('table-bordered'); else newClasses.delete('table-bordered');
+    if (options.applyStriped) newClasses.add('table-striped'); else newClasses.delete('table-striped');
+    if (options.applyHover) newClasses.add('table-hover'); else newClasses.delete('table-hover');
+    if (options.applyClassSmall) newClasses.add(smallClass); else newClasses.delete(smallClass);
+
+    table.className = Array.from(newClasses).join(' ');
+    // NEW: After setting class name for the table, check if it's empty
+    if (table.hasAttribute('class') && table.classList.length === 0) {
+        table.removeAttribute('class');
+    }
+
+
+    const originalTableRows = Array.from(table.querySelectorAll('tr'));
+
+    let headerRowCount = 0;
+    if (options.applyHeader) {
+        let maxRowSpanEnd = -1;
+
+        for (let i = 0; i < originalTableRows.length; i++) {
+            const currentRow = originalTableRows[i];
+            headerRowCount = i + 1;
+
+            const cellsInCurrentRow = Array.from(currentRow.querySelectorAll('th, td'));
+            cellsInCurrentRow.forEach(cell => {
+                const rowspan = parseInt(cell.getAttribute('rowspan') || '1', 10);
+                maxRowSpanEnd = Math.max(maxRowSpanEnd, i + rowspan - 1);
+            });
+
+            if (i >= maxRowSpanEnd) {
+                break;
+            }
+        }
+    }
+
+    let existingCaptionElement = table.querySelector('caption');
+    let existingCaptionContent = existingCaptionElement ? existingCaptionElement.innerHTML : '';
+    let existingCaptionClasses = existingCaptionElement ? Array.from(existingCaptionElement.classList) : [];
+
+    table.querySelectorAll('thead, tbody, tfoot, colgroup').forEach(el => el.remove());
+
+    const newThead = document.createElement('thead');
+    let newTbody = document.createElement('tbody');
+
+    originalTableRows.forEach((row, index) => {
+        if (index < headerRowCount) {
+            const clonedRow = row.cloneNode(true);
+            Array.from(clonedRow.querySelectorAll('td')).forEach(td => {
+                const newTh = document.createElement('th');
+                Array.from(td.attributes).forEach(attr => newTh.setAttribute(attr.name, attr.value));
+                newTh.innerHTML = td.innerHTML;
+                td.parentNode.replaceChild(newTh, td);
+            });
+            newThead.appendChild(clonedRow);
+        } else {
+            newTbody.appendChild(row);
+        }
+    });
+
+    if (newThead.children.length > 0) table.appendChild(newThead);
+    table.appendChild(newTbody);
+
+    let captionElement = table.querySelector('caption');
+    const shouldHaveCaption = options.applyCaption || options.applyAutoCaption;
+
+    if (shouldHaveCaption) {
+        if (!captionElement) {
+            captionElement = document.createElement('caption');
+            if (table.firstChild) table.insertBefore(captionElement, table.firstChild);
+            else table.appendChild(captionElement);
+        }
+        
+        if (existingCaptionClasses.length > 0) captionElement.className = existingCaptionClasses.join(' ');
+        else captionElement.removeAttribute('class');
+        
+        applyAlignment(captionElement, options.currentCaptionAlignment, alignmentClasses);
+
+        if (options.applyAutoCaption) {
+            let extractedContent = '';
+            if (options.specificTableId) {
+                const firstRow = table.querySelector('tr');
+                if (firstRow) {
+                    const firstCell = firstRow.firstElementChild;
+                    if (firstCell && (firstCell.tagName.toLowerCase() === 'th' || firstCell.tagName.toLowerCase() === 'td')) {
+                        const colspan = parseInt(firstCell.getAttribute('colspan') || '1', 10);
+                        const totalColumns = getEffectiveColumnCount(firstRow);
+                        if (colspan === totalColumns && firstCell.textContent.trim() !== '') {
+                            extractedContent = firstCell.textContent.trim();
+                        }
+                    }
+                }
+            } else {
+                let prevSibling = (table.parentNode.classList.contains('table-responsive') ? table.parentNode : table).previousElementSibling;
+                while (prevSibling) {
+                    if (['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'].includes(prevSibling.tagName)) {
+                        extractedContent = prevSibling.textContent.trim();
+                        prevSibling.remove();
+                        break;
+                    }
+                    if (prevSibling.nodeType === Node.TEXT_NODE && prevSibling.textContent.trim() !== '') break;
+                    prevSibling = prevSibling.previousElementSibling;
+                }
+            }
+            captionElement.textContent = extractedContent || `[insert table caption]`;
+        } else if (!captionElement.textContent.trim() || captionElement.textContent.trim() === '[insert table caption]') {
+            captionElement.textContent = existingCaptionContent || `[insert table caption]`;
+        }
+        // NEW: Check and remove empty class attributes on caption
+        if (captionElement.hasAttribute('class') && captionElement.classList.length === 0) {
+            captionElement.removeAttribute('class');
+        }
+    } else {
+        if (captionElement) captionElement.remove();
+    }
+
+    const currentCaption = table.querySelector('caption');
+    const currentThead = table.querySelector('thead');
+    if (currentCaption && currentThead) {
+        let currentNode = currentCaption.nextSibling;
+        while (currentNode && currentNode !== currentThead) {
+            const next = currentNode.nextSibling;
+            if (currentNode.nodeType === Node.TEXT_NODE && currentNode.nodeValue.trim() === '') {
+                currentNode.parentNode.removeChild(currentNode);
+            } else if (currentNode.nodeType === Node.ELEMENT_NODE && ['BR', 'P', 'DIV'].includes(currentNode.tagName.toUpperCase()) && currentNode.textContent.trim() === '') {
+                currentNode.parentNode.removeChild(currentNode);
+            }
+            currentNode = next;
+        }
+    }
+
+    if (options.applyMakeTfootFromColspan) {
+        const currentTbody = table.querySelector('tbody');
+        if (currentTbody && currentTbody.rows.length > 0) {
+            const lastRow = currentTbody.rows[currentTbody.rows.length - 1];
+            let totalColumns = 0;
+            const firstRowForColCount = table.querySelector('tr');
+            if(firstRowForColCount) totalColumns = getEffectiveColumnCount(firstRowForColCount);
+            
+            if (totalColumns > 0 && lastRow.cells.length === 1) {
+                const singleCell = lastRow.firstElementChild;
+                const colspan = parseInt(singleCell.getAttribute('colspan') || '1', 10);
+                if (colspan >= totalColumns) {
+                    let tfoot = table.querySelector('tfoot');
+                    if (!tfoot) {
+                        tfoot = document.createElement('tfoot');
+                        table.appendChild(tfoot);
+                    }
+                    tfoot.appendChild(lastRow);
+                    if (currentTbody.rows.length === 0) currentTbody.remove();
+                }
+            }
+        }
+    }
+
+    const tbodyRows = Array.from(newTbody.querySelectorAll('tr'));
+    tbodyRows.forEach(row => {
+        const firstCell = row.firstElementChild;
+        if (firstCell) {
+            const existingClasses = Array.from(firstCell.classList).join(' ');
+            if (options.applyRowHeader) {
+                if (firstCell.tagName.toLowerCase() !== 'th') {
+                    const newTh = document.createElement('th');
+                    Array.from(firstCell.attributes).forEach(attr => { if (attr.name !== 'class') newTh.setAttribute(attr.name, attr.value); });
+                    newTh.innerHTML = firstCell.innerHTML;
+                    newTh.className = existingClasses;
+                    row.replaceChild(newTh, firstCell);
+                    applyAlignment(newTh, options.currentRowHeaderAlignment, alignmentClasses);
+                } else {
+                    applyAlignment(firstCell, options.currentRowHeaderAlignment, alignmentClasses);
+                }
+            } else {
+                if (firstCell.tagName.toLowerCase() !== 'td') {
+                    const newTd = document.createElement('td');
+                    Array.from(firstCell.attributes).forEach(attr => { if (attr.name !== 'class') newTd.setAttribute(attr.name, attr.value); });
+                    newTd.innerHTML = firstCell.innerHTML;
+                    newTd.className = existingClasses;
+                    row.replaceChild(newTd, firstCell);
+                    applyAlignment(newTd, 'none', alignmentClasses);
+                } else {
+                    applyAlignment(firstCell, 'none', alignmentClasses);
+                }
+            }
+            // NEW: After alignment, check if cell's class attribute is empty
+            if (firstCell.hasAttribute('class') && firstCell.classList.length === 0) {
+                firstCell.removeAttribute('class');
+            }
+        }
+    });
+
+    if (options.applyAddSmallToTr) {
+        Array.from(table.querySelectorAll('tr')).forEach(tr => tr.classList.add(smallClass));
+    } else {
+        Array.from(table.querySelectorAll('tr')).forEach(tr => tr.classList.remove(smallClass));
+    }
+
+    Array.from(table.querySelectorAll('th, td')).forEach(cell => {
+        if (options.applyFixEmptyCells) {
+            const containsNBSP = cell.innerHTML.includes('&nbsp;') || cell.innerHTML.includes('&#160;');
+            if (cell.textContent.trim() === '' && !containsNBSP) {
+                cell.innerHTML = '&#160;';
+            }
+        }
+        if (options.applyRemovePTags) {
+            Array.from(cell.querySelectorAll('p')).forEach(p => {
+                while (p.firstChild) p.parentNode.insertBefore(p.firstChild, p);
+                p.remove();
+            });
+        }
+        if (cell.tagName.toLowerCase() === 'td') {
+            if (options.applyFinanceTable && financeRegex.test(cell.textContent.trim())) {
+                applyAlignment(cell, 'right', alignmentClasses);
+                cell.classList.add('nowrap');
+            } else {
+                applyAlignment(cell, options.currentDataCellsAlignment, alignmentClasses);
+                cell.classList.remove('nowrap');
+            }
+        }
+        // NEW: After all cell-specific class manipulations, remove empty class attributes
+        if (cell.hasAttribute('class') && cell.classList.length === 0) {
+            cell.removeAttribute('class');
+        }
+    });
+
+    Array.from(table.querySelectorAll('tbody tr')).forEach(row => {
+        const thInRow = row.querySelector('th');
+        let isTotalRow = thInRow && (thInRow.textContent.trim().toLowerCase() === 'total' || thInRow.textContent.trim().toLowerCase() === 'subtotal');
+        Array.from(row.querySelectorAll('td')).forEach(td => {
+            if (options.applyBoldTotals && isTotalRow) {
+                if (!td.querySelector('strong')) {
+                    td.innerHTML = `<strong>${td.innerHTML}</strong>`;
+                }
+            } else {
+                if (td.querySelector('strong')) {
+                    td.innerHTML = td.querySelector('strong').innerHTML;
+                }
+            }
+        });
+        // NEW: Check and remove empty class attributes on row
+        if (row.hasAttribute('class') && row.classList.length === 0) {
+            row.removeAttribute('class');
+        }
+    });
+
+    Array.from(table.querySelectorAll('thead tr')).forEach(tr => tr.classList.remove('active'));
+    if (options.applyActiveColHeaders) {
+        Array.from(newThead.querySelectorAll('tr')).forEach(tr => tr.classList.add('active'));
+    }
+
+    if (options.activeColspanHeadersCheckboxValue) {
+        Array.from(newTbody.querySelectorAll('th[colspan]')).forEach(th => th.classList.add('active'));
+    }
+    if (options.activeRowHeadersCheckboxValue) {
+        Array.from(newTbody.querySelectorAll('tr > th:first-child')).forEach(th => th.classList.add('active'));
+    }
+
+    Array.from(newThead.querySelectorAll('th')).forEach(th => {
+        applyAlignment(th, options.currentColHeaderAlignment, alignmentClasses);
+        // NEW: Check and remove empty class attributes on th
+        if (th.hasAttribute('class') && th.classList.length === 0) {
+            th.removeAttribute('class');
+        }
+    });
+    Array.from(newTbody.querySelectorAll('th[colspan]')).forEach(th => {
+        applyAlignment(th, options.currentColspanHeaderAlignment, alignmentClasses);
+        // NEW: Check and remove empty class attributes on th
+        if (th.hasAttribute('class') && th.classList.length === 0) {
+            th.removeAttribute('class');
+        }
+    });
+    if (options.applyRowHeader && newThead.rows.length > 0 && newThead.rows[0].cells.length > 0) {
+         applyAlignment(newThead.rows[0].cells[0], options.currentRowHeaderAlignment, alignmentClasses);
+         // NEW: Check and remove empty class attributes on this specific th
+         if (newThead.rows[0].cells[0].hasAttribute('class') && newThead.rows[0].cells[0].classList.length === 0) {
+            newThead.rows[0].cells[0].removeAttribute('class');
+         }
+    }
+
+    // FINAL CLEANUP: Iterate over all elements within the table one last time
+    // to catch any remaining empty class attributes that might have been missed.
+    Array.from(table.querySelectorAll('*')).forEach(el => {
+        if (el.hasAttribute('class') && el.classList.length === 0) {
+            el.removeAttribute('class');
+            console.log(`Final cleanup: Removed empty class attribute from ${el.tagName}.`);
+        }
+    });
+    return table;
+}
 
         /**
          * Resets scopes and IDs for a single, selected table.
@@ -2904,94 +3430,130 @@ function cleanEmptyHeadersAttribute(htmlString) {
          * @returns {string} The formatted string.
          */
         function formatNumberString(text, lang) {
-            // This regex is designed to find numbers that might have currency or percent symbols.
-            const regex = /([+\-]?)\s*([\$€]?)\s*([\d][\d\s,.'&#160;&nbsp;]*)\s*([\$€%]?)/g;
+    const regex = /([+\-]?)\s*([\$€]?)\s*([\d][\d\s,.'&#160;&nbsp;]*)\s*([\$€%]?)/g;
 
-            return text.replace(regex, (match, sign, preSymbol, numberStr, postSymbol) => {
-                // Ignore if it doesn't contain any digits.
-                if (!/\d/.test(numberStr)) return match;
-                
-                // Heuristic to ignore version numbers, IP addresses, or codes.
-                if ((numberStr.match(/\./g) || []).length > 1 && (numberStr.match(/,/g) || []).length === 0) {
-                    return match;
-                }
+    return text.replace(regex, (match, sign, preSymbol, numberStr, postSymbol) => {
+        if (!/\d/.test(numberStr)) return match;
 
-                // 1. Clean the string to be machine-readable (e.g., "123456.78")
-                let parsableStr = numberStr
-                    .replace(/&nbsp;/g, ' ')
-                    .replace(/&#160;/g, ' ')
-                    .trim();
-
-                const lastComma = parsableStr.lastIndexOf(',');
-                const lastPeriod = parsableStr.lastIndexOf('.');
-
-                // If a comma exists after the last period, it's the decimal separator (e.g., 1.234,56)
-                if (lastComma > lastPeriod) {
-                    parsableStr = parsableStr.replace(/\./g, '').replace(/\s/g, '').replace(',', '.');
-                } 
-                // If a period exists after the last comma, it's the decimal separator (e.g., 1,234.56)
-                else if (lastPeriod > lastComma) {
-                    parsableStr = parsableStr.replace(/,/g, '').replace(/\s/g, '');
-                }
-                // If only commas exist, we need to guess if the last one is a decimal.
-                else if (lastComma !== -1) {
-                    const partAfterComma = parsableStr.substring(lastComma + 1);
-                    // If the part after the last comma is not 3 digits long (and not a space), it's likely a decimal.
-                    if (partAfterComma.trim().length !== 3) {
-                        parsableStr = parsableStr.replace(/,/g, (m, offset) => offset === lastComma ? '.' : '').replace(/\s/g, '');
-                    } else {
-                        // It's likely a thousands separator, so remove all commas.
-                        parsableStr = parsableStr.replace(/,/g, '').replace(/\s/g, '');
-                    }
-                }
-                // If only periods exist, it's likely a thousands separator (e.g. 120.000)
-                else if (lastPeriod !== -1) {
-                     const partAfterPeriod = parsableStr.substring(lastPeriod + 1);
-                     if (partAfterPeriod.trim().length === 3) {
-                         parsableStr = parsableStr.replace(/\./g, '').replace(/\s/g, '');
-                     } else {
-                         parsableStr = parsableStr.replace(/\s/g, '');
-                     }
-                }
-                // If no separators, just remove spaces.
-                else {
-                    parsableStr = parsableStr.replace(/\s/g, '');
-                }
-
-
-                const num = parseFloat(parsableStr);
-                if (isNaN(num)) {
-                    return match;
-                }
-
-                const symbol = preSymbol || postSymbol;
-                const decimalPart = parsableStr.includes('.') ? parsableStr.split('.')[1] : '';
-                const decimalPlaces = decimalPart.length;
-
-                // 2. Format to the target locale
-                if (lang === 'eng') {
-                    let formattedNum = num.toLocaleString('en-CA', {
-                        minimumFractionDigits: decimalPlaces,
-                        maximumFractionDigits: 20
-                    });
-                    if (symbol === '$' || symbol === '€') return `${sign}${symbol}${formattedNum}`;
-                    if (symbol === '%') return `${sign}${formattedNum}${symbol}`;
-                    return `${sign}${formattedNum}`;
-                } else if (lang === 'fra') {
-                    let formattedNum = num.toLocaleString('fr-CA', {
-                        minimumFractionDigits: decimalPlaces,
-                        maximumFractionDigits: 20
-                    });
-                    // Use a literal non-breaking space character for DOM manipulation
-                    formattedNum = formattedNum.replace(/\s/g, '\u00A0');
-                    if (symbol === '$' || symbol === '€' || symbol === '%') {
-                        return `${sign}${formattedNum}\u00A0${symbol}`;
-                    }
-                    return `${sign}${formattedNum}`;
-                }
-                return match;
-            });
+        // Heuristic to ignore version numbers, IP addresses, or codes.
+        if ((numberStr.match(/\./g) || []).length > 1 && (numberStr.match(/,/g) || []).length === 0) {
+            return match;
         }
+
+        let parsableStr = numberStr
+            .replace(/&nbsp;/g, ' ')
+            .replace(/&#160;/g, ' ')
+            .trim();
+
+        const hasComma = parsableStr.includes(',');
+        const hasPeriod = parsableStr.includes('.');
+
+        if (hasComma && hasPeriod) {
+            // Both comma and period present. Determine decimal.
+            // If comma appears after period, it's European style (1.234,56)
+            if (parsableStr.indexOf(',') > parsableStr.indexOf('.')) {
+                parsableStr = parsableStr.replace(/\./g, '').replace(',', '.');
+            } else {
+                // If period appears after comma, it's American style (1,234.56)
+                parsableStr = parsableStr.replace(/,/g, '');
+            }
+        } else if (hasComma) {
+            // Only commas present. Heuristic: if last part is 1 or 2 digits, assume decimal.
+            const parts = parsableStr.split(',');
+            const lastPart = parts[parts.length - 1];
+            if (lastPart.length === 1 || lastPart.length === 2) {
+                parsableStr = parsableStr.replace(/,/g, (m, offset, str) => {
+                    if (offset === str.lastIndexOf(',')) return '.';
+                    return '';
+                });
+            } else {
+                // Otherwise, assume all commas are thousands separators.
+                parsableStr = parsableStr.replace(/,/g, '');
+            }
+        } else if (hasPeriod) {
+            // Only periods present. Heuristic: if last part is 3 digits, assume thousands.
+            const parts = parsableStr.split('.');
+            const lastPart = parts[parts.length - 1];
+            if (lastPart.length === 3 && parts.length > 1) {
+                parsableStr = parsableStr.replace(/\./g, '');
+            }
+            // Otherwise, assume it's a decimal separator, keep it as is.
+        }
+        parsableStr = parsableStr.replace(/\s/g, ''); // Remove any remaining spaces
+
+
+        const num = parseFloat(parsableStr);
+        if (isNaN(num)) {
+            return match;
+        }
+
+        const symbol = preSymbol || postSymbol;
+        const originalDecimalPartLength = (parsableStr.split('.')[1] || '').length;
+
+        // Determine formatting options
+        // For financial numbers, typically 2 decimal places are preferred.
+        // But if the original number had more, we should preserve that.
+        let minFractions = 0;
+        let maxFractions = 0;
+
+        if (num % 1 === 0) { // If it's an integer
+            minFractions = 0;
+            maxFractions = 0; // No decimals for integers unless specified by context
+        } else { // If it has decimal places
+            minFractions = originalDecimalPartLength;
+            // Ensure at least 2 decimal places for financial numbers, but keep original if more
+            maxFractions = Math.max(2, originalDecimalPartLength);
+        }
+
+        // 2. Format to the target locale
+        if (lang === 'eng') {
+            let formattedNum = num.toLocaleString('en-CA', {
+                minimumFractionDigits: minFractions,
+                maximumFractionDigits: maxFractions
+            });
+
+            // Specific check for integers to avoid '.00' if original had no decimals
+            // `toLocaleString` handles thousands separators automatically based on locale.
+            if (num % 1 === 0 && originalDecimalPartLength === 0) {
+                 formattedNum = num.toLocaleString('en-CA', {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                });
+            }
+
+            if (symbol === '$' || symbol === '€') return `${sign}${symbol}${formattedNum}`;
+            if (symbol === '%') return `${sign}${formattedNum}${symbol}`;
+            return `${sign}${formattedNum}`;
+        } else if (lang === 'fra') {
+            let formattedNum = num.toLocaleString('fr-CA', {
+                minimumFractionDigits: minFractions,
+                maximumFractionDigits: maxFractions
+            });
+
+            formattedNum = formattedNum.replace(/\u00A0/g, ' '); // Convert system NBSP to normal space temporarily
+            formattedNum = formattedNum.replace(/ /g, '\u00A0'); // Replace normal spaces with NBSP for thousands
+            formattedNum = formattedNum.replace(/,/g, ','); // Ensure decimal comma is preserved
+
+            // Specific check for integers to avoid ',00' if original had no decimals
+            if (num % 1 === 0 && originalDecimalPartLength === 0) {
+                formattedNum = num.toLocaleString('fr-CA', {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                });
+                // Re-apply NBSP if the integer formatting removed them
+                formattedNum = formattedNum.replace(/\u00A0/g, ' ');
+                formattedNum = formattedNum.replace(/ /g, '\u00A0');
+            }
+
+
+            if (symbol === '$' || symbol === '€' || symbol === '%') {
+                return `${sign}${formattedNum}\u00A0${symbol}`;
+            }
+            return `${sign}${formattedNum}`;
+        }
+        return match;
+    });
+}
 
         /**
          * Main function to trigger number formatting across all tables.
@@ -3316,7 +3878,7 @@ if (forceScopeButton) {
                     // Re-enable and revert button state after operation
                     forceScopeButton.textContent = 'Force Scope';
                     forceScopeButton.classList.remove('bg-green-500', 'hover:bg-green-600');
-                    forceScopeButton.classList.add('bg-blue-800', 'hover:bg-blue-700');
+                    forceScopeButton.classList.add('bg-green-700', 'hover:bg-green-600');
                     forceScopeButton.removeAttribute('data-temp-active');
                     updateAllInteractiveButtonStates(); // Re-enable other buttons
                 }
@@ -3371,7 +3933,7 @@ if (forceScopeButton) {
                     // Re-enable and revert button state after operation
                     forceIdButton.textContent = 'Force ID/Headers';
                     forceIdButton.classList.remove('bg-green-500', 'hover:bg-green-600');
-                    forceIdButton.classList.add('bg-blue-800', 'hover:bg-blue-700');
+                    forceIdButton.classList.add('bg-green-700', 'hover:bg-green-600');
                     forceIdButton.removeAttribute('data-temp-active');
                     updateAllInteractiveButtonStates(); // Re-enable other buttons
                 }
