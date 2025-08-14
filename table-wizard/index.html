@@ -7,6 +7,8 @@
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.0/beautify-html.min.js"></script>
+    <!-- Font Awesome CDN for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         /* Custom styles for the editor */
         html, body {
@@ -448,7 +450,7 @@
             font-size: 0.875rem;
             
             /* --- FIXED WIDTH PROPERTIES --- */
-            width: 180px; /* Adjust this value as needed for desired fixed width */
+            width: 380px; /* Adjust this value as needed for desired fixed width */
             flex-shrink: 0; /* Prevent it from shrinking on smaller screens */
             /* Removed flex-grow: 1; */
         }
@@ -563,17 +565,24 @@
             /* Removed min-width: 280px; */
         }
         
-        /* New styles for the interaction mode toggle (now removed) */
-        /* .interaction-mode-toggle {
-            margin-bottom: 0.5rem;
-            padding: 0 0.5rem;
+        /* --- Styles for Attached Button Groups --- */
+        .attached-button-group {
+            display: inline-flex;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
         }
-
-        .interaction-mode-toggle .button-group {
-            max-width: 300px;
-        } */
-
-        /* End of New/Modified styles for Customize Modal Layout */
+        .attached-button-group > button:first-child {
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+        .attached-button-group > button:last-child {
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .trash-button {
+            padding-left: 0.75rem;
+            padding-right: 0.75rem;
+        }
 
     </style>
 </head>
@@ -586,17 +595,43 @@
     <div class="editor-container">
         <!-- Main Content Area (Monaco Editor and Action Buttons) -->
         <div class="code-panel">
-            <div class="flex items-center mb-4 flex-wrap">
+            <div class="flex items-center mb-2 flex-wrap">
     <!-- NEW: Wrapper for left-aligned buttons with space-x-2 -->
     <div class="flex space-x-2 items-center"> <!-- Added space-x-2 here -->
-        <button id="open-options-modal-btn" class="px-4 py-2 text-base bg-blue-700 text-white rounded-md hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-semibold">
-            Universal Format
+        <div class="attached-button-group">
+            <button id="open-options-modal-btn" class="px-4 py-2 text-base bg-blue-700 text-white rounded-l-md hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-semibold">
+                Universal Format
+            </button>
+            <button id="reset-universal-btn" class="trash-button bg-blue-800 text-white rounded-r-md hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-opacity-50 font-semibold" title="Reset Universal Formatting">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        </div>
+        <div class="attached-button-group">
+            <button id="auto-responsive-btn" class="px-4 py-2 text-base bg-orange-700 text-white rounded-l-md hover:bg-orange-800 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50 font-semibold">
+                Auto-Responsive
+            </button>
+            <button id="reset-responsive-btn" class="trash-button bg-orange-800 text-white rounded-r-md hover:bg-orange-900 focus:outline-none focus:ring-2 focus:ring-orange-600 focus:ring-opacity-50 font-semibold" title="Remove Responsive Wrappers">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        </div>
+        <div class="attached-button-group">
+            <button id="auto-scope-btn" class="px-4 py-2 text-base bg-green-700 text-white rounded-l-md hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 font-semibold">
+                Auto-Scope/ID
+            </button>
+            <button id="reset-scopeid-btn" class="trash-button bg-green-800 text-white rounded-r-md hover:bg-green-900 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-opacity-50 font-semibold" title="Reset All Scopes and IDs">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        </div>
+        <div class="attached-button-group">
+        <button id="eng-number-button" class="px-3 py-1 text-sm bg-purple-700 text-white rounded-l-md hover:bg-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-opacity-50 font-bold">
+            ENG Numbering
         </button>
-		<button id="auto-responsive-btn" class="px-4 py-2 text-base bg-orange-700 text-white rounded-md hover:bg-orange-800 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-opacity-50 font-semibold">
-            Auto-Responsive
+        <button id="fra-number-button" class="px-3 py-1 text-sm bg-purple-700 text-white rounded-r-md hover:bg-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-opacity-50 font-bold">
+            FRA Numbering
         </button>
-        <button id="auto-scope-btn" class="px-4 py-2 text-base bg-green-700 text-white rounded-md hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 font-semibold">
-            Auto-Scope/ID
+        </div>
+        <button id="autoTableIDBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-600 focus:ring-opacity-50 font-bold">
+            Auto Table ID's
         </button>
         <button id="autoEncodeBtn" class="px-3 py-1 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold">
             Auto-Encode
@@ -606,21 +641,32 @@
         </button>
     </div>
     <!-- Existing right-aligned group -->
-    <div class="table-select-container ml-auto flex items-center">
+    
+</div>
+<div class="flex mb-2 px-2 py-2 space-x-2 items-center bg-gray-800 rounded-md">
         <label for="table-search-dropdown" class="text-sm font-medium">Table Select:</label>
         <select id="table-search-dropdown" class="text-sm">
             <option value="">-- Select a table --</option>
         </select>
-        <button id="customize-button" class="px-3 py-1 text-sm bg-blue-800 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-opacity-50 font-bold">
-            Customize
+        <div class="attached-button-group">
+        <button id="customize-button" class="px-3 py-1 text-sm bg-blue-700 text-white rounded-l-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-opacity-50 font-bold">
+            Custom Format
         </button>
-        <button id="force-scope-button" class="px-3 py-1 text-sm bg-blue-800 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-opacity-50 font-bold">
+    <button id="reset-tableformat-btn" class="trash-button bg-blue-800 text-white rounded-r-md hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-opacity-50 font-semibold" title="Reset Table Formatting">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+    </div>
+        <div class="attached-button-group">
+        <button id="force-scope-button" class="px-3 py-1 text-sm bg-green-700 text-white rounded-l-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-opacity-50 font-bold">
             Force Scope
         </button>
-        <button id="force-id-button" class="px-3 py-1 text-sm bg-blue-800 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-opacity-50 font-bold">
+        <button id="force-id-button" class="px-3 py-1 text-sm bg-green-700 text-white rounded-r-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-opacity-50 font-bold">
             Force ID/Headers
         </button>
-    </div>
+        <button id="reset-tablescopeid-btn" class="trash-button bg-green-800 text-white rounded-r-md hover:bg-green-900 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-opacity-50 font-semibold" title="Reset Table Scope/IDs">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        </div>
 </div>
 			<div class="flex items-center mb-4 flex-wrap">
                     <div class="inline-flex rounded-md shadow-sm" role="group">
@@ -644,14 +690,6 @@
             <div id="editor-container"></div>
 			<!-- Message Box for alerts/errors -->
             <div id="message-box" class="p-4 rounded-lg text-sm text-center transition-all duration-300 ease-in-out mb-4 mt-4 bg-gray-400" role="alert">No messages</div>
-			<div class="flex space-x-2 items-center">
-				<button id="reset-all-btn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-600 focus:ring-opacity-50 font-semibold">
-					Clear ALL Formats
-				</button>
-				<button id="reset-scopeid-btn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-600 focus:ring-opacity-50 font-semibold">
-					Clear ALL Scope/ID's
-				</button>
-			</div>
         </div>
     </div>
 
@@ -689,14 +727,6 @@
                             <label for="figure-data-id-prefix-input" class="text-gray-200">Figure Table ID Prefix</label>
                         </div>
                         
-                        <!-- Responsive Tables Checkbox -->
-                        <div class="toggle-switch-container">
-                            <label class="toggle-switch is-checked" for="responsive-tables-checkbox">
-                                <input type="checkbox" id="responsive-tables-checkbox" class="hidden" checked>
-                                <span class="toggle-switch-slider"></span>
-                            </label>
-                            <span class="toggle-switch-label text-gray-200">Responsive Tables</span>
-                        </div>
                         <!-- Make TFOOT from LAST COLSPAN -->
                         <div class="toggle-switch-container">
                             <label class="toggle-switch is-checked" for="make-tfoot-from-colspan-checkbox">
@@ -738,14 +768,6 @@
                             <span class="toggle-switch-label text-gray-200">Remove &lt;p&gt; Tags</span>
                         </div>
                         
-                        <!-- Add Small to DIV (renamed) Checkbox -->
-                        <div class="toggle-switch-container">
-                            <label class="toggle-switch" for="responsive-small-checkbox">
-                                <input type="checkbox" id="responsive-small-checkbox" class="hidden">
-                                <span class="toggle-switch-slider"></span>
-                            </label>
-                            <span class="toggle-switch-label text-gray-200">Add <strong>small</strong> to DIV</span>
-                        </div>
                         <!-- Add Small to TABLE (renamed and moved) Checkbox -->
                         <div class="toggle-switch-container">
                             <label class="toggle-switch" for="class-small-checkbox">
@@ -967,13 +989,6 @@
                             <div class="option-text-input">
                                 <label for="customize-page-id-prefix-input" class="text-gray-200">Custom ID</label>
                                 <input type="text" id="customize-page-id-prefix-input" class="flex-grow bg-zinc-700 text-white border border-zinc-500 rounded-md p-1" placeholder="my-custom-id">
-                            </div>
-                            <div class="toggle-switch-container">
-                                <label class="toggle-switch" for="customize-responsive-tables-checkbox">
-                                    <input type="checkbox" id="customize-responsive-tables-checkbox" class="hidden">
-                                    <span class="toggle-switch-slider"></span>
-                                </label>
-                                <span class="toggle-switch-label text-gray-200">Responsive Table</span>
                             </div>
                             <!-- Make TFOOT from LAST COLSPAN -->
                             <div class="toggle-switch-container">
@@ -1594,6 +1609,7 @@
          * @returns {number} The total number of columns spanned by cells in the row.
          */
         function getEffectiveColumnCount(row) {
+            if (!row) return 0;
             let count = 0;
             Array.from(row.children).forEach(cell => {
                 count += parseInt(cell.getAttribute('colspan') || '1', 10);
@@ -1686,37 +1702,8 @@
             console.log(`--- Applying formatting logic to table ---`);
 
             const financeRegex = /^\s*[-+]?(?:\d+|\d{1,3}(?:\s\d{3})*)(?:[.,]\d+)?\s*$/;
-            const responsiveDivClass = 'table-responsive';
             const smallClass = 'small';
             const alignmentClasses = ['text-left', 'text-center', 'text-right'];
-
-
-            let responsiveDiv = table.parentNode;
-            const parentIsResponsiveDiv = responsiveDiv && responsiveDiv.classList.contains(responsiveDivClass);
-
-            if (options.applyResponsiveTables) {
-                if (!parentIsResponsiveDiv) {
-                    responsiveDiv = document.createElement('div');
-                    responsiveDiv.classList.add(responsiveDivClass);
-                    if (table.parentNode) {
-                        table.parentNode.insertBefore(responsiveDiv, table);
-                    }
-                    responsiveDiv.appendChild(table);
-                }
-                if (options.applyResponsiveSmall) { // This option is only in Universal modal
-                    responsiveDiv.classList.add(smallClass);
-                } else {
-                    responsiveDiv.classList.remove(smallClass);
-                }
-            } else {
-                if (parentIsResponsiveDiv) {
-                    responsiveDiv.classList.remove(smallClass);
-                    if (responsiveDiv.parentNode) { 
-                        responsiveDiv.parentNode.insertBefore(table, responsiveDiv);
-                        responsiveDiv.remove();
-                    }
-                }
-            }
 
             // --- UNCONDITIONALLY REMOVE ALL IDs, HEADERS, AND SCOPES AT THE START from cells ---
             Array.from(table.querySelectorAll('*')).forEach(el => {
@@ -1866,7 +1853,7 @@
                             }
                         }
                     } else { // Universal auto-caption logic
-                        let prevSibling = (table.parentNode.classList.contains(responsiveDivClass) ? table.parentNode : table).previousElementSibling;
+                        let prevSibling = (table.parentNode.classList.contains('table-responsive') ? table.parentNode : table).previousElementSibling;
                         while (prevSibling) {
                             if (['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'].includes(prevSibling.tagName)) {
                                 extractedContent = prevSibling.textContent.trim();
@@ -2068,8 +2055,6 @@
                         applyAddSmallToTr: addSmallToTrCheckbox.checked,
                         applyHeader: headerCheckbox.checked,
                         applyRowHeader: rowHeaderCheckbox.checked,
-                        applyResponsiveTables: responsiveTablesCheckbox.checked,
-                        applyResponsiveSmall: responsiveSmallCheckbox.checked,
                         applyBordered: borderedCheckbox.checked,
                         applyStriped: stripedCheckbox.checked,
                         applyHover: hoverCheckbox.checked,
@@ -2124,9 +2109,7 @@ function autoScopeTableIDs(tableElement, tableIndex, forceComplexity = undefined
         tableBaseId = `t${tableIndex + 1}`;
         tableElement.id = tableBaseId;
     }
-    console.log(`Starting auto-scoping for table: ${tableBaseId}`);
 
-    // --- Stage 1: Initial Cleanup & A1 Cell Special Handling ---
     let a1Cell = null;
     const firstRow = tableElement.rows[0];
     if (firstRow && firstRow.cells.length > 0) {
@@ -2142,128 +2125,100 @@ function autoScopeTableIDs(tableElement, tableIndex, forceComplexity = undefined
             cell.innerHTML = '&#160;';
         }
     });
-    console.log(`  Cleaned existing accessibility attributes from THEAD/TBODY for ${tableBaseId}.`);
 
-    // --- Complexity Detection (now influenced by forceComplexity) ---
+    const firstRowForColCount = tableElement.querySelector('tr');
+    const totalColumns = firstRowForColCount ? getEffectiveColumnCount(firstRowForColCount) : 0;
+
     let isComplexTable;
     if (forceComplexity === 'simple') {
         isComplexTable = false;
-        console.log(`  Complexity FORCED to SIMPLE for table: ${tableBaseId}.`);
     } else if (forceComplexity === 'complex') {
         isComplexTable = true;
-        console.log(`  Complexity FORCED to COMPLEX for table: ${tableBaseId}.`);
     } else {
         const tbodyCells = Array.from(tableElement.querySelectorAll('tbody th, tbody td'));
         isComplexTable = tbodyCells.some(cell => cell.hasAttribute('rowspan') || cell.hasAttribute('colspan'));
-        console.log(`  Table ${tableBaseId} auto-detected as ${isComplexTable ? 'COMPLEX' : 'SIMPLE'}.`);
     }
 
-
-    // --- Stage 2: Apply Attributes based on Complexity ---
     if (!isComplexTable) {
-        // ... (simple table logic - no changes needed for this specific request) ...
-        console.log(`  Table ${tableBaseId} applying 'scope' attributes.`);
-
         Array.from(tableElement.querySelectorAll('thead th, tbody th')).forEach(th => {
-            if (th === a1Cell && isA1Empty) {
-                console.log(`    Skipping scope for empty A1 cell (${tableBaseId}).`);
-                return;
-            }
+            if (th === a1Cell && isA1Empty) return;
 
             const parentSection = th.closest('thead, tbody');
             if (parentSection && parentSection.tagName === 'THEAD') {
-                if (th.hasAttribute('colspan')) {
-                    th.setAttribute('scope', 'colgroup');
-                    console.log(`    Applied scope="colgroup" to THEAD TH: ${th.textContent.trim().substring(0,20) + '...'}`);
-                } else {
-                    th.setAttribute('scope', 'col');
-                    console.log(`    Applied scope="col" to THEAD TH: ${th.textContent.trim().substring(0,20) + '...'}`);
-                }
+                th.setAttribute('scope', th.hasAttribute('colspan') ? 'colgroup' : 'col');
             } else if (parentSection && parentSection.tagName === 'TBODY') {
                 if (th.hasAttribute('rowspan')) {
                     th.setAttribute('scope', 'rowgroup');
-                    console.log(`    Applied scope="rowgroup" to TBODY TH (rowspan): ${th.textContent.trim().substring(0,20) + '...'}`);
+                } else if (th.hasAttribute('colspan')) {
+                    const colspanVal = parseInt(th.getAttribute('colspan') || '1', 10);
+                    th.setAttribute('scope', (totalColumns > 0 && colspanVal >= totalColumns) ? 'colgroup' : 'row');
                 } else {
                     th.setAttribute('scope', 'row');
-                    console.log(`    Applied scope="row" to TBODY TH: ${th.textContent.trim().substring(0,20) + '...'}`);
                 }
             }
         });
+    } else {
+        let colHeaderCounter = 0, colSpanHeaderCounter = 0, rowHeaderCounter = 0;
+        let rowSpanHeaderCounter = 0, rowColSpanHeaderCounter = 0, headerIdCounter = 0;
 
-    } else { // Table is Complex - Use ID/Headers
-        console.log(`  Table ${tableBaseId} applying 'id' (to THs) and 'headers' (to THs & TDs) attributes.`);
+        Array.from(tableElement.querySelectorAll('thead th, tbody th')).forEach(cell => {
+            if (cell === a1Cell && isA1Empty) return;
+            
+            const parentSection = cell.closest('thead, tbody');
+            let idPrefix = `${tableBaseId}-`;
+            let counter;
 
-        let colHeaderCounter = 0;
-        let colSpanHeaderCounter = 0;
-        let rowHeaderCounter = 0;
-        let rowSpanHeaderCounter = 0;
-        let rowColSpanHeaderCounter = 0; // ADD THIS NEW COUNTER
-        let headerIdCounter = 0; // Fallback
-
-        const allRelevantCells = [];
-
-        // First pass: Assign descriptive IDs to THs and collect all relevant cells
-        Array.from(tableElement.querySelectorAll('thead th, tbody th, thead td, tbody td')).forEach(cell => {
-            if (cell === a1Cell && isA1Empty && cell.tagName === 'TH') {
-                console.log(`    Skipping ID for empty A1 TH cell (${tableBaseId}).`);
-            } else if (cell.tagName === 'TH') {
-                const parentSection = cell.closest('thead, tbody');
-                let idPrefix = `${tableBaseId}-`;
-                let counter;
-
-                if (parentSection && parentSection.tagName === 'THEAD') {
-                    if (cell.hasAttribute('colspan')) {
-                        idPrefix += 'csh-'; // Column Span Header
-                        counter = colSpanHeaderCounter++;
-                    } else {
-                        idPrefix += 'ch-'; // Column Header
-                        counter = colHeaderCounter++;
-                    }
-                } else if (parentSection && parentSection.tagName === 'TBODY') {
-                    // MODIFIED: Check for colspan first for row-column span headers
-                    if (cell.hasAttribute('colspan')) { // ADDED CONDITION
-                        idPrefix += 'rcsh-'; // Row Column Span Header
-                        counter = rowColSpanHeaderCounter++;
-                    } else if (cell.hasAttribute('rowspan')) {
-                        idPrefix += 'rsh-'; // Row Span Header
-                        counter = rowSpanHeaderCounter++;
-                    } else {
-                        idPrefix += 'rh-'; // Row Header
-                        counter = rowHeaderCounter++;
-                    }
+            if (parentSection && parentSection.tagName === 'THEAD') {
+                if (cell.hasAttribute('colspan')) {
+                    idPrefix += 'csh-'; counter = colSpanHeaderCounter++;
                 } else {
-                    idPrefix += 'th-';
-                    counter = headerIdCounter++;
+                    idPrefix += 'ch-'; counter = colHeaderCounter++;
                 }
-                cell.id = `${idPrefix}${counter}`;
-                console.log(`    Assigned TH ID: ${cell.id}`);
+            } else if (parentSection && parentSection.tagName === 'TBODY') {
+                if (cell.hasAttribute('colspan')) {
+                    const colspanVal = parseInt(cell.getAttribute('colspan') || '1', 10);
+                    if (totalColumns > 0 && colspanVal >= totalColumns) {
+                        idPrefix += 'rcsh-'; counter = rowColSpanHeaderCounter++;
+                    } else {
+                        idPrefix += 'rh-'; counter = rowHeaderCounter++;
+                    }
+                } else if (cell.hasAttribute('rowspan')) {
+                    idPrefix += 'rsh-'; counter = rowSpanHeaderCounter++;
+                } else {
+                    idPrefix += 'rh-'; counter = rowHeaderCounter++;
+                }
+            } else {
+                idPrefix += 'th-'; counter = headerIdCounter++;
             }
-            allRelevantCells.push(cell);
+            cell.id = `${idPrefix}${counter}`;
         });
 
         const rows = Array.from(tableElement.rows);
         const grid = [];
+        const theadHeaders = Array(totalColumns).fill(null);
 
         rows.forEach((row, rowIndex) => {
             let currentCol = 0;
             Array.from(row.cells).forEach(cell => {
                 const parentSection = cell.closest('thead, tbody, tfoot');
-                if (parentSection && parentSection.tagName === 'TFOOT') {
-                    currentCol += parseInt(cell.getAttribute('colspan') || '1', 10);
-                    return;
-                }
+                if (parentSection && parentSection.tagName === 'TFOOT') return;
+
                 while (grid[rowIndex] && grid[rowIndex][currentCol]) {
                     currentCol++;
                 }
-                if (!grid[rowIndex]) {
-                    grid[rowIndex] = [];
-                }
+                if (!grid[rowIndex]) grid[rowIndex] = [];
+
                 const colspan = parseInt(cell.getAttribute('colspan') || '1', 10);
                 const rowspan = parseInt(cell.getAttribute('rowspan') || '1', 10);
-                for (let r = 0; r < rowspan; r++) {
-                    if (!grid[rowIndex + r]) {
-                        grid[rowIndex + r] = [];
+
+                if (parentSection && parentSection.tagName === 'THEAD' && cell.tagName === 'TH') {
+                    for (let c = 0; c < colspan; c++) {
+                        theadHeaders[currentCol + c] = cell;
                     }
+                }
+
+                for (let r = 0; r < rowspan; r++) {
+                    if (!grid[rowIndex + r]) grid[rowIndex + r] = [];
                     for (let c = 0; c < colspan; c++) {
                         grid[rowIndex + r][currentCol + c] = cell;
                     }
@@ -2272,71 +2227,66 @@ function autoScopeTableIDs(tableElement, tableIndex, forceComplexity = undefined
             });
         });
 
-        allRelevantCells.forEach(cell => {
-            if (cell === a1Cell && isA1Empty) {
-                console.log(`    Skipping headers for empty A1 cell (${tableBaseId}).`);
-                cell.removeAttribute('headers');
-                return;
-            }
+        rows.forEach((row, rowIndex) => {
+            const parentSection = row.closest('thead, tbody, tfoot');
+            if (!parentSection || parentSection.tagName !== 'TBODY') return;
 
-            const headersToApply = new Set();
-            let cellRowIndex = -1;
-            let cellColIndex = -1;
-            for (let r = 0; r < grid.length; r++) {
-                if (grid[r]) {
-                    const c = grid[r].indexOf(cell);
-                    if (c !== -1) {
-                        cellRowIndex = r;
+            let rowHeadersInThisRow = [];
+            let latestFullColspan = null;
+
+            for (let r = rowIndex - 1; r >= 0; r--) {
+                const cellInColumnZero = grid[r] ? grid[r][0] : null;
+                if (cellInColumnZero && cellInColumnZero.tagName === 'TH' && parseInt(cellInColumnZero.getAttribute('colspan') || '1', 10) >= totalColumns) {
+                    latestFullColspan = cellInColumnZero;
+                    break;
+                }
+            }
+            
+            Array.from(row.cells).forEach(cell => {
+                if (cell.tagName === 'TH') {
+                    rowHeadersInThisRow.push(cell);
+                }
+            });
+
+            Array.from(row.cells).forEach((cell) => {
+                const isFullWidthColspanTH = cell.tagName === 'TH' &&
+                                             cell.hasAttribute('colspan') &&
+                                             parseInt(cell.getAttribute('colspan') || '1', 10) >= totalColumns;
+
+                if (isFullWidthColspanTH) {
+                    cell.removeAttribute('headers');
+                    return; 
+                }
+
+                const headersToApply = new Set();
+
+                if (latestFullColspan) {
+                    headersToApply.add(latestFullColspan.id);
+                }
+                
+                let cellColIndex = -1;
+                for (let c = 0; c < (grid[rowIndex]?.length || 0); c++) {
+                    if (grid[rowIndex][c] === cell) {
                         cellColIndex = c;
                         break;
                     }
                 }
-            }
-
-            if (cellRowIndex === -1 || cellColIndex === -1) {
-                console.warn(`    Could not find cell ${cell.id || cell.outerHTML.substring(0,50)} in grid. Skipping headers.`);
-                cell.removeAttribute('headers');
-                return;
-            }
-
-            for (let r = 0; r < cellRowIndex; r++) {
-                if (grid[r] && grid[r][cellColIndex] && grid[r][cellColIndex].tagName === 'TH') {
-                    const headerCell = grid[r][cellColIndex];
-                    // Check if it's a THEAD header or a TBODY TH with colspan (acting as a column header)
-                    const headerParentSection = headerCell.closest('thead, tbody');
-
-                    // If it's a THEAD TH OR a TBODY TH with a colspan (acting as a group header)
-                    if ((headerParentSection && headerParentSection.tagName === 'THEAD') || 
-                        (headerParentSection && headerParentSection.tagName === 'TBODY' && headerCell.hasAttribute('colspan'))) {
-                        headersToApply.add(headerCell.id);
-                    }
+                if (cellColIndex !== -1 && theadHeaders[cellColIndex] && theadHeaders[cellColIndex].id) {
+                    headersToApply.add(theadHeaders[cellColIndex].id);
                 }
-            }
 
-            if (cell.tagName === 'TD') {
-                const actualRowCells = Array.from(cell.parentElement.cells);
-                const cellIndexInActualRow = actualRowCells.indexOf(cell);
-                for(let i = 0; i < cellIndexInActualRow; i++) {
-                    const potentialHeader = actualRowCells[i];
-                    if (potentialHeader.tagName === 'TH') {
-                        if (grid[cellRowIndex] && grid[cellRowIndex].includes(potentialHeader)) {
-                            headersToApply.add(potentialHeader.id);
-                        }
+                rowHeadersInThisRow.forEach(rh => {
+                    if (rh !== cell) {
+                        headersToApply.add(rh.id);
                     }
+                });
+
+                if (headersToApply.size > 0) {
+                    cell.setAttribute('headers', Array.from(headersToApply).join(' '));
+                } else {
+                    cell.removeAttribute('headers');
                 }
-            }
-
-            if (cell.tagName === 'TH' && headersToApply.has(cell.id)) {
-                headersToApply.delete(cell.id);
-            }
-
-            if (headersToApply.size > 0) {
-                cell.setAttribute('headers', Array.from(headersToApply).join(' '));
-                console.log(`    Applied headers to ${cell.tagName}: ${cell.id || cell.outerHTML.substring(0,50)}... -> ${Array.from(headersToApply).join(' ')}`);
-            } else {
-                cell.removeAttribute('headers');
-                console.log(`    No relevant parent headers found for ${cell.tagName}: ${cell.id || cell.outerHTML.substring(0,50)}. Headers attribute removed.`);
-            }
+            });
         });
     }
 
@@ -2376,8 +2326,6 @@ function cleanEmptyHeadersAttribute(htmlString) {
 
             const customizeOptions = {
                 tableIdPrefix: customId,
-                applyResponsiveTables: customizeResponsiveTablesCheckbox.checked,
-                applyResponsiveSmall: false, // Not an option in customize modal
                 applyClassTables: customizeClassTablesCheckbox.checked,
                 applyCaption: customizeCaptionCheckbox.checked,
                 applyFixEmptyCells: customizeFixEmptyCellsCheckbox.checked,
@@ -2700,6 +2648,418 @@ function cleanEmptyHeadersAttribute(htmlString) {
             }, 1500);
         }
 
+        /**
+         * Resets universal formatting for all tables in the editor.
+         */
+        function resetUniversalFormatting() {
+            if (!monacoEditor) { showMessage('Editor is not ready.', 'info'); return; }
+
+            const editorContent = getEditorContent();
+            if (!editorContent.trim()) { showMessage('Nothing to reset.', 'info'); return; }
+
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = editorContent;
+
+            const tables = tempDiv.querySelectorAll('table');
+            if (tables.length === 0) {
+                showMessage('No tables found to reset.', 'info');
+                return;
+            }
+
+            const classesToRemove = ['table', 'table-bordered', 'table-striped', 'table-hover', 'table-condensed', 'small'];
+            const alignmentClasses = ['text-left', 'text-center', 'text-right'];
+            
+            tables.forEach(table => {
+                table.removeAttribute('id');
+                table.classList.remove(...classesToRemove);
+
+                table.querySelectorAll('tr, th, td, caption').forEach(el => {
+                    el.classList.remove('active', ...alignmentClasses);
+                    if (el.tagName === 'TR') {
+                        el.classList.remove('small');
+                    }
+                });
+            });
+            
+            // Clean up any empty class attributes left behind
+            tempDiv.querySelectorAll('*').forEach(el => {
+                if (el.hasAttribute('class') && el.classList.length === 0) {
+                    el.removeAttribute('class');
+                }
+            });
+
+            let finalHtml = tempDiv.innerHTML;
+            finalHtml = html_beautify(finalHtml, { indent_size: 4, space_in_paren: true });
+            setEditorContent(finalHtml);
+            applyEntityHighlighting();
+            populateTableSearchDropdown();
+            showMessage('Universal formatting has been reset.', 'success');
+        }
+
+        /**
+         * Resets responsive wrappers from all tables.
+         */
+        function resetResponsiveWrappers() {
+            if (!monacoEditor) { showMessage('Editor is not ready.', 'info'); return; }
+            const editorContent = getEditorContent();
+            if (!editorContent.trim()) { showMessage('Nothing to reset.', 'info'); return; }
+
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = editorContent;
+
+            const responsiveDivs = tempDiv.querySelectorAll('div.table-responsive');
+            if (responsiveDivs.length === 0) {
+                showMessage('No responsive wrappers found to remove.', 'info');
+                return;
+            }
+
+            responsiveDivs.forEach(div => {
+                // Move all children of the div out, right before the div
+                while (div.firstChild) {
+                    div.parentNode.insertBefore(div.firstChild, div);
+                }
+                // Remove the now-empty div
+                div.parentNode.removeChild(div);
+            });
+
+            let finalHtml = tempDiv.innerHTML;
+            finalHtml = html_beautify(finalHtml, { indent_size: 4, space_in_paren: true });
+            setEditorContent(finalHtml);
+            applyEntityHighlighting();
+            populateTableSearchDropdown();
+            showMessage('Responsive wrappers have been removed.', 'success');
+        }
+
+        /**
+         * Resets all scopes and IDs from all tables.
+         */
+        function resetAllScopesAndIDs() {
+            if (!monacoEditor) { showMessage('Editor is not ready.', 'info'); return; }
+            const editorContent = getEditorContent();
+            if (!editorContent.trim()) { showMessage('Nothing to reset.', 'info'); return; }
+
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = editorContent;
+
+            const cells = tempDiv.querySelectorAll('table th, table td');
+            if (cells.length === 0) {
+                showMessage('No table cells found to reset.', 'info');
+                return;
+            }
+
+            cells.forEach(cell => {
+                cell.removeAttribute('scope');
+                cell.removeAttribute('id');
+                cell.removeAttribute('headers');
+            });
+
+            let finalHtml = tempDiv.innerHTML;
+            finalHtml = html_beautify(finalHtml, { indent_size: 4, space_in_paren: true });
+            setEditorContent(finalHtml);
+            applyEntityHighlighting();
+            populateTableSearchDropdown();
+            showMessage('All scopes, IDs, and headers have been reset.', 'success');
+        }
+
+        /**
+         * Resets formatting for a single, selected table.
+         */
+        function resetTableFormatting() {
+            const selectedValue = tableSearchDropdown.value;
+            if (!selectedValue) {
+                showMessage('Please select a table to reset.', 'info');
+                return;
+            }
+            const tableInfo = tableDataMap.get(selectedValue);
+            if (!tableInfo) { return; }
+
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = tableInfo.outerHTML;
+            const table = tempDiv.querySelector('table');
+
+            // FIX: remove ID
+            table.removeAttribute('id');
+
+            const classesToRemove = ['table', 'table-bordered', 'table-striped', 'table-hover', 'table-condensed', 'small'];
+            const alignmentClasses = ['text-left', 'text-center', 'text-right'];
+
+            table.classList.remove(...classesToRemove);
+            table.querySelectorAll('tr, th, td, caption').forEach(el => {
+                el.classList.remove('active', ...alignmentClasses);
+                if (el.tagName === 'TR') el.classList.remove('small');
+            });
+
+            // FIX: Clean up empty class attributes
+            tempDiv.querySelectorAll('*').forEach(el => {
+                if (el.hasAttribute('class') && el.classList.length === 0) {
+                    el.removeAttribute('class');
+                }
+            });
+
+            let modifiedTableHtml = tempDiv.innerHTML;
+            modifiedTableHtml = html_beautify(modifiedTableHtml, { indent_size: 4, space_in_paren: true });
+
+            const currentEditorContent = getEditorContent();
+            const newEditorContent = currentEditorContent.substring(0, tableInfo.startIndex) +
+                                     modifiedTableHtml +
+                                     currentEditorContent.substring(tableInfo.startIndex + tableInfo.length);
+            
+            setEditorContent(newEditorContent);
+            applyEntityHighlighting();
+            populateTableSearchDropdown();
+            showMessage(`Formatting for table "${selectedValue}" has been reset.`, 'success');
+        }
+
+        /**
+         * Resets scopes and IDs for a single, selected table.
+         */
+        function resetTableScopeAndID() {
+             const selectedValue = tableSearchDropdown.value;
+            if (!selectedValue) {
+                showMessage('Please select a table to reset.', 'info');
+                return;
+            }
+            const tableInfo = tableDataMap.get(selectedValue);
+            if (!tableInfo) { return; }
+
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = tableInfo.outerHTML;
+            const table = tempDiv.querySelector('table');
+
+            table.querySelectorAll('th, td').forEach(cell => {
+                cell.removeAttribute('scope');
+                cell.removeAttribute('id');
+                cell.removeAttribute('headers');
+            });
+
+            let modifiedTableHtml = tempDiv.innerHTML;
+            modifiedTableHtml = html_beautify(modifiedTableHtml, { indent_size: 4, space_in_paren: true });
+
+            const currentEditorContent = getEditorContent();
+            const newEditorContent = currentEditorContent.substring(0, tableInfo.startIndex) +
+                                     modifiedTableHtml +
+                                     currentEditorContent.substring(tableInfo.startIndex + tableInfo.length);
+            
+            setEditorContent(newEditorContent);
+            applyEntityHighlighting();
+            populateTableSearchDropdown();
+            showMessage(`Scopes and IDs for table "${table.id || selectedValue}" have been reset.`, 'success');
+        }
+
+        /**
+         * Applies unique IDs to all tables in the editor.
+         */
+        function autoTableIDs() {
+            if (!monacoEditor) { showMessage('Editor is not ready.', 'info'); return; }
+            const editorContent = getEditorContent();
+            if (!editorContent.trim()) { showMessage('No content to add IDs to.', 'info'); return; }
+
+            autoTableIDBtn.textContent = 'IDing...';
+            autoTableIDBtn.setAttribute('data-temp-active', 'true');
+            updateAllInteractiveButtonStates();
+
+            try {
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = editorContent;
+
+                const tables = tempDiv.querySelectorAll('table');
+                if (tables.length === 0) {
+                    showMessage('No tables found to ID.', 'info');
+                    return; // finally block will still run
+                }
+
+                let tblCounter = 1;
+                let ftblCounter = 1;
+
+                tables.forEach(table => {
+                    if (table.closest('figure')) {
+                        table.id = `ftbl${ftblCounter++}`;
+                    } else {
+                        table.id = `tbl${tblCounter++}`;
+                    }
+                });
+
+                let finalHtml = tempDiv.innerHTML;
+                finalHtml = html_beautify(finalHtml, { indent_size: 4, space_in_paren: true });
+                setEditorContent(finalHtml);
+                applyEntityHighlighting();
+                populateTableSearchDropdown();
+                showMessage('Table IDs have been automatically assigned.', 'success');
+            } catch (e) {
+                console.error("Error assigning table IDs:", e);
+                showMessage('An error occurred while assigning IDs.', 'error');
+            } finally {
+                setTimeout(() => {
+                    autoTableIDBtn.textContent = "Auto Table ID's";
+                    autoTableIDBtn.removeAttribute('data-temp-active');
+                    updateAllInteractiveButtonStates();
+                }, 1500);
+            }
+        }
+
+        /**
+         * Formats a string containing numbers to a specific language format.
+         * @param {string} text - The string to format.
+         * @param {string} lang - The target language ('eng' or 'fra').
+         * @returns {string} The formatted string.
+         */
+        function formatNumberString(text, lang) {
+            // This regex is designed to find numbers that might have currency or percent symbols.
+            const regex = /([+\-]?)\s*([\$€]?)\s*([\d][\d\s,.'&#160;&nbsp;]*)\s*([\$€%]?)/g;
+
+            return text.replace(regex, (match, sign, preSymbol, numberStr, postSymbol) => {
+                // Ignore if it doesn't contain any digits.
+                if (!/\d/.test(numberStr)) return match;
+                
+                // Heuristic to ignore version numbers, IP addresses, or codes.
+                if ((numberStr.match(/\./g) || []).length > 1 && (numberStr.match(/,/g) || []).length === 0) {
+                    return match;
+                }
+
+                // 1. Clean the string to be machine-readable (e.g., "123456.78")
+                let parsableStr = numberStr
+                    .replace(/&nbsp;/g, ' ')
+                    .replace(/&#160;/g, ' ')
+                    .trim();
+
+                const lastComma = parsableStr.lastIndexOf(',');
+                const lastPeriod = parsableStr.lastIndexOf('.');
+
+                // If a comma exists after the last period, it's the decimal separator (e.g., 1.234,56)
+                if (lastComma > lastPeriod) {
+                    parsableStr = parsableStr.replace(/\./g, '').replace(/\s/g, '').replace(',', '.');
+                } 
+                // If a period exists after the last comma, it's the decimal separator (e.g., 1,234.56)
+                else if (lastPeriod > lastComma) {
+                    parsableStr = parsableStr.replace(/,/g, '').replace(/\s/g, '');
+                }
+                // If only commas exist, we need to guess if the last one is a decimal.
+                else if (lastComma !== -1) {
+                    const partAfterComma = parsableStr.substring(lastComma + 1);
+                    // If the part after the last comma is not 3 digits long (and not a space), it's likely a decimal.
+                    if (partAfterComma.trim().length !== 3) {
+                        parsableStr = parsableStr.replace(/,/g, (m, offset) => offset === lastComma ? '.' : '').replace(/\s/g, '');
+                    } else {
+                        // It's likely a thousands separator, so remove all commas.
+                        parsableStr = parsableStr.replace(/,/g, '').replace(/\s/g, '');
+                    }
+                }
+                // If only periods exist, it's likely a thousands separator (e.g. 120.000)
+                else if (lastPeriod !== -1) {
+                     const partAfterPeriod = parsableStr.substring(lastPeriod + 1);
+                     if (partAfterPeriod.trim().length === 3) {
+                         parsableStr = parsableStr.replace(/\./g, '').replace(/\s/g, '');
+                     } else {
+                         parsableStr = parsableStr.replace(/\s/g, '');
+                     }
+                }
+                // If no separators, just remove spaces.
+                else {
+                    parsableStr = parsableStr.replace(/\s/g, '');
+                }
+
+
+                const num = parseFloat(parsableStr);
+                if (isNaN(num)) {
+                    return match;
+                }
+
+                const symbol = preSymbol || postSymbol;
+                const decimalPart = parsableStr.includes('.') ? parsableStr.split('.')[1] : '';
+                const decimalPlaces = decimalPart.length;
+
+                // 2. Format to the target locale
+                if (lang === 'eng') {
+                    let formattedNum = num.toLocaleString('en-CA', {
+                        minimumFractionDigits: decimalPlaces,
+                        maximumFractionDigits: 20
+                    });
+                    if (symbol === '$' || symbol === '€') return `${sign}${symbol}${formattedNum}`;
+                    if (symbol === '%') return `${sign}${formattedNum}${symbol}`;
+                    return `${sign}${formattedNum}`;
+                } else if (lang === 'fra') {
+                    let formattedNum = num.toLocaleString('fr-CA', {
+                        minimumFractionDigits: decimalPlaces,
+                        maximumFractionDigits: 20
+                    });
+                    // Use a literal non-breaking space character for DOM manipulation
+                    formattedNum = formattedNum.replace(/\s/g, '\u00A0');
+                    if (symbol === '$' || symbol === '€' || symbol === '%') {
+                        return `${sign}${formattedNum}\u00A0${symbol}`;
+                    }
+                    return `${sign}${formattedNum}`;
+                }
+                return match;
+            });
+        }
+
+        /**
+         * Main function to trigger number formatting across all tables.
+         * @param {string} lang - The target language ('eng' or 'fra').
+         */
+        function formatTableNumbers(lang) {
+            if (!monacoEditor) {
+                showMessage('Editor is not ready.', 'info');
+                return;
+            }
+            const editorContent = getEditorContent();
+            if (!editorContent.trim()) {
+                showMessage('No content to format.', 'info');
+                return;
+            }
+
+            const btn = lang === 'eng' ? document.getElementById('eng-number-button') : document.getElementById('fra-number-button');
+            const originalText = btn.textContent;
+            btn.textContent = 'Formatting...';
+            btn.setAttribute('data-temp-active', 'true');
+            updateAllInteractiveButtonStates();
+
+            try {
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = editorContent;
+
+                const cells = tempDiv.querySelectorAll('table td, table th');
+
+                cells.forEach(cell => {
+                    const walker = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT, null, false);
+                    const nodesToProcess = [];
+                    let node;
+                    while (node = walker.nextNode()) {
+                        nodesToProcess.push(node);
+                    }
+
+                    nodesToProcess.forEach(textNode => {
+                        const formattedText = formatNumberString(textNode.nodeValue, lang);
+                        textNode.nodeValue = formattedText;
+                    });
+                });
+
+                let finalHtml = tempDiv.innerHTML;
+                
+                // After DOM manipulation, replace literal non-breaking spaces with the desired entity for editor consistency.
+                finalHtml = finalHtml.replace(/\u00A0/g, '&#160;');
+                
+                // Run auto-encode logic
+                finalHtml = convertAllEntitiesToNumeric(finalHtml);
+
+                finalHtml = html_beautify(finalHtml, { indent_size: 4, space_in_paren: true });
+                setEditorContent(finalHtml);
+                applyEntityHighlighting();
+                populateTableSearchDropdown();
+                showMessage(`Numbers formatted for ${lang === 'eng' ? 'English' : 'French'}.`, 'success');
+
+            } catch (e) {
+                console.error(`Error formatting numbers for ${lang}:`, e);
+                showMessage('An error occurred during number formatting.', 'error');
+            } finally {
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.removeAttribute('data-temp-active');
+                    updateAllInteractiveButtonStates();
+                }, 1500);
+            }
+        }
+
 
         // DOM element references (moved after functions to ensure they are available)
         const formatButton = document.getElementById('format-button-modal');
@@ -2722,9 +3082,6 @@ function cleanEmptyHeadersAttribute(htmlString) {
         const headerCheckbox = document.getElementById('header-checkbox');
         const rowHeaderCheckbox = document.getElementById('row-header-checkbox');
 
-        const responsiveTablesCheckbox = document.getElementById('responsive-tables-checkbox');
-        const responsiveSmallCheckbox = document.getElementById('responsive-small-checkbox');
-
         const borderedCheckbox = document.getElementById('bordered-checkbox');
         const stripedCheckbox = document.getElementById('striped-checkbox');
         const hoverCheckbox = document.getElementById('hover-checkbox');
@@ -2746,14 +3103,19 @@ function cleanEmptyHeadersAttribute(htmlString) {
         const importHtmlBtn = document.getElementById('importHtmlBtn');
         const exportHtmlBtn = document.getElementById('exportHtmlBtn');
         const htmlFileInput = document.getElementById('htmlFileInput');
+        const autoResponsiveBtn = document.getElementById('auto-responsive-btn');
+        const autoTableIDBtn = document.getElementById('autoTableIDBtn');
 
         // New dropdown for table search and customize button
         const tableSearchDropdown = document.getElementById('table-search-dropdown');
         const customizeButton = document.getElementById('customize-button');
 		const forceScopeButton = document.getElementById('force-scope-button');
 		const forceIdButton = document.getElementById('force-id-button');
-		const resetAllFormatBtn = document.getElementById('reset-all-btn');
-		const resetAllScopeIdBtn = document.getElementById('reset-scopeid-btn');
+		const resetUniversalBtn = document.getElementById('reset-universal-btn');
+        const resetResponsiveBtn = document.getElementById('reset-responsive-btn');
+        const resetScopeIdBtn = document.getElementById('reset-scopeid-btn');
+        const resetTableFormatBtn = document.getElementById('reset-tableformat-btn');
+        const resetTableScopeIDBtn = document.getElementById('reset-tablescopeid-btn');
 
         // Customize Table Modal elements
         const customizeModalOverlay = document.getElementById('customize-modal-overlay');
@@ -2763,7 +3125,6 @@ function cleanEmptyHeadersAttribute(htmlString) {
 
         // Customize Modal controls (all prefixed with customize-)
         const customizePageIdPrefixInput = document.getElementById('customize-page-id-prefix-input'); // Renamed to Custom ID
-		const customizeResponsiveTablesCheckbox = document.getElementById('customize-responsive-tables-checkbox');
 		const customizeMakeTfootFromColspanCheckbox = document.getElementById('customize-make-tfoot-from-colspan-checkbox');
 		const customizeCaptionCheckbox = document.getElementById('customize-caption-checkbox');
         const customizeFixEmptyCellsCheckbox = document.getElementById('customize-fix-empty-cells-checkbox');
@@ -2780,7 +3141,7 @@ function cleanEmptyHeadersAttribute(htmlString) {
         const customizeActiveColspanHeadersCheckbox = document.getElementById('customize-active-colspan-headers-checkbox');
         const customizeActiveRowHeadersCheckbox = document.getElementById('customize-active-row-headers-checkbox');
         const customizeFinanceTableCheckbox = document.getElementById('customize-finance-table-checkbox');
-        const customizeBoldTotalsCheckbox = document.getElementById('customize-bold-totals-checkbox');
+        const customizeBoldTotalsCheckbox = document.getElementById('bold-totals-checkbox');
 
 
         // Populate allInteractiveButtons array after all button elements are defined
@@ -2798,8 +3159,13 @@ function cleanEmptyHeadersAttribute(htmlString) {
 			autoScopeBtn,       
             forceScopeButton,     
             forceIdButton,
-			resetAllFormatBtn,     
-            resetAllScopeIdBtn   			
+            autoResponsiveBtn,
+            autoTableIDBtn,
+            resetUniversalBtn,
+            resetResponsiveBtn,
+            resetScopeIdBtn,
+            resetTableFormatBtn,
+            resetTableScopeIDBtn
         );
 
         // Event listeners for modals
@@ -2807,12 +3173,69 @@ function cleanEmptyHeadersAttribute(htmlString) {
         closeOptionsModalButton.addEventListener('click', closeOptionsModal);
         formatButton.addEventListener('click', formatHtmlTables); // Universal Format button
 		
+        if (autoResponsiveBtn) {
+            autoResponsiveBtn.addEventListener('click', () => {
+                if (!monacoEditor) { showMessage('Editor is still loading.', 'info'); return; }
+
+                // Temporarily disable buttons and show feedback
+                autoResponsiveBtn.textContent = 'Applying...';
+                autoResponsiveBtn.setAttribute('data-temp-active', 'true');
+                updateAllInteractiveButtonStates();
+
+                try {
+                    const editorContent = getEditorContent();
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = editorContent;
+                    
+                    const tables = tempDiv.querySelectorAll('table');
+                    if (tables.length === 0) {
+                        showMessage('No tables found to apply responsive wrappers.', 'info');
+                        // Use finally block to reset button state
+                        return;
+                    }
+
+                    let wrappedCount = 0;
+
+                    tables.forEach(table => {
+                        const parent = table.parentElement;
+                        // Check if parent is NOT a responsive div
+                        if (!parent || !parent.classList.contains('table-responsive')) {
+                            // It's not wrapped, so wrap it
+                            const responsiveDiv = document.createElement('div');
+                            responsiveDiv.className = 'table-responsive';
+                            if (table.parentNode) {
+                                table.parentNode.insertBefore(responsiveDiv, table);
+                                responsiveDiv.appendChild(table);
+                                wrappedCount++;
+                            }
+                        }
+                    });
+
+                    let finalHtml = tempDiv.innerHTML;
+                    finalHtml = html_beautify(finalHtml, { indent_size: 4, space_in_paren: true });
+                    setEditorContent(finalHtml);
+                    applyEntityHighlighting();
+                    populateTableSearchDropdown();
+
+                    showMessage(`${wrappedCount} responsive wrappers added.`, 'success');
+
+                } catch (e) {
+                    console.error("Error applying responsive wrappers:", e);
+                    showMessage('An error occurred. Check console for details.', 'error');
+                } finally {
+                    setTimeout(() => {
+                        autoResponsiveBtn.textContent = 'Auto-Responsive';
+                        autoResponsiveBtn.removeAttribute('data-temp-active');
+                        updateAllInteractiveButtonStates();
+                    }, 1500);
+                }
+            });
+        }
+        
 		if (autoScopeBtn) {
             autoScopeBtn.addEventListener('click', () => {
                 // Temporarily disable buttons and show feedback
                 autoScopeBtn.textContent = 'Scoping...';
-                autoScopeBtn.classList.add('bg-green-500', 'hover:bg-green-600');
-                autoScopeBtn.classList.remove('bg-green-700', 'hover:bg-green-800');
                 autoScopeBtn.setAttribute('data-temp-active', 'true'); // Set temp active
                 updateAllInteractiveButtonStates(); // Update states for ALL buttons
 
@@ -2838,11 +3261,8 @@ function cleanEmptyHeadersAttribute(htmlString) {
                 populateTableSearchDropdown();
 
                 // Re-enable and revert specific button state after operation
-                autoScopeBtn.textContent = 'Scoped!'; // Temporary feedback
                 setTimeout(() => {
                     autoScopeBtn.textContent = 'Auto-Scope/ID';
-                    autoScopeBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-                    autoScopeBtn.classList.add('bg-green-700', 'hover:bg-green-800');
                     autoScopeBtn.removeAttribute('data-temp-active'); // Remove temp active
                     updateAllInteractiveButtonStates(); // Update states for ALL buttons
                     showMessage('Auto-scoping complete!', 'success');
@@ -2958,6 +3378,22 @@ if (forceScopeButton) {
             });
         }
 
+        // NEW: Event listeners for reset buttons
+        resetUniversalBtn.addEventListener('click', resetUniversalFormatting);
+        resetResponsiveBtn.addEventListener('click', resetResponsiveWrappers);
+        resetScopeIdBtn.addEventListener('click', resetAllScopesAndIDs);
+        resetTableFormatBtn.addEventListener('click', resetTableFormatting);
+        resetTableScopeIDBtn.addEventListener('click', resetTableScopeAndID);
+        autoTableIDBtn.addEventListener('click', autoTableIDs);
+
+        // NEW: Event listeners for number formatting buttons
+        const engNumberButton = document.getElementById('eng-number-button');
+        const fraNumberButton = document.getElementById('fra-number-button');
+
+        engNumberButton.addEventListener('click', () => formatTableNumbers('eng'));
+        fraNumberButton.addEventListener('click', () => formatTableNumbers('fra'));
+
+
         customizeButton.addEventListener('click', () => {
             if (!tableSearchDropdown.value) {
                 showMessage('Please select a table from the dropdown first.', 'info');
@@ -3060,9 +3496,7 @@ if (forceScopeButton) {
 
             if (selectedTableElement) {
                 const tableClasses = Array.from(selectedTableElement.classList);
-                const parentDiv = selectedTableElement.parentElement;
-
-                customizeResponsiveTablesCheckbox.checked = parentDiv && parentDiv.classList.contains('table-responsive');
+                
                 customizeMakeTfootFromColspanCheckbox.checked = true; // Default to true, as it's an action
                 customizeFixEmptyCellsCheckbox.checked = true; // Default to true, as it's an action
                 customizeRemovePTagsCheckbox.checked = false; // Default to false, as it's a destructive action
@@ -3117,7 +3551,7 @@ if (forceScopeButton) {
                 // Default resets if no table selected
                 customizePageIdPrefixInput.value = '';
                 [
-                    customizeResponsiveTablesCheckbox, customizeMakeTfootFromColspanCheckbox, customizeFixEmptyCellsCheckbox,
+                    customizeMakeTfootFromColspanCheckbox, customizeFixEmptyCellsCheckbox,
                     customizeCaptionCheckbox, customizeClassSmallCheckboxElement, customizeAddSmallToTrCheckbox,
                     customizeClassTablesCheckbox, customizeHeaderCheckbox, customizeRowHeaderCheckbox,
                     customizeBorderedCheckbox, customizeActiveColHeadersCheckbox, customizeActiveColspanHeadersCheckbox
@@ -3524,7 +3958,7 @@ if (forceScopeButton) {
                 });
 
                 const allCustomizeCheckboxes = [
-                    customizeResponsiveTablesCheckbox, customizeMakeTfootFromColspanCheckbox, customizeCaptionCheckbox, customizeFixEmptyCellsCheckbox, customizeRemovePTagsCheckbox,
+                    customizeMakeTfootFromColspanCheckbox, customizeCaptionCheckbox, customizeFixEmptyCellsCheckbox, customizeRemovePTagsCheckbox,
                     customizeClassSmallCheckboxElement, customizeAddSmallToTrCheckbox, customizeClassTablesCheckbox,
                     customizeHeaderCheckbox, customizeRowHeaderCheckbox, customizeBorderedCheckbox,
                     customizeStripedCheckbox, customizeHoverCheckbox, customizeActiveColHeadersCheckbox,
@@ -3541,8 +3975,8 @@ if (forceScopeButton) {
                 });
 
                 const universalFormatCheckboxes = [
-                    idCheckbox, responsiveTablesCheckbox, makeTfootFromColspanCheckbox, captionCheckbox,
-                    autoCaptionCheckbox, fixEmptyCellsCheckbox, removePTagsCheckbox, responsiveSmallCheckbox,
+                    idCheckbox, makeTfootFromColspanCheckbox, captionCheckbox,
+                    autoCaptionCheckbox, fixEmptyCellsCheckbox, removePTagsCheckbox,
                     classSmallCheckboxElement, addSmallToTrCheckbox, classTablesCheckbox, headerCheckbox,
                     rowHeaderCheckbox, activeColHeadersCheckbox, activeColspanHeadersCheckbox, activeRowHeadersCheckbox,
                     borderedCheckbox, stripedCheckbox, hoverCheckbox, boldTotalsCheckbox, financeTableCheckbox
