@@ -951,6 +951,11 @@
             let xmlDeclaration = '';
             let contentToProcess = htmlString;
 
+            // Store original <doc> tag and its attributes for later restoration
+            let originalDocTagMatch = null;
+            let originalDocTagName = '';
+            let originalDocAttributes = '';
+
             // Regex to find <?xml ...?> at the very beginning of the string, optionally with leading whitespace
             const xmlDeclRegex = /^\s*(<\?xml[^>]*\?>)/i;
             const match = htmlString.match(xmlDeclRegex);
@@ -960,8 +965,25 @@
                 contentToProcess = htmlString.substring(match[0].length); // Get content after the declaration
             }
 
+            // Capture the original <doc> tag, its attributes, and content
+            // Group 1: entire <doc...> tag (e.g., <doc ID="123" TOPIC="TEST">)
+            // Group 2: attributes part (e.g., ID="123" TOPIC="TEST")
+            // Group 3: content of the doc tag
+            // Group 4: closing tag (e.g., </doc>)
+            const docTagRegex = /(<\s*doc\s*([^>]*)>)([\s\S]*?)(<\/\s*doc\s*>)/i;
+            originalDocTagMatch = contentToProcess.match(docTagRegex);
+
+            if (originalDocTagMatch) {
+                // We need to keep the original casing of the attributes.
+                // Store the full opening tag and the attributes string as they were originally.
+                // We'll restore these after innerHTML has done its lowercasing.
+                originalDocTagName = originalDocTagMatch[1]; // e.g., <doc ID="123" TOPIC="TEST">
+                originalDocAttributes = originalDocTagMatch[2]; // e.g., ID="123" TOPIC="TEST"
+            }
+
+
             const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = contentToProcess; // Process only the HTML content
+            tempDiv.innerHTML = contentToProcess;
 
             const walker = document.createTreeWalker(
                 tempDiv,
@@ -971,6 +993,10 @@
                         let parent = textNode.parentNode;
                         while (parent) {
                             const tagName = parent.tagName ? parent.tagName.toLowerCase() : '';
+                            // Exclude script, style, and time elements from text node processing
+                            // Note: If you also need to exclude attributes within <doc> from this text conversion,
+                            // you'd need to add a check like `tagName === 'doc'` here, but that only affects
+                            // text *inside* the doc, not its attributes. Attributes are handled by innerHTML.
                             if (tagName === 'script' || tagName === 'style' || tagName === 'time') {
                                 return NodeFilter.FILTER_REJECT;
                             }
@@ -990,7 +1016,7 @@
 
             textNodesToProcess.forEach(textNode => {
                 let text = textNode.nodeValue;
-                // Replace specific named entities/characters with their numeric character references
+                // Replace specific named entities/characters with their numeric HTML entity equivalents
                 text = text.replace(/’/g, '&#8217;');    // literal ’
                 text = text.replace(/&rsquo;/g, '&#8217;'); // &rsquo;
                 text = text.replace(/“/g, '&#8220;');    // literal “
@@ -1007,9 +1033,10 @@
                 textNode.nodeValue = text;
             });
 
-            let processedHtml = tempDiv.innerHTML; // This re-serializes characters to entities
+            let processedHtml = tempDiv.innerHTML; // This re-serializes characters to entities, and lowercases attributes.
 
             // Final string-based replacements to ensure numeric entities are explicitly present
+            // (These are fallback/cleanup in case innerHTML doesn't convert them reliably, or if new ones are added)
             processedHtml = processedHtml.replace(/&nbsp;/g, '&#160;');
             processedHtml = processedHtml.replace(/&rsquo;/g, '&#8217;');
             processedHtml = processedHtml.replace(/&ldquo;/g, '&#8220;');
@@ -1019,6 +1046,37 @@
 
             // Handle double encoding if it occurs (e.g., &amp;#160; -> &#160;)
             processedHtml = processedHtml.replace(/&amp;#(\d+);/g, '&#$1;');
+
+
+            // --- NEW CODE FOR DOC TAG ATTRIBUTE RESTORATION ---
+            if (originalDocTagMatch) {
+                // The current processedHtml will have <doc id="123" topic="test">
+                // We want to replace it with <doc ID="123" TOPIC="TEST">
+
+                // This regex finds the *lowercase* <doc ...> opening tag in the processed HTML
+                // and captures its lowercase attributes.
+                const lowercasedDocTagRegex = /(<\s*doc\s*)([^>]*)>/i; // captures `<doc ` and the lowercased attributes
+                const lowercasedMatch = processedHtml.match(lowercasedDocTagRegex);
+
+                if (lowercasedMatch && lowercasedMatch[2] && lowercasedMatch[2].length > 0) {
+                    // Reconstruct the opening tag with original attributes, case-preserved
+                    // We only replace the attributes part, not the whole tag, to be safe.
+                    // This assumes only ONE <doc> tag at the top level, or at least that
+                    // the first one matched is the one we care about.
+                    const replacementTag = `<doc ${originalDocAttributes}>`;
+                    
+                    // Replace the *first occurrence* of the lowercased opening <doc> tag attributes
+                    // with the original case-preserved attributes.
+                    // We need to be careful not to replace the content or closing tag.
+                    processedHtml = processedHtml.replace(lowercasedDocTagRegex, replacementTag);
+                } else {
+                    // If no attributes were found on the lowercased doc tag, but the original had some,
+                    // it means the tag was `<doc>` or similar.
+                    // Just replace the entire lowercased opening tag.
+                    processedHtml = processedHtml.replace(/(<\s*doc\s*>)/i, originalDocTagName);
+                }
+            }
+            // --- END NEW CODE ---
 
             return xmlDeclaration + processedHtml; // Prepend the XML declaration back
         }
@@ -1702,6 +1760,25 @@
             } else {
                 previewBtn.classList.remove('bg-gray-400', 'cursor-not-allowed', 'opacity-60');
                 previewBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+            }
+			// Update Clean URLs Button
+            cleanUrlsBtn.disabled = isXmlLike;
+            if (isXmlLike) {
+                cleanUrlsBtn.classList.remove('bg-gray-600', 'hover:bg-gray-500');
+                cleanUrlsBtn.classList.add('bg-gray-400', 'cursor-not-allowed', 'opacity-60');
+            } else {
+                cleanUrlsBtn.classList.remove('bg-gray-400', 'cursor-not-allowed', 'opacity-60');
+                cleanUrlsBtn.classList.add('bg-gray-600', 'hover:bg-gray-500');
+            }
+
+            // Update Colophon Button
+            colophonBtn.disabled = isXmlLike;
+            if (isXmlLike) {
+                colophonBtn.classList.remove('bg-gray-600', 'hover:bg-gray-500');
+                colophonBtn.classList.add('bg-gray-400', 'cursor-not-allowed', 'opacity-60');
+            } else {
+                colophonBtn.classList.remove('bg-gray-400', 'cursor-not-allowed', 'opacity-60');
+                colophonBtn.classList.add('bg-gray-600', 'hover:bg-gray-500');
             }
         }
 
