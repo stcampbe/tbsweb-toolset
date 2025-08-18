@@ -4,9 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BeforeYouPost™ - QA/Prototype Wizard</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- js-beautify for auto-indent -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.0/beautify-html.min.js"></script>
+    <!-- Font Awesome CDN for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         /* Custom styles for the editor */
         html, body {
@@ -521,7 +523,7 @@
 
         /* Sidebar for validation controls */
         .validation-sidebar {
-            width: 180px; /* Fixed width for the sidebar */
+            width: 240px; /* Fixed width for the sidebar */
             background-color: #2d3748;
             border-radius: 0.75rem;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
@@ -537,7 +539,7 @@
 <body>
     <!-- QA Wizard Title Header -->
     <header class="qa-wizard-header">
-        <h1 class="text-left">BeforeYouPost™ - QA/Prototype Wizard</h1>
+        <h1 class="text-left"><i class="fa-solid fa-clipboard-check"></i> BeforeYouPost™ - QA/Prototype Wizard</h1>
         <a href="/tbsweb-toolset/rich-content-wizard/" class="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold">Content Wizard</a>
         <a href="/tbsweb-toolset/table-wizard/" class="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold">Table Wizard</a>
         <a href="/tbsweb-toolset/qa-wizard/" class="px-3 py-1 text-sm text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold bg-gray-400 cursor-not-allowed opacity-60" disabled="">QA Wizard</a>
@@ -549,22 +551,30 @@
 
         <div class="code-panel">
             <!-- Removed the h2 "QA Wizard" from here -->
-            <div class="mb-4 flex flex-wrap"> <!-- Adjusted justify-content -->
-                <div class="inline-flex rounded-md shadow-sm" role="group">
-                    <!-- Removed Paste Code button -->
-                    <button id="copyCodeBtn" class="px-4 py-1 text-sm bg-gray-700 text-white rounded-l-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-semibold">
-                        Copy Code
-                    </button>
-                    <button id="clearAllBtn" class="px-4 py-1 text-sm bg-gray-700 text-white rounded-r-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">
-                        Clear All
-                    </button>
+            <div class="flex items-center mb-4 flex-wrap">
+                    <div class="inline-flex rounded-md shadow-sm" role="group">
+                        <button id="copyCodeBtn" class="px-4 py-1 text-sm bg-zinc-700 text-white rounded-l-md hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-opacity-50 font-semibold">
+                            Copy Code <i class="fa-solid fa-copy"></i>
+                        </button>
+                        <button id="clearAllBtn" class="px-4 py-1 text-sm bg-zinc-700 text-white rounded-r-md hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-opacity-50 font-semibold">
+                            Clear All <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                    <div class="inline-flex rounded-md shadow-sm ml-4" role="group">
+    <button id="undoBtn" class="px-4 py-1 text-sm bg-zinc-700 text-white rounded-l-md hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-opacity-50 font-semibold disabled:opacity-50 disabled:cursor-not-allowed" title="Undo">
+        <i class="fas fa-undo"></i>
+    </button>
+    <button id="redoBtn" class="px-4 py-1 text-sm bg-zinc-700 text-white rounded-r-md hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-opacity-50 font-semibold disabled:opacity-50 disabled:cursor-not-allowed" title="Redo">
+        <i class="fas fa-redo"></i>
+    </button>
+</div>
+                    <div class="inline-flex rounded-md shadow-sm ml-4" role="group">
+                        <button id="importHtmlBtn" class="px-3 py-1 text-sm bg-purple-700 text-white rounded-l-md hover:bg-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-opacity-50 font-bold">Import HTML <i class="fa-solid fa-file-import"></i></button>
+                        <button id="exportHtmlBtn" class="px-3 py-1 text-sm bg-red-700 text-white rounded-r-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-bold">Export HTML <i class="fa-solid fa-file-export"></i></button>
+                        <input type="file" id="htmlFileInput" accept=".html" style="display: none;">
+                    </div>
+                    
                 </div>
-                <div class="inline-flex space-x-2 ml-2">
-                    <button id="importHtmlBtn" class="px-3 py-1 text-sm bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 font-bold">Import HTML</button>
-                    <button id="exportHtmlBtn" class="px-3 py-1 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 font-bold">Export HTML</button>
-                    <input type="file" id="htmlFileInput" accept=".html" style="display: none;">
-                </div>
-            </div>
 
             <div id="monacoEditorContainer"></div>
 
@@ -578,8 +588,8 @@
         <!-- Right Sidebar for Validation Controls -->
         <div class="validation-sidebar">
             
-            <button id="previewBtn" class="px-3 py-1 text-sm bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 font-bold">
-                        View Preview
+            <button id="previewBtn" class="px-3 py-3 text-base bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 font-bold">
+                        <i class="fa-solid fa-eye"></i> View Preview
                     </button>
             <!-- Auto-Check Toggle -->
             <div class="toggle-switch-container">
@@ -587,17 +597,17 @@
                     <input type="checkbox" id="toggleAutoCheckOnSwitch" checked>
                     <span class="toggle-switch-slider"></span>
                 </label>
-                <span class="toggle-switch-label text-white text-xs">Auto-Validate</span>
+                <span class="toggle-switch-label text-white text-base"><strong>Auto-Validate</strong></span>
             </div>
             <!-- Validate Button -->
-            <button id="validateNowBtn" class="px-3 py-1 text-sm bg-blue-700 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold" disabled>
-                Validate
+            <button id="validateNowBtn" class="px-3 py-3 text-base bg-blue-700 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold" disabled>
+               <i class="fa-solid fa-check-double"></i> Validate
             </button>
-            <button id="cleanSpacesBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">Clean Spaces</button>
-            <button id="cleanUrlsBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">Clean URLs</button>
-            <button id="timeTagsBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">Time Tags</button>
-            <button id="fixFnIdsBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">Fix FN ID's</button>
-            <button id="colophonBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">Colophon</button>
+            <button id="cleanSpacesBtn" class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">Clean Spaces</button>
+            <button id="cleanUrlsBtn" class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">Clean URLs</button>
+            <button id="timeTagsBtn" class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">Time Tags</button>
+            <button id="fixFnIdsBtn" class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">Fix FN ID's</button>
+            <button id="colophonBtn" class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">Colophon</button>
             <button id="autoEncodeBtn" class="px-4 py-1 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 font-semibold">
                     Auto-Encode
                 </button>
@@ -2075,7 +2085,7 @@
                 // Directly revert the button text and color here
                 triggeringButton.textContent = originalButtonText;
                 triggeringButton.classList.remove('bg-green-500', 'hover:bg-green-600');
-                triggeringButton.classList.add('bg-gray-700', 'hover:bg-gray-600'); // Revert to default gray
+                triggeringButton.classList.add('bg-gray-600', 'hover:bg-gray-500'); // Revert to default gray
                 updateAllInteractiveButtonStates(); // Re-enable all buttons
             }
 
@@ -2200,12 +2210,12 @@
                 // Provide visual feedback for the triggering button only after successful insert
                 triggeringButton.textContent = 'Inserted!';
                 triggeringButton.classList.add('bg-green-500', 'hover:bg-green-600');
-                triggeringButton.classList.remove('bg-gray-700', 'hover:bg-gray-600'); // Revert to default gray
+                triggeringButton.classList.remove('bg-gray-600', 'hover:bg-gray-500'); // Revert to default gray
                 // The disabled state is managed by updateAllInteractiveButtonStates()
                 setTimeout(() => {
                     triggeringButton.textContent = capturedOriginalText; // Revert to initial text
                     triggeringButton.classList.remove('bg-green-500', 'hover:bg-green-600');
-                    triggeringButton.classList.add('bg-gray-700', 'hover:bg-gray-600'); // Revert to default gray
+                    triggeringButton.classList.add('bg-gray-600', 'hover:bg-gray-500'); // Revert to default gray
                 }, 1500);
             });
         }
@@ -2968,14 +2978,14 @@
 
                         cleanSpacesBtn.textContent = 'Cleaned!';
                         cleanSpacesBtn.classList.add('bg-green-500', 'hover:bg-green-600');
-                        cleanSpacesBtn.classList.remove('bg-gray-700', 'hover:bg-gray-600');
+                        cleanSpacesBtn.classList.remove('bg-gray-600', 'hover:bg-gray-500');
                         cleanSpacesBtn.disabled = true; // Disable the button
                         cleanSpacesBtn.setAttribute('data-temp-active', 'true'); // Mark as active
                         updateAllInteractiveButtonStates(); // Update all buttons
                         setTimeout(() => {
                             cleanSpacesBtn.textContent = originalText;
                             cleanSpacesBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-                            cleanSpacesBtn.classList.add('bg-gray-700', 'hover:bg-gray-600');
+                            cleanSpacesBtn.classList.add('bg-gray-600', 'hover:bg-gray-500');
                             cleanSpacesBtn.disabled = false; // Re-enable the button
                             cleanSpacesBtn.removeAttribute('data-temp-active'); // Unmark as active
                             updateAllInteractiveButtonStates(); // Update all buttons
@@ -3009,14 +3019,14 @@
 
                         cleanUrlsBtn.textContent = 'Cleaned!';
                         cleanUrlsBtn.classList.add('bg-green-500', 'hover:bg-green-600');
-                        cleanUrlsBtn.classList.remove('bg-gray-700', 'hover:bg-gray-600');
+                        cleanUrlsBtn.classList.remove('bg-gray-600', 'hover:bg-gray-500');
                         cleanUrlsBtn.disabled = true; // Disable the button
                         cleanUrlsBtn.setAttribute('data-temp-active', 'true'); // Mark as active
                         updateAllInteractiveButtonStates(); // Update all buttons
                         setTimeout(() => {
                             cleanUrlsBtn.textContent = originalText;
                             cleanUrlsBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-                            cleanUrlsBtn.classList.add('bg-gray-700', 'hover:bg-gray-600');
+                            cleanUrlsBtn.classList.add('bg-gray-600', 'hover:bg-gray-500');
                             cleanUrlsBtn.disabled = false; // Re-enable the button
                             cleanUrlsBtn.removeAttribute('data-temp-active'); // Unmark as active
                             updateAllInteractiveButtonStates(); // Update all buttons
@@ -3232,14 +3242,14 @@
 
                         timeTagsBtn.textContent = 'Tagged!';
                         timeTagsBtn.classList.add('bg-green-500', 'hover:bg-green-600');
-                        timeTagsBtn.classList.remove('bg-gray-700', 'hover:bg-gray-600');
+                        timeTagsBtn.classList.remove('bg-gray-600', 'hover:bg-gray-500');
                         timeTagsBtn.disabled = true; // Disable the button
                         timeTagsBtn.setAttribute('data-temp-active', 'true'); // Mark as active
                         updateAllInteractiveButtonStates(); // Update all buttons
                         setTimeout(() => {
                             timeTagsBtn.textContent = originalText;
                             timeTagsBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-                            timeTagsBtn.classList.add('bg-gray-700', 'hover:bg-gray-600');
+                            timeTagsBtn.classList.add('bg-gray-600', 'hover:bg-gray-500');
                             timeTagsBtn.disabled = false; // Re-enable the button
                             timeTagsBtn.removeAttribute('data-temp-active'); // Unmark as active
                             updateAllInteractiveButtonStates(); // Update all buttons
@@ -3322,14 +3332,14 @@
 
                         fixFnIdsBtn.textContent = 'Fixed!';
                         fixFnIdsBtn.classList.add('bg-green-500', 'hover:bg-green-600');
-                        fixFnIdsBtn.classList.remove('bg-gray-700', 'hover:bg-gray-600');
+                        fixFnIdsBtn.classList.remove('bg-gray-600', 'hover:bg-gray-500');
                         fixFnIdsBtn.disabled = true; // Disable the button
                         fixFnIdsBtn.setAttribute('data-temp-active', 'true'); // Mark as active
                         updateAllInteractiveButtonStates(); // Update all buttons
                         setTimeout(() => {
                             fixFnIdsBtn.textContent = originalText;
                             fixFnIdsBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-                            fixFnIdsBtn.classList.add('bg-gray-700', 'hover:bg-gray-600');
+                            fixFnIdsBtn.classList.add('bg-gray-600', 'hover:bg-gray-500');
                             fixFnIdsBtn.disabled = false; // Re-enable the button
                             fixFnIdsBtn.removeAttribute('data-temp-active'); // Unmark as active
                             updateAllInteractiveButtonStates(); // Update all buttons
@@ -3346,7 +3356,7 @@
                 const originalText = colophonBtn.textContent;
                 colophonBtn.textContent = 'Opening...';
                 colophonBtn.classList.add('bg-green-500', 'hover:bg-green-600');
-                colophonBtn.classList.remove('bg-gray-700', 'hover:bg-gray-600'); // Changed from slate to gray
+                colophonBtn.classList.remove('bg-gray-600', 'hover:bg-gray-500'); // Changed from slate to gray
                 colophonBtn.setAttribute('data-temp-active', 'true'); // Set the flag
                 updateAllInteractiveButtonStates(); // Disable all buttons
 
