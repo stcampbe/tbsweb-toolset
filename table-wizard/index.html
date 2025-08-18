@@ -1181,7 +1181,11 @@
                             </div>
 
                             <div class="alignment-group-container">
-                                <label for="customize-data-cells-alignment">Data Cells</label>
+                                <div class="flex items-center justify-between mb-1">
+                                    <label for="customize-data-cells-alignment-group">Data Cells</label>
+                                    <span id="financial-align-tag" class="hidden text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-600 text-white">(Financial, right-align numbers)</span>
+                                    <span id="manual-align-tag" class="hidden text-xs font-semibold px-2 py-0.5 rounded-full bg-red-600 text-white">(Manual)</span>
+                                </div>
                                 <div id="customize-data-cells-alignment-group" class="button-group">
                                     <button data-align="none" class="active">None</button>
                                     <button data-align="left">Left</button>
@@ -1207,11 +1211,11 @@
                         <button id="align-right-btn" title="Align text Right">Right</button>
                     <button id="align-none-btn" title="No alignment selected">None</button></div>
                         <div class="attached-button-group">
-                        <button id="mrgn-sm-btn" title="Apply Small Margin">Margin SM</button>
-                        <button id="mrgn-md-btn" title="Apply Medium Margin">MD</button>
-                        <button id="mrgn-lg-btn" title="Apply Large Margin">LG</button>
-                        <button id="mrgn-xl-btn" title="Apply Extra Large Margin">XL</button>
-                    <button id="mrgn-0-btn" title="No margin">No margin</button></div>
+                        <button id="mrgn-sm-btn" title="Apply Small indent">Indent SM</button>
+                        <button id="mrgn-md-btn" title="Apply Medium indent">MD</button>
+                        <button id="mrgn-lg-btn" title="Apply Large indent">LG</button>
+                        <button id="mrgn-xl-btn" title="Apply Extra Large indent">XL</button>
+                    <button id="mrgn-0-btn" title="No indent">No indent</button></div>
                         <div class="attached-button-group">
                             <input type="text" id="custom-class-input" placeholder="custom-class" class="rounded-l-md">
                             <button id="add-class-btn" class="rounded-r-md">Add</button>
@@ -1632,33 +1636,30 @@
     }
 
     /**
-     * Applies an alignment class to an element, removing any conflicting alignment classes first.
-     * If 'none' is selected, existing alignment classes are preserved.
+     * Applies an alignment class to an element, first removing any conflicting alignment classes.
+     * If 'none' is the selected alignment, all alignment classes are removed, effectively resetting it.
      * @param {HTMLElement} element - The HTML element to apply alignment to.
      * @param {string} alignment - The alignment to apply ('left', 'center', 'right', or 'none').
-     * @param {string[]} alignmentClasses - An array of all possible alignment classes.
+     * @param {string[]} alignmentClasses - An array of all possible alignment classes (e.g., ['text-left', 'text-center', 'text-right']).
      */
     function applyAlignment(element, alignment, alignmentClasses) {
-        if (!element) {
-            console.warn("Attempted to apply alignment to a null or undefined element.");
-            return;
+        // Ensure we have a valid element to work with.
+        if (!element) return;
+        
+        // Step 1: Always remove any existing alignment classes from the element.
+        // This creates a clean slate and ensures that changing alignment works correctly.
+        alignmentClasses.forEach(cls => element.classList.remove(cls));
+        
+        // Step 2: If the desired alignment is not 'none', add the new class.
+        // If it is 'none', we've already reset it in the step above, so we do nothing more.
+        if (alignment !== 'none') {
+            element.classList.add(`text-${alignment}`);
         }
         
-        // If a specific alignment (left, center, right) is selected, remove all conflicting ones first
-        alignmentClasses.forEach(cls => {
-            if (element.classList.contains(cls)) {
-                element.classList.remove(cls);
-            }
-        });
-
-        if (alignment === 'none') {
-            if (element.hasAttribute('class') && element.classList.length === 0) {
-                element.removeAttribute('class');
-            }
-            return; 
+        // Step 3 (Cleanup): If the element's class attribute is now empty, remove it entirely.
+        if (element.hasAttribute('class') && element.classList.length === 0) {
+            element.removeAttribute('class');
         }
-        
-        element.classList.add(`text-${alignment}`);
     }
     /**
      * Calculates the effective number of columns in a given row, considering colspans.
@@ -1782,33 +1783,30 @@
      * @param {object} options - An object containing all formatting options (checkbox states, alignment values).
      */
     function formatTableLogic(table, options) {
-        // *** FIX: List of classes this function GLOBALLY manages and should reset ***
         const globallyManagedClasses = [
             'table', 'table-condensed', 'table-bordered', 'table-striped', 'table-hover',
             'small', 'active', 'wb-inv'
-            // NOTE: 'nowrap', 'fnt-nrml', and 'text-*' are now treated as cell-specific and are NOT reset here.
         ];
         const financeRegex = /^\s*[-+]?(?:\d{1,3}(?:[,\s]\d{3})*|\d+)(?:[.,]\d+)?\s*$/;
         const smallClass = 'small';
         const alignmentClasses = ['text-left', 'text-center', 'text-right'];
 
-        // --- 1. MODIFIED Cleanup: Only remove globally managed classes and accessibility attributes ---
+        // --- MODIFIED Cleanup ---
         table.classList.remove(...globallyManagedClasses);
         Array.from(table.querySelectorAll('*')).forEach(el => {
-            el.removeAttribute('id');
-            el.removeAttribute('headers');
-            el.removeAttribute('scope');
-            el.classList.remove('active', 'wb-inv'); // 'active' can be on rows, 'wb-inv' on captions
+            if (!options.specificTableId) {
+                el.removeAttribute('id');
+                el.removeAttribute('headers');
+                el.removeAttribute('scope');
+            }
+            el.classList.remove('active', 'wb-inv');
         });
 
-
-        // --- 2. Apply Table-level ID and Classes ---
-        if (options.specificTableId) {
+        // --- Apply Table-level ID and Classes ---
+        if (options.specificTableId && !table.id) {
             let customId = options.tableIdPrefix;
             if (customId && customId.trim() !== '') {
                 table.id = customId.trim();
-            } else {
-                table.removeAttribute('id');
             }
         } else if (options.applyId) {
             let prefix = options.tableIdPrefix || 'tbl';
@@ -1816,8 +1814,6 @@
                 prefix = options.figureDataIdPrefix || 'ftbl';
             }
             table.id = `${prefix}${options.assignedIdCounter}`;
-        } else {
-            table.removeAttribute('id');
         }
 
         if (options.applyClassTables) table.classList.add('table', 'table-condensed');
@@ -1827,7 +1823,7 @@
         if (options.applyClassSmall) table.classList.add(smallClass);
 
 
-        // --- 3. Handle Caption ---
+        // --- Handle Caption ---
         let existingCaptionElement = table.querySelector('caption');
         const shouldHaveCaption = options.applyCaption || options.applyAutoCaption;
 
@@ -1836,11 +1832,8 @@
                 existingCaptionElement = document.createElement('caption');
                 table.insertBefore(existingCaptionElement, table.firstChild);
             }
-            // MODIFIED: Only apply global alignment if no specific alignment exists
-            const hasExistingAlignment = alignmentClasses.some(c => existingCaptionElement.classList.contains(c));
-            if (!hasExistingAlignment) {
-                applyAlignment(existingCaptionElement, options.currentCaptionAlignment, alignmentClasses);
-            }
+            // *** FIXED: Unconditionally apply alignment to handle updates and resets.
+            applyAlignment(existingCaptionElement, options.currentCaptionAlignment, alignmentClasses);
 
             if (options.applyInvisibleCaption) {
                 existingCaptionElement.classList.add('wb-inv');
@@ -1881,7 +1874,7 @@
         }
 
 
-        // --- 4. Reconstruct thead, tbody, tfoot ---
+        // --- Reconstruct thead, tbody, tfoot ---
         const rowsForThead = [];
         const rowsForTbody = [];
         const rowsForTfoot = [];
@@ -1947,7 +1940,7 @@
         rowsForTfoot.forEach(row => newTfootElement.appendChild(row));
 
 
-        // --- 5. Apply Row Header and its Alignment (only to newTbodyElement rows) ---
+        // --- Apply Row Header and its Alignment (only to newTbodyElement rows) ---
         Array.from(newTbodyElement.querySelectorAll('tr')).forEach(row => {
             const firstCell = row.firstElementChild;
             if (firstCell) {
@@ -1957,11 +1950,11 @@
                         Array.from(firstCell.attributes).forEach(attr => newTh.setAttribute(attr.name, attr.value));
                         newTh.innerHTML = firstCell.innerHTML;
                         row.replaceChild(newTh, firstCell);
-                        const hasExistingAlignment = alignmentClasses.some(c => newTh.classList.contains(c));
-                        if (!hasExistingAlignment) applyAlignment(newTh, options.currentRowHeaderAlignment, alignmentClasses);
+                        // *** FIXED: Unconditionally apply alignment.
+                        applyAlignment(newTh, options.currentRowHeaderAlignment, alignmentClasses);
                     } else {
-                        const hasExistingAlignment = alignmentClasses.some(c => firstCell.classList.contains(c));
-                        if (!hasExistingAlignment) applyAlignment(firstCell, options.currentRowHeaderAlignment, alignmentClasses);
+                        // *** FIXED: Unconditionally apply alignment.
+                        applyAlignment(firstCell, options.currentRowHeaderAlignment, alignmentClasses);
                     }
                 } else {
                     if (firstCell.tagName.toLowerCase() !== 'td') {
@@ -1975,7 +1968,7 @@
         });
 
 
-        // --- 6. Apply Data Cells Alignment, Fix Empty Cells, Remove P Tags ---
+        // --- Apply Data Cells Alignment, Fix Empty Cells, Remove P Tags ---
         const allCells = [...newTheadElement.querySelectorAll('th, td'), ...newTbodyElement.querySelectorAll('th, td'), ...newTfootElement.querySelectorAll('th, td')];
         allCells.forEach(cell => {
             if (options.applyFixEmptyCells && cell.textContent.trim() === '' && !cell.innerHTML.includes('&nbsp;') && !cell.innerHTML.includes('&#160;')) {
@@ -1988,28 +1981,32 @@
                 });
             }
             
-            const isTfootCell = cell.closest('tfoot');
             const isTheadCell = cell.closest('thead');
             const isTbodyCell = cell.closest('tbody');
-            const hasExistingAlignment = alignmentClasses.some(c => cell.classList.contains(c));
 
+            // *** FIXED: Reworked logic to remove the faulty "hasExistingAlignment" check.
             if (cell.tagName.toLowerCase() === 'td' && isTbodyCell) {
-                 if (options.applyFinanceTable && financeRegex.test(cell.textContent.trim())) {
+                if (options.applyFinanceTable && financeRegex.test(cell.textContent.trim())) {
+                    // Finance tables have a specific alignment rule, so we apply it directly.
                     applyAlignment(cell, 'right', alignmentClasses);
                     cell.classList.add('nowrap');
-                } else if (!hasExistingAlignment) {
+                } else {
+                    // For all other data cells, apply the selected alignment.
                     applyAlignment(cell, options.currentDataCellsAlignment, alignmentClasses);
                 }
-            } else if (cell.tagName.toLowerCase() === 'th' && !hasExistingAlignment) {
+            } else if (cell.tagName.toLowerCase() === 'th') {
                 if (isTheadCell) {
                     applyAlignment(cell, options.currentColHeaderAlignment, alignmentClasses);
                 } else if (isTbodyCell && cell.hasAttribute('colspan')) {
+                    // This handles TH cells within the TBODY that act as sub-headers spanning columns.
                     applyAlignment(cell, options.currentColspanHeaderAlignment, alignmentClasses);
                 }
+                // Row headers (TH in TBODY without colspan) are handled in the separate loop above,
+                // so we don't need an explicit rule for them here.
             }
         });
 
-        // --- 7. Apply Bold Totals (only to newTbodyElement rows) ---
+        // --- Apply Bold Totals (only to newTbodyElement rows) ---
         Array.from(newTbodyElement.querySelectorAll('tr')).forEach(row => {
             const thInRow = row.querySelector('th');
             if (options.applyBoldTotals && thInRow && (thInRow.textContent.trim().toLowerCase() === 'total' || thInRow.textContent.trim().toLowerCase() === 'subtotal')) {
@@ -2021,7 +2018,7 @@
             }
         });
 
-        // --- 8. Append the structural elements to the table in correct order ---
+        // --- Append the structural elements to the table in correct order ---
         if (newTheadElement.children.length > 0) table.appendChild(newTheadElement);
         if (options.applyTfootBeforeTbody) {
             if (newTfootElement.children.length > 0) table.appendChild(newTfootElement);
@@ -2031,17 +2028,17 @@
             if (newTfootElement.children.length > 0) table.appendChild(newTfootElement);
         }
 
-        // --- 9. Apply Small Class to TRs ---
+        // --- Apply Small Class to TRs ---
         if (options.applyAddSmallToTr) {
             Array.from(table.querySelectorAll('tr')).forEach(tr => tr.classList.add(smallClass));
         }
 
-        // --- 10. Apply Active Classes ---
+        // --- Apply Active Classes ---
         if (options.applyActiveColHeaders) Array.from(table.querySelectorAll('thead tr')).forEach(tr => tr.classList.add('active'));
         if (options.activeColspanHeadersCheckboxValue) Array.from(table.querySelectorAll('tbody th[colspan]')).forEach(th => th.classList.add('active'));
         if (options.activeRowHeadersCheckboxValue) Array.from(table.querySelectorAll('tbody tr > th:first-child')).forEach(th => th.classList.add('active'));
 
-        // --- 11. FINAL GENERAL CLASS CLEANUP: Remove any remaining empty class attributes ---
+        // --- FINAL GENERAL CLASS CLEANUP: Remove any remaining empty class attributes ---
         Array.from(table.querySelectorAll('*')).forEach(el => {
             if (el.hasAttribute('class') && el.classList.length === 0) {
                 el.removeAttribute('class');
@@ -3546,7 +3543,6 @@
     setupButtonGroup('customize-caption-alignment-group', 'customizeCaptionAlignment', customizeModalOverlay, updateCustomizeModalPreview);
     setupButtonGroup('customize-col-headers-alignment-group', 'customizeColHeaderAlignment', customizeModalOverlay, updateCustomizeModalPreview);
     setupButtonGroup('customize-row-headers-alignment-group', 'customizeRowHeaderAlignment', customizeModalOverlay, updateCustomizeModalPreview);
-    setupButtonGroup('customize-colspan-headers-alignment-group', 'customizeColspanHeaderAlignment', customizeModalOverlay, updateCustomizeModalPreview);
     setupButtonGroup('customize-data-cells-alignment-group', 'customizeDataCellsAlignment', customizeModalOverlay, updateCustomizeModalPreview);
 
     
@@ -3561,6 +3557,7 @@
          customizeFinanceTableCheckbox.addEventListener('change', function() {
             const parentLabel = this.closest('.toggle-switch');
             parentLabel.classList.toggle('is-checked', this.checked);
+            updateDataCellAlignmentUI();
             updateCustomizeModalPreview(); // Trigger preview update
         });
     }
@@ -3608,6 +3605,75 @@
                 parentLabel.classList.remove('is-checked');
             }
         });
+    }
+
+    /**
+     * NEW: Checks the state of the table's data cells and updates the alignment UI accordingly.
+     */
+    function updateDataCellAlignmentUI() {
+        const selectedValue = tableSearchDropdown.value;
+        if (!selectedValue) return;
+
+        const tableInfo = tableDataMap.get(selectedValue);
+        if (!tableInfo) return;
+
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = tableInfo.outerHTML;
+        const tableElement = tempDiv.querySelector('table');
+        if (!tableElement) return;
+
+        const dataCellsAlignmentGroup = document.getElementById('customize-data-cells-alignment-group');
+        const financialTag = document.getElementById('financial-align-tag');
+        const manualTag = document.getElementById('manual-align-tag');
+        const financeCheckbox = document.getElementById('customize-finance-table-checkbox');
+
+        // Reset state
+        financialTag.classList.add('hidden');
+        manualTag.classList.add('hidden');
+        Array.from(dataCellsAlignmentGroup.children).forEach(btn => btn.disabled = false);
+        dataCellsAlignmentGroup.style.opacity = '1';
+        dataCellsAlignmentGroup.style.cursor = 'auto';
+
+        if (financeCheckbox.checked) {
+            // Condition 1: Finance Table is checked
+            financialTag.classList.remove('hidden');
+            Array.from(dataCellsAlignmentGroup.children).forEach(btn => btn.disabled = true);
+            dataCellsAlignmentGroup.style.opacity = '0.5';
+            dataCellsAlignmentGroup.style.cursor = 'not-allowed';
+        } else {
+            // Condition 2: Check for manual/mixed alignment
+            const dataCells = Array.from(tableElement.querySelectorAll('tbody td'));
+            if (dataCells.length > 0) {
+                let firstAlignment = null;
+                let hasMixedAlignment = false;
+
+                // Determine the alignment of the first cell
+                if (dataCells[0].classList.contains('text-left')) firstAlignment = 'left';
+                else if (dataCells[0].classList.contains('text-center')) firstAlignment = 'center';
+                else if (dataCells[0].classList.contains('text-right')) firstAlignment = 'right';
+                else firstAlignment = 'none';
+
+                // Check if all other cells have the same alignment
+                for (let i = 1; i < dataCells.length; i++) {
+                    let currentAlignment = 'none';
+                    if (dataCells[i].classList.contains('text-left')) currentAlignment = 'left';
+                    else if (dataCells[i].classList.contains('text-center')) currentAlignment = 'center';
+                    else if (dataCells[i].classList.contains('text-right')) currentAlignment = 'right';
+                    
+                    if (currentAlignment !== firstAlignment) {
+                        hasMixedAlignment = true;
+                        break;
+                    }
+                }
+
+                if (hasMixedAlignment) {
+                    manualTag.classList.remove('hidden');
+                    Array.from(dataCellsAlignmentGroup.children).forEach(btn => btn.disabled = true);
+                    dataCellsAlignmentGroup.style.opacity = '0.5';
+                    dataCellsAlignmentGroup.style.cursor = 'not-allowed';
+                }
+            }
+        }
     }
 
 
@@ -3699,6 +3765,7 @@
         
         initializeToggleSwitchesVisuals(customizeModalOverlay);
         updateCustomizeModalPreview(tableInfo ? tableInfo.outerHTML : '');
+        updateDataCellAlignmentUI();
     }
 
     // New button event listeners for Clear All, Auto-Encode, Auto-Indent, Copy Code, Import/Export
@@ -3912,22 +3979,17 @@
             const tableInfo = tableDataMap.get(selectedValue);
 
             if (tableInfo && monacoEditor) {
-                const newLength = updatedTableHtml.length;
+                const currentEditorContent = getEditorContent();
+                const newEditorContent = currentEditorContent.substring(0, tableInfo.startIndex) +
+                                         updatedTableHtml +
+                                         currentEditorContent.substring(tableInfo.startIndex + tableInfo.length);
                 
-                monacoEditor.executeEdits('iframe-update', [{
-                    range: new monaco.Range(
-                        monacoEditor.getModel().getPositionAt(tableInfo.startIndex).lineNumber,
-                        monacoEditor.getModel().getPositionAt(tableInfo.startIndex).column,
-                        monacoEditor.getModel().getPositionAt(tableInfo.startIndex + tableInfo.length).lineNumber,
-                        monacoEditor.getModel().getPositionAt(tableInfo.startIndex + tableInfo.length).column
-                    ),
-                    text: updatedTableHtml
-                }]);
+                setEditorContent(newEditorContent);
 
-                tableInfo.length = newLength;
+                tableInfo.length = updatedTableHtml.length;
                 tableInfo.outerHTML = updatedTableHtml;
-                applyEntityHighlighting();
-                tableSearchDropdown.value = selectedValue;
+                
+                updateDataCellAlignmentUI();
             }
         }
     });
@@ -4220,6 +4282,7 @@
         });
     };
 </script>
+
 
 
 </body>
