@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.0/beautify-html.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.49.0/min/vs/loader.js"></script>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         /* Custom styles for the editor */
         html, body {
@@ -741,18 +742,27 @@
                 <!-- New row for Copy, Clear, Import, Export buttons -->
                 <div class="flex items-center mb-4 flex-wrap">
                     <div class="inline-flex rounded-md shadow-sm" role="group">
-                        <button id="copyCodeBtn" class="px-4 py-1 text-sm bg-gray-700 text-white rounded-l-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-semibold">
-                            Copy Code
+                        <button id="copyCodeBtn" class="px-4 py-1 text-sm bg-zinc-700 text-white rounded-l-md hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-opacity-50 font-semibold">
+                            Copy Code <i class="fa-solid fa-copy"></i>
                         </button>
-                        <button id="clearAllBtn" class="px-4 py-1 text-sm bg-gray-700 text-white rounded-r-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">
-                            Clear All
+                        <button id="clearAllBtn" class="px-4 py-1 text-sm bg-zinc-700 text-white rounded-r-md hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-opacity-50 font-semibold">
+                            Clear All <i class="fa-solid fa-trash"></i>
                         </button>
                     </div>
-                    <div class="inline-flex space-x-2 ml-4">
-                        <button id="importHtmlBtn" class="px-3 py-1 text-sm bg-purple-700 text-white rounded-md hover:bg-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-opacity-50 font-bold">Import HTML</button>
-                        <button id="exportHtmlBtn" class="px-3 py-1 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-bold">Export HTML</button>
+                    <div class="inline-flex rounded-md shadow-sm ml-4" role="group">
+    <button id="undoBtn" class="px-4 py-1 text-sm bg-zinc-700 text-white rounded-l-md hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-opacity-50 font-semibold disabled:opacity-50 disabled:cursor-not-allowed" title="Undo">
+        <i class="fas fa-undo"></i>
+    </button>
+    <button id="redoBtn" class="px-4 py-1 text-sm bg-zinc-700 text-white rounded-r-md hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-opacity-50 font-semibold disabled:opacity-50 disabled:cursor-not-allowed" title="Redo">
+        <i class="fas fa-redo"></i>
+    </button>
+</div>
+                    <div class="inline-flex rounded-md shadow-sm ml-4" role="group">
+                        <button id="importHtmlBtn" class="px-3 py-1 text-sm bg-purple-700 text-white rounded-l-md hover:bg-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-opacity-50 font-bold">Import HTML <i class="fa-solid fa-file-import"></i></button>
+                        <button id="exportHtmlBtn" class="px-3 py-1 text-sm bg-red-700 text-white rounded-r-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-bold">Export HTML <i class="fa-solid fa-file-export"></i></button>
                         <input type="file" id="htmlFileInput" accept=".html" style="display: none;">
                     </div>
+                    
                 </div>
 
                 <div id="monacoEditorContainer" class="flex-grow border border-slate-700 rounded-lg overflow-hidden"></div>
@@ -1935,7 +1945,33 @@
             const parser = new DOMParser();
             const doc = parser.parseFromString(htmlString, 'text/html');
             const body = doc.body;
-			
+				// --- NEW LOGIC: Stripping comment and endnote anchors specifically from headings ---
+    // Select elements with style containing "mso-element: comment-list" or "mso-element: endnote-list"
+    // that are direct children or descendants of a heading tag.
+    // This is more robust as it finds them even if they are nested within a span inside a heading.
+    doc.querySelectorAll('h1 [style*="mso-element: comment-list"], h1 [style*="mso-element: endnote-list"], ' +
+                        'h2 [style*="mso-element: comment-list"], h2 [style*="mso-element: endnote-list"], ' +
+                        'h3 [style*="mso-element: comment-list"], h3 [style*="mso-element: endnote-list"], ' +
+                        'h4 [style*="mso-element: comment-list"], h4 [style*="mso-element: endnote-list"], ' +
+                        'h5 [style*="mso-element: comment-list"], h5 [style*="mso-element: endnote-list"], ' +
+                        'h6 [style*="mso-element: comment-list"], h6 [style*="mso-element: endnote-list"]').forEach(element => {
+        if (element.parentNode) {
+            element.parentNode.removeChild(element);
+        }
+    });
+
+    // Select <a> elements with href containing "#_msocom" or "#_edn" that are direct children or descendants of a heading tag.
+    doc.querySelectorAll('h1 a[href*="#_msocom"], h1 a[href*="#_edn"], ' +
+                        'h2 a[href*="#_msocom"], h2 a[href*="#_edn"], ' +
+                        'h3 a[href*="#_msocom"], h3 a[href*="#_edn"], ' +
+                        'h4 a[href*="#_msocom"], h4 a[href*="#_edn"], ' +
+                        'h5 a[href*="#_msocom"], h5 a[href*="#_edn"], ' +
+                        'h6 a[href*="#_msocom"], h6 a[href*="#_edn"]').forEach(link => {
+        if (link.parentNode) {
+            link.parentNode.removeChild(link);
+        }
+    });
+    // --- END NEW LOGIC ---
 			  // ——— SPECIAL-CASE HEADINGS WITH MSO-LIST ———
 			  // Turn them back into plain headings with only their text
 			  doc.querySelectorAll(
@@ -2388,7 +2424,49 @@
         function applyCleanMsoCode(htmlString) {
             const parser = new DOMParser();
             const doc = parser.parseFromString(htmlString, 'text/html');
+			// Remove spans with mso-special-character: comment
+            doc.querySelectorAll('span[style*="mso-special-character: comment"]').forEach(span => {
+                if (span.parentNode) {
+                    span.parentNode.removeChild(span);
+                }
+            });
+			doc.querySelectorAll('a[href]').forEach(aTag => {
+                const trimmedTextContent = aTag.textContent.trim().replace(/\s/g, '');
+                const innerHTMLTrimmed = aTag.innerHTML.replace(/&nbsp;|\s/g, '').trim();
 
+                if (trimmedTextContent === '' || innerHTMLTrimmed === '') {
+                    const parent = aTag.parentNode;
+                    if (parent) {
+                        // Move the content (which is just whitespace) out of the <a> tag
+                        while (aTag.firstChild) {
+                            parent.insertBefore(aTag.firstChild, aTag);
+                        }
+                        // Then remove the empty <a> tag
+                        parent.removeChild(aTag);
+                    }
+                }
+            });
+			
+			doc.querySelectorAll('span[style*="mso-"]').forEach(span => {
+				const p = span.parentNode;
+				while (span.firstChild) p.insertBefore(span.firstChild, span);
+				p.removeChild(span);
+				
+			});
+			doc.querySelectorAll('del, span.msoDel').forEach(node => {
+				node.remove();
+			});
+			doc.querySelectorAll('span.msoIns').forEach(ins => {
+				const parent = ins.parentNode;
+				while (ins.firstChild) parent.insertBefore(ins.firstChild, ins);
+				parent.removeChild(ins);
+			});
+			doc.querySelectorAll('ins').forEach(ins => {
+				const parent = ins.parentNode;
+				while (ins.firstChild) parent.insertBefore(ins.firstChild, ins);
+				parent.removeChild(ins);
+			});
+			
             // --- Start of Clean IMGs Logic (Moved from applyCleanImgs) ---
             doc.querySelectorAll('img').forEach(img => {
                 const src = img.getAttribute('src');
@@ -2414,7 +2492,6 @@
             });
 
             // Select <a> elements with href containing "#_msocom" or "#_edn" and remove them completely
-            // This now also handles the [SP8] comments within headings, as they are also anchor tags with "#_msocom"
             const commentEndnoteLinks = doc.querySelectorAll('a[href*="#_msocom"], a[href*="#_edn"]');
             commentEndnoteLinks.forEach(link => {
                 if (link.parentNode) {
@@ -2592,12 +2669,11 @@
                 // Check if ID contains "Mso", "Word", or "BCX0" (case-sensitive)
                 const hasMsoWordBcx0Id = idAttr.includes('Mso') || idAttr.includes('Word') || idAttr.includes('BCX0');
 
-                // NEW: Check for classes that trigger complete unwrapping (eop, eoc, eocx, textrun, or any class containing "mso")
+                // NEW: Check for classes that trigger complete unwrapping
                 const shouldUnwrapCompletely = classAttr.split(/\s+/).some(cls =>
                     cls.includes('eop') ||
                     cls.includes('eoc') ||
                     cls.includes('eocx') ||
-                    cls.includes('mso') || // Broad check: any class containing "mso"
                     cls.includes('textrun')
                 );
 
@@ -2643,57 +2719,12 @@
                     }
                 }
             }
-
-            return doc.body.innerHTML;
-        }
-
-        /**
-         * Converts common formatting tags: removes <u>, converts <b> to <strong>, and <i> to <em>.
-         * @param {string} htmlString - The HTML content to clean.
-         * @returns {string} The cleaned HTML content.
-         */
-        function applyCleanFormattingTags(htmlString) {
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(htmlString, 'text/html');
-
-            // 1. Remove <u> tags (unwrap them)
-            const uElements = Array.from(doc.querySelectorAll('u'));
-            for (let i = uElements.length - 1; i >= 0; i--) {
-                const u = uElements[i];
-                if (u.parentNode) {
-                    while (u.firstChild) {
-                        u.parentNode.insertBefore(u.firstChild, u);
-                    }
-                    u.parentNode.removeChild(u);
-                }
-            }
-
-            // 2. Convert <b> to <strong>
-            const bElements = Array.from(doc.querySelectorAll('b'));
-            for (let i = bElements.length - 1; i >= 0; i--) {
-                const b = bElements[i];
-                if (b.parentNode) {
-                    const strong = doc.createElement('strong');
-                    while (b.firstChild) {
-                        strong.appendChild(b.firstChild);
-                    }
-                    b.parentNode.replaceChild(strong, b);
-                }
-            }
-
-            // 3. Convert <i> to <em>
-            const iElements = Array.from(doc.querySelectorAll('i'));
-            for (let i = iElements.length - 1; i >= 0; i--) {
-                const i_tag = iElements[i]; // Renamed to avoid conflict with loop variable
-                if (i_tag.parentNode) {
-                    const em = doc.createElement('em');
-                    while (i_tag.firstChild) {
-                        em.appendChild(i_tag.firstChild);
-                    }
-                    i_tag.parentNode.replaceChild(em, i_tag);
-                }
-            }
-
+			
+			// Remove 'title' attribute from all <a> tags
+            doc.querySelectorAll('a[title]').forEach(aTag => {
+                aTag.removeAttribute('title');
+            });
+			
             return doc.body.innerHTML;
         }
 
