@@ -2962,11 +2962,11 @@
          * - H1s: Not ID'd.
          * - H2s:
          * - If text starts with a number (e.g., "1. Introduction"): ID is "toc<number>" (e.g., "toc1").
-         * - If text starts with "Appendix", "Annex", or "Annexe": ID is "app<letter>" (e.g., "appA", "appB"),
+         * - If text starts with "Appendix", or "Annexe": ID is "app<letter>" (e.g., "appA", "appB"),
          * where the letter is derived from the text if present, otherwise sequentially generated.
          * - Otherwise (general H2): ID is "toc<sequential_letter>" (e.g., "tocA", "tocB").
          * - H3-H6: Nested IDs.
-         * - If text starts with "Appendix", "Annex", or "Annexe": ID is "<parentID>-app<letter>",
+         * - If text starts with "Appendix", or "Annexe": ID is "<parentID>-app<letter>",
          * where the letter is derived from the text if present, otherwise sequentially generated within that parent's scope.
          * - Otherwise (general H3-H6): ID is "<parentID>-<sequential_number>".
          *
@@ -3025,10 +3025,10 @@
                 return s || 'A';
             }
 
-            // Helper function to extract an alphabetical character from an appendix/annex text
-            // e.g., "Appendix A" -> "A", "Annex B" -> "B"
+            // Helper function to extract an alphabetical character from an appendix text
+            // e.g., "Appendix A" -> "A", "Annexe B" -> "B"
             function getLetterFromAppendixText(text) {
-                const match = text.match(/^(?:Appendix|Annex|Annexe)\s*([A-Z])?/i);
+                const match = text.match(/^(?:Appendix|Annexe)\s*([A-Z])?/i);
                 if (match && match[1]) {
                     return match[1].toUpperCase();
                 }
@@ -3217,7 +3217,7 @@
 
                     let id_segment = '';
                     const isNumericHeading = text.match(/^\s*(\d+)(?:\.|\s|\)|\-)?/);
-                    const isAppendixHeading = text.match(/^(?:Appendix|Annex|Annexe)\s*(?:([A-Z]))?/i);
+                    const isAppendixHeading = text.match(/^(?:Appendix|Annexe)\s*(?:([A-Z]))?/i);
 
                     if (level === 2) {
                         // This is a regular H2 (not the special 'toc' type).
