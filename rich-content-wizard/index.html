@@ -7,7 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.0/beautify-html.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.49.0/min/vs/loader.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         /* Custom styles for the editor */
         html, body {
@@ -23,6 +22,37 @@
             flex-direction: column;
             background-color: #0F172A; /* Dark slate */
         }
+		 /* Highlight styles for headings */
+    .highlight-h1 {
+        background-color: #FFD700; /* Gold */
+        padding: 2px 5px;
+        border-radius: 3px;
+    }
+    .highlight-h2 {
+        background-color: #ADD8E6; /* Light Blue */
+        padding: 2px 5px;
+        border-radius: 3px;
+    }
+    .highlight-h3 {
+        background-color: #90EE90; /* Light Green */
+        padding: 2px 5px;
+        border-radius: 3px;
+    }
+    .highlight-h4 {
+        background-color: #FFB6C1; /* Light Pink */
+        padding: 2px 5px;
+        border-radius: 3px;
+    }
+    .highlight-h5 {
+        background-color: #FF7F50; /* Coral */
+        padding: 2px 5px;
+        border-radius: 3px;
+    }
+    .highlight-h6 {
+        background-color: #DA70D6; /* Orchid */
+        padding: 2px 5px;
+        border-radius: 3px;
+    }
         /* New header for the QA Wizard title */
         .content-wizard-header {
             padding: 1rem;
@@ -336,6 +366,38 @@
             align-items: center;
             z-index: 1000;
         }
+		/* Specific styles for the Regex Guide Modal content */
+.regex-guide-modal-content {
+    /* Override or set specific width for the Regex Guide */
+    width: 90%;
+    max-width: 700px; /* Adjust as desired for the regex guide */
+    min-width: 300px; /* Adjust as desired */
+    
+    /* Override or set specific height for the Regex Guide */
+    height: auto;
+    max-height: 90vh; /* Adjust as desired for the regex guide */
+    overflow-y: auto;
+}
+
+/* Specific styling for list items and code within the Regex Guide Modal */
+.regex-guide-modal-content ul {
+    margin-left: 1.5rem;
+}
+
+.regex-guide-modal-content li {
+    margin-bottom: 0.5rem;
+}
+
+.regex-guide-modal-content code {
+    display: inline-block;
+    background-color: #334155;
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+    font-size: 0.9em;
+    color: #e0f2f7;
+    white-space: nowrap;
+}
 
         .modal-content {
             background-color: #1E293B; /* Darker slate */
@@ -392,6 +454,58 @@
             color: white;
             border-color: #4338CA;
         }
+		
+.message-box { /* This is probably not needed if you have your own system */
+    position: fixed;
+    top: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    padding: 1rem 2rem;
+    font-weight: bold;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    animation: fadeInOut 4s ease-in-out forwards;
+    color: white;
+    background-color: #38a169; /* Default to green for success */
+}
+.message-box.error { /* This is probably not needed if you have your own system */
+    background-color: #f56565; /* Red for errors */
+}
+@keyframes fadeInOut { /* This is probably not needed if you have your own system */
+    0% { opacity: 0; transform: translateX(-50%) scale(0.9); }
+    10% { opacity: 1; transform: translateX(-50%) scale(1); }
+    90% { opacity: 1; transform: translateX(-50%) scale(1); }
+    100% { opacity: 0; transform: translateX(-50%) scale(0.9); }
+}
+/* Custom class for highlighting a single match when "Highlight all" is off */
+.find-highlight {
+    background-color: rgba(255, 255, 0, 0.6);
+    color: #000000 !important;
+}
+/* Custom class for highlighting all matches in magenta */
+.highlight-all-magenta {
+    background-color: rgba(255, 0, 255, 0.5);
+    color: #ffffff !important;
+}
+/* Custom class for highlighting the CURRENT match when "Highlight all" is ON */
+.find-current-match-highlight {
+    box-shadow: 0 0 0 2px #f97316; /* Bright orange outline */
+    background-color: rgba(255, 165, 0, 0.8); /* More opaque orange background */
+    z-index: 10;
+}
+/* Custom class for highlighting the entire ID tag block with a subtle border */
+.id-highlight {
+	border-bottom: 1px solid rgba(0, 255, 255, 1);
+	z-index: 1;
+}
+.tag-highlight {
+	border-bottom: 2px solid rgba(255, 0, 255, 1);
+}
+/* New CSS for Regex active border */
+.regex-active-border {
+    border: 2px solid #3498db !important; /* A distinct blue color */
+}
 
         /* Styles for collapsible sections */
         .collapsible-section {
@@ -525,7 +639,6 @@
             flex-direction: column; /* Stack buttons vertically */
             width: 100%;
             /* Removed border and border-radius from button-list container */
-            margin-bottom: 1rem; /* Space below button list */
         }
 
         .button-list button {
@@ -544,9 +657,6 @@
             background-color: #64748B; /* Lighter slate on hover */
         }
 
-        .button-list button:last-child {
-            margin-bottom: 0; /* No margin after the last button */
-        }
 
         /* The two-button group in modals uses a different style, which is fine */
         .modal-content .button-group.inline-flex {
@@ -563,6 +673,24 @@
             padding: 0.3rem 0.6rem; /* Smaller padding for modal buttons */
             font-size: 0.8rem; /* Smaller font size for modal buttons */
         }
+		
+/* Apply these classes to the new #searchControlsContent div */
+.search-controls-hidden {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+    pointer-events: none; /* Disable interaction when hidden */
+    padding-top: 0 !important; /* Remove any top/bottom padding when hidden */
+    padding-bottom: 0 !important;
+}
+
+.search-controls-visible {
+    max-height: 500px; /* A value large enough to contain all controls */
+    opacity: 1;
+    transition: max-height 0.3s ease-in, opacity 0.3s ease-in;
+    pointer-events: auto;
+}
     </style>
 </head>
 <body>
@@ -610,32 +738,159 @@
                         Clean MSO
                     </button>
                 </div>
+                <!-- New row for Copy, Clear, Import, Export buttons -->
                 <div class="flex items-center mb-4 flex-wrap">
                     <div class="inline-flex rounded-md shadow-sm" role="group">
-                        <button id="copyCodeBtn" class="px-4 py-1 text-sm bg-zinc-700 text-white rounded-l-md hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-opacity-50 font-semibold">
-                            Copy Code <i class="fa-solid fa-copy"></i>
+                        <button id="copyCodeBtn" class="px-4 py-1 text-sm bg-gray-700 text-white rounded-l-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-semibold">
+                            Copy Code
                         </button>
-                        <button id="clearAllBtn" class="px-4 py-1 text-sm bg-zinc-700 text-white rounded-r-md hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-opacity-50 font-semibold">
-                            Clear All <i class="fa-solid fa-trash"></i>
+                        <button id="clearAllBtn" class="px-4 py-1 text-sm bg-gray-700 text-white rounded-r-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">
+                            Clear All
                         </button>
                     </div>
-                    <div class="inline-flex rounded-md shadow-sm ml-4" role="group">
-    <button id="undoBtn" class="px-4 py-1 text-sm bg-zinc-700 text-white rounded-l-md hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-opacity-50 font-semibold disabled:opacity-50 disabled:cursor-not-allowed" title="Undo">
-        <i class="fas fa-undo"></i>
-    </button>
-    <button id="redoBtn" class="px-4 py-1 text-sm bg-zinc-700 text-white rounded-r-md hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-opacity-50 font-semibold disabled:opacity-50 disabled:cursor-not-allowed" title="Redo">
-        <i class="fas fa-redo"></i>
-    </button>
-</div>
-                    <div class="inline-flex rounded-md shadow-sm ml-4" role="group">
-                        <button id="importHtmlBtn" class="px-3 py-1 text-sm bg-purple-700 text-white rounded-l-md hover:bg-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-opacity-50 font-bold">Import HTML <i class="fa-solid fa-file-import"></i></button>
-                        <button id="exportHtmlBtn" class="px-3 py-1 text-sm bg-red-700 text-white rounded-r-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-bold">Export HTML <i class="fa-solid fa-file-export"></i></button>
+                    <div class="inline-flex space-x-2 ml-4">
+                        <button id="importHtmlBtn" class="px-3 py-1 text-sm bg-purple-700 text-white rounded-md hover:bg-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-opacity-50 font-bold">Import HTML</button>
+                        <button id="exportHtmlBtn" class="px-3 py-1 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-bold">Export HTML</button>
                         <input type="file" id="htmlFileInput" accept=".html" style="display: none;">
                     </div>
-                    
                 </div>
 
                 <div id="monacoEditorContainer" class="flex-grow border border-slate-700 rounded-lg overflow-hidden"></div>
+				<div id="betterSearchContainer" class="w-full hidden">
+				<div class="w-full text-left mb-2 mt-2 flex items-center justify-between">
+    <span id="match-count" class="text-white text-sm"></span>
+    <button id="toggleSearchControlsBtn" class="px-3 py-1 text-xs bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">
+        Hide Search Panel
+    </button>
+</div>
+    <div id="searchControlsContent">
+					<!-- Controls for Find & Replace -->
+						<!-- Dropdowns and Checkboxes -->
+						<div class="flex flex-wrap items-center space-x-4 mb-1">
+							<!-- ID Dropdown -->
+							<select
+								id="target-id-dropdown"
+								class="w-32 p-3 rounded-md bg-gray-900 text-white font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+							>
+								<option value="all">All ID's</option>
+							</select>
+							<!-- Tag Dropdown -->
+							<select
+								id="target-tag-dropdown"
+								class="w-32 p-3 rounded-md bg-gray-900 text-white font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+							>
+								<option value="all">All Tags</option>
+							</select>
+							<!-- Checkbox Options moved to the right of the dropdowns -->
+							<div class="flex items-center space-x-4 text-white ml-auto">
+								
+								<!-- Match Case Checkbox -->
+								<label for="match-case" class="flex items-center space-x-2">
+									<input type="checkbox" id="match-case" class="form-checkbox h-5 w-5 text-blue-600 rounded">
+									<span>Match case</span>
+								</label>
+								<!-- Highlight all Checkbox -->
+								<label for="highlight-all" class="flex items-center space-x-2">
+									<input type="checkbox" id="highlight-all" class="form-checkbox h-5 w-5 text-blue-600 rounded">
+									<span>Highlight all</span>
+								</label>
+								<!-- REGEX Checkbox -->
+								<label for="enable-regex" class="flex items-center space-x-2">
+									<input type="checkbox" id="enable-regex" class="form-checkbox h-5 w-5 text-blue-600 rounded">
+									<span>REGEX</span>
+								</label>
+							</div>
+						</div>
+						
+						<!-- Sequencing Options -->
+						<div
+							id="sequence-container"
+							class="flex flex-wrap items-center space-x-4 text-white overflow-hidden max-h-40 opacity-100 transition-all duration-300 ease-in-out mb-1 mt-1"
+						>
+							<!-- Sequence Checkbox -->
+							<label for="sequence" class="flex items-center space-x-2">
+								<input type="checkbox" id="sequence" class="form-checkbox h-5 w-5 text-blue-600 rounded">
+								<span>Sequence <span class="text-gray-300 text-sm">(To use: Insert <strong><code>{$#+}</code></strong> OR <strong><code>{$#-}</code></strong> in replace field)</span></span>
+							</label>
+							<!-- Range Inputs -->
+							<div id="sequence-range-container" class="flex items-center space-x-2 flex-grow justify-end opacity-0 pointer-events-none transition-opacity duration-300 ease-in-out">
+								<label for="start-index">Start:</label>
+								<input
+									type="number"
+									id="start-index"
+									value="1"
+									class="w-20 p-2 rounded-md bg-gray-900 text-white font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+								>
+								<label for="end-index">End:</label>
+								<input
+									type="number"
+									id="end-index"
+									placeholder="all"
+									class="w-20 p-2 rounded-md bg-gray-900 text-white font-mono placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+								>
+							</div>
+						</div>
+
+						<!-- Inputs and Buttons are now in separate rows -->
+						<div class="flex flex-col space-y-4 mt-1">
+							<!-- Find/Replace Inputs -->
+							<div class="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-4">
+								<input
+									id="find-input"
+									type="text"
+									placeholder="Find"
+									class="w-full flex-1 p-3 rounded-md bg-gray-900 text-white font-mono placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+								>
+								<input
+									id="replace-input"
+									type="text"
+									placeholder="Replace"
+									class="w-full flex-1 p-3 rounded-md bg-gray-900 text-white font-mono placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+								>
+							</div>
+							<!-- Action Buttons -->
+							<div class="flex flex-wrap justify-between items-center space-x-2">
+								<div class="flex items-center space-x-2">
+									<button
+										id="find-previous-button"
+										class="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold"
+									>
+										&#x2191;
+									</button>
+									<button
+										id="find-next-button"
+										class="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold"
+									>
+										Next &#x2193;
+									</button>
+									
+									<!-- REGEX Guide Button moved here -->
+									<button
+										id="regex-guide-button"
+										class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold"
+									>
+										Regex Guide
+									</button>
+								</div>
+								<div class="flex items-center space-x-2">
+									<button
+										id="replace-one-button"
+										class="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold"
+									>
+										Replace
+									</button>
+									<button
+										id="replace-all-button"
+										class="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold"
+									>
+										Replace All
+									</button>
+								</div>
+							</div>
+							
+						</div>
+				</div>
+				</div>
             </div>
 
             <div id="sidebarPanel" class="sidebar-panel">
@@ -724,22 +979,23 @@
                     </div>
                 </div>
                 <!-- New Format Button for Quick Formatting Toggles -->
-                <button id="formatSelectedBtn" class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold mb-4" disabled>
+                <button id="formatSelectedBtn" class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold mb-2 mt-2" disabled>
                     Format
                 </button>
-                <button id="autoEncodeBtn" class="px-4 py-2 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50  font-bold mb-4">
+                <button id="autoEncodeBtn" class="px-4 py-2 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50  font-bold mb-2">
                     Auto-Encode
                 </button>
-                <button id="autoFormatBtn" class="px-4 py-2 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50  font-bold mb-4">
+                <button id="autoFormatBtn" class="px-4 py-2 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50  font-bold mb-2">
                     Auto-Indent
                 </button>
 
-                <h3 class="text-lg font-semibold text-white mb-4">Quick Insert</h3>
-                <div class="button-list">
+                <h3 class="text-lg font-semibold text-white mb-4 mt-4">Quick Insert</h3>
+                <div class="button-list mb-2">
                     <!-- Auto-ID Button -->
                     <button id="autoIdBtn" class="px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded-md">
                         Element ID's
                     </button>
+				
                     <!-- Footnote List Button -->
                     <button id="footnoteListBtn" class="px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded-md">
                         Footnote List
@@ -749,7 +1005,50 @@
                         Colophon
                     </button>
                 </div>
-            </div>
+				<h4 class="text-md text-white mb-2">Page ToC ("On this page")</h4>
+				<div class="button-list">
+				  <div class="flex space-x-2">
+					<button
+					  id="enPageToCBtn"
+					  class="flex-1 px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 rounded-md mb-1"
+					>English
+					</button>
+					<button
+					  id="enPageToCH3Btn"
+					  class="flex-1 px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 rounded-md mb-1"
+					>+H3
+					</button>
+				  </div>
+				  <div class="flex space-x-2 mb-2">
+					<button
+					  id="frPageToCBtn"
+					  class="flex-1 px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 rounded-md mb-1"
+					>French
+					</button>
+					<button
+					  id="frPageToCH3Btn"
+					  class="flex-1 px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 rounded-md mb-1"
+					>+H3
+					</button>
+				  </div>
+				</div>
+				<h4 class="text-md text-white mb-2">Section ToC ("In this section")</h4>
+				<div class="button-list">
+					<div class="flex space-x-2">
+						<button id="enSecToCBtn" class="flex-1 px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 rounded-md mb-1">ENG</button>
+						<button id="enSecToCH4Btn" class="flex-1 px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 rounded-md mb-1">+H4</button>
+						<button id="enSecToCH5Btn" class="flex-1 px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 rounded-md mb-1">+H5</button>
+						<button id="enSecToCH6Btn" class="flex-1 px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 rounded-md mb-1">+H6</button>
+					</div>
+				</div>
+				<div class="button-list">
+					<div class="flex space-x-2">
+						<button id="frSecToCBtn" class="flex-1 px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 rounded-md mb-1">FRA</button>
+						<button id="frSecToCH4Btn" class="flex-1 px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 rounded-md mb-1">+H4</button>
+						<button id="frSecToCH5Btn" class="flex-1 px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 rounded-md mb-1">+H5</button>
+						<button id="frSecToCH6Btn" class="flex-1 px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 rounded-md mb-1">+H6</button>
+					</div>
+				</div>
         </div>
     </div>
 
@@ -785,8 +1084,8 @@
         const autoIdBtn = document.getElementById('autoIdBtn'); // New: Auto-ID button
         const colophonBtn = document.getElementById('colophonBtn'); // New: Colophon button
         const footnoteListBtn = document.getElementById('footnoteListBtn'); // New: Footnote List button
-        // REMOVED: pageTocBtn, sectionTocBtn
 
+		
         // Monaco Resizer elements - now applies to panels
         const monacoEditorContainer = document.getElementById('monacoEditorContainer');
         // const panelResizer = document.getElementById('panelResizer'); // Removed: Resizer element
@@ -803,15 +1102,26 @@
             cleanMsoBtn,
             importHtmlBtn,
             exportHtmlBtn,
-            formatSelectedBtn, // Add the new Format button
+            formatSelectedBtn,
             autoIdBtn,
-            // REMOVED: pageTocBtn, sectionTocBtn
             footnoteListBtn,
             colophonBtn,
             clearAllBtn,
             autoEncodeBtn,
             autoFormatBtn,
             copyCodeBtn,
+			enPageToCBtn,
+			enPageToCH3Btn,
+			frPageToCBtn,
+			frPageToCH3Btn,
+			enSecToCBtn,
+			enSecToCH4Btn,
+			enSecToCH5Btn,
+			enSecToCH6Btn,
+			frSecToCBtn,
+			frSecToCH4Btn,
+			frSecToCH5Btn,
+			frSecToCH6Btn,
         ];
 
         // Add the toggle inputs themselves to the list if their parent elements need to be disabled
@@ -1139,14 +1449,18 @@
             // NEW: Remove empty text nodes (representing empty lines/excess whitespace)
             const walker = doc.createTreeWalker(
                 body,
-                NodeFilter.SHOW_TEXT,
-                {
-                    acceptNode: function(node) {
-                        // Accept text nodes that are purely whitespace
-                        return node.nodeValue.trim() === '' ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
-                    }
-                },
-                false
+				  NodeFilter.SHOW_TEXT,
+				  {
+					acceptNode: function(node) {
+					  const txt = node.nodeValue;
+					  // Only remove if it’s pure whitespace AND more than a single space (or contains newline/tab)
+					  if (txt.trim() === '' && (txt.length > 1 || /[\r\n\t]/.test(txt))) {
+						return NodeFilter.FILTER_ACCEPT;
+					  }
+					  return NodeFilter.FILTER_REJECT;
+					}
+				  },
+				  false
             );
 
             const nodesToRemove = [];
@@ -1220,7 +1534,15 @@
                     if (['div', 'span', 'section'].includes(tagName) && element.attributes.length > 0) {
                         continue; // Skip this element, keep it intact
                     }
-
+					if (element.textContent === ' ' &&
+						  ['strong','em','u','b','i'].includes(tagName)
+					  ) {
+						element.parentNode.replaceChild(
+						  doc.createTextNode(' '),
+						  element
+						);
+						continue;
+					  }
                     if (trimmedContent === '' || containsOnlyNBSP) {
                         if (element.parentNode) {
                             element.parentNode.removeChild(element);
@@ -1574,7 +1896,7 @@
                         const clonedChild = child.cloneNode(false);
                         clonedChild.innerHTML = cleanAndPreserveAllowedContent(child, doc); // Still clean content inside
                         tempContainer.appendChild(clonedChild);
-                    } else if (tagName === 'div' || tagName === 'span' || tagName === 'ins') {
+                    } else if (tagName === 'div' || tagName === 'span') {
                         // <div>, <span>, <ins> ONLY if they have a class or ID that DON'T contain "Mso" or "Word" or "BCX0"
                         if ((child.hasAttribute('class') || child.hasAttribute('id')) && !containsDisallowedPattern(child)) {
                             const clonedChild = child.cloneNode(false);
@@ -1613,6 +1935,20 @@
             const parser = new DOMParser();
             const doc = parser.parseFromString(htmlString, 'text/html');
             const body = doc.body;
+			
+			  // ——— SPECIAL-CASE HEADINGS WITH MSO-LIST ———
+			  // Turn them back into plain headings with only their text
+			  doc.querySelectorAll(
+				'h1[style*="mso-list"],h2[style*="mso-list"],h3[style*="mso-list"],' +
+				'h4[style*="mso-list"],h5[style*="mso-list"],h6[style*="mso-list"]'
+			  ).forEach(h => {
+				const tag = h.tagName.toLowerCase();
+				// collapse whitespace so you don’t get accidental newlines/tabs
+				const text = h.textContent.trim().replace(/\s+/g, ' ');
+				const cleanH = doc.createElement(tag);
+				cleanH.textContent = text;
+				h.replaceWith(cleanH);
+			  });
 
             // Helper to get the level from style attribute for lists
             function getLevel(styleAttr) {
@@ -1657,13 +1993,14 @@
                             return false;
                         };
 
-                        if (tagName === 'br' || tagName === 'strong' || tagName === 'a' || tagName === 'em' || tagName === 'u' || tagName === 'sup' || tagName === 'sub' || tagName === 'section') {
+                        if (tagName === 'br' || tagName === 'strong' || tagName === 'a' || tagName === 'em' || tagName === 'u' || tagName === 'sup' || tagName === 'sub' || tagName === 'section' || tagName === 'ins') {
                             contentHtml += child.outerHTML;
-                        } else if ((tagName === 'span' || tagName === 'div' || tagName === 'ins') && hasClassOrId && !containsDisallowedPattern(child)) {
-                            const clonedChild = child.cloneNode(false);
-                            clonedChild.innerHTML = extractAllowedContentForLists(clonedChild);
-                            contentHtml += clonedChild.outerHTML;
-                        } else if (tagName === 'a' && child.hasAttribute('href')) { // Explicitly handle <a> with href
+                        } else if ((tagName === 'span' || tagName === 'div') && !containsDisallowedPattern(child)) {
+    const clonedChild = child.cloneNode(false);
+    // PASS THE ORIGINAL NODE INTO THE RECURSION, NOT THE EMPTY CLONE:
+    clonedChild.innerHTML = extractAllowedContentForLists(child);
+    contentHtml += clonedChild.outerHTML;
+} else if (tagName === 'a' && child.hasAttribute('href')) { // Explicitly handle <a> with href
                             contentHtml += child.outerHTML;
                         }
                         else {
@@ -2034,7 +2371,7 @@
             return doc.body.innerHTML;
         }
 
-                /**
+        /**
          * Applies cleaning for Microsoft Office specific code.
          * This function removes tags and their entire content if they have specific MSO-related attributes or hrefs.
          * Attributes targeted for removal: "mso-element: comment-list", "mso-element: endnote-list".
@@ -2361,6 +2698,56 @@
         }
 
         /**
+         * Converts common formatting tags: removes <u>, converts <b> to <strong>, and <i> to <em>.
+         * @param {string} htmlString - The HTML content to clean.
+         * @returns {string} The cleaned HTML content.
+         */
+        function applyCleanFormattingTags(htmlString) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlString, 'text/html');
+
+            // 1. Remove <u> tags (unwrap them)
+            const uElements = Array.from(doc.querySelectorAll('u'));
+            for (let i = uElements.length - 1; i >= 0; i--) {
+                const u = uElements[i];
+                if (u.parentNode) {
+                    while (u.firstChild) {
+                        u.parentNode.insertBefore(u.firstChild, u);
+                    }
+                    u.parentNode.removeChild(u);
+                }
+            }
+
+            // 2. Convert <b> to <strong>
+            const bElements = Array.from(doc.querySelectorAll('b'));
+            for (let i = bElements.length - 1; i >= 0; i--) {
+                const b = bElements[i];
+                if (b.parentNode) {
+                    const strong = doc.createElement('strong');
+                    while (b.firstChild) {
+                        strong.appendChild(b.firstChild);
+                    }
+                    b.parentNode.replaceChild(strong, b);
+                }
+            }
+
+            // 3. Convert <i> to <em>
+            const iElements = Array.from(doc.querySelectorAll('i'));
+            for (let i = iElements.length - 1; i >= 0; i--) {
+                const i_tag = iElements[i]; // Renamed to avoid conflict with loop variable
+                if (i_tag.parentNode) {
+                    const em = doc.createElement('em');
+                    while (i_tag.firstChild) {
+                        em.appendChild(i_tag.firstChild);
+                    }
+                    i_tag.parentNode.replaceChild(em, i_tag);
+                }
+            }
+
+            return doc.body.innerHTML;
+        }
+
+        /**
          * Adjusts heading levels (h1-h6) to ensure a correct hierarchical structure.
          *
          * Rules:
@@ -2580,11 +2967,11 @@
          * - H1s: Not ID'd.
          * - H2s:
          * - If text starts with a number (e.g., "1. Introduction"): ID is "toc<number>" (e.g., "toc1").
-         * - If text starts with "Appendix", "Annex", or "Annexe": ID is "app<letter>" (e.g., "appA", "appB"),
+         * - If text starts with "Appendix", or "Annexe": ID is "app<letter>" (e.g., "appA", "appB"),
          * where the letter is derived from the text if present, otherwise sequentially generated.
          * - Otherwise (general H2): ID is "toc<sequential_letter>" (e.g., "tocA", "tocB").
          * - H3-H6: Nested IDs.
-         * - If text starts with "Appendix", "Annex", or "Annexe": ID is "<parentID>-app<letter>",
+         * - If text starts with "Appendix", or "Annexe": ID is "<parentID>-app<letter>",
          * where the letter is derived from the text if present, otherwise sequentially generated within that parent's scope.
          * - Otherwise (general H3-H6): ID is "<parentID>-<sequential_number>".
          *
@@ -2643,10 +3030,10 @@
                 return s || 'A';
             }
 
-            // Helper function to extract an alphabetical character from an appendix/annex text
-            // e.g., "Appendix A" -> "A", "Annex B" -> "B"
+            // Helper function to extract an alphabetical character from an appendix text
+            // e.g., "Appendix A" -> "A", "Annexe B" -> "B"
             function getLetterFromAppendixText(text) {
-                const match = text.match(/^(?:Appendix|Annex|Annexe)\s*([A-Z])?/i);
+                const match = text.match(/^(?:Appendix|Annexe)\s*([A-Z])?/i);
                 if (match && match[1]) {
                     return match[1].toUpperCase();
                 }
@@ -2835,7 +3222,7 @@
 
                     let id_segment = '';
                     const isNumericHeading = text.match(/^\s*(\d+)(?:\.|\s|\)|\-)?/);
-                    const isAppendixHeading = text.match(/^(?:Appendix|Annex|Annexe)\s*(?:([A-Z]))?/i);
+                    const isAppendixHeading = text.match(/^(?:Appendix|Annexe)\s*(?:([A-Z]))?/i);
 
                     if (level === 2) {
                         // This is a regular H2 (not the special 'toc' type).
@@ -3625,7 +4012,80 @@
                 }, 1500);
             });
         }
+		/**
+ * Displays the Regex Guide modal dialog.
+ * @param {HTMLElement} triggeringButton - The button that opened this modal.
+ * @param {string} originalButtonText - The original text of the triggering button.
+ */
+function showRegexGuideModal(triggeringButton, originalButtonText) {
+    const regexGuideContentHtml = `
+        <p class="mb-4">Regular expressions are patterns used to match character combinations in strings. Here are some common metacharacters:</p>
+        
+            <p><code class="font-bold">.</code> : Matches any single character (except newline).</p>
+            <p><code class="font-bold">\\d</code> : Matches any digit (0-9).</p>
+            <p><code class="font-bold">\\D</code> : Matches any non-digit character.</p>
+            <p><code class="font-bold">\\w</code> : Matches any word character (alphanumeric and underscore).</p>
+            <p><code class="font-bold">\\W</code> : Matches any non-word character.</p>
+            <p><code class="font-bold">\\s</code> : Matches any whitespace character (space, tab, newline).</p>
+            <p><code class="font-bold">\\S</code> : Matches any non-whitespace character.</p>
+            <p><code class="font-bold">\\b</code> : Matches a word boundary.</p>
+            <p><code class="font-bold">\\B</code> : Matches a non-word boundary.</p>
+            <p><code class="font-bold">^</code> : Matches the beginning of the string.</p>
+            <p><code class="font-bold">$</code> : Matches the end of the string.</p>
+            <p><code class="font-bold">*</code> : Matches the previous character zero or more times.</p>
+            <p><code class="font-bold">+</code> : Matches the previous character one or more times.</p>
+            <p><code class="font-bold">?</code> : Matches the previous character zero or one time (also for non-greedy matching).</p>
+            <p><code class="font-bold">{n}</code> : Matches the previous character exactly 'n' times.</p>
+            <p><code class="font-bold">{n,}</code> : Matches the previous character 'n' or more times.</p>
+            <p><code class="font-bold">{n,m}</code> : Matches the previous character between 'n' and 'm' times.</p>
+            <p><code class="font-bold">[abc]</code> : Matches any one of the characters inside the brackets.</p>
+            <p><code class="font-bold">[^abc]</code> : Matches any character NOT inside the brackets.</p>
+            <p><code class="font-bold">(x|y)</code> : Matches either 'x' or 'y'.</p>
+            <p><code class="font-bold">(...)</code> : Capturing group.</p>
+            <p><code class="font-bold">\\n</code> : Backreference to the n-th capturing group.</p>
+            <p><code class="font-bold">|</code> : OR operator.</p>
+            <p><code class="font-bold">\\\\</code> : Escapes a special character (e.g., '\.' to match a literal dot).</p>
+    `;
 
+    const modalOverlay = document.createElement('div');
+    modalOverlay.className = 'modal-overlay'; // Use your existing modal-overlay class
+    modalOverlay.innerHTML = `
+        <div class="modal-content regex-guide-modal-content">
+            <h3>Regex Guide</h3> <!-- Changed from h2 to h3 to match other modals' titles -->
+            <div id="modalBody">${regexGuideContentHtml}</div>
+            <div class="flex justify-end mt-4 space-x-2">
+                <button id="modalCloseRegexBtn" class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600">Close</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modalOverlay);
+
+    // Function to clean up and re-enable buttons
+    function closeModalAndReEnableButtons() {
+        modalOverlay.remove();
+        triggeringButton.removeAttribute('data-temp-active'); // Crucial: Remove flag
+        triggeringButton.textContent = originalButtonText; // Revert immediately
+        triggeringButton.classList.remove('bg-green-500', 'hover:bg-green-600');
+        triggeringButton.classList.add('bg-gray-600', 'hover:bg-gray-700'); // Revert to original gray button style
+        updateAllInteractiveButtonStates(); // Re-enable all buttons
+    }
+
+    document.getElementById('modalCloseRegexBtn').addEventListener('click', closeModalAndReEnableButtons);
+    
+    // Close modal if clicked outside content
+    modalOverlay.addEventListener('click', (event) => {
+        if (event.target === modalOverlay) {
+            closeModalAndReEnableButtons();
+        }
+    });
+
+    // Provide immediate visual feedback for the triggering button
+    triggeringButton.textContent = 'Opening...';
+    triggeringButton.classList.add('bg-green-500', 'hover:bg-green-600');
+    triggeringButton.classList.remove('bg-gray-600', 'hover:bg-gray-700'); // Change to green immediately
+    triggeringButton.setAttribute('data-temp-active', 'true'); // Set the flag
+    updateAllInteractiveButtonStates(); // Disable all buttons
+}
         /**
          * Displays a modal dialog for Auto-ID options.
          * @param {HTMLElement} triggeringButton - The button that opened this modal.
@@ -3815,8 +4275,7 @@
             toggleEditorViewBtnCode.classList.add('bg-cyan-700', 'hover:bg-cyan-800');
             toggleEditorViewBtnCode.classList.remove('bg-cyan-700', 'hover:bg-cyan-800', 'bg-slate-800', 'hover:bg-slate-700'); /* Changed */
             updateGoToHtmlButtonColor(); // Call to set initial color for "Go to HTML" button
-
-
+			
             // Initialize Monaco Editor
             require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.49.0/min/vs' } });
             require(['vs/editor/editor.main'], function () {
@@ -3847,16 +4306,890 @@
 
                 // Ensure Monaco refreshes layout on window resize
                 window.addEventListener('resize', debouncedMonacoLayout);
+				
+				// --- START PASTED JAVASCRIPT FROM BETTER-SEARCH.HTML ---
+                // Get references to the DOM elements (adjust 'editor' to 'monacoEditorInstance')
+                const findInput = document.getElementById('find-input');
+                const replaceInput = document.getElementById('replace-input');
+                const findNextButton = document.getElementById('find-next-button');
+                const findPreviousButton = document.getElementById('find-previous-button');
+                const replaceOneButton = document.getElementById('replace-one-button');
+                const replaceAllButton = document.getElementById('replace-all-button');
+                const tagDropdown = document.getElementById('target-tag-dropdown');
+                const idDropdown = document.getElementById('target-id-dropdown');
+                const enableRegexCheckbox = document.getElementById('enable-regex');
+                const matchCaseCheckbox = document.getElementById('match-case');
+                const highlightAllCheckbox = document.getElementById('highlight-all');
+                const sequenceCheckbox = document.getElementById('sequence');
+                const sequenceContainer = document.getElementById('sequence-container');
+                const sequenceRangeContainer = document.getElementById('sequence-range-container');
+                const startIndexInput = document.getElementById('start-index');
+                const endIndexInput = document.getElementById('end-index');
+                const matchCountSpan = document.getElementById('match-count');
+                const regexGuideButton = document.getElementById('regex-guide-button');
+// Get a reference to the new toggle button
+const toggleSearchControlsBtn = document.getElementById('toggleSearchControlsBtn');
+// Get a reference to the container holding all search controls content
+const searchControlsContent = document.getElementById('searchControlsContent'); // Changed ID here!
+// Get a reference to the outer panel div (for show/hide logic related to the panel itself)
+const betterSearchPanel = document.getElementById('betterSearchContainer'); // Keep reference to outer panel
+				// NOW, PUSH regexGuideButton onto the array here, after it's defined
+				allInteractiveButtons.push(regexGuideButton);
+
+                let allDecorations = [];
+                let allMatches = [];
+                let currentMatchIndex = -1;
+                let currentFindText = '';
+                let currentSelectedId = 'all';
+                let currentSelectedTag = 'all';
+                let currentIsRegex = false;
+                let currentMatchCase = false;
+                
+
+
+// State variable for search controls visibility
+let searchControlsVisible = true; // Initial state
+
+// Function to toggle search controls visibility
+function toggleSearchControls() {
+    searchControlsVisible = !searchControlsVisible;
+
+    if (searchControlsVisible) {
+        // Show the inner content
+        searchControlsContent.classList.remove('search-controls-hidden');
+        searchControlsContent.classList.add('search-controls-visible');
+        
+        // Show the outer panel (if it was hidden)
+        betterSearchPanel.classList.remove('hidden'); 
+        betterSearchPanel.classList.remove('search-controls-hidden'); // In case it was hidden by the previous logic
+        betterSearchPanel.classList.add('search-controls-visible'); // Ensure it's visible for the inner content to animate
+        
+        toggleSearchControlsBtn.textContent = 'Hide Search Panel';
+    } else {
+        // Hide the inner content
+        searchControlsContent.classList.remove('search-controls-visible');
+        searchControlsContent.classList.add('search-controls-hidden');
+        
+        // You might want to delay hiding the outer panel's background slightly
+        // or just ensure its padding collapses.
+        // For simplicity, let's just make sure it doesn't take up too much space.
+        // The CSS for search-controls-hidden with !important padding handles this well.
+        
+        toggleSearchControlsBtn.textContent = 'Show Search Panel';
+    }
+}
+
+// Add event listener to the toggle button
+toggleSearchControlsBtn.addEventListener('click', toggleSearchControls);
+
+// Apply initial state when the page loads
+// Ensure the main panel is visible if it was initially set to 'hidden' in HTML
+betterSearchPanel.classList.remove('hidden'); // Remove the initial 'hidden' class from betterSearchContainer
+searchControlsContent.classList.add('search-controls-visible'); // Ensure inner content starts visible
+				
+                /**
+             * Populates the dropdown menu with unique HTML tags from the editor's content.
+             * Preserves the currently selected tag if it still exists.
+             */
+            function populateTagDropdown() {
+                const currentSelection = tagDropdown.value; // Store current selection
+                const editorValue = editor.getValue();
+                const tagRegex = /<(\w+)(?=\s|>)/g;
+                const uniqueTags = new Set();
+                let match;
+
+                while ((match = tagRegex.exec(editorValue)) !== null) {
+                    uniqueTags.add(match[1]);
+                }
+
+                tagDropdown.innerHTML = '';
+                const defaultOption = document.createElement('option');
+                defaultOption.value = 'all';
+                defaultOption.textContent = 'All Tags';
+                tagDropdown.appendChild(defaultOption);
+
+                const sortedTags = [...uniqueTags].sort();
+
+                sortedTags.forEach(tag => {
+                    const option = document.createElement('option');
+                    option.value = tag;
+                    option.textContent = `<${tag}>`;
+                    tagDropdown.appendChild(option);
+                });
+
+                // Restore previous selection if it's still a valid option
+                if (Array.from(tagDropdown.options).some(option => option.value === currentSelection)) {
+                    tagDropdown.value = currentSelection;
+                } else {
+                    tagDropdown.value = 'all'; // Fallback if old selection is gone
+                }
+            }
+            
+            /**
+             * Populates the dropdown menu with unique HTML IDs from the editor's content.
+             * Preserves the currently selected ID if it still exists.
+             */
+                function populateTagDropdown() {
+                    const currentSelection = tagDropdown.value;
+                    const editorValue = monacoEditorInstance.getValue(); // Use monacoEditorInstance
+                    const tagRegex = /<(\w+)(?=\s|>)/g;
+                    const uniqueTags = new Set();
+                    let match;
+
+                    while ((match = tagRegex.exec(editorValue)) !== null) {
+                        uniqueTags.add(match[1]);
+                    }
+
+                    tagDropdown.innerHTML = '';
+                    const defaultOption = document.createElement('option');
+                    defaultOption.value = 'all';
+                    defaultOption.textContent = 'All Tags';
+                    tagDropdown.appendChild(defaultOption);
+
+                    const sortedTags = [...uniqueTags].sort();
+
+                    sortedTags.forEach(tag => {
+                        const option = document.createElement('option');
+                        option.value = tag;
+                        option.textContent = `<${tag}>`;
+                        tagDropdown.appendChild(option);
+                    });
+
+                    if (Array.from(tagDropdown.options).some(option => option.value === currentSelection)) {
+                        tagDropdown.value = currentSelection;
+                    } else {
+                        tagDropdown.value = 'all';
+                    }
+                }
+                
+                /**
+                 * Populates the dropdown menu with unique HTML IDs from the editor's content.
+                 */
+                function populateIdDropdown() {
+                    const currentSelection = idDropdown.value;
+                    const editorValue = monacoEditorInstance.getValue(); // Use monacoEditorInstance
+                    const idRegex = /id="([^"]+)"/g;
+                    const uniqueIds = [];
+                    const seenIds = new Set();
+
+                    let match;
+                    while ((match = idRegex.exec(editorValue)) !== null) {
+                        const id = match[1];
+                        if (!seenIds.has(id)) {
+                            uniqueIds.push(id);
+                            seenIds.add(id);
+                        }
+                    }
+
+                    idDropdown.innerHTML = '';
+                    const defaultOption = document.createElement('option');
+                    defaultOption.value = 'all';
+                    defaultOption.textContent = 'All ID\'s';
+                    idDropdown.appendChild(defaultOption);
+
+                    uniqueIds.forEach(id => {
+                        const option = document.createElement('option');
+                        option.value = id;
+                        option.textContent = `#${id}`;
+                        idDropdown.appendChild(option);
+                    });
+
+                    if (Array.from(idDropdown.options).some(option => option.value === currentSelection)) {
+                        idDropdown.value = currentSelection;
+                    } else {
+                        idDropdown.value = 'all';
+                    }
+                }
+
+                populateTagDropdown();
+                populateIdDropdown();
+
+                // Update the dropdowns whenever the editor content changes
+                monacoEditorInstance.onDidChangeModelContent(() => { // Use monacoEditorInstance
+                    populateTagDropdown();
+                    populateIdDropdown();
+                    resetSearchState(true);
+                });
+                
+                // Function to handle the visibility of the sequence options container
+                function toggleSequenceVisibility() {
+                    if (enableRegexCheckbox.checked) {
+                        sequenceContainer.classList.remove('max-h-0', 'opacity-0', 'pointer-events-none');
+                        sequenceContainer.classList.add('max-h-40', 'opacity-100');
+                    } else {
+                        sequenceContainer.classList.remove('max-h-40', 'opacity-0', 'pointer-events-none');
+                        sequenceContainer.classList.add('max-h-0', 'opacity-0', 'pointer-events-none');
+                    }
+                }
+
+                // Toggle visibility of the sequence range inputs based on the sequence checkbox
+                sequenceCheckbox.addEventListener('change', () => {
+                    if (sequenceCheckbox.checked) {
+                        sequenceRangeContainer.classList.remove('opacity-0', 'pointer-events-none');
+                    } else {
+                        sequenceRangeContainer.classList.add('opacity-0', 'pointer-events-none');
+                    }
+                });
+
+                // Function to toggle the regex active border
+                function toggleRegexBorder() {
+                    if (enableRegexCheckbox.checked) {
+                        findInput.classList.add('regex-active-border');
+                        replaceInput.classList.add('regex-active-border');
+                    } else {
+                        findInput.classList.remove('regex-active-border');
+                        replaceInput.classList.remove('regex-active-border');
+                    }
+                }
+
+                // Toggle visibility of the entire sequence container based on the regex checkbox
+                enableRegexCheckbox.addEventListener('change', () => {
+                    toggleSequenceVisibility();
+                    toggleRegexBorder();
+                    resetSearchState(true);
+                });
+                
+                // Initial check for sequence container visibility and regex border
+                toggleSequenceVisibility();
+                toggleRegexBorder();
+
+                /**
+                 * Generates a context string based on selected ID and Tag.
+                 */
+                function getContextString() {
+                    const selectedId = idDropdown.value;
+                    const selectedTag = tagDropdown.value;
+                    let contextText = '';
+
+                    if (selectedId !== 'all' && selectedTag !== 'all') {
+                        contextText = ` in selected <span class="text-blue-400 font-bold">#${selectedId}</span> and <span class="text-purple-400 font-bold">&lt;${selectedTag}&gt;</span> tags only`;
+                    } else if (selectedId !== 'all') {
+                        contextText = ` in selected <span class="text-blue-400 font-bold">#${selectedId}</span> only`;
+                    } else if (selectedTag !== 'all') {
+                        contextText = ` in selected <span class="text-purple-400 font-bold">&lt;${selectedTag}&gt;</span> tags only`;
+                    }
+                    return contextText;
+                }
+
+                  /**
+                 * Finds and returns a list of all matches based on the current search criteria.
+                 */
+                function findMatches() {
+    const findText = findInput.value;
+    if (!findText) return [];
+
+    const selectedId = idDropdown.value;
+    const selectedTag = tagDropdown.value;
+    const isRegex = enableRegexCheckbox.checked;
+    const matchCase = matchCaseCheckbox.checked;
+    const isCaseSensitive = matchCase;
+    const model = monacoEditorInstance.getModel();
+    const editorValue = model.getValue();
+    let matches = [];
+    let searchScopeRange = null; // This will define the overall range for the search
+
+    // --- Determine the ID-based search scope first ---
+    if (selectedId !== 'all') {
+        const idAttributeRegex = new RegExp(`<(\\w+)([^>]*id="${selectedId}"[^>]*)>`, 'i'); // Capture tagName
+        const idMatch = idAttributeRegex.exec(editorValue);
+
+        if (idMatch) {
+            const startOffset = idMatch.index;
+            const tagName = idMatch[1];
+            const tagContent = idMatch[2];
+
+            const isSelfClosing = tagContent.endsWith('/') || ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'].includes(tagName.toLowerCase());
+
+            if (isSelfClosing) {
+                searchScopeRange = new monaco.Range(
+                    model.getPositionAt(startOffset).lineNumber,
+                    model.getPositionAt(startOffset).column,
+                    model.getPositionAt(startOffset + idMatch[0].length).lineNumber,
+                    model.getPositionAt(startOffset + idMatch[0].length).column
+                );
+            } else {
+                searchScopeRange = findFullElementRange(model, startOffset);
+            }
+        } else {
+            return []; // ID not found, so no search scope
+        }
+    }
+
+    // --- Now, refine the search scope further if a tag is selected ---
+    if (selectedTag !== 'all') {
+        let currentSearchAreaRange = searchScopeRange; // Start with ID scope if present, else full document
+        let allRangesToSearch = []; // Collect all ranges for selected tag within the current scope
+
+        const tagOpeningRegex = new RegExp(`<${selectedTag}([^>]*)>`, 'gi');
+        tagOpeningRegex.lastIndex = currentSearchAreaRange ? model.getOffsetAt(currentSearchAreaRange.getStartPosition()) : 0;
+
+        let match;
+        while ((match = tagOpeningRegex.exec(editorValue)) !== null) {
+            const matchStartOffset = match.index;
+            const matchEndOffset = match.index + match[0].length;
+
+            // If a broader scope (like ID scope) is active, ensure this tag is within it
+            if (currentSearchAreaRange) {
+                const matchStartPos = model.getPositionAt(matchStartOffset);
+                if (!currentSearchAreaRange.containsPosition(matchStartPos) && matchStartOffset >= model.getOffsetAt(currentSearchAreaRange.getEndPosition())) {
+                    // Optimization: if we've passed the end of the current search area, stop.
+                    break;
+                }
+                if (!currentSearchAreaRange.containsPosition(matchStartPos)) {
+                    continue; // Skip if this match is outside the defined scope
+                }
+            }
+
+            const elementFullRange = findFullElementRange(model, matchStartOffset);
+            if (elementFullRange) {
+                allRangesToSearch.push(elementFullRange);
+            }
+        }
+
+        // If specific tags are selected, concatenate all matches found within those tag ranges
+        if (allRangesToSearch.length > 0) {
+            allRangesToSearch.forEach(range => {
+                matches.push(...model.findMatches(findText, range, isRegex, isCaseSensitive, null, true));
+            });
+        } else {
+            return []; // No elements of the selected tag type found in the scope
+        }
+
+    } else {
+        // If only ID is selected, or no filters are applied, perform a search within searchScopeRange
+        matches = model.findMatches(findText, searchScopeRange, isRegex, isCaseSensitive, null, true);
+    }
+
+    return matches;
+}
+
+// Helper function to find the full range of an HTML element given its opening tag's start offset
+function findFullElementRange(model, initialStartOffset) {
+    const editorValue = model.getValue();
+    const startPos = model.getPositionAt(initialStartOffset);
+
+    // 1. Find the opening tag and extract its name and whether it's self-closing
+    // Regex for an opening tag (e.g., <div id="x"> or <img src="y"/>)
+    const openTagMatch = editorValue.substring(initialStartOffset).match(/^<(\w+)([^>]*)>/);
+    if (!openTagMatch) {
+        return null; // Not a valid opening tag at this position
+    }
+
+    const tagName = openTagMatch[1];
+    const tagContent = openTagMatch[2]; // Attributes and closing part
+    const openTagLength = openTagMatch[0].length;
+    const isSelfClosing = tagContent.endsWith('/') || ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'].includes(tagName.toLowerCase());
+
+    if (isSelfClosing) {
+        // For self-closing tags, the range is just the tag itself
+        return new monaco.Range(
+            startPos.lineNumber,
+            startPos.column,
+            model.getPositionAt(initialStartOffset + openTagLength).lineNumber,
+            model.getPositionAt(initialStartOffset + openTagLength).column
+        );
+    }
+
+    // 2. For paired tags, scan to find the matching closing tag
+    let balance = 1; // Start with 1 for the initial opening tag
+    let currentOffset = initialStartOffset + openTagLength;
+
+    const openingTagRegex = new RegExp(`<${tagName}([^>]*)>`, 'gi');
+    const closingTagRegex = new RegExp(`<\/${tagName}>`, 'gi');
+
+    // Reset regex lastIndex to search from currentOffset
+    openingTagRegex.lastIndex = currentOffset;
+    closingTagRegex.lastIndex = currentOffset;
+
+    let nextOpenMatch = openingTagRegex.exec(editorValue);
+    let nextCloseMatch = closingTagRegex.exec(editorValue);
+
+    while (balance > 0 && (nextOpenMatch || nextCloseMatch)) {
+        if (nextCloseMatch && (!nextOpenMatch || nextCloseMatch.index < nextOpenMatch.index)) {
+            // Found a closing tag before the next opening tag (or no more opening tags)
+            balance--;
+            currentOffset = nextCloseMatch.index + nextCloseMatch[0].length;
+            if (balance === 0) {
+                // Found the matching closing tag
+                return new monaco.Range(
+                    startPos.lineNumber,
+                    startPos.column,
+                    model.getPositionAt(currentOffset).lineNumber,
+                    model.getPositionAt(currentOffset).column
+                );
+            }
+            // Continue searching from after this closing tag
+            openingTagRegex.lastIndex = currentOffset;
+            closingTagRegex.lastIndex = currentOffset;
+            nextOpenMatch = openingTagRegex.exec(editorValue);
+            nextCloseMatch = closingTagRegex.exec(editorValue);
+        } else if (nextOpenMatch) {
+            // Found an opening tag (nested) before the next closing tag
+            balance++;
+            currentOffset = nextOpenMatch.index + nextOpenMatch[0].length;
+            // Continue searching from after this opening tag
+            openingTagRegex.lastIndex = currentOffset;
+            closingTagRegex.lastIndex = currentOffset;
+            nextOpenMatch = openingTagRegex.exec(editorValue);
+            nextCloseMatch = closingTagRegex.exec(editorValue);
+        } else {
+            // No more opening or closing tags, but balance > 0 (unclosed tag)
+            break;
+        }
+    }
+
+    // If we reach here, the tag was unclosed or an error occurred.
+    // Highlight from the start of the opening tag to the end of the document
+    // or to the end of the line if that's more appropriate.
+    // For now, let's just highlight the opening tag itself as a fallback
+    return new monaco.Range(
+        startPos.lineNumber,
+        startPos.column,
+        model.getPositionAt(initialStartOffset + openTagLength).lineNumber,
+        model.getPositionAt(initialStartOffset + openTagLength).column
+    );
+}
+
+                  /**
+                 * Updates all decorations (ID highlight and find matches) based on the current state.
+                 */
+                function updateDecorations() {
+    const newDecorations = [];
+    const selectedId = idDropdown.value;
+    const selectedTag = tagDropdown.value;
+    const editorValue = monacoEditorInstance.getModel().getValue();
+    const model = monacoEditorInstance.getModel();
+
+    let idBlockRange = null;
+
+    // --- ID Highlight Logic ---
+    if (selectedId !== 'all') {
+        const idAttributeRegex = new RegExp(`<(\\w+)([^>]*id="${selectedId}"[^>]*)>`, 'i'); // Capture tagName
+        const idMatch = idAttributeRegex.exec(editorValue);
+
+        if (idMatch) {
+            const startOffset = idMatch.index;
+            const tagName = idMatch[1]; // Get the tag name (e.g., 'section', 'div')
+            const tagContent = idMatch[2]; // Attributes and closing part (needed for self-closing check)
+
+            const isSelfClosing = tagContent.endsWith('/') || ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'].includes(tagName.toLowerCase());
+
+            if (isSelfClosing) {
+                // For self-closing tags with ID, just highlight the tag itself
+                idBlockRange = new monaco.Range(
+                    model.getPositionAt(startOffset).lineNumber,
+                    model.getPositionAt(startOffset).column,
+                    model.getPositionAt(startOffset + idMatch[0].length).lineNumber,
+                    model.getPositionAt(startOffset + idMatch[0].length).column
+                );
+            } else {
+                // Use the tag balancing function for paired tags
+                idBlockRange = findFullElementRange(model, startOffset);
+            }
+        }
+    }
+
+    if (idBlockRange) {
+        newDecorations.push({
+            range: idBlockRange,
+            options: { inlineClassName: 'id-highlight' }
+        });
+    }
+
+    // --- Tag Highlight Logic (with ID scope awareness) ---
+    if (selectedTag !== 'all') {
+        let contentToSearchForTags = editorValue;
+        let baseOffsetForTags = 0;
+        let searchStartOffset = 0; // Where to start searching in editorValue
+
+        // If an ID is selected AND its block was successfully found,
+        // restrict the tag search to that block's content and adjust baseOffset.
+        if (selectedId !== 'all' && idBlockRange) {
+            searchStartOffset = model.getOffsetAt(new monaco.Position(idBlockRange.startLineNumber, idBlockRange.startColumn));
+            contentToSearchForTags = model.getValueInRange(idBlockRange); // This might not be strictly needed for findFullElementRange
+            baseOffsetForTags = searchStartOffset; // Base offset for ranges found within this content
+        }
+
+        // Find all occurrences of the selectedTag
+        const tagOpeningRegex = new RegExp(`<${selectedTag}([^>]*)>`, 'gi'); // Find all opening tags
+        tagOpeningRegex.lastIndex = searchStartOffset; // Start search from the correct position
+
+        let match;
+        while ((match = tagOpeningRegex.exec(editorValue)) !== null) {
+            // Ensure this match is within the current ID scope if one is active
+            if (selectedId !== 'all' && idBlockRange) {
+                 const matchStartPos = model.getPositionAt(match.index);
+                 if (!idBlockRange.containsPosition(matchStartPos)) {
+                     // If the match is outside the ID scope, skip it.
+                     // This can happen if regex.lastIndex goes past idBlockRange end.
+                     // To prevent infinite loops or missing tags, it's safer to break if outside current scope.
+                     if (match.index >= model.getOffsetAt(idBlockRange.getEndPosition())) {
+                         break;
+                     }
+                     continue; // Skip current match, continue searching
+                 }
+            }
+
+            const currentElementFullRange = findFullElementRange(model, match.index);
+            if (currentElementFullRange) {
+                newDecorations.push({
+                    range: currentElementFullRange,
+                    options: { inlineClassName: 'tag-highlight' }
+                });
+            }
+        }
+    }
+
+    // --- Existing Find Match Highlighting Logic ---
+    if (allMatches.length > 0) {
+        if (highlightAllCheckbox.checked) {
+            allMatches.forEach(match => {
+                newDecorations.push({
+                    range: match.range,
+                    options: { inlineClassName: 'highlight-all-magenta' }
+                });
+            });
+            if (currentMatchIndex !== -1) {
+                newDecorations.push({
+                    range: allMatches[currentMatchIndex].range,
+                    options: { inlineClassName: 'find-current-match-highlight' }
+                });
+            }
+        } else if (currentMatchIndex !== -1) {
+            newDecorations.push({
+                range: allMatches[currentMatchIndex].range,
+                options: { inlineClassName: 'find-highlight' }
+            });
+        }
+
+        if (currentMatchIndex !== -1) {
+             monacoEditorInstance.revealRangeInCenterIfOutsideViewport(allMatches[currentMatchIndex].range, 0);
+             const position = allMatches[currentMatchIndex].range.getStartPosition();
+             monacoEditorInstance.setPosition(position);
+
+             matchCountSpan.innerHTML = `${currentMatchIndex + 1} of ${allMatches.length}${getContextString()}`;
+        }
+    } else {
+        const matchCase = matchCaseCheckbox.checked;
+        let statusMessage = "No matches";
+        let optionsDescription = [];
+
+        if (findInput.value === '') {
+            matchCountSpan.innerHTML = "";
+            allDecorations = monacoEditorInstance.deltaDecorations(allDecorations, newDecorations);
+            return;
+        }
+
+        if (matchCase) {
+            optionsDescription.push("case-sensitive");
+        }
+
+        if (optionsDescription.length > 0) {
+            statusMessage = `No ${optionsDescription.join(' ')} matches`;
+        }
+        matchCountSpan.innerHTML = `${statusMessage}${getContextString()}`;
+    }
+
+    allDecorations = monacoEditorInstance.deltaDecorations(allDecorations, newDecorations);
+}
+
+                /**
+                 * Resets the search state and decorations when search criteria change,
+                 * or forces a re-index if 'force' is true.
+                 */
+                function resetSearchState(force = false) {
+                    const newFindText = findInput.value;
+                    const newSelectedId = idDropdown.value;
+                    const newSelectedTag = tagDropdown.value;
+                    const newIsRegex = enableRegexCheckbox.checked;
+                    const newMatchCase = matchCaseCheckbox.checked;
+
+                    const criteriaChanged = (
+                        newFindText !== currentFindText ||
+                        newSelectedId !== currentSelectedId ||
+                        newSelectedTag !== currentSelectedTag ||
+                        newIsRegex !== currentIsRegex ||
+                        newMatchCase !== currentMatchCase
+                    );
+
+                    if (force || criteriaChanged) {
+                        currentFindText = newFindText;
+                        currentSelectedId = newSelectedId;
+                        currentSelectedTag = newSelectedTag;
+                        currentIsRegex = newIsRegex;
+                        currentMatchCase = newMatchCase;
+
+                        allMatches = findMatches();
+                        currentMatchIndex = -1;
+
+                        if (allMatches.length > 0 && newFindText !== '') {
+                            currentMatchIndex = 0;
+                        }
+                    }
+                    
+                    updateDecorations();
+                }
+
+                // Helper function to process replacement text for a single match
+                function processReplacement(originalMatchText, replaceText, isRegex, isSequencing, sequenceCurrentValue) {
+                    let finalReplacement = replaceText;
+
+                    // Handle sequencing
+                    if (isSequencing) {
+                        if (finalReplacement.includes('{$#+}')) {
+                            finalReplacement = finalReplacement.replaceAll('{$#+}', sequenceCurrentValue.toString());
+                        } else if (finalReplacement.includes('{$#-}' )) {
+                            finalReplacement = finalReplacement.replaceAll('{$#-}', sequenceCurrentValue.toString());
+                        }
+                    }
+
+                    // Handle backreferences ($1, $2, etc.) and $& if regex is enabled
+                    if (isRegex) {
+                        const findText = findInput.value;
+                        const matchCase = matchCaseCheckbox.checked;
+                        const pattern = isRegex ? findText : escapeRegExp(findText);
+                        const regexForGroups = new RegExp(pattern, matchCase ? '' : 'i');
+
+                        const groupMatch = regexForGroups.exec(originalMatchText);
+
+                        if (groupMatch) {
+                            finalReplacement = finalReplacement.replaceAll('$&', groupMatch[0] || '');
+                            for (let i = 1; i < groupMatch.length; i++) {
+                                const placeholder = `$${i}`;
+                                finalReplacement = finalReplacement.replaceAll(placeholder, groupMatch[i] || '');
+                            }
+                        }
+                    }
+                    return finalReplacement;
+                }
+
+                // Event listeners for UI elements
+                findNextButton.addEventListener('click', () => {
+                    resetSearchState();
+                    if (allMatches.length > 0) {
+                        currentMatchIndex = (currentMatchIndex + 1) % allMatches.length;
+                        updateDecorations();
+                    } else {
+                        // Message already handled by updateDecorations
+                    }
+                });
+
+                findPreviousButton.addEventListener('click', () => {
+                    resetSearchState();
+                    if (allMatches.length > 0) {
+                        currentMatchIndex = (currentMatchIndex - 1 + allMatches.length) % allMatches.length;
+                        updateDecorations();
+                    } else {
+                        // Message already handled by updateDecorations
+                    }
+                });
+
+                // Logic for the new "Replace" button
+                replaceOneButton.addEventListener('click', () => {
+                    const findText = findInput.value;
+                    const replaceText = replaceInput.value;
+                    const isRegex = enableRegexCheckbox.checked;
+                    const isSequencing = sequenceCheckbox.checked && (replaceText.includes('{$#+}') || replaceText.includes('{$#-}') );
+                    let startIndex = parseInt(startIndexInput.value, 10);
+
+                    if (!findText) {
+                        updateDecorations();
+                        return;
+                    }
+
+                    if (isSequencing && isNaN(startIndex)) {
+                        showMessageBox("Please enter a valid number for 'Start' index when sequencing.", true);
+                        return;
+                    }
+
+                    if (allMatches.length === 0 || currentMatchIndex === -1 || currentMatchIndex >= allMatches.length) {
+                        resetSearchState();
+                        if (allMatches.length === 0) {
+                            updateDecorations();
+                            return;
+                        }
+                    }
+                    
+                    const matchToReplace = allMatches[currentMatchIndex];
+                    const originalMatchRange = matchToReplace.range;
+                    const originalMatchText = monacoEditorInstance.getModel().getValueInRange(originalMatchRange); // Use monacoEditorInstance
+                    
+                    const processedReplaceText = processReplacement(
+                        originalMatchText,
+                        replaceText,
+                        isRegex,
+                        isSequencing,
+                        startIndex
+                    );
+
+                    monacoEditorInstance.executeEdits( // Use monacoEditorInstance
+                        null,
+                        [{
+                            range: originalMatchRange,
+                            text: processedReplaceText,
+                            forceMoveMarkers: true
+                        }]
+                    );
+                    
+                    if (isSequencing) {
+                        if (replaceText.includes('{$#+}')) {
+                            startIndexInput.value = (startIndex + 1).toString();
+                        } else if (replaceText.includes('{$#-}' )) {
+                            startIndexInput.value = (startIndex - 1).toString();
+                        }
+                    }
+
+                    const oldEndPosition = originalMatchRange.getEndPosition();
+
+                    resetSearchState(true);
+
+                    let newCurrentMatchIndex = -1;
+
+                    for (let i = 0; i < allMatches.length; i++) {
+                        const newMatchRange = allMatches[i].range;
+                        if (monaco.Position.compare(newMatchRange.getStartPosition(), oldEndPosition) >= 0) {
+                            newCurrentMatchIndex = i;
+                            break;
+                        }
+                    }
+
+                    if (newCurrentMatchIndex !== -1) {
+                        currentMatchIndex = newCurrentMatchIndex;
+                    } else if (allMatches.length > 0) {
+                        currentMatchIndex = 0;
+                    } else {
+                        currentMatchIndex = -1;
+                    }
+                    
+                    allDecorations = monacoEditorInstance.deltaDecorations(allDecorations, []); // Use monacoEditorInstance
+                    updateDecorations();
+                });
+
+                idDropdown.addEventListener('change', () => resetSearchState(true)); 
+                tagDropdown.addEventListener('change', () => resetSearchState(true)); 
+                matchCaseCheckbox.addEventListener('change', () => resetSearchState(true)); 
+                highlightAllCheckbox.addEventListener('change', updateDecorations);
+                findInput.addEventListener('input', () => resetSearchState(true));
+				
+                // The original replace button is now Replace All
+                replaceAllButton.addEventListener('click', () => {
+    const findText = findInput.value;
+    const replaceText = replaceInput.value;
+    const isRegex = enableRegexCheckbox.checked;
+    const matchCase = matchCaseCheckbox.checked;
+    const isSequencing = sequenceCheckbox.checked && (replaceText.includes('{$#+}') || replaceText.includes('{$#-}') );
+
+    if (!findText) {
+        // If find input is empty, clear decorations and show a message
+        resetSearchState(); // This will effectively clear old matches and decorations
+        matchCountSpan.innerHTML = "Enter text to find.";
+        return;
+    }
+
+    let startIndex = parseInt(startIndexInput.value, 10);
+    if (isSequencing && (isNaN(startIndex) || startIndex < 0)) { // Added check for negative startIndex
+        showMessageBox("Please enter a valid non-negative number for 'Start' index when sequencing.", true);
+        return;
+    }
+    
+    // Find all matches *before* starting replacements, as replacements can change offsets
+    let matchesToReplace = findMatches(); 
+    
+    if (matchesToReplace.length === 0) {
+        resetSearchState(); // Show "No matches"
+        return;
+    }
+
+    const edits = [];
+    let replacementCount = 0;
+    let sequenceCounter = startIndex; // Start sequence from the input value
+
+    // Important: endIndex should only be considered if sequence is enabled.
+    // Also, ensure endIndex is treated as inclusive if user intends it that way.
+    const endIndex = parseInt(endIndexInput.value, 10);
+    const hasEndIndex = isSequencing && !isNaN(endIndex);
+
+    const pattern = isRegex ? findText : escapeRegExp(findText);
+
+    // Filter matches based on the end index if sequencing is active and an end index is provided
+    let filteredMatches = matchesToReplace;
+    if (hasEndIndex) {
+        filteredMatches = matchesToReplace.filter((match, index) => {
+            const currentMatchSequenceValue = sequenceCounter + index;
+            return currentMatchSequenceValue <= endIndex;
+        });
+    }
+
+    filteredMatches.forEach((match, index) => {
+        // Use `sequenceCounter + index` for calculation, as `sequenceCounter` is the base for the *first* item
+        // and `index` is its offset within the `filteredMatches` array.
+        const effectiveSequenceValue = sequenceCounter + index; 
+
+        let finalReplacement = replaceText;
+
+        if (isSequencing) {
+            // Apply sequencing tokens
+            if (finalReplacement.includes('{$#+}')) {
+                finalReplacement = finalReplacement.replaceAll('{$#+}', effectiveSequenceValue.toString());
+            } else if (finalReplacement.includes('{$#-}' )) {
+                finalReplacement = finalReplacement.replaceAll('{$#-}', effectiveSequenceValue.toString());
+            }
+        }
+
+        if (isRegex) {
+            const originalMatchText = monacoEditorInstance.getModel().getValueInRange(match.range);
+            const regexForGroups = new RegExp(pattern, matchCase ? '' : 'i');
+            const groupMatch = regexForGroups.exec(originalMatchText);
+
+            if (groupMatch) { 
+                finalReplacement = finalReplacement.replaceAll('$&', groupMatch[0] || '');
+
+                for (let i = 1; i < groupMatch.length; i++) { 
+                    const placeholder = `$${i}`;
+                    finalReplacement = finalReplacement.replaceAll(placeholder, groupMatch[i] || '');
+                }
+            }
+        }
+
+        edits.push({
+            range: match.range,
+            text: finalReplacement
+        });
+        replacementCount++;
+    });
+
+    if (edits.length === 0) {
+        // This case should ideally be caught by matchesToReplace.length === 0,
+        // but if `hasEndIndex` filters everything out, this handles it.
+        matchCountSpan.innerHTML = "No matches found within the specified sequence range.";
+        return;
+    }
+
+    monacoEditorInstance.getModel().pushEditOperations(
+        [],
+        edits,
+        () => null // This function is called to compute new selections after edits.
+                   // Returning `null` means selections are not automatically adjusted.
+                   // You might want to adjust this if you need specific cursor placement.
+    );
+
+    // After replacement, clear old decorations and re-run findMatches to update current state
+    matchCountSpan.innerHTML = `Replaced ${replacementCount} occurrences.`;
+    resetSearchState(true); // Force a re-search and re-decoration
+});
+
+                // NEW Regex Guide button event listener:
+				regexGuideButton.addEventListener('click', () => {
+					const originalText = regexGuideButton.textContent;
+					showRegexGuideModal(regexGuideButton, originalText);
+				});
+				updateAllInteractiveButtonStates();
             });
 
             copyCodeBtn.addEventListener('click', async () => {
                 const codeContent = monacoEditorInstance ? monacoEditorInstance.getValue() : '';
                 try {
-                    const tempTextArea = document.createElement('textarea');
-                    tempTextArea.value = codeContent;
-                    document.body.appendChild(tempTextArea);
-                    tempTextArea.select();
-                    document.execCommand('copy');
+                    await navigator.clipboard.writeText(codeContent);
                     const originalText = copyCodeBtn.textContent;
                     copyCodeBtn.textContent = 'Copied!';
                     copyCodeBtn.classList.add('bg-green-500', 'hover:bg-green-600');
@@ -3867,7 +5200,6 @@
                     setTimeout(() => {
                         copyCodeBtn.textContent = originalText;
                         copyCodeBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-                        copyCodeBtn.classList.add('bg-slate-600', 'hover:bg-slate-500'); // Changed
                         copyCodeBtn.disabled = false; // Re-enable the button
                         copyCodeBtn.removeAttribute('data-temp-active'); // Unmark as active
                         updateAllInteractiveButtonStates(); // Update all buttons
@@ -4071,7 +5403,6 @@
                 setTimeout(() => {
                     clearAllBtn.textContent = originalText;
                     clearAllBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-                    clearAllBtn.classList.add('bg-slate-600', 'hover:bg-slate-500'); // Changed
                     clearAllBtn.disabled = false; // Re-enable the button
                     clearAllBtn.removeAttribute('data-temp-active'); // Unmark as active
                     updateAllInteractiveButtonStates();
@@ -4143,6 +5474,7 @@
                         .nowrap {
                             white-space: nowrap;
                         }
+						
                     </style>
                 </head>
                 <body>
@@ -4199,16 +5531,20 @@
                             console.log("Iframe: HugeRTE library loaded. Initializing editor.");
                             hugerte.init({
                                 selector: '#richEditor',
-                                toolbar: 'undo redo styles bold italic alignleft aligncenter alignright numlist bullist link table',
-                                plugins: [ 'table', 'lists', 'link' ],
-                                height: '100%', // Explicitly set height for TinyMCE
-                                tab_focus: false, // Allow tab to indent instead of changing focus
-                                formats: { // Define custom formats for alignment to use classes
-                                    alignleft: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img', classes: 'text-left', exact: true },
-                                    aligncenter: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img', classes: 'text-center', exact: true },
-                                    alignright: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img', classes: 'text-right', exact: true },
-                                },
-                                init_instance_callback: function(editorInstance) {
+								toolbar: 'undo redo styles bold italic alignleft aligncenter alignright numlist bullist link table',
+								plugins: [ 'table', 'lists', 'link' ], // 'lists' plugin is relevant for ol/ul, but not directly dl
+								height: '100%',
+								tab_focus: false,
+								formats: {
+									alignleft: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img', classes: 'text-left', exact: true },
+									aligncenter: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img', classes: 'text-center', exact: true },
+									alignright: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img', classes: 'text-right', exact: true },
+								},
+								content_style: 'body { max-width: 1170px; margin-left: auto; margin-right: auto; padding: 15px; box-sizing: border-box; } h1 { background-color: #FF6347; padding: 2px 5px; border-radius: 3px; display: inline-block; } h2 { background-color: #FE9900; padding: 2px 5px; border-radius: 3px; display: inline-block; } h3 { background-color: #FFDE59; padding: 2px 5px; border-radius: 3px; display: inline-block; } h4 { background-color: #7DDA58; padding: 2px 5px; border-radius: 3px; display: inline-block; } h5 { background-color: #5DE2E7; padding: 2px 5px; border-radius: 3px; display: inline-block; } h6 { background-color: #E7DDFF; padding: 2px 5px; border-radius: 3px; display: inline-block; } section { border: #060270 2px dashed; margin: 5px; padding: 5px;} div, aside { border: #8D6F64 2px solid; margin: 5px; padding: 5px;} details > *:not(summary) { display: block !important; } details summary { cursor: default !important; font-weight: bold; margin-bottom: 5px; color: #333; }',
+                                extended_valid_elements: 'dl[class|id],dt[class|id],dd[class|id],details[open],summary',
+								valid_children: '+body[dl],+dl[dt|dd],+dt[a|abbr|acronym|b|bdo|big|br|button|cite|code|del|dfn|em|i|img|input|ins|kbd|label|map|q|samp|select|small|span|strike|strong|sub|sup|textarea|tt|var|p],+dd[a|abbr|acronym|b|bdo|big|br|button|cite|code|del|dfn|em|i|img|input|ins|kbd|label|map|q|samp|select|small|span|strike|strong|sub|sup|textarea|tt|var|p|ul|ol|dl],+details[summary|p|div|ul|ol|table|h1|h2|h3|h4|h5|h6]',
+								custom_elements: 'dl,dt,dd,details,summary',
+								init_instance_callback: function(editorInstance) {
                                     console.log('Iframe: HugeRTE editor initialized inside iframe.');
                                     richTextEditorInstance = editorInstance; // Store the instance globally
                                     // Expose the instance to the parent window
@@ -4359,19 +5695,26 @@
                         // Time tags functionality - copied from original timeTagsBtn.click()
                         const parser = new DOMParser();
                         const doc = parser.parseFromString(currentContent, 'text/html');
-                        const body = doc.body;
+                        let htmlToProcessForTimeTags = doc.body.innerHTML; // Directly use innerHTML
 
-                        // Step 1: Remove existing <time> tags and extract their text content
-                        const existingTimeElements = doc.querySelectorAll('time');
+// Step 1: Remove existing <time> tags and extract their text content.
+// This is crucial to prevent re-processing already tagged dates and infinite loops.
+                        const tempDoc = parser.parseFromString(htmlToProcessForTimeTags, 'text/html');
+                        const existingTimeElements = tempDoc.querySelectorAll('time');
                         existingTimeElements.forEach(timeEl => {
-                            // Replace the <time> element with its text content
-                            const textNode = doc.createTextNode(timeEl.textContent);
+                            // Replace the <time> element with its innerHTML to retain any nested tags like sup.
+                            // Create a temporary element to hold the innerHTML for correct node insertion.
+                            const tempDiv = tempDoc.createElement('div');
+                            tempDiv.innerHTML = timeEl.innerHTML;
                             if (timeEl.parentNode) {
-                                timeEl.parentNode.replaceChild(textNode, timeEl);
+                                while (tempDiv.firstChild) {
+                                    timeEl.parentNode.insertBefore(tempDiv.firstChild, timeEl);
+                                }
+                                timeEl.parentNode.removeChild(timeEl);
                             }
                         });
+                        htmlToProcessForTimeTags = tempDoc.body.innerHTML; // Update with untagged content
 
-                        let contentToProcessForTimeTags = body.innerHTML;
 
                         const monthMap = {
                             'january': '01', 'jan': '01', 'janvier': '01',
@@ -4392,159 +5735,159 @@
                             return monthMap[monthName.toLowerCase()] || null;
                         }
 
-                        // Sort month keys by length descending to match longer names first (e.g., 'september' before 'sep')
+                        // Sort month keys by length descending to match longer names first
                         const sortedMonthKeys = Object.keys(monthMap).sort((a, b) => b.length - a.length);
                         // Escape special characters in month names for regex
                         const monthPattern = sortedMonthKeys.map(m => m.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|');
+                        // Assuming NBSP_PLACEHOLDER is defined elsewhere, or replace with actual NBSP.
                         const spaceOrNBSPChar = `(?:\\s|${NBSP_PLACEHOLDER})+`;
 
-                        // Add word boundaries (\b) to month patterns to prevent partial word matches (e.g., 'mai' in 'maintaining')
-                        // And robustly check for non-digits before/after the full match
+                        // NEW: Prioritize matching HTML-tag suffixes first in the OR group.
+                        const daySuffixPattern = '(?:<sup>er<\\/sup>|<sup>st<\\/sup>|<sup>nd<\\/sup>|<sup>rd<\\/sup>|<sup>th<\\/sup>|er|st|nd|rd|th)?';
+
+
                         const regexIsoDateFull = /(?<!\d)(\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01]))(?!\d)/g;
-                        const regexMonthDayYear = new RegExp(`(?<!\\d)\\b(${monthPattern})\\b${spaceOrNBSPChar}(\\d{1,2}),?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'i');
-                        const regexDayMonthYear = new RegExp(`(?<!\\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2})${spaceOrNBSPChar}\\b(${monthPattern})\\b,?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'i');
-                        const regexMonthYear = new RegExp(`(?<!\\d)\\b(${monthPattern})\\b${spaceOrNBSPChar}(\\d{4})(?!\\d|${spaceOrNBSPChar}\\d{1,2})`, 'i');
-                        const regexMonthDayNoYear = new RegExp(`(?<!\\d)\\b(${monthPattern})\\b${spaceOrNBSPChar}(\\d{1,2})(?!\\d|${spaceOrNBSPChar}\\d{4})(?!-)`, 'i');
-                        const regexDayMonthNoYear = new RegExp(`(?<!\\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2})${spaceOrNBSPChar}\\b(${monthPattern})\\b(?!\d|${spaceOrNBSPChar}\\d{4})(?!-)`, 'i');
 
-                        const reParsedDocForTimeTags = parser.parseFromString(contentToProcessForTimeTags, 'text/html');
-                        const reParsedBodyForTimeTags = reParsedDocForTimeTags.body;
+                        // Regexes now correctly capture day with its suffix (HTML or plain)
+                        // and handle optional comma with spaces around it
+                        const regexMonthDayYear = new RegExp(`(?<!\\d)\\b(${monthPattern})\\b${spaceOrNBSPChar}(\\d{1,2}${daySuffixPattern})\\s*,?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'i');
+                        const regexDayMonthYear = new RegExp(`(?<!\\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2}${daySuffixPattern})${spaceOrNBSPChar}\\b(${monthPattern})\\b\\s*,?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'i');
 
-                        const textNodesToModifyForTimeTags = [];
-                        const walkerForTimeTags = reParsedDocForTimeTags.createTreeWalker(
-                            reParsedBodyForTimeTags,
-                            NodeFilter.SHOW_TEXT,
-                            {
-                                acceptNode: function(node) {
-                                    let parent = node.parentNode;
-                                    while (parent) {
-                                        const tagName = parent.tagName ? parent.tagName.toLowerCase() : '';
-                                        if (tagName === 'script' || tagName === 'style' || tagName === 'time') {
-                                            return NodeFilter.FILTER_REJECT;
-                                        }
-                                        parent = parent.parentNode;
-                                    }
-                                    return NodeFilter.FILTER_ACCEPT;
-                                }
-                            },
-                            false
-                        );
+                        const regexMonthYear = new RegExp(`(?<!\\d)\\b(${monthPattern})\\b${spaceOrNBSPChar}(\\d{4})(?!\\d|(?:${spaceOrNBSPChar}\\d{1,2}))`, 'i');
 
-                        let currentNodeForTimeTags;
-                        while (currentNodeForTimeTags = walkerForTimeTags.nextNode()) {
-                            textNodesToModifyForTimeTags.push(currentNodeForTimeTags);
-                        }
+                        // Lookahead ensures it doesn't match if a year is present after the day/month.
+                        const regexMonthDayNoYear = new RegExp(`(?<!\\d)\\b(${monthPattern})\\b${spaceOrNBSPChar}(\\d{1,2}${daySuffixPattern})(?!\\d|(?:${spaceOrNBSPChar}\\d{4}))(?!-)`, 'i');
+                        const regexDayMonthNoYear = new RegExp(`(?<!\\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2}${daySuffixPattern})${spaceOrNBSPChar}\\b(${monthPattern})\\b(?!\d|(?:${spaceOrNBSPChar}\\d{4}))(?!-)`, 'i');
 
-                        textNodesToModifyForTimeTags.forEach(textNode => {
-                            let text = textNode.nodeValue;
-                            let currentText = text;
 
-                            let allMatches = [];
-                            const patternsToTest = [
-                                { name: 'IsoDateFull', regex: regexIsoDateFull, handler: (match) => {
-                                    const [fullMatch, yearMonthDay] = match;
-                                    return yearMonthDay;
-                                }, priority: 3 },
-                                { name: 'MonthDayYear', regex: regexMonthDayYear, handler: (match) => {
-                                    const [, month, day, year] = match;
-                                    const monthNum = getMonthNumber(month);
-                                    const parsedDay = parseInt(day);
-                                    if (!monthNum || isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) return null;
-                                    return `${year}-${monthNum}-${String(parsedDay).padStart(2, '0')}`;
-                                }, priority: 2 },
-                                { name: 'DayMonthYear', regex: regexDayMonthYear, handler: (match) => {
-                                    const [, day, month, year] = match;
-                                    const monthNum = getMonthNumber(month);
-                                    const parsedDay = parseInt(day);
-                                    if (!monthNum || isNaN(parsedDay) || parsedDay > 31) return null;
-                                    return `${year}-${monthNum}-${String(parsedDay).padStart(2, '0')}`;
-                                }, priority: 2 },
-                                { name: 'MonthYear', regex: regexMonthYear, handler: (match) => {
-                                    const [, month, year] = match;
-                                    const monthNum = getMonthNumber(month);
-                                    if (!monthNum) return null;
-                                    return `${year}-${monthNum}`;
-                                }, priority: 2 },
-                                { name: 'MonthDayNoYear', regex: regexMonthDayNoYear, handler: (match) => {
-                                    const [, month, day] = match;
-                                    const monthNum = getMonthNumber(month);
-                                    const parsedDay = parseInt(day);
-                                    if (!monthNum || isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) return null;
-                                    return `${monthNum}-${String(parsedDay).padStart(2, '0')}`;
-                                }, priority: 1 },
-                                { name: 'DayMonthNoYear', regex: regexDayMonthNoYear, handler: (match) => {
-                                    const [, day, month] = match;
-                                    const monthNum = getMonthNumber(month);
-                                    const parsedDay = parseInt(day);
-                                    if (!monthNum || isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) return null;
-                                    return `${monthNum}-${String(parsedDay).padStart(2, '0')}`;
-                                }, priority: 1 }
-                            ];
+                        // Instead of iterating text nodes, we will apply regex to the whole HTML string.
+                        let allMatches = [];
+                        const patternsToTest = [
+                            { name: 'IsoDateFull', regex: regexIsoDateFull, handler: (match) => {
+                                const [fullMatch, yearMonthDay] = match;
+                                return yearMonthDay;
+                            }, priority: 3 },
+                            { name: 'MonthDayYear', regex: regexMonthDayYear, handler: (match) => {
+                                const [, month, dayPart, year] = match;
+                                const monthNum = getMonthNumber(month);
+                                // Clean all possible suffixes, including `<sup>` tags
+                                let cleanDay = dayPart.replace(/(?:<sup>er<\/sup>|<sup>st<\/sup>|<sup>nd<\/sup>|<sup>rd<\/sup>|<sup>th<\/sup>|er|st|nd|rd|th)/gi, '').trim();
+                                const parsedDay = parseInt(cleanDay);
+                                if (!monthNum || isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) return null;
+                                return `${year}-${monthNum}-${String(parsedDay).padStart(2, '0')}`;
+                            }, priority: 2 },
+                            { name: 'DayMonthYear', regex: regexDayMonthYear, handler: (match) => {
+                                const [, dayPart, month, year] = match;
+                                const monthNum = getMonthNumber(month);
+                                // Clean all possible suffixes, including `<sup>` tags
+                                let cleanDay = dayPart.replace(/(?:<sup>er<\/sup>|<sup>st<\/sup>|<sup>nd<\/sup>|<sup>rd<\/sup>|<sup>th<\/sup>|er|st|nd|rd|th)/gi, '').trim();
+                                const parsedDay = parseInt(cleanDay);
+                                if (!monthNum || isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) return null;
+                                return `${year}-${monthNum}-${String(parsedDay).padStart(2, '0')}`;
+                            }, priority: 2 },
+                            { name: 'MonthYear', regex: regexMonthYear, handler: (match) => {
+                                const [, month, year] = match;
+                                const monthNum = getMonthNumber(month);
+                                if (!monthNum) return null;
+                                return `${year}-${monthNum}`;
+                            }, priority: 2 },
+                            { name: 'MonthDayNoYear', regex: regexMonthDayNoYear, handler: (match) => {
+                                const [, month, dayPart] = match;
+                                const monthNum = getMonthNumber(month);
+                                // Clean all possible suffixes, including `<sup>` tags
+                                let cleanDay = dayPart.replace(/(?:<sup>er<\/sup>|<sup>st<\/sup>|<sup>nd<\/sup>|<sup>rd<\/sup>|<sup>th<\/sup>|er|st|nd|rd|th)/gi, '').trim();
+                                const parsedDay = parseInt(cleanDay);
+                                if (!monthNum || isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) return null;
+                                return `${monthNum}-${String(parsedDay).padStart(2, '0')}`;
+                            }, priority: 1 },
+                            { name: 'DayMonthNoYear', regex: regexDayMonthNoYear, handler: (match) => {
+                                const [, dayPart, month] = match;
+                                const monthNum = getMonthNumber(month);
+                                // Clean all possible suffixes, including `<sup>` tags
+                                let cleanDay = dayPart.replace(/(?:<sup>er<\/sup>|<sup>st<\/sup>|<sup>nd<\/sup>|<sup>rd<\/sup>|<sup>th<\/sup>|er|st|nd|rd|th)/gi, '').trim();
+                                const parsedDay = parseInt(cleanDay);
+                                if (!monthNum || isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) return null;
+                                return `${monthNum}-${String(parsedDay).padStart(2, '0')}`;
+                            }, priority: 1 }
+                        ];
 
-                            patternsToTest.forEach(pattern => {
-                                let localRegex = new RegExp(pattern.regex.source, pattern.regex.flags);
-                                if (!localRegex.flags.includes('g')) {
-                                    localRegex = new RegExp(localRegex.source, localRegex.flags + 'g');
-                                }
-
-                                let match;
-                                while ((match = localRegex.exec(currentText)) !== null) {
-                                    const datetimeValue = pattern.handler(match);
-                                    if (datetimeValue) {
-                                        allMatches.push({
-                                            start: match.index,
-                                            end: match.index + match[0].length,
-                                            original: match[0],
-                                            datetime: datetimeValue,
-                                            priority: pattern.priority
-                                        });
-                                    }
-                                }
-                            });
-
-                            allMatches.sort((a, b) => {
-                                if (a.start !== b.start) {
-                                    return a.start - b.start;
-                                }
-                                if (a.priority !== b.priority) {
-                                    return b.priority - a.priority;
-                                }
-                                return b.original.length - a.original.length;
-                            });
-
-                            let nonOverlappingMatches = [];
-                            if (allMatches.length > 0) {
-                                nonOverlappingMatches.push(allMatches[0]);
-                                for (let i = 1; i < allMatches.length; i++) {
-                                    const currentMatch = allMatches[i];
-                                    const lastAddedMatch = nonOverlappingMatches[nonOverlappingMatches.length - 1];
-
-                                    if (currentMatch.start >= lastAddedMatch.end) {
-                                        nonOverlappingMatches.push(currentMatch);
-                                    }
-                                }
+                        patternsToTest.forEach(pattern => {
+                            let localRegex = new RegExp(pattern.regex.source, pattern.regex.flags);
+                            if (!localRegex.flags.includes('g')) {
+                                localRegex = new RegExp(localRegex.source, localRegex.flags + 'g');
                             }
 
-                            if (nonOverlappingMatches.length > 0) {
-                                let resultParts = [];
-                                let currentIndex = 0;
-                                nonOverlappingMatches.forEach(match => {
-                                    resultParts.push(currentText.substring(currentIndex, match.start));
-                                    resultParts.push(`<time class="nowrap" datetime="${match.datetime}">${match.original}</time>`);
-                                    currentIndex = match.end;
-                                });
-                                resultParts.push(currentText.substring(currentIndex));
-                                const newHtmlContent = resultParts.join('');
+                            let match;
+                            // Apply regex to the entire HTML string.
+                            // Reset lastIndex for global regex in a loop when called on the same string
+                            localRegex.lastIndex = 0;
+                            while ((match = localRegex.exec(htmlToProcessForTimeTags)) !== null) {
+                                // To avoid issues with nested time tags or matches within already-processed ones,
+                                // we should ensure the current match doesn't contain a <time> tag within itself.
+                                // This is a simple check, more robust would be a DOM-based approach.
+                                // However, our `nonOverlappingMatches` logic should largely handle this.
+                                if (match[0].includes('<time') && match[0].includes('</time>')) {
+                                    continue; // Skip if it matched an already-wrapped time tag
+                                }
 
-                                const fragment = reParsedDocForTimeTags.createRange().createContextualFragment(newHtmlContent);
-                                if (textNode.parentNode) {
-                                    textNode.parentNode.replaceChild(fragment, textNode);
+                                const datetimeValue = pattern.handler(match);
+                                if (datetimeValue) {
+                                    allMatches.push({
+                                        start: match.index,
+                                        end: match.index + match[0].length,
+                                        original: match[0], // match[0] is the full matched string, including any HTML
+                                        datetime: datetimeValue,
+                                        priority: pattern.priority
+                                    });
                                 }
                             }
                         });
-                        currentContent = reParsedBodyForTimeTags.innerHTML; // Update currentContent after time tag processing
+
+                        allMatches.sort((a, b) => {
+                            // Primary sort: by start position (earlier first)
+                            if (a.start !== b.start) {
+                                return a.start - b.start;
+                            }
+                            // Secondary sort: if same start, longest match first (more specific)
+                            if (a.original.length !== b.original.length) {
+                                return b.original.length - a.original.length;
+                            }
+                            // Tertiary sort: if same start and length, higher priority first
+                            return b.priority - a.priority;
+                        });
+
+                        let nonOverlappingMatches = [];
+                        if (allMatches.length > 0) {
+                            nonOverlappingMatches.push(allMatches[0]);
+                            for (let i = 1; i < allMatches.length; i++) {
+                                const currentMatch = allMatches[i];
+                                const lastAddedMatch = nonOverlappingMatches[nonOverlappingMatches.length - 1];
+
+                                // Only add if it doesn't overlap with the last added match.
+                                // The sorting (longest first for same start) should mean we don't need to replace.
+                                if (currentMatch.start >= lastAddedMatch.end) {
+                                    nonOverlappingMatches.push(currentMatch);
+                                }
+                            }
+                        }
+
+                        if (nonOverlappingMatches.length > 0) {
+                            let resultParts = [];
+                            let currentIndex = 0;
+                            nonOverlappingMatches.forEach(match => {
+                                resultParts.push(htmlToProcessForTimeTags.substring(currentIndex, match.start));
+                                resultParts.push(`<time class="nowrap" datetime="${match.datetime}">${match.original}</time>`);
+                                currentIndex = match.end;
+                            });
+                            resultParts.push(htmlToProcessForTimeTags.substring(currentIndex));
+                            htmlToProcessForTimeTags = resultParts.join('');
+                        }
+
+                        currentContent = htmlToProcessForTimeTags; // Update currentContent after time tag processing
                         console.log("Time Tags applied. Content length:", currentContent.length);
                     }
+					
+					
                     if (toggleFixFnIds.checked) {
                         // Fix FN ID's functionality - copied from original fixFnIdsBtn.click()
                         const parser = new DOMParser();
@@ -4692,6 +6035,425 @@
                 updateAllInteractiveButtonStates();
                 showFootnoteModal(footnoteListBtn, originalText); // Pass original text
             });
+// Helper function to generate a valid, unique ID for HTML elements.
+// It sanitizes baseText, and ensures the generated ID is not already present in the document.
+function generateUniqueId(baseText, existingIds) {
+    let id = baseText.toLowerCase()
+                     .replace(/[^a-z0-9\s-]/g, '') // Remove characters not allowed in IDs (keep letters, numbers, spaces, hyphens)
+                     .replace(/\s+/g, '-')       // Replace spaces with single hyphens
+                     .replace(/^-+|-+$/g, '');   // Trim hyphens from start/end
+
+    if (!id) { // If the baseText was empty or only special characters, use a generic fallback
+        id = 'auto-id';
+    }
+
+    let counter = 1;
+    let uniqueId = id;
+    // Check if the generated ID already exists. If so, append a counter until unique.
+    while (existingIds.has(uniqueId)) {
+        uniqueId = `${id}-${counter}`;
+        counter++;
+    }
+    existingIds.add(uniqueId); // Add the newly generated unique ID to our set of existing IDs
+    return uniqueId;
+}
+
+function escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the matched substring
+}
+
+/**
+ * Helper function to recursively collect classes from existing list items.
+ * This version focuses on li and a classes.
+ * @param {HTMLElement} listElement - The current ul/ol element to traverse.
+ * @param {Map} liClassMap - Map to store li classes.
+ * @param {Map} aClassMap - Map to store a classes.
+ */
+function collectExistingListClasses(listElement, liClassMap, aClassMap) {
+    Array.from(listElement.children).forEach(child => {
+        if (child.tagName.toLowerCase() === 'li') {
+            const li = child;
+            const a = li.querySelector('a');
+            const hrefTargetId = a ? a.getAttribute('href')?.substring(1) : null;
+
+            if (hrefTargetId) {
+                if (li.className) {
+                    liClassMap.set(hrefTargetId, li.className);
+                }
+                if (a && a.className) {
+                    aClassMap.set(hrefTargetId, a.className);
+                }
+            }
+
+            // Recursively collect classes from any nested lists within this li
+            Array.from(li.children).forEach(liChild => {
+                if (liChild.tagName.toLowerCase() === 'ul' || liChild.tagName.toLowerCase() === 'ol') {
+                    collectExistingListClasses(liChild, liClassMap, aClassMap);
+                }
+            });
+        }
+    });
+}
+
+/**
+ * Inserts or updates the "On this page" / "Sur cette page" Table of Contents.
+ * It removes any existing Page ToC and regenerates it based on H2 (and optionally H3) headings,
+ * preserving any manually added classes on the ToC elements.
+ *
+ * @param {number} maxLevel - The maximum heading level to include (2 for H2 only, 3 for H2 and H3).
+ * @param {string} lang - The language ('en' for English, 'fr' for French).
+ */
+function insertPageToc(maxLevel, lang) {
+    const html = monacoEditorInstance.getValue();
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const existingIds = new Set();
+    doc.querySelectorAll('[id]').forEach(el => existingIds.add(el.id));
+
+    // Ensure all H-level headings have unique IDs before generating links
+    doc.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(heading => {
+        if (!heading.id) {
+            heading.id = generateUniqueId(heading.textContent || `heading-${heading.tagName.toLowerCase()}`, existingIds);
+        }
+    });
+
+    let pageTocSectionClass = '';
+    let pageTocH2Class = '';
+    let pageTocUlClass = '';
+    let initialListTagName = 'ul'; // Default to ul
+    const pageTocLiClassMap = new Map();
+    const pageTocALinkClassMap = new Map();
+
+    // 1) Find and remove any existing Page ToC, and collect its classes
+    let oldToc = doc.getElementById('page-nav');
+    if (oldToc) {
+        pageTocSectionClass = oldToc.getAttribute('class') || '';
+        const existingH2 = oldToc.querySelector('h2');
+        if (existingH2) {
+            pageTocH2Class = existingH2.getAttribute('class') || '';
+        }
+        const existingUlOrOl = oldToc.querySelector('ul, ol');
+        if (existingUlOrOl) {
+            pageTocUlClass = existingUlOrOl.getAttribute('class') || '';
+            initialListTagName = existingUlOrOl.tagName.toLowerCase();
+            collectExistingListClasses(existingUlOrOl, pageTocLiClassMap, pageTocALinkClassMap);
+        }
+        oldToc.remove();
+    } else {
+        const existingH2ByContent = Array.from(doc.querySelectorAll('h2')).find(h =>
+            h.textContent.trim().toLowerCase() === 'on this page' || h.textContent.trim().toLowerCase() === 'sur cette page'
+        );
+        if (existingH2ByContent && existingH2ByContent.parentNode && existingH2ByContent.parentNode.tagName.toLowerCase() === 'section') {
+            const potentialOldTocSection = existingH2ByContent.parentNode;
+            pageTocSectionClass = potentialOldTocSection.getAttribute('class') || '';
+            pageTocH2Class = existingH2ByContent.getAttribute('class') || '';
+            const existingUlOrOl = potentialOldTocSection.querySelector('ul, ol');
+            if (existingUlOrOl) {
+                pageTocUlClass = existingUlOrOl.getAttribute('class') || '';
+                initialListTagName = existingUlOrOl.tagName.toLowerCase();
+                collectExistingListClasses(existingUlOrOl, pageTocLiClassMap, pageTocALinkClassMap);
+            }
+            potentialOldTocSection.remove();
+        }
+    }
+
+    // 2) Collect all relevant headings, filtering out those within <aside> tags
+    const relevantHeadings = Array.from(doc.querySelectorAll('h1, h2, h3, h4, h5, h6')).filter(h => {
+        return parseInt(h.tagName.substring(1), 10) <= maxLevel && !h.closest('aside');
+    });
+
+    if (!relevantHeadings.length) return;
+
+    // --- DOM-based List Building Logic (Mirroring insertSectionToc directly) ---
+
+    // Create the root UL/OL element for the Page TOC
+    const rootUl = doc.createElement(initialListTagName);
+    if (pageTocUlClass) rootUl.setAttribute('class', pageTocUlClass);
+
+    // The stack holds references to actual DOM ul/ol elements.
+    // Each item: { domElement: HTMLUListElement | HTMLOListElement, level: number, tagName: 'ul' | 'ol' }
+    // The `level` here represents the heading level that this `domElement` is meant to contain.
+    // Start with the rootUl, which will contain H2s (level 2).
+    let currentListStack = [{ domElement: rootUl, level: 2, tagName: initialListTagName }];
+    let currentListDomElement = rootUl; // The actual DOM element to append LIs to
+
+    relevantHeadings.forEach(h => {
+        const hLevel = parseInt(h.tagName.substring(1), 10);
+        const txt = h.textContent.trim();
+        const id = h.id;
+        const liClass = pageTocLiClassMap.get(id) || '';
+        const aClass = pageTocALinkClassMap.get(id) || '';
+
+        // Create the <li> and <a> elements for the current heading
+        const li = doc.createElement('li');
+        if (liClass) li.setAttribute('class', liClass);
+        const a = doc.createElement('a');
+        a.setAttribute('href', `#${id}`);
+        a.textContent = txt;
+        if (aClass) a.setAttribute('class', aClass);
+        li.appendChild(a);
+
+        // Adjust stack based on heading level
+        // IMPORTANT FIX: Changed hLevel <= to hLevel < in the while condition,
+        // mirroring insertSectionToc's working logic.
+        while (currentListStack.length > 1 && hLevel < currentListStack[currentListStack.length - 1].level) {
+            currentListStack.pop();
+        }
+        currentListDomElement = currentListStack[currentListStack.length - 1].domElement; // Update current list DOM element
+
+        if (hLevel > currentListStack[currentListStack.length - 1].level) {
+            // New, deeper level: Create a new nested <ul>/ol.
+            // This new list will be a child of the *last <li>* added to the currentListDomElement.
+            const parentLiElement = currentListDomElement.lastElementChild; // Get the last <li> appended
+
+            if (parentLiElement && parentLiElement.tagName.toLowerCase() === 'li') {
+                const newNestedListDomElement = doc.createElement(initialListTagName); // Use initialListTagName for consistency
+                parentLiElement.appendChild(newNestedListDomElement); // Append new <ul> to the last <li>
+
+                // Push this new list DOM element onto the stack
+                currentListStack.push({ domElement: newNestedListDomElement, level: hLevel, tagName: initialListTagName });
+                currentListDomElement = newNestedListDomElement; // Update current list DOM element
+            } else {
+                // This scenario means an H3 (or deeper) appeared without a preceding H2/LI to nest under.
+                // It indicates a malformed heading structure or an issue with heading collection.
+                // For robustness, add the LI directly to the current (likely root) UL.
+                console.warn(`H${hLevel} (${txt}) found with no valid parent LI to nest under. Appending to current UL.`);
+            }
+        }
+        
+        // Add the current <li> to the current active <ul>/ol DOM element
+        currentListDomElement.appendChild(li);
+    });
+
+    // 3) Get the final HTML string from the constructed DOM tree
+    const finalHtmlListContent = rootUl.outerHTML;
+
+    // 4) Assemble new ToC HTML
+    const tocTitle = lang === 'en' ? 'On this page' : 'Sur cette page';
+    const toc = `
+    <section id="page-nav"${pageTocSectionClass ? ` class="${pageTocSectionClass}"` : ''}>
+        <h2 id="toc"${pageTocH2Class ? ` class="${pageTocH2Class}"` : ''}>${tocTitle}</h2>
+        ${finalHtmlListContent}
+    </section>`;
+
+    // 5) Find insertion point: first <section> or fallback to top of body
+    const firstSection = doc.querySelector('section');
+    if (firstSection) {
+        firstSection.insertAdjacentHTML('beforebegin', toc);
+    } else {
+        doc.body.insertAdjacentHTML('afterbegin', toc);
+    }
+
+    // 6) Write back updated HTML
+    monacoEditorInstance.setValue(doc.body.innerHTML);
+    autoFormatBtn.click(); // Format the new HTML
+}
+
+// Update your button event listeners to use the new insertPageToc function:
+document.getElementById('enPageToCBtn').addEventListener('click', () => insertPageToc(2, 'en')); // H2 only
+document.getElementById('frPageToCBtn').addEventListener('click', () => insertPageToc(2, 'fr')); // H2 only
+document.getElementById('enPageToCH3Btn').addEventListener('click', () => insertPageToc(3, 'en')); // H2 and H3
+document.getElementById('frPageToCH3Btn').addEventListener('click', () => insertPageToc(3, 'fr')); // H2 and H3
+
+
+function insertSectionToc(maxLevel, lang) {
+    const html = monacoEditorInstance.getValue();
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const existingIds = new Set();
+    doc.querySelectorAll('[id]').forEach(el => existingIds.add(el.id));
+
+    // Ensure all H-level elements have unique IDs first (essential for linking)
+    doc.querySelectorAll('h2, h3, h4, h5, h6').forEach(heading => {
+        if (!heading.id) {
+            heading.id = generateUniqueId(heading.textContent || `heading-${heading.tagName.toLowerCase()}`, existingIds);
+        }
+    });
+
+    // Data structures to store existing classes for li and a tags
+    const liClassMap = new Map();
+    const aClassMap = new Map();
+    // Only store the type of the ROOT list for each section TOC
+    const rootListTypeMap = new Map(); // Key: details.id, Value: 'ul' or 'ol'
+
+    // Pre-scan existing TOCs to collect classes and root list types
+    doc.querySelectorAll('details[id^="sec-nav-"]').forEach(existingDetails => {
+        const detailsId = existingDetails.id;
+        const existingUlOrOl = existingDetails.querySelector('ul, ol');
+
+        if (existingUlOrOl) {
+            // Store the type of this root section list
+            rootListTypeMap.set(detailsId, existingUlOrOl.tagName.toLowerCase());
+
+            // Collect classes from li and a tags
+            collectExistingListClasses(existingUlOrOl, liClassMap, aClassMap);
+        }
+    });
+
+    Array.from(doc.querySelectorAll('h2')).forEach(h2 => {
+        const items = [];
+        let currentElement = h2.nextElementSibling;
+        while (currentElement && !['h1', 'h2'].includes(currentElement.tagName.toLowerCase())) {
+            Array.from(currentElement.querySelectorAll('h3, h4, h5, h6')).forEach(subHeading => {
+                const subLevel = parseInt(subHeading.tagName.substring(1), 10);
+                if (subLevel <= maxLevel) {
+                    items.push(subHeading);
+                }
+            });
+            currentElement = currentElement.nextElementSibling;
+        }
+
+        const detailsId = 'sec-nav-' + h2.id;
+        let details = doc.getElementById(detailsId);
+        let summary, ulOrOl;
+        let oldDetailsClasses = details ? details.getAttribute('class') || '' : '';
+        let oldSummaryClasses = details ? (details.querySelector('summary') ? details.querySelector('summary').getAttribute('class') || '' : '') : '';
+        let oldListClasses = details ? (details.querySelector('ul, ol') ? details.querySelector('ul, ol').getAttribute('class') || '' : '') : '';
+        let initialListTagName = rootListTypeMap.get(detailsId) || 'ul';
+
+        // NEW LOGIC START: Check for un-ID'd details elements to adopt
+        if (!details) {
+            // Look for a sibling <details> element that doesn't have an ID
+            // and whose summary content matches the expected ToC titles.
+            // THIS IS THE CRUCIAL CHANGE: `child === h2.nextElementSibling`
+            const potentialDetails = Array.from(h2.parentNode.children).find(child => {
+                return child.tagName.toLowerCase() === 'details' &&
+                       !child.id &&
+                       child === h2.nextElementSibling && // The potential details element MUST immediately follow the h2
+                       child.querySelector('summary') &&
+                       (child.querySelector('summary').textContent.trim().toLowerCase() === 'in this section' ||
+                        child.querySelector('summary').textContent.trim().toLowerCase() === 'dans cette section');
+            });
+
+            if (potentialDetails) {
+                details = potentialDetails;
+                // Assign the correct ID to the adopted details element
+                details.id = detailsId;
+                existingIds.add(detailsId); // Add to our set of known IDs
+                // Capture its existing classes, if any
+                oldDetailsClasses = details.getAttribute('class') || '';
+                oldSummaryClasses = details.querySelector('summary') ? details.querySelector('summary').getAttribute('class') || '' : '';
+                oldListClasses = details.querySelector('ul, ol') ? details.querySelector('ul', 'ol').getAttribute('class') || '' : '';
+                const existingUl = details.querySelector('ul');
+                const existingOl = details.querySelector('ol');
+                if (existingUl) initialListTagName = 'ul';
+                else if (existingOl) initialListTagName = 'ol';
+            }
+        }
+        // NEW LOGIC END
+
+        if (!items.length && (!details || !details.id || !details.id.startsWith('sec-nav-'))) {
+            // If no items found, and no existing *section toc* details, just return.
+            // If a generic un-ID'd details was found but doesn't map to a section TOC, it's ignored.
+            return;
+        }
+        if (!items.length && details) { // If there were items previously but no longer, remove the old ToC
+            details.remove();
+            return;
+        }
+
+
+        if (details) {
+            summary = details.querySelector('summary');
+            ulOrOl = details.querySelector('ul, ol');
+            if (ulOrOl) {
+                ulOrOl.innerHTML = ''; // Clear existing list items to rebuild
+            } else {
+                // If details exist but no list inside, create new with initialListTagName
+                ulOrOl = doc.createElement(initialListTagName);
+                if (oldListClasses) ulOrOl.setAttribute('class', oldListClasses);
+                details.appendChild(ulOrOl);
+            }
+        } else {
+            details = doc.createElement('details');
+            details.id = detailsId;
+            summary = doc.createElement('summary');
+            summary.className = 'wb-toggle';
+            ulOrOl = doc.createElement(initialListTagName); // Use determined initial list tag
+            details.appendChild(summary);
+            details.appendChild(ulOrOl);
+        }
+
+        if (oldDetailsClasses) details.setAttribute('class', oldDetailsClasses);
+        if (oldSummaryClasses) summary.setAttribute('class', oldSummaryClasses);
+        if (oldListClasses) ulOrOl.setAttribute('class', oldListClasses);
+
+        summary.setAttribute('data-toggle', '{"print":"on"}');
+        summary.textContent = lang === 'en' ? 'In this section' : 'Dans cette section';
+
+        // Initialize stack with the root list element for this section TOC
+        let currentListStack = [{ domElement: ulOrOl, level: 3, tagName: initialListTagName }];
+
+        items.forEach(el => {
+            const elLevel = parseInt(el.tagName.substring(1), 10);
+            const li = doc.createElement('li');
+            const a = doc.createElement('a');
+            const hrefTargetId = el.id;
+            a.href = `#${hrefTargetId}`;
+            a.textContent = el.textContent.trim();
+
+            if (liClassMap.has(hrefTargetId)) {
+                li.setAttribute('class', liClassMap.get(hrefTargetId));
+            }
+            if (aClassMap.has(hrefTargetId)) {
+                a.setAttribute('class', aClassMap.get(hrefTargetId));
+            }
+
+            li.appendChild(a);
+
+            let currentParentListContainer = currentListStack[currentListStack.length - 1];
+            let currentParentList = currentParentListContainer.domElement;
+            let currentParentLevel = currentParentListContainer.level;
+            let currentParentListType = currentParentListContainer.tagName;
+
+            if (elLevel > currentParentLevel) {
+                while (elLevel > currentParentLevel) {
+                    let newNestedListTagName = 'ul';
+                    if (currentParentListType === 'ol') {
+                        newNestedListTagName = 'ol';
+                    }
+                    const newNestedList = doc.createElement(newNestedListTagName);
+
+                    if (currentParentList.lastElementChild && currentParentList.lastElementChild.tagName.toLowerCase() === 'li') {
+                        currentParentList.lastElementChild.appendChild(newNestedList);
+                    } else {
+                        console.warn(`Unexpected structure: Appending new ${newNestedListTagName.toUpperCase()} to ${currentParentList.tagName.toUpperCase()} without preceding LI.`);
+                        currentParentList.appendChild(newNestedList);
+                    }
+                    currentListStack.push({ domElement: newNestedList, level: currentParentLevel + 1, tagName: newNestedListTagName });
+                    currentParentList = newNestedList;
+                    currentParentLevel++;
+                    currentParentListType = newNestedListTagName;
+                }
+                currentParentList.appendChild(li);
+            } else if (elLevel < currentParentLevel) {
+                while (currentListStack.length > 1 && elLevel < currentListStack[currentListStack.length - 1].level) {
+                    currentListStack.pop();
+                }
+                currentParentListContainer = currentListStack[currentListStack.length - 1];
+                currentParentList = currentParentListContainer.domElement;
+                currentParentList.appendChild(li);
+            } else {
+                currentParentList.appendChild(li);
+            }
+        });
+
+        // Only insert if it was newly created and not already in the DOM (e.g., adopted)
+        if (!doc.getElementById(detailsId)) { // This check ensures we don't re-insert an adopted element
+            h2.parentNode.insertBefore(details, h2.nextSibling);
+        }
+    });
+
+    monacoEditorInstance.setValue(doc.body.innerHTML);
+    autoFormatBtn.click();
+}
+			// now wire your buttons (you may already have these listeners; just point them at our new function)
+			enSecToCBtn.addEventListener('click', () => insertSectionToc(3, 'en'));
+			frSecToCBtn.addEventListener('click', () => insertSectionToc(3, 'fr'));
+			enSecToCH4Btn.addEventListener('click', () => insertSectionToc(4, 'en'));
+			frSecToCH4Btn.addEventListener('click', () => insertSectionToc(4, 'fr'));
+			enSecToCH5Btn.addEventListener('click', () => insertSectionToc(5, 'en'));
+			frSecToCH5Btn.addEventListener('click', () => insertSectionToc(5, 'fr'));
+			enSecToCH6Btn.addEventListener('click', () => insertSectionToc(6, 'en'));
+			frSecToCH6Btn.addEventListener('click', () => insertSectionToc(6, 'fr'));
 
             // Initial call to set the state of the Clean Mso button on load
             updateCleanMsoButtonState();
