@@ -910,7 +910,10 @@
                         <div class="alignment-group-container">
                             <label for="caption-alignment">Caption</label>
                             <div id="caption-alignment-group" class="button-group">
-                                <button data-align="left" class="active">Left</button>
+                                <button id="reset-capAlign-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset/delete caption alignment">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                                <button data-align="left">Left</button>
                                 <button data-align="center">Center</button>
                                 <button data-align="right">Right</button>
                             </div>
@@ -919,7 +922,9 @@
                         <div class="alignment-group-container">
                             <label for="col-headers-alignment">Column Headers</label>
                             <div id="col-headers-alignment-group" class="button-group">
-                                <button data-align="none" class="active">None</button>
+                                <button id="reset-colHAlign-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset/delete col header alignment">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
                                 <button data-align="left">Left</button>
                                 <button data-align="center">Center</button>
                                 <button data-align="right">Right</button>
@@ -929,7 +934,9 @@
                         <div class="alignment-group-container">
                             <label for="row-headers-alignment">Row Headers</label>
                             <div id="row-headers-alignment-group" class="button-group">
-                                <button data-align="none" class="active">None</button>
+                                <button id="reset-rowHAlign-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset/delete row header alignment">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
                                 <button data-align="left">Left</button>
                                 <button data-align="center">Center</button>
                                 <button data-align="right">Right</button>
@@ -939,7 +946,9 @@
                         <div class="alignment-group-container">
                             <label for="colspan-headers-alignment">Colspan Headers</label>
                             <div id="colspan-headers-alignment-group" class="button-group">
-                                <button data-align="none" class="active">None</button>
+                                <button id="reset-csHAlign-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset/delete colspan header alignment">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
                                 <button data-align="left">Left</button>
                                 <button data-align="center">Center</button>
                                 <button data-align="right">Right</button>
@@ -949,7 +958,9 @@
                         <div class="alignment-group-container">
                             <label for="data-cells-alignment">Data Cells</label>
                             <div id="data-cells-alignment-group" class="button-group">
-                                <button data-align="none" class="active">None</button>
+                                <button id="reset-dataAlign-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset/delete data cell alignment">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
                                 <button data-align="left">Left</button>
                                 <button data-align="center">Center</button>
                                 <button data-align="right">Right</button>
@@ -1024,7 +1035,7 @@
                                 <input type="checkbox" id="customize-inv-caption-checkbox" class="hidden">
                                 <span class="toggle-switch-slider"></span>
                             </label>
-                            <span class="toggle-switch-label text-gray-200">Invisible Captions</span>
+                            <span class="toggle-switch-label text-gray-200">Invisible Caption</span>
                         </div>
                             <div class="toggle-switch-container">
                                 <label class="toggle-switch" for="customize-remove-p-tags-checkbox">
@@ -1144,7 +1155,10 @@
                             <div class="alignment-group-container">
                                 <label for="customize-caption-alignment">Caption</label>
                                 <div id="customize-caption-alignment-group" class="button-group">
-                                    <button data-align="left" class="active">Left</button>
+                                    <button id="resetCust-capAlign-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset/delete caption alignment">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                                    <button data-align="left">Left</button>
                                     <button data-align="center">Center</button>
                                     <button data-align="right">Right</button>
                                 </div>
@@ -1152,8 +1166,11 @@
 
                             <div class="alignment-group-container">
                                 <label for="customize-col-headers-alignment">Column Headers</label>
+                                <span id="manual-chalign-tag" class="hidden text-xs font-semibold px-2 py-0.5 rounded-full bg-red-600 text-white">(Manual)</span>
                                 <div id="customize-col-headers-alignment-group" class="button-group">
-                                    <button data-align="none" class="active">None</button>
+                                    <button id="resetCust-colHAlign-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset/delete col header alignment">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
                                     <button data-align="left">Left</button>
                                     <button data-align="center">Center</button>
                                     <button data-align="right">Right</button>
@@ -1162,8 +1179,11 @@
 
                             <div class="alignment-group-container">
                                 <label for="customize-row-headers-alignment">Row Headers</label>
+                                <span id="manual-rhalign-tag" class="hidden text-xs font-semibold px-2 py-0.5 rounded-full bg-red-600 text-white">(Manual)</span>
                                 <div id="customize-row-headers-alignment-group" class="button-group">
-                                    <button data-align="none" class="active">None</button>
+                                    <button id="resetCust-rowHAlign-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset/delete row header alignment">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
                                     <button data-align="left">Left</button>
                                     <button data-align="center">Center</button>
                                     <button data-align="right">Right</button>
@@ -1172,8 +1192,11 @@
 
                             <div class="alignment-group-container">
                                 <label for="customize-colspan-headers-alignment">Colspan Headers</label>
+                                <span id="manual-csalign-tag" class="hidden text-xs font-semibold px-2 py-0.5 rounded-full bg-red-600 text-white">(Manual)</span>
                                 <div id="customize-colspan-headers-alignment-group" class="button-group">
-                                    <button data-align="none" class="active">None</button>
+                                    <button id="resetCust-csAlign-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset/delete colspan header alignment">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
                                     <button data-align="left">Left</button>
                                     <button data-align="center">Center</button>
                                     <button data-align="right">Right</button>
@@ -1187,7 +1210,9 @@
                                     <span id="manual-align-tag" class="hidden text-xs font-semibold px-2 py-0.5 rounded-full bg-red-600 text-white">(Manual)</span>
                                 </div>
                                 <div id="customize-data-cells-alignment-group" class="button-group">
-                                    <button data-align="none" class="active">None</button>
+                                    <button id="resetCust-dataAlign-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset/delete data cell alignment">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
                                     <button data-align="left">Left</button>
                                     <button data-align="center">Center</button>
                                     <button data-align="right">Right</button>
@@ -1203,13 +1228,15 @@
                  <div class="flex justify-between items-center mt-4 gap-4 flex-wrap border-t border-zinc-700 pt-4">
                     <div class="cell-actions-group">
                         <div class="attached-button-group font-semibold">
-                        <button id="unbold-th-btn" title="Remove Bold from selected TH cells">Un-Bold TH</button>
-                        <button id="bold-td-btn" title="Make selected TD cells Bold">Bold TD</button></div>
+                        <button id="unbold-th-btn">Toggle Bold TH</button>
+                        <button id="bold-td-btn">Toggle Bold TD</button></div>
                         <div class="attached-button-group">
                         <button id="align-left-btn" title="Align text Left">Align Left</button>
                         <button id="align-center-btn" title="Align text Center">Center</button>
                         <button id="align-right-btn" title="Align text Right">Right</button>
-                    <button id="align-none-btn" title="No alignment selected">None</button></div>
+                    <button id="reset-scopeid-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset selected cell alignment">
+                <i class="fas fa-trash-alt"></i>
+            </button></div>
                         <div class="attached-button-group">
                         <button id="mrgn-sm-btn" title="Apply Small indent">Indent SM</button>
                         <button id="mrgn-md-btn" title="Apply Medium indent">MD</button>
@@ -1255,6 +1282,10 @@
     window.customizeRowHeaderAlignment = 'none';
     window.customizeColspanHeaderAlignment = 'none'; // Changed to 'none'
     window.customizeDataCellsAlignment = 'none';
+    window.isCustomizeManualDataAlign = false; 
+    window.isCustomizeManualColHeaderAlign = false;
+    window.isCustomizeManualRowHeaderAlign = false;
+    window.isCustomizeManualColspanAlign = false;
 
     // --- NEW: Undo/Redo Functions ---
     /**
@@ -1603,7 +1634,7 @@
     }
 
     /**
-     * Function to handle button group clicks for alignment
+     * MODIFIED: Function to handle button group clicks for alignment, including a reset button.
      * @param {string} groupId - The ID of the button group container.
      * @param {string} alignmentVarName - The name of the global window variable to update.
      * @param {HTMLElement} [parentContainer=document] - The parent element to search for the group in (e.g., a modal).
@@ -1615,25 +1646,49 @@
             console.warn(`Button group with ID "${groupId}" not found in parentContainer.`);
             return;
         }
-        Array.from(group.children).forEach(button => {
-            button.addEventListener('click', () => {
-                console.log(`Button "${button.dataset.align || button.dataset.mode}" clicked for group "${groupId}"`);
-                // Remove 'active' class from all buttons in this group
-                Array.from(group.children).forEach(btn => btn.classList.remove('active'));
-                // Add 'active' class to the clicked button
-                button.classList.add('active');
 
-                // If a global alignment variable name is provided, update it
-                if (alignmentVarName) {
-                    window[alignmentVarName] = button.dataset.align;
-                    console.log(`Global variable ${alignmentVarName} updated to: ${window[alignmentVarName]}`);
+        const alignmentButtons = group.querySelectorAll('button[data-align]');
+        const resetButton = group.querySelector('.trash-button');
+
+        // Combined click handler for all buttons in the group
+        const clickHandler = (alignValue) => {
+            // Update visual state: remove active from all, add to the clicked one (if it's not the reset)
+            alignmentButtons.forEach(btn => btn.classList.remove('active'));
+            if (alignValue !== 'none') {
+                const clickedButton = Array.from(alignmentButtons).find(btn => btn.dataset.align === alignValue);
+                if (clickedButton) {
+                    clickedButton.classList.add('active');
                 }
-                if (callback) {
-                    callback();
-                }
-            });
+            }
+
+            // Update the global state variable
+            if (alignmentVarName) {
+                window[alignmentVarName] = alignValue;
+                console.log(`Global variable ${alignmentVarName} updated to: ${alignValue}`);
+            }
+
+            // If a global alignment is chosen, exit manual mode for that group.
+            if (groupId === 'customize-data-cells-alignment-group') window.isCustomizeManualDataAlign = false;
+            if (groupId === 'customize-col-headers-alignment-group') window.isCustomizeManualColHeaderAlign = false;
+            if (groupId === 'customize-row-headers-alignment-group') window.isCustomizeManualRowHeaderAlign = false;
+            if (groupId === 'customize-colspan-headers-alignment-group') window.isCustomizeManualColspanAlign = false;
+            
+            // Execute the callback if it exists
+            if (callback) {
+                callback();
+            }
+        };
+
+        // Attach listeners
+        alignmentButtons.forEach(button => {
+            button.addEventListener('click', () => clickHandler(button.dataset.align));
         });
+
+        if (resetButton) {
+            resetButton.addEventListener('click', () => clickHandler('none'));
+        }
     }
+
 
     /**
      * Applies an alignment class to an element, first removing any conflicting alignment classes.
@@ -1832,8 +1887,10 @@
                 existingCaptionElement = document.createElement('caption');
                 table.insertBefore(existingCaptionElement, table.firstChild);
             }
-            // *** FIXED: Unconditionally apply alignment to handle updates and resets.
-            applyAlignment(existingCaptionElement, options.currentCaptionAlignment, alignmentClasses);
+             // Apply caption alignment only if NOT in manual mode to preserve manual cell edits
+            if (options.currentCaptionAlignment !== 'manual') {
+                applyAlignment(existingCaptionElement, options.currentCaptionAlignment, alignmentClasses);
+            }
 
             if (options.applyInvisibleCaption) {
                 existingCaptionElement.classList.add('wb-inv');
@@ -1940,7 +1997,7 @@
         rowsForTfoot.forEach(row => newTfootElement.appendChild(row));
 
 
-        // --- Apply Row Header and its Alignment (only to newTbodyElement rows) ---
+        // --- Apply Row Header (only to newTbodyElement rows) ---
         Array.from(newTbodyElement.querySelectorAll('tr')).forEach(row => {
             const firstCell = row.firstElementChild;
             if (firstCell) {
@@ -1950,11 +2007,6 @@
                         Array.from(firstCell.attributes).forEach(attr => newTh.setAttribute(attr.name, attr.value));
                         newTh.innerHTML = firstCell.innerHTML;
                         row.replaceChild(newTh, firstCell);
-                        // *** FIXED: Unconditionally apply alignment.
-                        applyAlignment(newTh, options.currentRowHeaderAlignment, alignmentClasses);
-                    } else {
-                        // *** FIXED: Unconditionally apply alignment.
-                        applyAlignment(firstCell, options.currentRowHeaderAlignment, alignmentClasses);
                     }
                 } else {
                     if (firstCell.tagName.toLowerCase() !== 'td') {
@@ -1968,7 +2020,7 @@
         });
 
 
-        // --- Apply Data Cells Alignment, Fix Empty Cells, Remove P Tags ---
+        // --- Apply Alignment, Fix Empty Cells, Remove P Tags ---
         const allCells = [...newTheadElement.querySelectorAll('th, td'), ...newTbodyElement.querySelectorAll('th, td'), ...newTfootElement.querySelectorAll('th, td')];
         allCells.forEach(cell => {
             if (options.applyFixEmptyCells && cell.textContent.trim() === '' && !cell.innerHTML.includes('&nbsp;') && !cell.innerHTML.includes('&#160;')) {
@@ -1980,29 +2032,41 @@
                     p.remove();
                 });
             }
+
+            // --- FIX: Ignore all alignment operations for any cell within a TFOOT. ---
+            if (cell.closest('tfoot')) {
+                return; // Skip to the next cell.
+            }
             
+            // --- Centralized Alignment Logic ---
             const isTheadCell = cell.closest('thead');
             const isTbodyCell = cell.closest('tbody');
+            const isRowHeader = isTbodyCell && cell.tagName.toLowerCase() === 'th' && cell.parentElement.firstElementChild === cell;
 
-            // *** FIXED: Reworked logic to remove the faulty "hasExistingAlignment" check.
-            if (cell.tagName.toLowerCase() === 'td' && isTbodyCell) {
-                if (options.applyFinanceTable && financeRegex.test(cell.textContent.trim())) {
-                    // Finance tables have a specific alignment rule, so we apply it directly.
-                    applyAlignment(cell, 'right', alignmentClasses);
-                    cell.classList.add('nowrap');
-                } else {
-                    // For all other data cells, apply the selected alignment.
-                    applyAlignment(cell, options.currentDataCellsAlignment, alignmentClasses);
+            if (cell.tagName.toLowerCase() === 'td') {
+                if (options.currentDataCellsAlignment !== 'manual') {
+                    if (options.applyFinanceTable && financeRegex.test(cell.textContent.trim())) {
+                        applyAlignment(cell, 'right', alignmentClasses);
+                        cell.classList.add('nowrap');
+                    } else {
+                        applyAlignment(cell, options.currentDataCellsAlignment, alignmentClasses);
+                    }
                 }
             } else if (cell.tagName.toLowerCase() === 'th') {
-                if (isTheadCell) {
-                    applyAlignment(cell, options.currentColHeaderAlignment, alignmentClasses);
-                } else if (isTbodyCell && cell.hasAttribute('colspan')) {
-                    // This handles TH cells within the TBODY that act as sub-headers spanning columns.
-                    applyAlignment(cell, options.currentColspanHeaderAlignment, alignmentClasses);
+                // Precedence: Colspan > Col > Row
+                if (cell.hasAttribute('colspan')) {
+                    if (options.currentColspanHeaderAlignment !== 'manual') {
+                        applyAlignment(cell, options.currentColspanHeaderAlignment, alignmentClasses);
+                    }
+                } else if (isTheadCell) {
+                    if (options.currentColHeaderAlignment !== 'manual') {
+                        applyAlignment(cell, options.currentColHeaderAlignment, alignmentClasses);
+                    }
+                } else if (isRowHeader) {
+                    if (options.currentRowHeaderAlignment !== 'manual') {
+                        applyAlignment(cell, options.currentRowHeaderAlignment, alignmentClasses);
+                    }
                 }
-                // Row headers (TH in TBODY without colspan) are handled in the separate loop above,
-                // so we don't need an explicit rule for them here.
             }
         });
 
@@ -2380,10 +2444,10 @@
             applyFinanceTable: customizeFinanceTableCheckbox.checked,
             applyBoldTotals: customizeBoldTotalsCheckbox.checked,
             currentCaptionAlignment: window.customizeCaptionAlignment,
-            currentColHeaderAlignment: window.customizeColHeaderAlignment,
-            currentRowHeaderAlignment: window.customizeRowHeaderAlignment,
-            currentColspanHeaderAlignment: window.customizeColspanHeaderAlignment,
-            currentDataCellsAlignment: window.customizeDataCellsAlignment,
+            currentColHeaderAlignment: window.isCustomizeManualColHeaderAlign ? 'manual' : window.customizeColHeaderAlignment,
+            currentRowHeaderAlignment: window.isCustomizeManualRowHeaderAlign ? 'manual' : window.customizeRowHeaderAlignment,
+            currentColspanHeaderAlignment: window.isCustomizeManualColspanAlign ? 'manual' : window.customizeColspanHeaderAlignment,
+            currentDataCellsAlignment: window.isCustomizeManualDataAlign ? 'manual' : window.customizeDataCellsAlignment,
             specificTableId: selectedValue
         };
 
@@ -3541,10 +3605,35 @@
 
     // Setup all new alignment button groups for CUSTOMIZE modal, with preview update callback
     setupButtonGroup('customize-caption-alignment-group', 'customizeCaptionAlignment', customizeModalOverlay, updateCustomizeModalPreview);
-    setupButtonGroup('customize-col-headers-alignment-group', 'customizeColHeaderAlignment', customizeModalOverlay, updateCustomizeModalPreview);
-    setupButtonGroup('customize-row-headers-alignment-group', 'customizeRowHeaderAlignment', customizeModalOverlay, updateCustomizeModalPreview);
-    setupButtonGroup('customize-data-cells-alignment-group', 'customizeDataCellsAlignment', customizeModalOverlay, updateCustomizeModalPreview);
+    
+    const headerAlignmentCallback = () => {
+        const newPreviewHtml = generatePreviewTableHtml();
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = newPreviewHtml;
+        const newTableElement = tempDiv.querySelector('table');
+        if (newTableElement) {
+            updateHeaderAlignmentUI(newTableElement);
+            updateDataCellAlignmentUI(newTableElement); 
+        }
+        updateCustomizePreview(newPreviewHtml);
+    };
 
+    setupButtonGroup('customize-col-headers-alignment-group', 'customizeColHeaderAlignment', customizeModalOverlay, headerAlignmentCallback);
+    setupButtonGroup('customize-row-headers-alignment-group', 'customizeRowHeaderAlignment', customizeModalOverlay, headerAlignmentCallback);
+    setupButtonGroup('customize-colspan-headers-alignment-group', 'customizeColspanHeaderAlignment', customizeModalOverlay, headerAlignmentCallback);
+    
+    // Special setup for the data cells alignment group to handle state correctly.
+    setupButtonGroup('customize-data-cells-alignment-group', 'customizeDataCellsAlignment', customizeModalOverlay, () => {
+        const newPreviewHtml = generatePreviewTableHtml();
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = newPreviewHtml;
+        const newTableElement = tempDiv.querySelector('table');
+
+        if (newTableElement) {
+            updateDataCellAlignmentUI(newTableElement);
+        }
+        updateCustomizePreview(newPreviewHtml);
+    });
     
     // Mutual exclusivity logic for Finance Table checkbox and Alignment button groups
     if (financeTableCheckbox) {
@@ -3561,8 +3650,6 @@
             updateCustomizeModalPreview(); // Trigger preview update
         });
     }
-
-    
 
     // Mutual exclusivity logic for Captions (placeholder) and Auto-Caption (Universal Modal)
     captionCheckbox.addEventListener('change', function() {
@@ -3608,21 +3695,82 @@
     }
 
     /**
-     * NEW: Checks the state of the table's data cells and updates the alignment UI accordingly.
+     * Checks for mixed alignment in header cells and updates the customize modal UI accordingly.
+     * @param {HTMLElement} tableElement - The table element to inspect.
      */
-    function updateDataCellAlignmentUI() {
-        const selectedValue = tableSearchDropdown.value;
-        if (!selectedValue) return;
+    function updateHeaderAlignmentUI(tableElement) {
+        if (!tableElement) return;
 
-        const tableInfo = tableDataMap.get(selectedValue);
-        if (!tableInfo) return;
+        // Helper function to check a group of cells and update UI
+        const checkAlignmentAndSetUI = (selector, manualFlagName, groupId, tagId) => {
+            const cells = Array.from(tableElement.querySelectorAll(selector));
+            const alignmentGroup = document.getElementById(groupId);
+            const manualTag = document.getElementById(tagId);
+            
+            // Reset UI state first
+            window[manualFlagName] = false;
+            manualTag.classList.add('hidden');
+            alignmentGroup.querySelectorAll('button').forEach(btn => btn.disabled = false);
+            alignmentGroup.style.opacity = '1';
 
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = tableInfo.outerHTML;
-        const tableElement = tempDiv.querySelector('table');
+            if (cells.length > 0) {
+                let firstAlignment = null;
+                let hasMixedAlignment = false;
+
+                // Determine alignment of the first cell
+                if (cells[0].classList.contains('text-left')) firstAlignment = 'left';
+                else if (cells[0].classList.contains('text-center')) firstAlignment = 'center';
+                else if (cells[0].classList.contains('text-right')) firstAlignment = 'right';
+                else firstAlignment = 'none';
+
+                // Check if all other cells have the same alignment
+                for (let i = 1; i < cells.length; i++) {
+                    let currentAlignment = 'none';
+                    if (cells[i].classList.contains('text-left')) currentAlignment = 'left';
+                    else if (cells[i].classList.contains('text-center')) currentAlignment = 'center';
+                    else if (cells[i].classList.contains('text-right')) currentAlignment = 'right';
+                    
+                    if (currentAlignment !== firstAlignment) {
+                        hasMixedAlignment = true;
+                        break;
+                    }
+                }
+
+                if (hasMixedAlignment) {
+                    window[manualFlagName] = true;
+                    manualTag.classList.remove('hidden');
+                    alignmentGroup.querySelectorAll('button[data-align]').forEach(btn => btn.disabled = true);
+                    alignmentGroup.style.opacity = '0.5';
+                }
+            }
+        };
+
+        // Run the check for each header type
+        checkAlignmentAndSetUI('thead th:not([colspan])', 'isCustomizeManualColHeaderAlign', 'customize-col-headers-alignment-group', 'manual-chalign-tag');
+        checkAlignmentAndSetUI('tbody tr > th:first-child:not([colspan])', 'isCustomizeManualRowHeaderAlign', 'customize-row-headers-alignment-group', 'manual-rhalign-tag');
+        checkAlignmentAndSetUI('th[colspan]', 'isCustomizeManualColspanAlign', 'customize-colspan-headers-alignment-group', 'manual-csalign-tag');
+    }
+
+    /**
+     * Checks the state of a given table element and updates the UI for data cell alignment.
+     * @param {HTMLElement} [tableElement] - The table element to inspect. If not provided, it falls back to using tableDataMap.
+     */
+    function updateDataCellAlignmentUI(tableElement) {
+        // If no table element is passed, get it from the data map as a fallback.
+        if (!tableElement) {
+            const selectedValue = tableSearchDropdown.value;
+            if (!selectedValue) return;
+            const tableInfo = tableDataMap.get(selectedValue);
+            if (!tableInfo) return;
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = tableInfo.outerHTML;
+            tableElement = tempDiv.querySelector('table');
+        }
+
         if (!tableElement) return;
 
         const dataCellsAlignmentGroup = document.getElementById('customize-data-cells-alignment-group');
+        const alignmentButtons = dataCellsAlignmentGroup.querySelectorAll('button[data-align]');
         const financialTag = document.getElementById('financial-align-tag');
         const manualTag = document.getElementById('manual-align-tag');
         const financeCheckbox = document.getElementById('customize-finance-table-checkbox');
@@ -3630,30 +3778,27 @@
         // Reset state
         financialTag.classList.add('hidden');
         manualTag.classList.add('hidden');
-        Array.from(dataCellsAlignmentGroup.children).forEach(btn => btn.disabled = false);
+        alignmentButtons.forEach(btn => btn.disabled = false);
         dataCellsAlignmentGroup.style.opacity = '1';
-        dataCellsAlignmentGroup.style.cursor = 'auto';
+        window.isCustomizeManualDataAlign = false; // Assume not manual unless proven otherwise
 
         if (financeCheckbox.checked) {
-            // Condition 1: Finance Table is checked
             financialTag.classList.remove('hidden');
-            Array.from(dataCellsAlignmentGroup.children).forEach(btn => btn.disabled = true);
+            alignmentButtons.forEach(btn => btn.disabled = true);
             dataCellsAlignmentGroup.style.opacity = '0.5';
-            dataCellsAlignmentGroup.style.cursor = 'not-allowed';
         } else {
-            // Condition 2: Check for manual/mixed alignment
             const dataCells = Array.from(tableElement.querySelectorAll('tbody td'));
             if (dataCells.length > 0) {
                 let firstAlignment = null;
                 let hasMixedAlignment = false;
 
-                // Determine the alignment of the first cell
+                // Determine the alignment of the first data cell
                 if (dataCells[0].classList.contains('text-left')) firstAlignment = 'left';
                 else if (dataCells[0].classList.contains('text-center')) firstAlignment = 'center';
                 else if (dataCells[0].classList.contains('text-right')) firstAlignment = 'right';
                 else firstAlignment = 'none';
 
-                // Check if all other cells have the same alignment
+                // Check if all other data cells have the same alignment
                 for (let i = 1; i < dataCells.length; i++) {
                     let currentAlignment = 'none';
                     if (dataCells[i].classList.contains('text-left')) currentAlignment = 'left';
@@ -3667,10 +3812,10 @@
                 }
 
                 if (hasMixedAlignment) {
+                    window.isCustomizeManualDataAlign = true; // Set manual flag
                     manualTag.classList.remove('hidden');
-                    Array.from(dataCellsAlignmentGroup.children).forEach(btn => btn.disabled = true);
+                    alignmentButtons.forEach(btn => btn.disabled = true);
                     dataCellsAlignmentGroup.style.opacity = '0.5';
-                    dataCellsAlignmentGroup.style.cursor = 'not-allowed';
                 }
             }
         }
@@ -3765,7 +3910,8 @@
         
         initializeToggleSwitchesVisuals(customizeModalOverlay);
         updateCustomizeModalPreview(tableInfo ? tableInfo.outerHTML : '');
-        updateDataCellAlignmentUI();
+        updateDataCellAlignmentUI(selectedTableElement);
+        updateHeaderAlignmentUI(selectedTableElement);
     }
 
     // New button event listeners for Clear All, Auto-Encode, Auto-Indent, Copy Code, Import/Export
@@ -3971,9 +4117,9 @@
 
     // Listen for messages from the iframe (for content updates)
     window.addEventListener('message', (event) => {
-        if (event.data && event.data.type === 'iframeReady') {
-            // When iframe is ready, send the initial mode (no longer needed, but keeping for general iframe communication)
-        } else if (event.data && event.data.type === 'updateTableContent') {
+        if (!event.data) return;
+
+        if (event.data.type === 'updateTableContent') {
             const updatedTableHtml = event.data.tableHtml;
             const selectedValue = tableSearchDropdown.value;
             const tableInfo = tableDataMap.get(selectedValue);
@@ -3986,10 +4132,19 @@
                 
                 setEditorContent(newEditorContent);
 
+                // Update the in-memory map with the manually edited HTML
                 tableInfo.length = updatedTableHtml.length;
                 tableInfo.outerHTML = updatedTableHtml;
                 
-                updateDataCellAlignmentUI();
+                // --- FIX: Re-evaluate the table's alignment state to update manual flags ---
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = updatedTableHtml;
+                const updatedTableElement = tempDiv.querySelector('table');
+                if (updatedTableElement) {
+                    // This updates the isCustomizeManual... flags based on the new content.
+                    updateDataCellAlignmentUI(updatedTableElement);
+                    updateHeaderAlignmentUI(updatedTableElement);
+                }
             }
         }
     });
@@ -4224,14 +4379,14 @@
                 }
             }
 
-            // --- NEW: Cell Action Button Event Listeners ---
+            // --- Cell Action Button Event Listeners ---
             const cellActionButtons = {
                 'unbold-th-btn': { action: 'toggle-unbold-th' },
                 'bold-td-btn': { action: 'toggle-bold-td' },
                 'align-left-btn': { action: 'set-alignment', value: 'left' },
                 'align-center-btn': { action: 'set-alignment', value: 'center' },
                 'align-right-btn': { action: 'set-alignment', value: 'right' },
-                'align-none-btn': { action: 'set-alignment', value: 'none' },
+                'reset-scopeid-btn': { action: 'set-alignment', value: 'none' }, // Correctly maps the trash icon button
                 'mrgn-sm-btn': { action: 'set-margin', value: 'sm' },
                 'mrgn-md-btn': { action: 'set-margin', value: 'md' },
                 'mrgn-lg-btn': { action: 'set-margin', value: 'lg' },
@@ -4282,7 +4437,6 @@
         });
     };
 </script>
-
 
 
 </body>
