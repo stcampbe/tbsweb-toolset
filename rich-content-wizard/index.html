@@ -4688,7 +4688,8 @@ searchControlsContent.classList.add('search-controls-visible'); // Ensure inner 
 
     } else {
         // If only ID is selected, or no filters are applied, perform a search within searchScopeRange
-        matches = model.findMatches(findText, searchScopeRange, isRegex, isCaseSensitive, null, true);
+        const textToSearch = isRegex ? findText : escapeRegExp(findText);
+    matches = model.findMatches(textToSearch, searchScopeRange, isRegex, isCaseSensitive, null, true);
     }
 
     return matches;
@@ -4977,11 +4978,12 @@ function findFullElementRange(model, initialStartOffset) {
                     // Handle backreferences ($1, $2, etc.) and $& if regex is enabled
                     if (isRegex) {
                         const findText = findInput.value;
-                        const matchCase = matchCaseCheckbox.checked;
-                        const pattern = isRegex ? findText : escapeRegExp(findText);
-                        const regexForGroups = new RegExp(pattern, matchCase ? '' : 'i');
+                    const matchCase = matchCaseCheckbox.checked;
+                    // FIX: Ensure 'pattern' is not escaped if REGEX is enabled
+                    const pattern = findText; // Directly use findText for regex pattern
+                    const regexForGroups = new RegExp(pattern, matchCase ? '' : 'i');
 
-                        const groupMatch = regexForGroups.exec(originalMatchText);
+                    const groupMatch = regexForGroups.exec(originalMatchText);
 
                         if (groupMatch) {
                             finalReplacement = finalReplacement.replaceAll('$&', groupMatch[0] || '');
