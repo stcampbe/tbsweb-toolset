@@ -696,7 +696,7 @@
 </head>
 <body>
     <header class="content-wizard-header">
-        <h1 class="text-left">WordToCode™ - Rich Content Wizard</h1>
+        <h1 class="text-left"><i class="fa-solid fa-pen-to-square"></i> WordToCode™ - Rich Content Wizard</h1>
        <a href="/tbsweb-toolset/rich-content-wizard/" class="px-3 py-1 text-sm text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold bg-gray-400 cursor-not-allowed opacity-60" disabled="">Content Wizard</a>
         <a href="/tbsweb-toolset/table-wizard/" class="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold">Table Wizard</a>
         <a href="/tbsweb-toolset/qa-wizard/" class="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold">QA Wizard</a>
@@ -1120,6 +1120,8 @@
             autoEncodeBtn,
             autoFormatBtn,
             copyCodeBtn,
+            undoBtn,
+            redoBtn,
 			enPageToCBtn,
 			enPageToCH3Btn,
 			frPageToCBtn,
@@ -1133,6 +1135,12 @@
 			frSecToCH5Btn,
 			frSecToCH6Btn,
         ];
+
+        // --- Undo/Redo Manager ---
+        const undoStack = [];
+        const redoStack = [];
+        let isUndoingOrRedoing = false;
+        const UNDO_LIMIT = 50; // To prevent memory issues
 
         // Add the toggle inputs themselves to the list if their parent elements need to be disabled
         // No, these are inputs, not buttons. The disabled state of the *toggles* is not controlled by `data-temp-active`
@@ -1151,6 +1159,86 @@
 
         // NEW: Simplified NBSP Placeholder
         const NBSP_PLACEHOLDER = '__NBSP_PLACEHOLDER__'; // A unique string that won't conflict with content
+
+         /**
+         * Updates the enabled/disabled state of the undo and redo buttons.
+         */
+        function updateUndoRedoButtons() {
+            // Can undo if there's more than the initial state in the stack.
+            undoBtn.disabled = undoStack.length <= 1;
+            redoBtn.disabled = redoStack.length === 0;
+        }
+
+        /**
+         * Records a snapshot of the current editor content to the undo stack.
+         * @param {string} content - The editor content to save.
+         */
+        function recordState(content) {
+            // Don't record a new state if we are in the middle of an undo/redo action.
+            if (isUndoingOrRedoing) return;
+
+            // A new action clears the redo stack.
+            redoStack.length = 0;
+
+            // Avoid storing identical consecutive states.
+            if (undoStack.length > 0 && undoStack[undoStack.length - 1] === content) {
+                return;
+            }
+
+            undoStack.push(content);
+
+            // Enforce a memory limit on the undo history.
+            if (undoStack.length > UNDO_LIMIT) {
+                undoStack.shift(); // Remove the oldest state.
+            }
+
+            updateUndoRedoButtons();
+        }
+        // --- End Undo/Redo Manager ---
+
+        // --- Undo/Redo Event Listeners ---
+        undoBtn.addEventListener('click', () => {
+            if (undoStack.length > 1) {
+                isUndoingOrRedoing = true;
+
+                // Move the current state to the redo stack.
+                const currentState = undoStack.pop();
+                redoStack.push(currentState);
+
+                // Get the previous state from the undo stack and load it.
+                const prevState = undoStack[undoStack.length - 1];
+                monacoEditorInstance.setValue(prevState);
+
+                // IMPORTANT: We use a timeout to reset the flag *after* Monaco's
+                // change event has fired, preventing a feedback loop.
+                setTimeout(() => {
+                    isUndoingOrRedoing = false;
+                    updateUndoRedoButtons();
+                }, 10);
+            }
+        });
+
+        redoBtn.addEventListener('click', () => {
+            if (redoStack.length > 0) {
+                isUndoingOrRedoing = true;
+
+                // Pop the state you want to restore from the redo stack.
+                const stateToRestore = redoStack.pop();
+                
+                // Push this restored state back onto the undo stack, as it is now the "current" state.
+                undoStack.push(stateToRestore);
+
+                // Apply this state to the editor.
+                monacoEditorInstance.setValue(stateToRestore);
+
+                // Use a timeout to reset the flag *after* Monaco's change event has fired.
+                setTimeout(() => {
+                    isUndoingOrRedoing = false;
+                    updateUndoRedoButtons();
+                }, 10);
+            }
+        });
+        // --- End Undo/Redo Event Listeners ---
 
         /**
          * Replaces all forms of non-breaking spaces with a single, unique placeholder.
@@ -3205,6 +3293,18 @@
 
                     // 3. Special handling for the very first H2 that is not a special H1 and not in an ignored parent
                     // This logic only applies to the *first* H2 encountered that passes the above checks.
+                    // NEW: Check if the heading already has a valid ID. If so, respect it and skip re-IDing.
+                    if (oldId && (oldId.startsWith('toc') || oldId.startsWith('app'))) {
+                        // It has a valid-looking ID. We need to parse it to set the context for subheadings.
+                        currentHeadingIdPathSegments = oldId.split('-');
+                        // Reset sub-counters for this path to ensure children are numbered correctly.
+                        sub_num_counters.clear();
+                        sub_appendix_alpha_counters.clear();
+                        effectivePreviousLevel = level;
+                        initialH2ProcessedInLoop = true; // Consider it processed to not interfere with sequential numbering.
+                        return; // Skip the rest of the logic for this heading.
+                    }
+                    
                     if (level === 2 && !initialH2ProcessedInLoop) {
                         const textContentLower = heading.textContent.trim().toLowerCase();
                         const textMatchesCriteria =
@@ -4326,14 +4426,43 @@ function showRegexGuideModal(triggeringButton, originalButtonText) {
                 });
                 console.log("Monaco editor initialized.");
 
-                // Update htmlOutputContent on Monaco content change
-                monacoEditorInstance.onDidChangeModelContent(() => {
-                    htmlOutputContent = monacoEditorInstance.getValue();
-                    applyEntityHighlighting(); // Re-apply highlighting on content change
-                });
+                 // --- START: MODIFICATION FOR UNDO/REDO ---
 
-                // Apply initial highlighting after Monaco is created
+            // 1. Initialize the Undo Manager with the editor's starting content.
+            recordState(monacoEditorInstance.getValue());
+            updateUndoRedoButtons(); // Set initial button states.
+
+            // 2. Create a debounced function to record state after typing stops.
+            const debouncedRecordState = debounce(() => {
+                recordState(monacoEditorInstance.getValue());
+            }, 500); // 500ms delay
+
+monacoEditorInstance.onDidChangeModelContent(() => {
+                // Update the main content variable first
+                htmlOutputContent = monacoEditorInstance.getValue();
+
+                // --- Trigger functions that need to run on content change ---
+
+                // 1. For the Undo/Redo Manager
+                // Only record a new state if the change isn't from an undo/redo operation.
+                if (!isUndoingOrRedoing) {
+                    debouncedRecordState();
+                }
+
+                // 2. For highlighting HTML entities (like &nbsp;)
                 applyEntityHighlighting();
+
+                // 3. For the "Better Search" feature to update its dropdowns and state
+                populateTagDropdown();
+                populateIdDropdown();
+                resetSearchState(true);
+            });
+            // =========================================================================
+
+
+            // Apply initial highlighting after Monaco is created
+            applyEntityHighlighting();
+
 
                 // Ensure Monaco refreshes layout on window resize
                 window.addEventListener('resize', debouncedMonacoLayout);
@@ -4535,12 +4664,6 @@ searchControlsContent.classList.add('search-controls-visible'); // Ensure inner 
                 populateTagDropdown();
                 populateIdDropdown();
 
-                // Update the dropdowns whenever the editor content changes
-                monacoEditorInstance.onDidChangeModelContent(() => { // Use monacoEditorInstance
-                    populateTagDropdown();
-                    populateIdDropdown();
-                    resetSearchState(true);
-                });
                 
                 // Function to handle the visibility of the sequence options container
                 function toggleSequenceVisibility() {
@@ -6191,7 +6314,7 @@ function insertPageToc(maxLevel, lang) {
 
     // 2) Collect all relevant headings, filtering out those within <aside> tags
     const relevantHeadings = Array.from(doc.querySelectorAll('h1, h2, h3, h4, h5, h6')).filter(h => {
-        return parseInt(h.tagName.substring(1), 10) <= maxLevel && !h.closest('aside');
+        return parseInt(h.tagName.substring(1), 10) <= maxLevel && !h.closest('aside') && !h.closest('table');
     });
 
     if (!relevantHeadings.length) return;
