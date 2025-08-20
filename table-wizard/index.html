@@ -603,7 +603,9 @@
         height: auto;
         border: 1px solid #52525b;
     }
-    
+    .entity-highlight {
+        color: gold !important;
+    }
     /* Padding utility classes for iframe cells */
     .pad-sm { padding: 0.25rem !important; }
     .pad-md { padding: 0.5rem !important; }
@@ -1234,7 +1236,7 @@
                         <button id="align-left-btn" title="Align text Left">Align Left</button>
                         <button id="align-center-btn" title="Align text Center">Center</button>
                         <button id="align-right-btn" title="Align text Right">Right</button>
-                    <button id="reset-scopeid-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset selected cell alignment">
+                    <button id="reset-selCell-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset selected cell alignment">
                 <i class="fas fa-trash-alt"></i>
             </button></div>
                         <div class="attached-button-group">
@@ -1242,11 +1244,15 @@
                         <button id="mrgn-md-btn" title="Apply Medium indent">MD</button>
                         <button id="mrgn-lg-btn" title="Apply Large indent">LG</button>
                         <button id="mrgn-xl-btn" title="Apply Extra Large indent">XL</button>
-                    <button id="mrgn-0-btn" title="No indent">No indent</button></div>
+                    <button id="mrgn-0-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset selected cell indent">
+                <i class="fas fa-trash-alt"></i>
+            </button></div>
                         <div class="attached-button-group">
                             <input type="text" id="custom-class-input" placeholder="custom-class" class="rounded-l-md">
                             <button id="add-class-btn" class="rounded-r-md">Add</button>
-                            <button id="remove-class-btn" class="rounded-r-md">Remove</button>
+                            <button id="remove-class-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset selected custom class">
+                <i class="fas fa-trash-alt"></i>
+            </button>
                         </div>
                     </div>
                     <button id="format-specific-table-button" class="font-semibold">Format Table</button>
@@ -1262,7 +1268,7 @@
     let messageTimeoutId; // Timeout for message box
     let tableDataMap = new Map(); // Stores {optionValue: {startIndex: ...}} for jump functionality
     let currentHighlightDecorationId = []; // Stores the ID of the current highlight decoration
-    
+
     // --- NEW: Undo/Redo History Management ---
     let undoStack = [];
     let redoStack = [];
@@ -1270,14 +1276,14 @@
 
     // Initialize global state variables for alignment options
     // These are for the UNIVERSAL format modal
-    window.captionAlignment = 'left'; // Changed to 'left'
+    window.captionAlignment = 'none'; // Changed to 'left'
     window.colHeaderAlignment = 'none';
     window.rowHeaderAlignment = 'none';
     window.colspanHeaderAlignment = 'none'; // Changed to 'none'
     window.dataCellsAlignment = 'none';
 
     // Global variables for CUSTOMIZE modal alignment options (initialize to default for specific table)
-    window.customizeCaptionAlignment = 'left'; // Changed to 'left'
+    window.customizeCaptionAlignment = 'none'; // Changed to 'left'
     window.customizeColHeaderAlignment = 'none';
     window.customizeRowHeaderAlignment = 'none';
     window.customizeColspanHeaderAlignment = 'none'; // Changed to 'none'
@@ -1308,14 +1314,19 @@
      */
     function undo() {
         if (undoStack.length > 1) { // Need at least one state to revert to
-            isUndoingOrRedoing = true;
+            isUndoingOrRedoing = true; // Set flag BEFORE changing content
             const currentState = undoStack.pop();
             redoStack.push(currentState);
             const prevState = undoStack[undoStack.length - 1];
-            setEditorContent(prevState);
-            isUndoingOrRedoing = false;
-            updateUndoRedoButtons();
-             showMessage('Undo successful.', 'info');
+            setEditorContent(prevState); // This triggers the onDidChangeModelContent event
+            applyEntityHighlighting();
+            // Defer setting the flag back to false until after the event has fired
+            setTimeout(() => {
+                isUndoingOrRedoing = false;
+                updateUndoRedoButtons(); // Update buttons now that the state is stable
+            }, 0);
+
+            showMessage('Undo successful.', 'info');
         }
     }
 
@@ -1324,12 +1335,17 @@
      */
     function redo() {
         if (redoStack.length > 0) {
-            isUndoingOrRedoing = true;
+            isUndoingOrRedoing = true; // Set flag BEFORE changing content
             const nextState = redoStack.pop();
             undoStack.push(nextState);
-            setEditorContent(nextState);
-            isUndoingOrRedoing = false;
-            updateUndoRedoButtons();
+            setEditorContent(nextState); // This triggers the onDidChangeModelContent event
+            applyEntityHighlighting();
+            // Defer setting the flag back to false until after the event has fired
+            setTimeout(() => {
+                isUndoingOrRedoing = false;
+                updateUndoRedoButtons(); // Update buttons now that the state is stable
+            }, 0);
+
             showMessage('Redo successful.', 'info');
         }
     }
@@ -1340,11 +1356,15 @@
     function updateUndoRedoButtons() {
         const undoBtn = document.getElementById('undoBtn');
         const redoBtn = document.getElementById('redoBtn');
-        // This function is now called from within updateAllInteractiveButtonStates,
-        // so we only need to manage the logic based on stack length.
-        // The overall disabled state during an action is handled by the main function.
-        if (undoBtn) undoBtn.disabled = undoBtn.disabled || undoStack.length <= 1;
-        if (redoBtn) redoBtn.disabled = redoBtn.disabled || redoStack.length === 0;
+
+        // This function is called when no other action is active,
+        // so we can set the disabled state directly based on stack length.
+        if (undoBtn) {
+            undoBtn.disabled = undoStack.length <= 1;
+        }
+        if (redoBtn) {
+            redoBtn.disabled = redoStack.length === 0;
+        }
     }
 
 
@@ -1356,7 +1376,9 @@
     // Helper function to set the HTML content in the editor
     function setEditorContent(content) {
         if (monacoEditor) {
+            const currentPosition = monacoEditor.getPosition();
             monacoEditor.setValue(content);
+            monacoEditor.setPosition(currentPosition);
         }
     }
 
@@ -1528,6 +1550,16 @@
         processedHtml = processedHtml.replace(/&amp;#(\d+);/g, '&#$1;');
 
         return processedHtml;
+    }
+
+    function cleanupEmptyClassAttributes(containerElement) {
+        if (!containerElement) return;
+        const elements = [containerElement, ...containerElement.querySelectorAll('[class]')];
+        elements.forEach(el => {
+            if (el.hasAttribute('class') && el.classList.length === 0) {
+                el.removeAttribute('class');
+            }
+        });
     }
 
     // Array of all interactive buttons to control their disabled state
@@ -1729,107 +1761,122 @@
         });
         return count;
     }
-
     /**
-     * Populates the table search dropdown with IDs and captions from tables in the editor.
-     * It also stores the starting character index of each table in the Monaco editor content
-     * for efficient jumping.
+     * Helper function to robustly find the end index of a table, accounting for nested tables.
+     */
+    function findTableEndIndex(html, startIndex) {
+        let depth = 1;
+        // Start searching after the initial '<table' tag is found
+        let currentIndex = html.indexOf('>', startIndex);
+        if (currentIndex === -1) return -1; // Malformed opening tag
+        currentIndex += 1;
+
+        while (depth > 0 && currentIndex < html.length) {
+            const nextClose = html.indexOf('</table', currentIndex);
+            const nextOpen = html.indexOf('<table', currentIndex);
+
+            // If no more closing tags can be found, something is wrong with the HTML
+            if (nextClose === -1) return -1;
+
+            // If a nested <table tag appears before the next </table> tag
+            if (nextOpen !== -1 && nextOpen < nextClose) {
+                depth++;
+                currentIndex = html.indexOf('>', nextOpen) + 1;
+            } else {
+                depth--;
+                currentIndex = html.indexOf('>', nextClose) + 1;
+            }
+             // If a tag is unclosed (e.g., `</table`), indexOf returns -1, and +1 makes it 0. Stop to prevent infinite loop.
+            if (currentIndex === 0) return -1;
+        }
+        return currentIndex;
+    }
+    /**
+     * REGRESSION FIX: Populates the table dropdown using a robust scanning method.
+     * This correctly finds all tables and their exact positions in the editor.
      */
     function populateTableSearchDropdown(keepSelectionValue) {
         if (!monacoEditor || !tableSearchDropdown) return;
 
-        // Store the currently selected value if not provided
+        const model = monacoEditor.getModel();
         const currentSelectedValue = keepSelectionValue !== undefined ? keepSelectionValue : tableSearchDropdown.value;
-
-        const htmlContent = monacoEditor.getValue();
+        const htmlContent = getEditorContent();
+        
+        // Use the DOM parser primarily to get an accurate count and metadata of valid tables.
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlContent, 'text/html');
-        const tables = Array.from(doc.querySelectorAll('table'));
+        const tablesFromDom = Array.from(doc.querySelectorAll('table'));
 
-        // Clear existing options and map
         tableSearchDropdown.innerHTML = '<option value="">-- Select a table --</option>';
-        tableDataMap = new Map();
+        tableDataMap.clear();
 
+        let searchStartIndex = 0;
         let unidCounter = 1;
-        tables.forEach((table, originalTableIndex) => {
-            let tableId = table.id;
-            let tableCaption = '';
 
-            const captionElement = table.querySelector('caption');
-            if (captionElement && captionElement.textContent.trim()) {
-                tableCaption = captionElement.textContent.trim();
+        // Correlate the DOM tables with their string positions to build the map.
+        tablesFromDom.forEach(tableDom => {
+            // Find the start of the next <table> tag in the raw string.
+            const startIndex = htmlContent.indexOf('<table', searchStartIndex);
+            if (startIndex === -1) return; // No more tables in string, stop.
+
+            // Use the robust helper to find the correct closing tag.
+            const endIndex = findTableEndIndex(htmlContent, startIndex);
+            if (endIndex === -1) {
+                searchStartIndex = startIndex + 1; // Skip malformed table and continue
+                return;
             }
 
-            let optionValue;
-            let startIndex = -1;
+            const tableOuterHtml = htmlContent.substring(startIndex, endIndex);
+            const startPosition = model.getPositionAt(startIndex);
+            const endPosition = model.getPositionAt(endIndex);
 
-            if (tableId) {
-                optionValue = `id:${tableId}`;
-                const idRegex = new RegExp(`<table[^>]*id=["']${tableId}["'][^>]*>`, 'i');
-                const idMatch = htmlContent.match(idRegex);
-                if (idMatch) {
-                    startIndex = idMatch.index;
-                }
-            } else {
-                optionValue = `unid:${unidCounter}`; // Unique ID for this dropdown option
-                let tempHtml = htmlContent;
-                let count = 0;
-                let regex = /<table/gi;
-                let match;
-                while ((match = regex.exec(tempHtml)) !== null) {
-                    if (count === originalTableIndex) {
-                        startIndex = match.index;
-                        break;
-                    }
-                    count++;
-                }
-                unidCounter++;
-            }
+            // Get metadata (ID, caption) from the reliable DOM element.
+            const tableId = tableDom.id;
+            const captionElement = tableDom.querySelector('caption');
+            const tableCaption = captionElement ? captionElement.textContent.trim() : '';
+            
+            const optionValue = tableId ? `id:${tableId}` : `unid:${unidCounter++}`;
+            const optionText = `${tableCaption ? tableCaption + ' ' : ''}${tableId ? '(ID: ' + tableId + ')' : '(Table ' + (tableDataMap.size + 1) + ')'}`;
+            
+            const option = document.createElement('option');
+            option.value = optionValue;
+            option.textContent = optionText;
+            tableSearchDropdown.appendChild(option);
 
-            if (startIndex !== -1) {
-                const option = document.createElement('option');
-                option.value = optionValue;
-                option.textContent = `${tableCaption ? captionElement.textContent.trim() + ' ' : ''}${tableId ? '(ID: ' + tableId + ')' : '(Table ' + (originalTableIndex + 1) + ')'}`;
-                tableSearchDropdown.appendChild(option);
-
-                const tableOuterHtml = table.outerHTML;
-                tableDataMap.set(optionValue, {
-                    startIndex: startIndex,
-                    outerHTML: tableOuterHtml,
-                    length: tableOuterHtml.length
-                });
-            } else {
-                console.warn(`Could not find table "${tableId || ('Table ' + (originalTableIndex + 1))}" in editor content by regex.`);
-            }
+            // Store the accurate range and the actual source code of the table.
+            tableDataMap.set(optionValue, {
+                outerHTML: tableOuterHtml,
+                range: new monaco.Range(
+                    startPosition.lineNumber,
+                    startPosition.column,
+                    endPosition.lineNumber,
+                    endPosition.column
+                )
+            });
+            
+            // Set the starting point for the next search to be after the table we just found.
+            searchStartIndex = endIndex;
         });
 
-        // --- NEW: Re-select the previously selected value ---
+        // Restore the previously selected value if it still exists.
         if (currentSelectedValue) {
-            // Check if the option still exists after re-population
-            const optionExists = Array.from(tableSearchDropdown.options).some(
-                option => option.value === currentSelectedValue
-            );
+            const optionExists = Array.from(tableSearchDropdown.options).some(opt => opt.value === currentSelectedValue);
             if (optionExists) {
                 tableSearchDropdown.value = currentSelectedValue;
-                // If the selected value is re-applied, and the modal is open, update preview
-                if (!customizeModalOverlay.classList.contains('hidden') && customizeButton.disabled === false) {
-                     // Check if customize button is not disabled to ensure it's an active interaction
-                    // and not just a background update.
+                if (!customizeModalOverlay.classList.contains('hidden') && !customizeButton.disabled) {
                     updateCustomizeModalPreview();
                 }
             } else {
-                // If the previously selected option no longer exists (e.g., table was removed),
-                // reset to default and clear any highlights
                 tableSearchDropdown.value = '';
                 clearMonacoHighlight();
-                updateCustomizeModalPreview(''); // Clear preview if table removed
+                updateCustomizeModalPreview('');
             }
         } else {
-            // If nothing was selected before, clear any highlights
             clearMonacoHighlight();
-            updateCustomizeModalPreview(''); // Clear preview
+            updateCustomizeModalPreview('');
         }
     }
+    
 
     /**
      * Contains the core logic for formatting a single HTML table.
@@ -2044,6 +2091,7 @@
             const isRowHeader = isTbodyCell && cell.tagName.toLowerCase() === 'th' && cell.parentElement.firstElementChild === cell;
 
             if (cell.tagName.toLowerCase() === 'td') {
+                cell.classList.remove('nowrap','text-right');
                 if (options.currentDataCellsAlignment !== 'manual') {
                     if (options.applyFinanceTable && financeRegex.test(cell.textContent.trim())) {
                         applyAlignment(cell, 'right', alignmentClasses);
@@ -2070,17 +2118,27 @@
             }
         });
 
-        // --- Apply Bold Totals (only to newTbodyElement rows) ---
+        // --- MAJOR FIX: Bold Totals Toggle Logic ---
         Array.from(newTbodyElement.querySelectorAll('tr')).forEach(row => {
             const thInRow = row.querySelector('th');
-            if (options.applyBoldTotals && thInRow && (thInRow.textContent.trim().toLowerCase() === 'total' || thInRow.textContent.trim().toLowerCase() === 'subtotal')) {
+            if (thInRow && (thInRow.textContent.trim().toLowerCase() === 'total' || thInRow.textContent.trim().toLowerCase() === 'subtotal')) {
                 Array.from(row.querySelectorAll('td')).forEach(td => {
-                    if (!td.querySelector('strong')) {
+                    const isBold = td.firstElementChild && td.firstElementChild.tagName === 'STRONG' && td.children.length === 1;
+                    if (options.applyBoldTotals && !isBold) {
+                        // Wrap content in <strong> if it's not already
                         td.innerHTML = `<strong>${td.innerHTML}</strong>`;
+                    } else if (!options.applyBoldTotals && isBold) {
+                        // Unwrap content from <strong> if it is bold
+                        const strongTag = td.firstElementChild;
+                        while (strongTag.firstChild) {
+                            td.insertBefore(strongTag.firstChild, strongTag);
+                        }
+                        strongTag.remove();
                     }
                 });
             }
         });
+
 
         // --- Append the structural elements to the table in correct order ---
         if (newTheadElement.children.length > 0) table.appendChild(newTheadElement);
@@ -2092,10 +2150,14 @@
             if (newTfootElement.children.length > 0) table.appendChild(newTfootElement);
         }
 
-        // --- Apply Small Class to TRs ---
+        // --- MAJOR FIX: Small TR Class Toggle Logic ---
+        // First, reset the state by removing the class from all TRs
+        Array.from(table.querySelectorAll('tr')).forEach(tr => tr.classList.remove(smallClass));
+        // Then, conditionally add it back if the option is checked
         if (options.applyAddSmallToTr) {
             Array.from(table.querySelectorAll('tr')).forEach(tr => tr.classList.add(smallClass));
         }
+
 
         // --- Apply Active Classes ---
         if (options.applyActiveColHeaders) Array.from(table.querySelectorAll('thead tr')).forEach(tr => tr.classList.add('active'));
@@ -2109,7 +2171,8 @@
             }
         });
 
-        return table;
+        cleanupEmptyClassAttributes(table); // Clean up empty classes before returning
+return table;
     }
 
 
@@ -2131,58 +2194,69 @@
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = htmlText;
             const tables = tempDiv.querySelectorAll('table');
-            if (tables.length === 0) { showMessage('No HTML tables found to format.', 'info'); return; }
+            if (tables.length === 0) {
+                showMessage('No HTML tables found to format.', 'info');
+            } else {
+                let tblCounter = 1;
+                let ftblCounter = 1;
 
-            let tblCounter = 1;
-            let ftblCounter = 1;
+                tables.forEach(table => {
+                    const isFigureTable = table.closest('figure') !== null;
+                    const options = {
+                        applyId: idCheckbox.checked,
+                        tableIdPrefix: pageIdPrefixInput.value.trim(),
+                        figureDataIdPrefix: figureDataIdPrefixInput.value.trim(),
+                        applyClassTables: classTablesCheckbox.checked,
+                        applyCaption: captionCheckbox.checked,
+                        applyAutoCaption: autoCaptionCheckbox.checked,
+                        applyInvisibleCaption: invCaptionCheckbox.checked,
+                        applyFixEmptyCells: fixEmptyCellsCheckbox.checked,
+                        applyRemovePTags: removePTagsCheckbox.checked,
+                        applyMakeTfootFromColspan: makeTfootFromColspanCheckbox.checked,
+                        applyTfootBeforeTbody: document.getElementById('make-tfoot-before-tbody-checkbox').checked,
+                        applyAddSmallToTr: addSmallToTrCheckbox.checked,
+                        applyHeader: headerCheckbox.checked,
+                        applyRowHeader: rowHeaderCheckbox.checked,
+                        applyBordered: borderedCheckbox.checked,
+                        applyStriped: stripedCheckbox.checked,
+                        applyHover: hoverCheckbox.checked,
+                        applyActiveColHeaders: activeColHeadersCheckbox.checked,
+                        activeColspanHeadersCheckboxValue: activeColspanHeadersCheckbox.checked,
+                        activeRowHeadersCheckboxValue: activeRowHeadersCheckbox.checked,
+                        applyClassSmall: classSmallCheckboxElement.checked,
+                        applyFinanceTable: financeTableCheckbox.checked,
+                        applyBoldTotals: boldTotalsCheckbox.checked,
+                        currentCaptionAlignment: window.captionAlignment,
+                        currentColHeaderAlignment: window.colHeaderAlignment,
+                        currentRowHeaderAlignment: window.rowHeaderAlignment,
+                        currentColspanHeaderAlignment: window.colspanHeaderAlignment,
+                        currentDataCellsAlignment: window.dataCellsAlignment,
+                        assignedIdCounter: isFigureTable ? ftblCounter++ : tblCounter++,
+                        isFigureTable: isFigureTable,
+                        specificTableId: false
+                    };
+                    formatTableLogic(table, options);
+                });
 
-            tables.forEach(table => {
-                const isFigureTable = table.closest('figure') !== null;
-                const options = {
-                    applyId: idCheckbox.checked,
-                    tableIdPrefix: pageIdPrefixInput.value.trim(),
-                    figureDataIdPrefix: figureDataIdPrefixInput.value.trim(),
-                    applyClassTables: classTablesCheckbox.checked,
-                    applyCaption: captionCheckbox.checked,
-                    applyAutoCaption: autoCaptionCheckbox.checked,
-                    applyInvisibleCaption: invCaptionCheckbox.checked,
-                    applyFixEmptyCells: fixEmptyCellsCheckbox.checked,
-                    applyRemovePTags: removePTagsCheckbox.checked,
-                    applyMakeTfootFromColspan: makeTfootFromColspanCheckbox.checked,
-                    applyTfootBeforeTbody: document.getElementById('make-tfoot-before-tbody-checkbox').checked,
-                    applyAddSmallToTr: addSmallToTrCheckbox.checked,
-                    applyHeader: headerCheckbox.checked,
-                    applyRowHeader: rowHeaderCheckbox.checked,
-                    applyBordered: borderedCheckbox.checked,
-                    applyStriped: stripedCheckbox.checked,
-                    applyHover: hoverCheckbox.checked,
-                    applyActiveColHeaders: activeColHeadersCheckbox.checked,
-                    activeColspanHeadersCheckboxValue: activeColspanHeadersCheckbox.checked,
-                    activeRowHeadersCheckboxValue: activeRowHeadersCheckbox.checked,
-                    applyClassSmall: classSmallCheckboxElement.checked,
-                    applyFinanceTable: financeTableCheckbox.checked,
-                    applyBoldTotals: boldTotalsCheckbox.checked,
-                    currentCaptionAlignment: window.captionAlignment,
-                    currentColHeaderAlignment: window.colHeaderAlignment,
-                    currentRowHeaderAlignment: window.rowHeaderAlignment,
-                    currentColspanHeaderAlignment: window.colspanHeaderAlignment,
-                    currentDataCellsAlignment: window.dataCellsAlignment,
-                    assignedIdCounter: isFigureTable ? ftblCounter++ : tblCounter++,
-                    isFigureTable: isFigureTable,
-                    specificTableId: false
-                };
-                formatTableLogic(table, options);
-            });
+                let reconstructedHtml = '';
+                tempDiv.childNodes.forEach(node => {
+                    if (node.nodeType === Node.ELEMENT_NODE) {
+                        reconstructedHtml += node.outerHTML;
+                    } else if (node.nodeType === Node.TEXT_NODE) {
+                        reconstructedHtml += node.textContent;
+                    }
+                });
 
-            let formattedContent = tempDiv.innerHTML;
-            formattedContent = protectDataAttributes(formattedContent);
-            formattedContent = html_beautify(formattedContent, { indent_size: 4, space_in_paren: true, preserve_newlines: false, extra_liners: [] });
-            formattedContent = restoreDataAttributes(formattedContent);
-            formattedContent = convertAllEntitiesToNumeric(formattedContent);
-            setEditorContent(formattedContent);
-            const prevSelectedTable = tableSearchDropdown.value; 
-            applyEntityHighlighting();
-            populateTableSearchDropdown(prevSelectedTable); 
+                let formattedContent = reconstructedHtml;
+                formattedContent = protectDataAttributes(formattedContent);
+                formattedContent = html_beautify(formattedContent, { indent_size: 4, space_in_paren: true, preserve_newlines: false, extra_liners: [] });
+                formattedContent = restoreDataAttributes(formattedContent);
+                formattedContent = convertAllEntitiesToNumeric(formattedContent);
+                setEditorContent(formattedContent);
+                const prevSelectedTable = tableSearchDropdown.value; 
+                applyEntityHighlighting();
+                populateTableSearchDropdown(prevSelectedTable);
+            }
 
         } catch (e) {
             console.error("Error formatting HTML tables:", e);
@@ -2192,7 +2266,9 @@
                 formatButton.textContent = 'Format Tables';
                 formatButton.removeAttribute('data-temp-active');
                 updateAllInteractiveButtonStates();
-                showMessage('HTML tables formatted successfully!', 'success');
+                if (document.querySelectorAll('table').length > 0) {
+                     showMessage('HTML tables formatted successfully!', 'success');
+                }
             }, 1500);
         }
     }
@@ -2395,7 +2471,7 @@
                 el.removeAttribute('class');
             }
         });
-
+        cleanupEmptyClassAttributes(tableElement);
         return tableElement.outerHTML;
     }
 
@@ -2462,28 +2538,29 @@
     }
 
     /**
-     * Updates the customize modal's preview iframe based on current option selections.
-     * @param {string} [htmlContentToPreview] - Optional. If provided, this HTML is used for the iframe.
-     * Otherwise, generatePreviewTableHtml() is called to create the HTML.
+     * Updates the customize modal's preview iframe and stages the changes.
+     * This is the single source of truth for updating the preview.
+     * @param {string} [htmlContentToPreview] - Optional HTML to preview. If not provided, it's generated from current settings.
      */
     function updateCustomizeModalPreview(htmlContentToPreview) {
-        if (htmlContentToPreview === undefined) {
-            htmlContentToPreview = generatePreviewTableHtml();
-        }
-        updateCustomizePreview(htmlContentToPreview);
-    }
+        // Step 1: Generate the new HTML if it wasn't passed in.
+        const finalHtmlToPreview = (htmlContentToPreview === undefined)
+            ? generatePreviewTableHtml()
+            : htmlContentToPreview;
 
-    /**
-     * Updates the content of the customize preview iframe with enhanced selection capabilities.
-     * @param {string} tableHtmlString - The HTML string of the table to display in the iframe.
-     */
-    function updateCustomizePreview(tableHtmlString) {
+        // Step 2: Stage the changes by updating the in-memory map. This is the crucial fix.
+        const selectedValue = tableSearchDropdown.value;
+        const tableInfo = tableDataMap.get(selectedValue);
+        if (tableInfo) {
+            tableInfo.outerHTML = finalHtmlToPreview;
+        }
+
+        // Step 3: Update the content of the iframe with the new HTML.
         if (!customizePreviewIframe) {
             console.warn("Customize preview iframe not found.");
             return;
         }
 
-        // The complete HTML for the iframe content, including new styles and a more robust script
         const baseHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2494,180 +2571,193 @@
     <link rel="stylesheet" href="https://www.canada.ca/etc/designs/canada/wet-boew/css/theme.min.css">
     <link rel="stylesheet" href="https://cdn.design-system.alpha.canada.ca/@cdssnc/gcds-components@latest/dist/gcds/gcds.css">
     <style>
-        /* --- Enhanced Selection and Hover Styles --- */
         body { -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }
         td, th, caption { transition: background-color 0.1s ease-in-out; }
-        .cell-hover { background-color: rgba(173, 216, 230, 0.3) !important; /* Light blue transparent hover */ }
+        .cell-hover { background-color: rgba(173, 216, 230, 0.3) !important; }
         .highlighted-cell { background-color: rgba(173, 216, 230, 0.7) !important; border: 1px solid #3b82f6 !important; }
         .fnt-nrml { font-weight: normal !important; }
-        .mrgn-lft-sm { margin-left: 0.5rem; }
-        .mrgn-lft-md { margin-left: 1rem; }
-        .mrgn-lft-lg { margin-left: 1.5rem; }
-        .mrgn-lft-xl { margin-left: 2rem; }
+        .mrgn-lft-sm { margin-left: 0.5rem; } .mrgn-lft-md { margin-left: 1rem; }
+        .mrgn-lft-lg { margin-left: 1.5rem; } .mrgn-lft-xl { margin-left: 2rem; }
     </style>
 </head>
 <body>
     <main property="mainContentOfPage" resource="#wb-main" typeof="WebPageElement">
-        <div class="container">
-            <div class="table-responsive">
-                ${tableHtmlString}
-            </div>
-        </div>
+        <div class="container"><div class="table-responsive">${finalHtmlToPreview}</div></div>
     </main>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"><\/script>
     <script src="https://www.canada.ca/etc/designs/canada/wet-boew/js/wet-boew.min.js"><\/script>
     <script src="https://www.canada.ca/etc/designs/canada/wet-boew/js/theme.min.js"><\/script>
     <script>
-        // --- Robust Live Select System for Table Preview ---
         document.addEventListener('DOMContentLoaded', () => {
             const table = document.querySelector('table');
             if (!table) return;
 
-            let isMouseDown = false;
-            let startCell = null;
             const selectedCells = new Set();
-            const grid = []; // Will store a map of the table cells for easy lookup
+            let lastClickedCell = null;
+            let isDragging = false;
+            let dragStarted = false;
+            let startCellForDrag = null;
+            const grid = [];
 
-            // 1. Build a grid map of the table to handle colspan and rowspan correctly
-            const rows = Array.from(table.rows);
-            rows.forEach((row, rIndex) => {
-                grid[rIndex] = grid[rIndex] || [];
-                let cIndex = 0;
-                Array.from(row.cells).forEach(cell => {
-                    while(grid[rIndex][cIndex]) {
-                        cIndex++;
+            const buildGrid = () => {
+                grid.length = 0;
+                Array.from(table.rows).forEach((row, rIndex) => {
+                    grid[rIndex] = grid[rIndex] || [];
+                    let cIndex = 0;
+                    Array.from(row.cells).forEach(cell => {
+                        while (grid[rIndex][cIndex]) cIndex++;
+                        const colspan = parseInt(cell.getAttribute('colspan') || '1');
+                        const rowspan = parseInt(cell.getAttribute('rowspan') || '1');
+                        for (let rs = 0; rs < rowspan; rs++) {
+                            for (let cs = 0; cs < colspan; cs++) {
+                                if (!grid[rIndex + rs]) grid[rIndex + rs] = [];
+                                grid[rIndex + rs][cIndex + cs] = cell;
+                            }
+                        }
+                        cIndex += colspan;
+                    });
+                });
+            };
+            buildGrid();
+
+            const findCellCoords = (cell) => {
+                for (let r = 0; r < grid.length; r++) {
+                    for (let c = 0; c < (grid[r] ? grid[r].length : 0); c++) {
+                        if (grid[r][c] === cell) return { r, c };
                     }
-                    const colspan = parseInt(cell.getAttribute('colspan') || '1');
-                    const rowspan = parseInt(cell.getAttribute('rowspan') || '1');
-                    for(let rs = 0; rs < rowspan; rs++) {
-                        for (let cs = 0; cs < colspan; cs++) {
-                            if (!grid[rIndex + rs]) grid[rIndex + rs] = [];
-                            grid[rIndex + rs][cIndex + cs] = cell;
+                }
+                return null;
+            };
+
+            const clearAllHighlights = () => {
+                selectedCells.forEach(c => c.classList.remove('highlighted-cell'));
+                selectedCells.clear();
+            };
+
+            table.addEventListener('mouseover', (e) => {
+                document.querySelectorAll('.cell-hover').forEach(c => c.classList.remove('cell-hover'));
+                const targetCell = e.target.closest('th, td, caption');
+                if (targetCell) targetCell.classList.add('cell-hover');
+
+                if (isDragging && startCellForDrag && targetCell) {
+                    dragStarted = true;
+                    clearAllHighlights();
+                    const startCoords = findCellCoords(startCellForDrag);
+                    const currentCoords = findCellCoords(targetCell);
+                    if (startCoords && currentCoords) {
+                        const r1 = Math.min(startCoords.r, currentCoords.r);
+                        const r2 = Math.max(startCoords.r, currentCoords.r);
+                        const c1 = Math.min(startCoords.c, currentCoords.c);
+                        const c2 = Math.max(startCoords.c, currentCoords.c);
+                        for (let i = r1; i <= r2; i++) {
+                            for (let j = c1; j <= c2; j++) {
+                                const cell = grid[i] && grid[i][j];
+                                if (cell && !selectedCells.has(cell)) {
+                                    cell.classList.add('highlighted-cell');
+                                    selectedCells.add(cell);
+                                }
+                            }
                         }
                     }
-                    cIndex += colspan;
-                });
+                }
             });
 
-            // Helper function to clear all selections
-            function clearAllHighlights() {
-                document.querySelectorAll('.highlighted-cell').forEach(cell => cell.classList.remove('highlighted-cell'));
-                selectedCells.clear();
-            }
+            table.addEventListener('mouseleave', () => {
+                document.querySelectorAll('.cell-hover').forEach(c => c.classList.remove('cell-hover'));
+            });
 
-            // 2. Add event listeners to the table
             table.addEventListener('mousedown', (e) => {
                 const targetCell = e.target.closest('th, td, caption');
                 if (!targetCell) return;
-
-                e.preventDefault();
-                isMouseDown = true;
-                startCell = targetCell;
-
-                if (!e.ctrlKey) {
-                    clearAllHighlights();
-                }
                 
-                if (selectedCells.has(targetCell) && e.ctrlKey) {
-                    targetCell.classList.remove('highlighted-cell');
-                    selectedCells.delete(targetCell);
+                isDragging = true;
+                dragStarted = false;
+                startCellForDrag = targetCell;
+
+                if (e.shiftKey && lastClickedCell) {
+                    clearAllHighlights();
+                    const startCoords = findCellCoords(lastClickedCell);
+                    const endCoords = findCellCoords(targetCell);
+                    if (startCoords && endCoords) {
+                         const r1 = Math.min(startCoords.r, endCoords.r);
+                         const r2 = Math.max(startCoords.r, endCoords.r);
+                         const c1 = Math.min(startCoords.c, endCoords.c);
+                         const c2 = Math.max(startCoords.c, endCoords.c);
+                         for (let i = r1; i <= r2; i++) {
+                            for (let j = c1; j <= c2; j++) {
+                                const cell = grid[i] && grid[i][j];
+                                if(cell) selectedCells.add(cell);
+                            }
+                        }
+                        selectedCells.forEach(c => c.classList.add('highlighted-cell'));
+                    }
+                } else if (e.ctrlKey) {
+                    if (selectedCells.has(targetCell)) {
+                        targetCell.classList.remove('highlighted-cell');
+                        selectedCells.delete(targetCell);
+                    } else {
+                        targetCell.classList.add('highlighted-cell');
+                        selectedCells.add(targetCell);
+                    }
                 } else {
+                    clearAllHighlights();
                     targetCell.classList.add('highlighted-cell');
                     selectedCells.add(targetCell);
                 }
             });
 
-            table.addEventListener('mouseover', (e) => {
-                const targetCell = e.target.closest('th, td, caption');
-                
-                document.querySelectorAll('.cell-hover').forEach(c => c.classList.remove('cell-hover'));
-                if (targetCell) {
-                    targetCell.classList.add('cell-hover');
-                }
-
-                if (!isMouseDown || !startCell || !targetCell) return;
-
-                let startCoords = { r: -1, c: -1 };
-                let endCoords = { r: -1, c: -1 };
-                grid.forEach((row, r) => {
-                    row.forEach((cell, c) => {
-                        if (cell === startCell) startCoords = { r, c };
-                        if (cell === targetCell) endCoords = { r, c };
-                    });
-                });
-
-                if (startCoords.r === -1 || endCoords.r === -1) return;
-
-                const minRow = Math.min(startCoords.r, endCoords.r);
-                const maxRow = Math.max(startCoords.r, endCoords.r);
-                const minCol = Math.min(startCoords.c, endCoords.c);
-                const maxCol = Math.max(startCoords.c, endCoords.c);
-
-                clearAllHighlights();
-                for (let r = minRow; r <= maxRow; r++) {
-                    for (let c = minCol; c <= maxCol; c++) {
-                        if (grid[r] && grid[r][c]) {
-                            const cellToSelect = grid[r][c];
-                            cellToSelect.classList.add('highlighted-cell');
-                            selectedCells.add(cellToSelect);
-                        }
+            document.addEventListener('mouseup', (e) => {
+                if (isDragging && !dragStarted) {
+                    const targetCell = e.target.closest('th, td, caption');
+                     if (targetCell && !e.shiftKey) {
+                        lastClickedCell = targetCell;
                     }
                 }
+                isDragging = false;
+                startCellForDrag = null;
             });
 
-            document.addEventListener('mouseup', () => {
-                isMouseDown = false;
-                startCell = null;
+            table.addEventListener('dblclick', (e) => {
+                e.preventDefault();
+                const targetCell = e.target.closest('th, td');
+                if (!targetCell || targetCell.tagName !== 'TD') return;
+                
+                clearAllHighlights();
+                table.querySelectorAll('tbody td').forEach(td => {
+                    td.classList.add('highlighted-cell');
+                    selectedCells.add(td);
+                });
+                window.parent.postMessage({ type: 'allTdsSelected' }, '*');
             });
             
-            table.addEventListener('mouseleave', () => {
-                 document.querySelectorAll('.cell-hover').forEach(c => c.classList.remove('cell-hover'));
-            });
-
-            // Listen for messages from parent window
             window.addEventListener('message', (event) => {
-                 if (!event.data) return;
-
-                switch (event.data.type) {
-                    case 'resetCellStates':
-                        clearAllHighlights();
-                        break;
-                    case 'cellAction':
-                        handleCellAction(event.data.payload);
-                        break;
+                if (event.data && event.data.type === 'cellAction') {
+                    handleCellAction(event.data.payload);
                 }
             });
 
             function handleCellAction(payload) {
-                const { action, value } = payload;
                 if (selectedCells.size === 0) return;
-
+                const { action, value } = payload;
                 selectedCells.forEach(cell => {
                     switch(action) {
-                        case 'toggle-unbold-th':
-                            if (cell.tagName === 'TH') {
-                                cell.classList.toggle('fnt-nrml');
-                            }
-                            break;
+                        case 'toggle-unbold-th': if (cell.tagName === 'TH') cell.classList.toggle('fnt-nrml'); break;
                         case 'toggle-bold-td':
                             if (cell.tagName === 'TD') {
-                                const strong = cell.querySelector('strong');
-                                if (strong && strong.parentElement === cell) {
-                                    while(strong.firstChild) {
-                                        strong.parentNode.insertBefore(strong.firstChild, strong);
-                                    }
-                                    strong.remove();
+                                const firstEl = cell.firstElementChild;
+                                if (firstEl && firstEl.tagName === 'STRONG' && cell.children.length === 1) {
+                                    while (firstEl.firstChild) cell.insertBefore(firstEl.firstChild, firstEl);
+                                    firstEl.remove();
                                 } else {
                                     const strongEl = document.createElement('strong');
-                                    while(cell.firstChild) {
-                                        strongEl.appendChild(cell.firstChild);
-                                    }
+                                    while (cell.firstChild) strongEl.appendChild(cell.firstChild);
                                     cell.appendChild(strongEl);
                                 }
                             }
                             break;
                         case 'set-alignment':
                             cell.classList.remove('text-left', 'text-center', 'text-right');
+                            cell.style.textAlign = '';
                             if (value !== 'none') {
                                 cell.classList.add('text-' + value);
                             }
@@ -2675,25 +2765,21 @@
                         case 'set-margin':
                             const existingMarginDiv = cell.querySelector('div[class*="mrgn-lft-"]');
                             if (existingMarginDiv) {
-                                while(existingMarginDiv.firstChild) {
-                                    cell.insertBefore(existingMarginDiv.firstChild, existingMarginDiv);
-                                }
+                                while (existingMarginDiv.firstChild) cell.insertBefore(existingMarginDiv.firstChild, existingMarginDiv);
                                 existingMarginDiv.remove();
                             }
                             if (value !== '0') {
                                 const marginDiv = document.createElement('div');
                                 marginDiv.className = 'mrgn-lft-' + value;
-                                while(cell.firstChild) {
-                                    marginDiv.appendChild(cell.firstChild);
-                                }
+                                while (cell.firstChild) marginDiv.appendChild(cell.firstChild);
                                 cell.appendChild(marginDiv);
                             }
                             break;
-                        case 'add-custom-class':
-                            if (value) cell.classList.add(value);
-                            break;
-                        case 'remove-custom-class':
-                            if (value) cell.classList.remove(value);
+                        case 'add-custom-class': if (value) cell.classList.add(value); break;
+                        case 'reset-custom-classes':
+                            const protectedClasses = ['highlighted-cell', 'cell-hover', 'fnt-nrml', 'text-left', 'text-center', 'text-right'];
+                            const classesToRemove = Array.from(cell.classList).filter(c => !protectedClasses.includes(c));
+                            if (classesToRemove.length > 0) cell.classList.remove(...classesToRemove);
                             break;
                     }
                 });
@@ -2702,7 +2788,14 @@
                     clearTimeout(window.updateParentTimeout);
                     window.updateParentTimeout = setTimeout(() => {
                         const tableClone = table.cloneNode(true);
-                        tableClone.querySelectorAll('.highlighted-cell').forEach(c => c.classList.remove('highlighted-cell'));
+                        tableClone.querySelectorAll('.highlighted-cell, .cell-hover').forEach(c => {
+                            c.classList.remove('highlighted-cell');
+                            c.classList.remove('cell-hover');
+                        });
+                        const elementsToClean = [tableClone, ...tableClone.querySelectorAll('[class]')];
+                        elementsToClean.forEach(el => {
+                            if (el.classList.length === 0) el.removeAttribute('class');
+                        });
                         window.parent.postMessage({ type: 'updateTableContent', tableHtml: tableClone.outerHTML }, '*');
                     }, 100);
                 }
@@ -2716,11 +2809,12 @@
 
 
     /**
-     * Formats a specific HTML table in the editor based on options from the customize modal.
+     * CRITICAL FIX: Formats a specific table using the Monaco Editor's API for safe, accurate replacement.
+     * This completely prevents the bug where code outside the table was being deleted.
      */
     async function formatSpecificTable() {
-        pushUndoState(); // Save state before action
-        closeCustomizeModal(); // Close the customize modal
+        if (!monacoEditor) return;
+        pushUndoState();
 
         const selectedValue = tableSearchDropdown.value;
         if (!selectedValue) {
@@ -2729,42 +2823,43 @@
         }
 
         const tableInfo = tableDataMap.get(selectedValue);
-        if (!tableInfo || tableInfo.startIndex === -1) {
-            showMessage('Selected table not found in editor content.', 'error');
+        if (!tableInfo || !tableInfo.range) {
+            showMessage('Could not find the selected table\'s location in the editor. Please try re-selecting.', 'error');
             return;
         }
 
-        const currentEditorContent = getEditorContent();
+        closeCustomizeModal();
 
-        // Perform the formatting on a *copy* of the table HTML
-        const formattedTableOuterHTML = generatePreviewTableHtml(); // Re-use logic for consistency
+        // Get the final, formatted HTML from the in-memory map (updated by the preview iframe)
+        const formattedTableOuterHTML = tableInfo.outerHTML;
 
-        // Replace the original table's content in the full editor content
-        const newEditorContent = currentEditorContent.substring(0, tableInfo.startIndex) +
-                                 formattedTableOuterHTML +
-                                 currentEditorContent.substring(tableInfo.startIndex + tableInfo.length);
+        // Use Monaco's API to perform a safe, range-based replacement
+        const editOperation = {
+            range: tableInfo.range,
+            text: formattedTableOuterHTML,
+            forceMoveMarkers: true
+        };
 
-        setEditorContent(newEditorContent);
-        applyEntityHighlighting();
-        populateTableSearchDropdown(); // Re-populate dropdown as content/IDs might have changed
+        monacoEditor.executeEdits('table-formatter', [editOperation]);
 
-        // Temporarily disable buttons and show feedback
+        // A small delay to allow the editor to process the edit before re-scanning
+        setTimeout(() => {
+            applyEntityHighlighting();
+            populateTableSearchDropdown(selectedValue); // Re-scan and keep the table selected
+        }, 100);
+        
         const originalHtml = formatSpecificTableButton.innerHTML;
         formatSpecificTableButton.innerHTML = 'Formatting...';
-        formatSpecificTableButton.classList.add('bg-green-500', 'hover:bg-green-600');
-        formatSpecificTableButton.classList.remove('bg-blue-700', 'hover:bg-blue-800');
         formatSpecificTableButton.setAttribute('data-temp-active', 'true');
         updateAllInteractiveButtonStates();
-
         setTimeout(() => {
             formatSpecificTableButton.innerHTML = originalHtml;
-            formatSpecificTableButton.classList.remove('bg-green-500', 'hover:bg-green-600');
-            formatSpecificTableButton.classList.add('bg-blue-700', 'hover:bg-blue-800');
             formatSpecificTableButton.removeAttribute('data-temp-active');
             updateAllInteractiveButtonStates();
-            showMessage('Selected table customized successfully!', 'success'); // Show success message
+            showMessage('Selected table customized successfully!', 'success');
         }, 1500);
     }
+
 
     /**
      * Resets universal formatting for all tables in the editor.
@@ -2785,23 +2880,18 @@
             return;
         }
 
-        // *** FIX: Define all classes that this tool's formatting functions might add. ***
         const managedClasses = [
             'table', 'table-bordered', 'table-striped', 'table-hover', 'table-condensed',
             'small', 'active', 'text-left', 'text-center', 'text-right', 'nowrap', 'wb-inv'
         ];
 
         tables.forEach(table => {
-            // Iterate over the table itself and all its descendants
             [table, ...table.querySelectorAll('*')].forEach(el => {
-                // Remove only the managed classes, preserving custom ones
                 el.classList.remove(...managedClasses);
             });
-            // Also remove the table's ID
             table.removeAttribute('id');
         });
         
-        // Clean up any empty class attributes left behind
         tempDiv.querySelectorAll('*').forEach(el => {
             if (el.hasAttribute('class') && el.classList.length === 0) {
                 el.removeAttribute('class');
@@ -2835,11 +2925,9 @@
         }
 
         responsiveDivs.forEach(div => {
-            // Move all children of the div out, right before the div
             while (div.firstChild) {
                 div.parentNode.insertBefore(div.firstChild, div);
             }
-            // Remove the now-empty div
             div.parentNode.removeChild(div);
         });
 
@@ -2900,47 +2988,44 @@
         tempDiv.innerHTML = tableInfo.outerHTML;
         const table = tempDiv.querySelector('table');
 
-        // *** FIX: Define all classes that this tool's formatting functions might add. ***
         const managedClasses = [
             'table', 'table-bordered', 'table-striped', 'table-hover', 'table-condensed',
             'small', 'active', 'text-left', 'text-center', 'text-right', 'nowrap', 'wb-inv'
         ];
 
-        // *** FIX: Iterate over the table itself and all its descendants ***
         [table, ...table.querySelectorAll('*')].forEach(el => {
-            // Remove only the managed classes, preserving custom ones
             el.classList.remove(...managedClasses);
         });
         table.removeAttribute('id');
 
-        // *** FIX: Clean up empty class attributes after removal ***
         [table, ...table.querySelectorAll('*')].forEach(el => {
              if (el.hasAttribute('class') && el.classList.length === 0) {
                 el.removeAttribute('class');
             }
         });
 
+        let modifiedTableHtml = html_beautify(tempDiv.innerHTML, { indent_size: 4, space_in_paren: true, preserve_newlines: false, extra_liners: [] });
 
-        let modifiedTableHtml = tempDiv.innerHTML;
-        modifiedTableHtml = html_beautify(modifiedTableHtml, { indent_size: 4, space_in_paren: true, preserve_newlines: false, extra_liners: [] });
+        const editOperation = {
+            range: tableInfo.range,
+            text: modifiedTableHtml,
+            forceMoveMarkers: true
+        };
+        monacoEditor.executeEdits('table-formatter-reset', [editOperation]);
 
-        const currentEditorContent = getEditorContent();
-        const newEditorContent = currentEditorContent.substring(0, tableInfo.startIndex) +
-                                 modifiedTableHtml +
-                                 currentEditorContent.substring(tableInfo.startIndex + tableInfo.length);
-        
-        setEditorContent(newEditorContent);
-        applyEntityHighlighting();
-        populateTableSearchDropdown();
-        showMessage(`Formatting for table "${selectedValue}" has been reset.`, 'success');
+        setTimeout(() => {
+            applyEntityHighlighting();
+            populateTableSearchDropdown(selectedValue);
+            showMessage(`Formatting for table "${selectedValue}" has been reset.`, 'success');
+        }, 100);
     }
 
     /**
      * Resets scopes and IDs for a single, selected table.
      */
     function resetTableScopeAndID() {
-        pushUndoState(); // Save state before action
-         const selectedValue = tableSearchDropdown.value;
+        pushUndoState();
+        const selectedValue = tableSearchDropdown.value;
         if (!selectedValue) {
             showMessage('Please select a table to reset.', 'info');
             return;
@@ -2958,18 +3043,20 @@
             cell.removeAttribute('headers');
         });
 
-        let modifiedTableHtml = tempDiv.innerHTML;
-        modifiedTableHtml = html_beautify(modifiedTableHtml, { indent_size: 4, space_in_paren: true, preserve_newlines: false, extra_liners: [] });
+        let modifiedTableHtml = html_beautify(tempDiv.innerHTML, { indent_size: 4, space_in_paren: true, preserve_newlines: false, extra_liners: [] });
 
-        const currentEditorContent = getEditorContent();
-        const newEditorContent = currentEditorContent.substring(0, tableInfo.startIndex) +
-                                 modifiedTableHtml +
-                                 currentEditorContent.substring(tableInfo.startIndex + tableInfo.length);
-        
-        setEditorContent(newEditorContent);
-        applyEntityHighlighting();
-        populateTableSearchDropdown();
-        showMessage(`Scopes and IDs for table "${table.id || selectedValue}" have been reset.`, 'success');
+        const editOperation = {
+            range: tableInfo.range,
+            text: modifiedTableHtml,
+            forceMoveMarkers: true
+        };
+        monacoEditor.executeEdits('table-formatter-reset-scope', [editOperation]);
+
+        setTimeout(() => {
+            applyEntityHighlighting();
+            populateTableSearchDropdown(selectedValue);
+            showMessage(`Scopes and IDs for the selected table have been reset.`, 'success');
+        }, 100);
     }
 
     /**
@@ -2993,7 +3080,7 @@
             const tables = tempDiv.querySelectorAll('table');
             if (tables.length === 0) {
                 showMessage('No tables found to ID.', 'info');
-                return; // finally block will still run
+                return; 
             }
 
             let tblCounter = 1;
@@ -3009,7 +3096,6 @@
 
             let finalHtml = tempDiv.innerHTML;
             finalHtml = html_beautify(finalHtml, { indent_size: 4, space_in_paren: true, preserve_newlines: false, extra_liners: [] });
-            // MODIFICATION: Run auto-encode
             finalHtml = convertAllEntitiesToNumeric(finalHtml);
             setEditorContent(finalHtml);
             applyEntityHighlighting();
@@ -3039,7 +3125,6 @@
         return text.replace(regex, (match, sign, preSymbol, numberStr, postSymbol) => {
             if (!/\d/.test(numberStr)) return match;
 
-            // Heuristic to ignore version numbers, IP addresses, or codes.
             if ((numberStr.match(/\./g) || []).length > 1 && (numberStr.match(/,/g) || []).length === 0) {
                 return match;
             }
@@ -3053,16 +3138,12 @@
             const hasPeriod = parsableStr.includes('.');
 
             if (hasComma && hasPeriod) {
-                // Both comma and period present. Determine decimal.
-                // If comma appears after period, it's European style (1.234,56)
                 if (parsableStr.indexOf(',') > parsableStr.indexOf('.')) {
                     parsableStr = parsableStr.replace(/\./g, '').replace(',', '.');
                 } else {
-                    // If period appears after comma, it's American style (1,234.56)
                     parsableStr = parsableStr.replace(/,/g, '');
                 }
             } else if (hasComma) {
-                // Only commas present. Heuristic: if last part is 1 or 2 digits, assume decimal.
                 const parts = parsableStr.split(',');
                 const lastPart = parts[parts.length - 1];
                 if (lastPart.length === 1 || lastPart.length === 2) {
@@ -3071,19 +3152,16 @@
                         return '';
                     });
                 } else {
-                    // Otherwise, assume all commas are thousands separators.
                     parsableStr = parsableStr.replace(/,/g, '');
                 }
             } else if (hasPeriod) {
-                // Only periods present. Heuristic: if last part is 3 digits, assume thousands.
                 const parts = parsableStr.split('.');
                 const lastPart = parts[parts.length - 1];
                 if (lastPart.length === 3 && parts.length > 1) {
                     parsableStr = parsableStr.replace(/\./g, '');
                 }
-                // Otherwise, assume it's a decimal separator, keep it as is.
             }
-            parsableStr = parsableStr.replace(/\s/g, ''); // Remove any remaining spaces
+            parsableStr = parsableStr.replace(/\s/g, '');
 
 
             const num = parseFloat(parsableStr);
@@ -3094,30 +3172,23 @@
             const symbol = preSymbol || postSymbol;
             const originalDecimalPartLength = (parsableStr.split('.')[1] || '').length;
 
-            // Determine formatting options
-            // For financial numbers, typically 2 decimal places are preferred.
-            // But if the original number had more, we should preserve that.
             let minFractions = 0;
             let maxFractions = 0;
 
-            if (num % 1 === 0) { // If it's an integer
+            if (num % 1 === 0) { 
                 minFractions = 0;
-                maxFractions = 0; // No decimals for integers unless specified by context
-            } else { // If it has decimal places
+                maxFractions = 0; 
+            } else { 
                 minFractions = originalDecimalPartLength;
-                // Ensure at least 2 decimal places for financial numbers, but keep original if more
                 maxFractions = Math.max(2, originalDecimalPartLength);
             }
 
-            // 2. Format to the target locale
             if (lang === 'eng') {
                 let formattedNum = num.toLocaleString('en-CA', {
                     minimumFractionDigits: minFractions,
                     maximumFractionDigits: maxFractions
                 });
 
-                // Specific check for integers to avoid '.00' if original had no decimals
-                // `toLocaleString` handles thousands separators automatically based on locale.
                 if (num % 1 === 0 && originalDecimalPartLength === 0) {
                      formattedNum = num.toLocaleString('en-CA', {
                         minimumFractionDigits: 0,
@@ -3134,21 +3205,18 @@
                     maximumFractionDigits: maxFractions
                 });
 
-                formattedNum = formattedNum.replace(/\u00A0/g, ' '); // Convert system NBSP to normal space temporarily
-                formattedNum = formattedNum.replace(/ /g, '\u00A0'); // Replace normal spaces with NBSP for thousands
-                formattedNum = formattedNum.replace(/,/g, ','); // Ensure decimal comma is preserved
+                formattedNum = formattedNum.replace(/\u00A0/g, ' ');
+                formattedNum = formattedNum.replace(/ /g, '\u00A0');
+                formattedNum = formattedNum.replace(/,/g, ',');
 
-                // Specific check for integers to avoid ',00' if original had no decimals
                 if (num % 1 === 0 && originalDecimalPartLength === 0) {
                     formattedNum = num.toLocaleString('fr-CA', {
                         minimumFractionDigits: 0,
                         maximumFractionDigits: 0
                     });
-                    // Re-apply NBSP if the integer formatting removed them
                     formattedNum = formattedNum.replace(/\u00A0/g, ' ');
                     formattedNum = formattedNum.replace(/ /g, '\u00A0');
                 }
-
 
                 if (symbol === '$' || symbol === '€' || symbol === '%') {
                     return `${sign}${formattedNum}\u00A0${symbol}`;
@@ -3203,10 +3271,8 @@
 
             let finalHtml = tempDiv.innerHTML;
             
-            // After DOM manipulation, replace literal non-breaking spaces with the desired entity for editor consistency.
             finalHtml = finalHtml.replace(/\u00A0/g, '&#160;');
             
-            // Run auto-encode logic
             finalHtml = convertAllEntitiesToNumeric(finalHtml);
 
             finalHtml = html_beautify(finalHtml, { indent_size: 4, space_in_paren: true, preserve_newlines: false, extra_liners: [] });
@@ -3357,7 +3423,6 @@
             pushUndoState(); // Save state before action
             if (!monacoEditor) { showMessage('Editor is still loading.', 'info'); return; }
 
-            // Temporarily disable buttons and show feedback
             const originalHtml = autoResponsiveBtn.innerHTML;
             autoResponsiveBtn.innerHTML = 'Applying...';
             autoResponsiveBtn.setAttribute('data-temp-active', 'true');
@@ -3371,7 +3436,6 @@
                 const tables = tempDiv.querySelectorAll('table');
                 if (tables.length === 0) {
                     showMessage('No tables found to apply responsive wrappers.', 'info');
-                    // Use finally block to reset button state
                     return;
                 }
 
@@ -3379,9 +3443,7 @@
 
                 tables.forEach(table => {
                     const parent = table.parentElement;
-                    // Check if parent is NOT a responsive div
                     if (!parent || !parent.classList.contains('table-responsive')) {
-                        // It's not wrapped, so wrap it
                         const responsiveDiv = document.createElement('div');
                         responsiveDiv.className = 'table-responsive';
                         if (table.parentNode) {
@@ -3394,7 +3456,6 @@
 
                 let finalHtml = tempDiv.innerHTML;
                 finalHtml = html_beautify(finalHtml, { indent_size: 4, space_in_paren: true, preserve_newlines: false, extra_liners: [] });
-                // MODIFICATION: Run auto-encode
                 finalHtml = convertAllEntitiesToNumeric(finalHtml);
                 setEditorContent(finalHtml);
                 applyEntityHighlighting();
@@ -3417,12 +3478,11 @@
     
     if (autoScopeBtn) {
         autoScopeBtn.addEventListener('click', () => {
-            pushUndoState(); // Save state before action
-            // Temporarily disable buttons and show feedback
+            pushUndoState(); 
             const originalHtml = autoScopeBtn.innerHTML;
             autoScopeBtn.innerHTML = 'Scoping...';
-            autoScopeBtn.setAttribute('data-temp-active', 'true'); // Set temp active
-            updateAllInteractiveButtonStates(); // Update states for ALL buttons
+            autoScopeBtn.setAttribute('data-temp-active', 'true');
+            updateAllInteractiveButtonStates(); 
 
             const editorContent = monacoEditor.getValue();
             const tempDiv = document.createElement('div');
@@ -3430,7 +3490,6 @@
             const allTables = tempDiv.querySelectorAll('table');
 
             if (allTables.length === 0) {
-                // ... (no tables found handling) ...
                 return;
             }
 
@@ -3440,18 +3499,16 @@
 
             let finalFormattedHtml = tempDiv.innerHTML;
             finalFormattedHtml = cleanEmptyHeadersAttribute(finalFormattedHtml);
-            // MODIFICATION: Run auto-encode
             finalFormattedHtml = convertAllEntitiesToNumeric(finalFormattedHtml);
 
-            monacoEditor.setValue(finalFormattedHtml);
+            setEditorContent(finalFormattedHtml);
             applyEntityHighlighting();
             populateTableSearchDropdown();
 
-            // Re-enable and revert specific button state after operation
             setTimeout(() => {
                 autoScopeBtn.innerHTML = originalHtml;
-                autoScopeBtn.removeAttribute('data-temp-active'); // Remove temp active
-                updateAllInteractiveButtonStates(); // Update states for ALL buttons
+                autoScopeBtn.removeAttribute('data-temp-active'); 
+                updateAllInteractiveButtonStates();
                 showMessage('Auto-scoping complete!', 'success');
             }, 1500);
         });
@@ -3459,119 +3516,71 @@
 
     if (forceScopeButton) {
         forceScopeButton.addEventListener('click', () => {
-            pushUndoState(); // Save state before action
+            pushUndoState();
             const selectedValue = tableSearchDropdown.value;
             if (!selectedValue) {
                 showMessage('Please select a table to force scope.', 'info');
                 return;
             }
+            
+            const tableInfo = tableDataMap.get(selectedValue);
+             if (!tableInfo) { return; }
 
-            // ... (temp-active and other button state management) ...
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = tableInfo.outerHTML;
+            const tableToProcess = tempDiv.querySelector('table');
+            
+            autoScopeTableIDs(tableToProcess, 0, 'simple');
 
-            try {
-                const tableInfo = tableDataMap.get(selectedValue);
-                if (!tableInfo || tableInfo.startIndex === -1) {
-                    showMessage('Selected table not found in editor content.', 'error');
-                    return;
-                }
+            const modifiedTableHtml = cleanEmptyHeadersAttribute(convertAllEntitiesToNumeric(tableToProcess.outerHTML));
+            
+            const editOperation = {
+                range: tableInfo.range, text: modifiedTableHtml, forceMoveMarkers: true
+            };
+            monacoEditor.executeEdits('table-formatter-force-scope', [editOperation]);
 
-                const currentEditorContent = monacoEditor.getValue();
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = tableInfo.outerHTML;
-                const tableToProcess = tempDiv.querySelector('table');
-
-                autoScopeTableIDs(tableToProcess, 0, 'simple');
-
-                const modifiedTableHtml = tableToProcess.outerHTML;
-
-                // CHANGE 'const' to 'let' here
-                let newEditorContent = currentEditorContent.substring(0, tableInfo.startIndex) +
-                                       modifiedTableHtml +
-                                       currentEditorContent.substring(tableInfo.startIndex + tableInfo.length);
-
-                newEditorContent = cleanEmptyHeadersAttribute(newEditorContent); // Reassignment happens here
-                // MODIFICATION: Run auto-encode
-                newEditorContent = convertAllEntitiesToNumeric(newEditorContent);
-
-                monacoEditor.setValue(newEditorContent);
+            setTimeout(() => {
                 applyEntityHighlighting();
-                populateTableSearchDropdown();
-
+                populateTableSearchDropdown(selectedValue);
                 showMessage('Force Scope applied successfully!', 'success');
-
-            } catch (e) {
-                console.error("Error forcing scope:", e);
-                showMessage('An error occurred during force scope. Check console.', 'error');
-            } finally {
-                // Re-enable and revert button state after operation
-                forceScopeButton.textContent = 'Force Scope';
-                forceScopeButton.classList.remove('bg-green-500', 'hover:bg-green-600');
-                forceScopeButton.classList.add('bg-green-700', 'hover:bg-green-600');
-                forceScopeButton.removeAttribute('data-temp-active');
-                updateAllInteractiveButtonStates(); // Re-enable other buttons
-            }
+            }, 100);
         });
     }
 
 
-    // Event listener for Force ID/Headers button
     if (forceIdButton) {
         forceIdButton.addEventListener('click', () => {
-            pushUndoState(); // Save state before action
+            pushUndoState();
             const selectedValue = tableSearchDropdown.value;
             if (!selectedValue) {
                 showMessage('Please select a table to force ID/Headers.', 'info');
                 return;
             }
 
-            // ... (temp-active and other button state management) ...
+            const tableInfo = tableDataMap.get(selectedValue);
+            if (!tableInfo) { return; }
 
-            try {
-                const tableInfo = tableDataMap.get(selectedValue);
-                if (!tableInfo || tableInfo.startIndex === -1) {
-                    showMessage('Selected table not found in editor content.', 'error');
-                    return;
-                }
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = tableInfo.outerHTML;
+            const tableToProcess = tempDiv.querySelector('table');
 
-                const currentEditorContent = monacoEditor.getValue();
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = tableInfo.outerHTML;
-                const tableToProcess = tempDiv.querySelector('table');
+            autoScopeTableIDs(tableToProcess, 0, 'complex');
 
-                autoScopeTableIDs(tableToProcess, 0, 'complex');
+            const modifiedTableHtml = cleanEmptyHeadersAttribute(convertAllEntitiesToNumeric(tableToProcess.outerHTML));
+            
+            const editOperation = {
+                range: tableInfo.range, text: modifiedTableHtml, forceMoveMarkers: true
+            };
+            monacoEditor.executeEdits('table-formatter-force-id', [editOperation]);
 
-                const modifiedTableHtml = tableToProcess.outerHTML;
-
-                // CHANGE 'const' to 'let' here
-                let newEditorContent = currentEditorContent.substring(0, tableInfo.startIndex) +
-                                       modifiedTableHtml +
-                                       currentEditorContent.substring(tableInfo.startIndex + tableInfo.length);
-
-                newEditorContent = cleanEmptyHeadersAttribute(newEditorContent); // Reassignment happens here
-                // MODIFICATION: Run auto-encode
-                newEditorContent = convertAllEntitiesToNumeric(newEditorContent);
-
-                monacoEditor.setValue(newEditorContent);
+            setTimeout(() => {
                 applyEntityHighlighting();
-                populateTableSearchDropdown();
-
+                populateTableSearchDropdown(selectedValue);
                 showMessage('Force ID/Headers applied successfully!', 'success');
-
-            } catch (e) {
-                console.error("Error forcing ID/Headers:", e); // This is the line reported by user (3189:23 for them)
-                showMessage('An error occurred during force ID/Headers. Check console for details.', 'error');
-            } finally {
-                // Re-enable and revert button state after operation
-                forceIdButton.textContent = 'Force ID/Headers';
-                forceIdButton.classList.remove('bg-green-500', 'hover:bg-green-600');
-                forceIdButton.classList.add('bg-green-700', 'hover:bg-green-600');
-                forceIdButton.removeAttribute('data-temp-active');
-                updateAllInteractiveButtonStates(); // Re-enable other buttons
-            }
+            }, 100);
         });
     }
 
-    // NEW: Event listeners for reset buttons
     resetUniversalBtn.addEventListener('click', resetUniversalFormatting);
     resetResponsiveBtn.addEventListener('click', resetResponsiveWrappers);
     resetScopeIdBtn.addEventListener('click', resetAllScopesAndIDs);
@@ -3579,7 +3588,6 @@
     resetTableScopeIDBtn.addEventListener('click', resetTableScopeAndID);
     autoTableIDBtn.addEventListener('click', autoTableIDs);
 
-    // NEW: Event listeners for number formatting buttons
     engNumberButton.addEventListener('click', () => formatTableNumbers('eng'));
     fraNumberButton.addEventListener('click', () => formatTableNumbers('fra'));
 
@@ -3593,17 +3601,15 @@
         tableSearchDropdown.dispatchEvent(new Event('change'));
     });
     closeCustomizeModalButton.addEventListener('click', closeCustomizeModal);
-    formatSpecificTableButton.addEventListener('click', formatSpecificTable); // Specific Table Format button
+    formatSpecificTableButton.addEventListener('click', formatSpecificTable);
 
 
-    // Setup all new alignment button groups for UNIVERSAL modal
     setupButtonGroup('caption-alignment-group', 'captionAlignment');
     setupButtonGroup('col-headers-alignment-group', 'colHeaderAlignment');
     setupButtonGroup('row-headers-alignment-group', 'rowHeaderAlignment');
     setupButtonGroup('colspan-headers-alignment-group', 'colspanHeaderAlignment');
     setupButtonGroup('data-cells-alignment-group', 'dataCellsAlignment');
 
-    // Setup all new alignment button groups for CUSTOMIZE modal, with preview update callback
     setupButtonGroup('customize-caption-alignment-group', 'customizeCaptionAlignment', customizeModalOverlay, updateCustomizeModalPreview);
     
     const headerAlignmentCallback = () => {
@@ -3615,14 +3621,13 @@
             updateHeaderAlignmentUI(newTableElement);
             updateDataCellAlignmentUI(newTableElement); 
         }
-        updateCustomizePreview(newPreviewHtml);
+        updateCustomizeModalPreview(newPreviewHtml);
     };
 
     setupButtonGroup('customize-col-headers-alignment-group', 'customizeColHeaderAlignment', customizeModalOverlay, headerAlignmentCallback);
     setupButtonGroup('customize-row-headers-alignment-group', 'customizeRowHeaderAlignment', customizeModalOverlay, headerAlignmentCallback);
     setupButtonGroup('customize-colspan-headers-alignment-group', 'customizeColspanHeaderAlignment', customizeModalOverlay, headerAlignmentCallback);
     
-    // Special setup for the data cells alignment group to handle state correctly.
     setupButtonGroup('customize-data-cells-alignment-group', 'customizeDataCellsAlignment', customizeModalOverlay, () => {
         const newPreviewHtml = generatePreviewTableHtml();
         const tempDiv = document.createElement('div');
@@ -3632,10 +3637,9 @@
         if (newTableElement) {
             updateDataCellAlignmentUI(newTableElement);
         }
-        updateCustomizePreview(newPreviewHtml);
+        updateCustomizeModalPreview(newPreviewHtml);
     });
     
-    // Mutual exclusivity logic for Finance Table checkbox and Alignment button groups
     if (financeTableCheckbox) {
          financeTableCheckbox.addEventListener('change', function() {
             const parentLabel = this.closest('.toggle-switch');
@@ -3647,11 +3651,10 @@
             const parentLabel = this.closest('.toggle-switch');
             parentLabel.classList.toggle('is-checked', this.checked);
             updateDataCellAlignmentUI();
-            updateCustomizeModalPreview(); // Trigger preview update
+            updateCustomizeModalPreview();
         });
     }
 
-    // Mutual exclusivity logic for Captions (placeholder) and Auto-Caption (Universal Modal)
     captionCheckbox.addEventListener('change', function() {
         const parentLabel = this.closest('.toggle-switch');
         parentLabel.classList.toggle('is-checked', this.checked);
@@ -3670,19 +3673,13 @@
         }
     });
     
-    // Mutual exclusivity logic for Captions (placeholder) and Auto-Caption (Customize Modal)
     customizeCaptionCheckbox.addEventListener('change', function() {
         const parentLabel = this.closest('.toggle-switch');
         parentLabel.classList.toggle('is-checked', this.checked);
-        updateCustomizeModalPreview(); // Ensure preview updates when caption is toggled
+        updateCustomizeModalPreview();
     });
 
 
-    /**
-     * Initializes the visual state of toggle switches.
-     * This function ONLY applies the 'is-checked' class based on the checkbox's 'checked' property.
-     * @param {HTMLElement} [container=document] - The container element to search for toggle switches.
-     */
     function initializeToggleSwitchesVisuals(container = document) {
         container.querySelectorAll('.toggle-switch input[type="checkbox"]').forEach(checkbox => {
             const parentLabel = checkbox.closest('.toggle-switch');
@@ -3694,20 +3691,14 @@
         });
     }
 
-    /**
-     * Checks for mixed alignment in header cells and updates the customize modal UI accordingly.
-     * @param {HTMLElement} tableElement - The table element to inspect.
-     */
     function updateHeaderAlignmentUI(tableElement) {
         if (!tableElement) return;
 
-        // Helper function to check a group of cells and update UI
         const checkAlignmentAndSetUI = (selector, manualFlagName, groupId, tagId) => {
             const cells = Array.from(tableElement.querySelectorAll(selector));
             const alignmentGroup = document.getElementById(groupId);
             const manualTag = document.getElementById(tagId);
             
-            // Reset UI state first
             window[manualFlagName] = false;
             manualTag.classList.add('hidden');
             alignmentGroup.querySelectorAll('button').forEach(btn => btn.disabled = false);
@@ -3717,13 +3708,11 @@
                 let firstAlignment = null;
                 let hasMixedAlignment = false;
 
-                // Determine alignment of the first cell
                 if (cells[0].classList.contains('text-left')) firstAlignment = 'left';
                 else if (cells[0].classList.contains('text-center')) firstAlignment = 'center';
                 else if (cells[0].classList.contains('text-right')) firstAlignment = 'right';
                 else firstAlignment = 'none';
 
-                // Check if all other cells have the same alignment
                 for (let i = 1; i < cells.length; i++) {
                     let currentAlignment = 'none';
                     if (cells[i].classList.contains('text-left')) currentAlignment = 'left';
@@ -3745,18 +3734,12 @@
             }
         };
 
-        // Run the check for each header type
         checkAlignmentAndSetUI('thead th:not([colspan])', 'isCustomizeManualColHeaderAlign', 'customize-col-headers-alignment-group', 'manual-chalign-tag');
         checkAlignmentAndSetUI('tbody tr > th:first-child:not([colspan])', 'isCustomizeManualRowHeaderAlign', 'customize-row-headers-alignment-group', 'manual-rhalign-tag');
         checkAlignmentAndSetUI('th[colspan]', 'isCustomizeManualColspanAlign', 'customize-colspan-headers-alignment-group', 'manual-csalign-tag');
     }
 
-    /**
-     * Checks the state of a given table element and updates the UI for data cell alignment.
-     * @param {HTMLElement} [tableElement] - The table element to inspect. If not provided, it falls back to using tableDataMap.
-     */
     function updateDataCellAlignmentUI(tableElement) {
-        // If no table element is passed, get it from the data map as a fallback.
         if (!tableElement) {
             const selectedValue = tableSearchDropdown.value;
             if (!selectedValue) return;
@@ -3775,12 +3758,11 @@
         const manualTag = document.getElementById('manual-align-tag');
         const financeCheckbox = document.getElementById('customize-finance-table-checkbox');
 
-        // Reset state
         financialTag.classList.add('hidden');
         manualTag.classList.add('hidden');
         alignmentButtons.forEach(btn => btn.disabled = false);
         dataCellsAlignmentGroup.style.opacity = '1';
-        window.isCustomizeManualDataAlign = false; // Assume not manual unless proven otherwise
+        window.isCustomizeManualDataAlign = false;
 
         if (financeCheckbox.checked) {
             financialTag.classList.remove('hidden');
@@ -3792,13 +3774,11 @@
                 let firstAlignment = null;
                 let hasMixedAlignment = false;
 
-                // Determine the alignment of the first data cell
                 if (dataCells[0].classList.contains('text-left')) firstAlignment = 'left';
                 else if (dataCells[0].classList.contains('text-center')) firstAlignment = 'center';
                 else if (dataCells[0].classList.contains('text-right')) firstAlignment = 'right';
                 else firstAlignment = 'none';
 
-                // Check if all other data cells have the same alignment
                 for (let i = 1; i < dataCells.length; i++) {
                     let currentAlignment = 'none';
                     if (dataCells[i].classList.contains('text-left')) currentAlignment = 'left';
@@ -3812,7 +3792,7 @@
                 }
 
                 if (hasMixedAlignment) {
-                    window.isCustomizeManualDataAlign = true; // Set manual flag
+                    window.isCustomizeManualDataAlign = true;
                     manualTag.classList.remove('hidden');
                     alignmentButtons.forEach(btn => btn.disabled = true);
                     dataCellsAlignmentGroup.style.opacity = '0.5';
@@ -3837,9 +3817,9 @@
         if (selectedTableElement) {
             const tableClasses = Array.from(selectedTableElement.classList);
             
-            customizeMakeTfootFromColspanCheckbox.checked = true; // Default to true, as it's an action
-            customizeFixEmptyCellsCheckbox.checked = true; // Default to true, as it's an action
-            customizeRemovePTagsCheckbox.checked = false; // Default to false, as it's a destructive action
+            customizeMakeTfootFromColspanCheckbox.checked = true;
+            customizeFixEmptyCellsCheckbox.checked = true;
+            customizeRemovePTagsCheckbox.checked = false;
 
             customizeCaptionCheckbox.checked = !!selectedTableElement.querySelector('caption');
 
@@ -3861,9 +3841,11 @@
             customizeActiveColspanHeadersCheckbox.checked = Array.from(selectedTableElement.querySelectorAll('th[colspan]')).some(th => th.classList.contains('active'));
             customizeActiveRowHeadersCheckbox.checked = Array.from(selectedTableElement.querySelectorAll('tbody tr > th:first-child')).some(th => th.classList.contains('active'));
             
-            const lastTbodyRow = selectedTableElement.querySelector('tbody > tr:last-child');
-            const lastRowIsTotal = lastTbodyRow && lastTbodyRow.querySelector('th')?.textContent.toLowerCase().includes('total');
-            customizeBoldTotalsCheckbox.checked = lastRowIsTotal && Array.from(lastTbodyRow.querySelectorAll('td')).some(td => td.querySelector('strong'));
+            const totalRow = Array.from(selectedTableElement.querySelectorAll('tbody > tr')).find(row => {
+                const th = row.querySelector('th');
+                return th && (th.textContent.trim().toLowerCase() === 'total' || th.textContent.trim().toLowerCase() === 'subtotal');
+            });
+            customizeBoldTotalsCheckbox.checked = totalRow && Array.from(totalRow.querySelectorAll('td')).some(td => td.querySelector('strong'));
 
             customizeFinanceTableCheckbox.checked = Array.from(selectedTableElement.querySelectorAll('td')).some(td => td.classList.contains('nowrap'));
             
@@ -3881,14 +3863,14 @@
             };
 
             const captionElement = selectedTableElement.querySelector('caption');
-            window.customizeCaptionAlignment = setAlignmentButtonState('customize-caption-alignment-group', captionElement, 'left');
+            window.customizeCaptionAlignment = setAlignmentButtonState('customize-caption-alignment-group', captionElement, 'none');
             window.customizeColHeaderAlignment = setAlignmentButtonState('customize-col-headers-alignment-group', thead?.querySelector('th'), 'none');
             window.customizeRowHeaderAlignment = setAlignmentButtonState('customize-row-headers-alignment-group', tbody?.querySelector('tr > th:first-child'), 'none');
             window.customizeColspanHeaderAlignment = setAlignmentButtonState('customize-colspan-headers-alignment-group', selectedTableElement.querySelector('th[colspan]'), 'none');
             window.customizeDataCellsAlignment = setAlignmentButtonState('customize-data-cells-alignment-group', selectedTableElement.querySelector('tbody td'), 'none');
 
         } else {
-            // Default resets if no table selected
+            // Default resets
             customizePageIdPrefixInput.value = '';
             [
                 customizeMakeTfootFromColspanCheckbox, customizeFixEmptyCellsCheckbox,
@@ -3897,10 +3879,8 @@
                 customizeBorderedCheckbox, customizeActiveColHeadersCheckbox, customizeActiveColspanHeadersCheckbox
             ].forEach(cb => cb.checked = true);
 
-            // Reset alignments
             customizeModalOverlay.querySelectorAll('.button-group button.active').forEach(b => b.classList.remove('active'));
             customizeModalOverlay.querySelector('#customize-caption-alignment-group button[data-align="left"]').classList.add('active');
-            customizeModalOverlay.querySelectorAll('#customize-col-headers-alignment-group button[data-align="none"], #customize-row-headers-alignment-group button[data-align="none"], #customize-colspan-headers-alignment-group button[data-align="none"], #customize-data-cells-alignment-group button[data-align="none"]').forEach(b => b.classList.add('active'));
             window.customizeCaptionAlignment = 'left';
             window.customizeColHeaderAlignment = 'none';
             window.customizeRowHeaderAlignment = 'none';
@@ -3914,11 +3894,9 @@
         updateHeaderAlignmentUI(selectedTableElement);
     }
 
-    // New button event listeners for Clear All, Auto-Encode, Auto-Indent, Copy Code, Import/Export
     copyCodeBtn.addEventListener('click', async () => {
         const codeContent = monacoEditor ? monacoEditor.getValue() : '';
         try {
-            // Use a temporary textarea for copying to clipboard as navigator.clipboard.writeText might not work in iframes
             const tempTextArea = document.createElement('textarea');
             tempTextArea.value = codeContent;
             document.body.appendChild(tempTextArea);
@@ -3949,19 +3927,19 @@
         pushUndoState(); // Save state before action
         if (monacoEditor) {
             let currentContent = monacoEditor.getValue();
-            currentContent = protectDataAttributes(currentContent); // Protect attributes
+            currentContent = protectDataAttributes(currentContent);
 
             let formattedContent = html_beautify(currentContent, {
                 indent_size: 4,
                 space_in_paren: true,
-                preserve_newlines: false, // Add this line
+                preserve_newlines: false,
                 extra_liners: []
             });
 
-            formattedContent = restoreDataAttributes(formattedContent); // Restore attributes
-            formattedContent = convertAllEntitiesToNumeric(formattedContent); // Ensure entities are correct
+            formattedContent = restoreDataAttributes(formattedContent);
+            formattedContent = convertAllEntitiesToNumeric(formattedContent);
 
-            monacoEditor.setValue(formattedContent);
+            setEditorContent(formattedContent);
             applyEntityHighlighting();
 
             const originalHtml = autoFormatBtn.innerHTML;
@@ -3981,14 +3959,14 @@
     });
 
     autoEncodeBtn.addEventListener('click', () => {
-        pushUndoState(); // Save state before action
+        pushUndoState();
         if (monacoEditor) {
             let currentContent = monacoEditor.getValue();
-            currentContent = protectDataAttributes(currentContent); // Protect attributes
-            let encodedContent = convertAllEntitiesToNumeric(currentContent); // Apply encoding
-            encodedContent = restoreDataAttributes(encodedContent); // Restore attributes
+            currentContent = protectDataAttributes(currentContent);
+            let encodedContent = convertAllEntitiesToNumeric(currentContent);
+            encodedContent = restoreDataAttributes(encodedContent);
 
-            monacoEditor.setValue(encodedContent);
+            setEditorContent(encodedContent);
             applyEntityHighlighting();
 
             const originalHtml = autoEncodeBtn.innerHTML;
@@ -4013,7 +3991,7 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'table_formatter_output.html'; // Default filename
+        a.download = 'table_formatter_output.html';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -4042,8 +4020,8 @@
             reader.onload = (e) => {
                 const importedContent = e.target.result;
                 if (monacoEditor) {
-                    pushUndoState(); // Save state before action
-                    monacoEditor.setValue(importedContent);
+                    pushUndoState();
+                    setEditorContent(importedContent);
                     applyEntityHighlighting();
                 }
                 const originalHtml = importHtmlBtn.innerHTML;
@@ -4056,7 +4034,7 @@
                     importHtmlBtn.innerHTML = originalHtml;
                     importHtmlBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
                     importHtmlBtn.classList.add('bg-purple-700', 'hover:bg-purple-800');
-                    htmlFileInput.value = null; // Clear the input so same file can be imported again
+                    htmlFileInput.value = null;
                     importHtmlBtn.removeAttribute('data-temp-active');
                     updateAllInteractiveButtonStates();
                 }, 1500);
@@ -4067,8 +4045,8 @@
 
     clearAllBtn.addEventListener('click', () => {
         if (monacoEditor) {
-            pushUndoState(); // Save state before action
-            monacoEditor.setValue('');
+            pushUndoState();
+            setEditorContent('');
             showMessage('Editor content cleared.', 'info');
             const originalHtml = clearAllBtn.innerHTML;
             clearAllBtn.innerHTML = 'Cleared!';
@@ -4086,72 +4064,56 @@
         }
     });
 
-    // Event listener for the table search dropdown
     tableSearchDropdown.addEventListener('change', () => {
         const selectedValue = tableSearchDropdown.value;
         clearMonacoHighlight();
 
         if (selectedValue && monacoEditor) {
-            const model = monacoEditor.getModel();
             const tableInfo = tableDataMap.get(selectedValue);
 
-            if (tableInfo && tableInfo.startIndex !== -1) {
-                const position = model.getPositionAt(tableInfo.startIndex);
-                monacoEditor.revealLineInCenter(position.lineNumber, monaco.editor.ScrollType.Smooth);
+            if (tableInfo && tableInfo.range) {
+                monacoEditor.revealRangeInCenter(tableInfo.range, monaco.editor.ScrollType.Smooth);
                 
-                const endPosition = model.getPositionAt(tableInfo.startIndex + tableInfo.length);
-
-                currentHighlightDecorationId = model.deltaDecorations([], [{
-                    range: new monaco.Range(position.lineNumber, position.column, endPosition.lineNumber, endPosition.column),
+                currentHighlightDecorationId = monacoEditor.getModel().deltaDecorations([], [{
+                    range: tableInfo.range,
                     options: { isTransparent: true, className: 'selected-line-highlight' }
                 }]);
                 
                 openOptionsModalCustomize();
             } else {
-                updateCustomizePreview('');
+                updateCustomizeModalPreview('');
             }
         } else {
-            updateCustomizePreview('');
+            updateCustomizeModalPreview('');
         }
     });
 
-    // Listen for messages from the iframe (for content updates)
     window.addEventListener('message', (event) => {
         if (!event.data) return;
 
-        if (event.data.type === 'updateTableContent') {
-            const updatedTableHtml = event.data.tableHtml;
-            const selectedValue = tableSearchDropdown.value;
-            const tableInfo = tableDataMap.get(selectedValue);
-
-            if (tableInfo && monacoEditor) {
-                const currentEditorContent = getEditorContent();
-                const newEditorContent = currentEditorContent.substring(0, tableInfo.startIndex) +
-                                         updatedTableHtml +
-                                         currentEditorContent.substring(tableInfo.startIndex + tableInfo.length);
-                
-                setEditorContent(newEditorContent);
-
-                // Update the in-memory map with the manually edited HTML
-                tableInfo.length = updatedTableHtml.length;
-                tableInfo.outerHTML = updatedTableHtml;
-                
-                // --- FIX: Re-evaluate the table's alignment state to update manual flags ---
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = updatedTableHtml;
-                const updatedTableElement = tempDiv.querySelector('table');
-                if (updatedTableElement) {
-                    // This updates the isCustomizeManual... flags based on the new content.
-                    updateDataCellAlignmentUI(updatedTableElement);
-                    updateHeaderAlignmentUI(updatedTableElement);
+        switch (event.data.type) {
+            case 'updateTableContent': {
+                const updatedTableHtml = event.data.tableHtml;
+                const selectedValue = tableSearchDropdown.value;
+                const tableInfo = tableDataMap.get(selectedValue);
+                if (tableInfo) {
+                    tableInfo.outerHTML = updatedTableHtml;
                 }
+                break;
+            }
+            case 'allTdsSelected': {
+                if (customizePreviewIframe && customizePreviewIframe.contentWindow) {
+                    customizePreviewIframe.contentWindow.postMessage({
+                        type: 'cellAction',
+                        payload: { action: 'set-alignment', value: window.customizeDataCellsAlignment }
+                    }, '*');
+                }
+                break;
             }
         }
     });
 
-    // Wrap Monaco editor initialization and main event listener attachments in window.onload
     window.onload = function() {
-        console.log('Window loaded, initializing Monaco Editor...'); // Debugging log
         require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.49.0/min/vs' }});
         require(['vs/editor/editor.main'], function() {
             monacoEditor = monaco.editor.create(document.getElementById('editor-container'), {
@@ -4197,6 +4159,7 @@
     </tr>
   </tbody>
 </table>
+<p>Some content between tables.</p>
 <figure>
 <table id="tbl11">
     <thead>
@@ -4255,37 +4218,7 @@
         <tr><td>Data 1</td><td>Data 2</td></tr>
     </tbody>
 </table>
-<table>
-    <thead>
-        <tr>
-            <th>Header 1</th>
-            <th>Header 2</th>
-            <th>Header 3</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <th>Row Header A</th>
-            <td></td> <td>Data A2</td>
-        </tr>
-        <tr>
-            <th></th> <td>Data B1</td>
-            <td>Data B2</td>
-        </tr>
-        <tr>
-            <td> <p></p> </td> <td>Data C1</td>
-            <td>Data C2</td>
-        </tr>
-        <tr>
-            <td>  </td> <td>Data D1</td>
-            <td>Data D2</td>
-        </tr>
-        <tr>
-            <td>&nbsp;</td> <td>Data E1</td>
-            <td>Data E2</td>
-        </tr>
-    </tbody>
-</table>
+<p>Some final content after all tables.</p>
 `,
                 language: 'html',
                 theme: 'vs-dark',
@@ -4293,25 +4226,22 @@
                 minimap: { enabled: false }
             });
 
-            // --- NEW: Initialize Undo/Redo ---
-            pushUndoState(); // Push the initial state
+            pushUndoState();
             document.getElementById('undoBtn').addEventListener('click', undo);
             document.getElementById('redoBtn').addEventListener('click', redo);
-
 
             populateTableSearchDropdown();
 
             monacoEditor.onDidChangeModelContent(() => {
-                if(isUndoingOrRedoing) return; // Prevent loop
-                pushUndoState(); // Push state on manual user edits
+                if(isUndoingOrRedoing) return;
+                pushUndoState();
                 clearTimeout(window.monacoUpdateTimeout);
                 window.monacoUpdateTimeout = setTimeout(() => {
                     applyEntityHighlighting();
                     const currentSelection = tableSearchDropdown.value;
                     populateTableSearchDropdown(currentSelection);
-                }, 500); // 500ms delay
+                }, 500);
             });
-
 
             applyEntityHighlighting();
 
@@ -4353,7 +4283,6 @@
                 });
             });
 
-            // --- FIX: Default TFOOT before TBODY to ON and DISABLED ---
             const universalTfootToggle = document.getElementById('make-tfoot-before-tbody-checkbox');
             const customTfootToggle = document.getElementById('customize-make-tfoot-before-tbody-checkbox');
 
@@ -4379,14 +4308,13 @@
                 }
             }
 
-            // --- Cell Action Button Event Listeners ---
             const cellActionButtons = {
                 'unbold-th-btn': { action: 'toggle-unbold-th' },
                 'bold-td-btn': { action: 'toggle-bold-td' },
                 'align-left-btn': { action: 'set-alignment', value: 'left' },
                 'align-center-btn': { action: 'set-alignment', value: 'center' },
                 'align-right-btn': { action: 'set-alignment', value: 'right' },
-                'reset-scopeid-btn': { action: 'set-alignment', value: 'none' }, // Correctly maps the trash icon button
+                'reset-selCell-btn': { action: 'set-alignment', value: 'none' },
                 'mrgn-sm-btn': { action: 'set-margin', value: 'sm' },
                 'mrgn-md-btn': { action: 'set-margin', value: 'md' },
                 'mrgn-lg-btn': { action: 'set-margin', value: 'lg' },
@@ -4405,6 +4333,8 @@
                             }, '*');
                         }
                     });
+                } else {
+                    console.warn(`Button with ID "${id}" not found in the document.`);
                 }
             });
 
@@ -4425,18 +4355,23 @@
             }
             if (removeClassBtn) {
                 removeClassBtn.addEventListener('click', () => {
-                    const className = customClassInput.value.trim();
-                    if (className && customizePreviewIframe && customizePreviewIframe.contentWindow) {
+                    if (customizePreviewIframe && customizePreviewIframe.contentWindow) {
                         customizePreviewIframe.contentWindow.postMessage({
                             type: 'cellAction',
-                            payload: { action: 'remove-custom-class', value: className }
+                            payload: { action: 'reset-custom-classes' }
                         }, '*');
                     }
                 });
             }
         });
+    window.onbeforeunload = function() {
+    if (monacoEditor && monacoEditor.getValue().trim() !== '') {
+        return "You have unsaved changes. Are you sure you want to leave?";
+    }
+};
     };
 </script>
+
 
 
 </body>
