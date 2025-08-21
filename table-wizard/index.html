@@ -1917,7 +1917,7 @@
     }
     
 
-     /**
+    /**
      * Contains the core logic for formatting a single HTML table.
      * This function is designed to be reusable by both universal and specific table formatting.
      * @param {HTMLElement} table - The table DOM element to format.
@@ -1926,22 +1926,21 @@
     function formatTableLogic(table, options) {
         const globallyManagedClasses = [
             'table', 'table-condensed', 'table-bordered', 'table-striped', 'table-hover',
-            'small', 'active'
+            'small'
         ];
         const financeRegex = /^\s*[-+]?(?:\d{1,3}(?:[,\s]\d{3})*|\d+)(?:[.,]\d+)?\s*$/;
         const smallClass = 'small';
         const alignmentClasses = ['text-left', 'text-center', 'text-right'];
 
-        // --- Cleanup: 'wb-inv' is no longer globally removed ---
+        // --- Cleanup ---
         table.classList.remove(...globallyManagedClasses);
         Array.from(table.querySelectorAll('*')).forEach(el => {
+            el.classList.remove('wb-fnote-inited', 'wb-init');
+            // This condition applies during "Format ALL Tables"
             if (!options.specificTableId) {
-                el.removeAttribute('id');
                 el.removeAttribute('headers');
                 el.removeAttribute('scope');
             }
-            // Only 'active' is globally managed here. 'wb-inv' is now handled separately for captions.
-            el.classList.remove('active');
         });
 
         // --- Apply Table-level ID and Classes ---
@@ -1975,13 +1974,12 @@
                 table.insertBefore(existingCaptionElement, table.firstChild);
             }
             
-            // --- Manage wb-inv ONLY on the caption ---
             existingCaptionElement.classList.remove('wb-inv');
             if (options.applyInvisibleCaption) {
                 existingCaptionElement.classList.add('wb-inv');
             }
-
-             // Apply caption alignment only if NOT in manual mode to preserve manual cell edits
+            
+            // --- FIX: The faulty "!hasExistingAlignment" check is removed here ---
             if (options.currentCaptionAlignment !== 'manual') {
                 applyAlignment(existingCaptionElement, options.currentCaptionAlignment, alignmentClasses);
             }
@@ -2117,8 +2115,6 @@
                 cell.innerHTML = '&#160;';
             }
             
-            // --- THIS IS THE FIX ---
-            // Only remove <p> tags if the cell is NOT inside a <tfoot>
             if (options.applyRemovePTags && !cell.closest('tfoot')) {
                 Array.from(cell.querySelectorAll('p')).forEach(p => {
                     while (p.firstChild) p.parentNode.insertBefore(p.firstChild, p);
@@ -2126,28 +2122,26 @@
                 });
             }
 
-            // --- Ignore all alignment operations for any cell within a TFOOT. ---
             if (cell.closest('tfoot')) {
-                return; // Skip to the next cell.
+                return; 
             }
             
-            // --- Centralized Alignment Logic ---
             const isTheadCell = cell.closest('thead');
             const isTbodyCell = cell.closest('tbody');
             const isRowHeader = isTbodyCell && cell.tagName.toLowerCase() === 'th' && cell.parentElement.firstElementChild === cell;
 
             if (cell.tagName.toLowerCase() === 'td') {
-                cell.classList.remove('nowrap','text-right');
                 if (options.currentDataCellsAlignment !== 'manual') {
                     if (options.applyFinanceTable && financeRegex.test(cell.textContent.trim())) {
                         applyAlignment(cell, 'right', alignmentClasses);
                         cell.classList.add('nowrap');
                     } else {
+                        // --- FIX: The faulty "!hasExistingAlignment" check is removed here ---
                         applyAlignment(cell, options.currentDataCellsAlignment, alignmentClasses);
                     }
                 }
             } else if (cell.tagName.toLowerCase() === 'th') {
-                // Precedence: Colspan > Col > Row
+                // --- FIX: The faulty "!hasExistingAlignment" check is removed here ---
                 if (cell.hasAttribute('colspan')) {
                     if (options.currentColspanHeaderAlignment !== 'manual') {
                         applyAlignment(cell, options.currentColspanHeaderAlignment, alignmentClasses);
@@ -2164,21 +2158,17 @@
             }
         });
 
-        // --- MAJOR FIX: Bold Totals Toggle Logic ---
+        // --- Bold Totals Toggle Logic (Preserved) ---
         Array.from(newTbodyElement.querySelectorAll('tr')).forEach(row => {
             const thInRow = row.querySelector('th');
             if (thInRow && (thInRow.textContent.trim().toLowerCase() === 'total' || thInRow.textContent.trim().toLowerCase() === 'subtotal')) {
                 Array.from(row.querySelectorAll('td')).forEach(td => {
                     const isBold = td.firstElementChild && td.firstElementChild.tagName === 'STRONG' && td.children.length === 1;
                     if (options.applyBoldTotals && !isBold) {
-                        // Wrap content in <strong> if it's not already
                         td.innerHTML = `<strong>${td.innerHTML}</strong>`;
                     } else if (!options.applyBoldTotals && isBold) {
-                        // Unwrap content from <strong> if it is bold
                         const strongTag = td.firstElementChild;
-                        while (strongTag.firstChild) {
-                            td.insertBefore(strongTag.firstChild, strongTag);
-                        }
+                        while (strongTag.firstChild) td.insertBefore(strongTag.firstChild, strongTag);
                         strongTag.remove();
                     }
                 });
@@ -2196,31 +2186,22 @@
             if (newTfootElement.children.length > 0) table.appendChild(newTfootElement);
         }
 
-        // --- MAJOR FIX: Small TR Class Toggle Logic ---
-        // First, reset the state by removing the class from all TRs
+        // --- Small TR Class Toggle Logic (Preserved) ---
         Array.from(table.querySelectorAll('tr')).forEach(tr => tr.classList.remove(smallClass));
-        // Then, conditionally add it back if the option is checked
         if (options.applyAddSmallToTr) {
             Array.from(table.querySelectorAll('tr')).forEach(tr => tr.classList.add(smallClass));
         }
 
 
-        // --- Apply Active Classes ---
+        // --- Apply Active Classes (Additive, which is correct) ---
         if (options.applyActiveColHeaders) Array.from(table.querySelectorAll('thead tr')).forEach(tr => tr.classList.add('active'));
         if (options.activeColspanHeadersCheckboxValue) Array.from(table.querySelectorAll('tbody th[colspan]')).forEach(th => th.classList.add('active'));
         if (options.activeRowHeadersCheckboxValue) Array.from(table.querySelectorAll('tbody tr > th:first-child')).forEach(th => th.classList.add('active'));
 
         // --- FINAL GENERAL CLASS CLEANUP: Remove any remaining empty class attributes ---
-        Array.from(table.querySelectorAll('*')).forEach(el => {
-            if (el.hasAttribute('class') && el.classList.length === 0) {
-                el.removeAttribute('class');
-            }
-        });
-
-        cleanupEmptyClassAttributes(table); // Clean up empty classes before returning
-return table;
+        cleanupEmptyClassAttributes(table); 
+        return table;
     }
-
 
     /**
      * Formats all HTML tables in the editor based on universal options.
@@ -2594,12 +2575,23 @@ return table;
             ? generatePreviewTableHtml()
             : htmlContentToPreview;
 
-        // Step 2: Stage the changes by updating the in-memory map. This is the crucial fix.
+        // Step 2: Stage the changes by updating the in-memory map.
         const selectedValue = tableSearchDropdown.value;
         const tableInfo = tableDataMap.get(selectedValue);
         if (tableInfo) {
             tableInfo.outerHTML = finalHtmlToPreview;
         }
+
+        // --- Disguise the trigger class before rendering ---
+        const tempPreviewDiv = document.createElement('div');
+        tempPreviewDiv.innerHTML = finalHtmlToPreview;
+        const fnoteSections = tempPreviewDiv.querySelectorAll('.wb-fnote');
+        fnoteSections.forEach(section => {
+            section.classList.remove('wb-fnote');
+            section.dataset.wasWbFnote = 'true';
+        });
+        const disguisedHtmlForPreview = tempPreviewDiv.innerHTML;
+
 
         // Step 3: Update the content of the iframe with the new HTML.
         if (!customizePreviewIframe) {
@@ -2628,13 +2620,40 @@ return table;
 </head>
 <body>
     <main property="mainContentOfPage" resource="#wb-main" typeof="WebPageElement">
-        <div class="container"><div class="table-responsive">${finalHtmlToPreview}</div></div>
+        <div class="container"><div class="table-responsive">${disguisedHtmlForPreview}</div></div>
     </main>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"><\/script>
     <script src="https://www.canada.ca/etc/designs/canada/wet-boew/js/wet-boew.min.js"><\/script>
     <script src="https://www.canada.ca/etc/designs/canada/wet-boew/js/theme.min.js"><\/script>
     <script>
                 document.addEventListener('DOMContentLoaded', () => {
+                    
+                    // --- START: FINAL FIX ---
+                    // The "wb-ready.wb" event fires after the WET framework has finished initializing.
+                    // We listen for this to ensure our code runs AFTER the WET scripts are done.
+                    $(document).on("wb-ready.wb", function(event) {
+                        const disguisedElements = document.querySelectorAll('[data-was-wb-fnote="true"]');
+                        disguisedElements.forEach(section => {
+                            // 1. Restore the original class.
+                            section.classList.add('wb-fnote');
+                            section.removeAttribute('data-was-wb-fnote');
+
+                            // 2. Force-clean any residual modifications the WET script made.
+                            section.classList.remove('wb-init', 'wb-fnote-inited');
+                            if (section.id.startsWith('wb-auto-')) {
+                                section.removeAttribute('id');
+                            }
+                            
+                            section.querySelectorAll('dt, dd').forEach(el => {
+                                el.removeAttribute('tabindex');
+                                if (el.tagName === 'DT' && el.id.endsWith('-dt')) {
+                                    el.removeAttribute('id');
+                                }
+                            });
+                        });
+                    });
+                    // --- END: FINAL FIX ---
+
                     const table = document.querySelector('table');
                     if (!table) return;
 
@@ -2870,6 +2889,34 @@ return table;
                             clearTimeout(window.updateParentTimeout);
                             window.updateParentTimeout = setTimeout(() => {
                                 const tableClone = table.cloneNode(true);
+                                
+                                // --- START: NEW CLEANUP LOGIC ---
+                                // Find all elements within the cloned table that might have been modified by WET.
+                                const allElements = [tableClone, ...tableClone.querySelectorAll('*')];
+                                
+                                allElements.forEach(el => {
+                                    // Remove classes added by the WET interactive table plugin.
+                                    el.classList.remove(
+                                        'wb-tables-inited', 
+                                        'sorting', 
+                                        'sorting_asc', 
+                                        'sorting_desc',
+                                        'footable-last-column',
+                                        'footable-first-column'
+                                    );
+                                    
+                                    // Remove attributes added by the plugin.
+                                    el.removeAttribute('aria-live');
+                                    el.removeAttribute('aria-label');
+                                    el.removeAttribute('aria-sort');
+
+                                    // Remove empty class attributes that might be left over.
+                                    if (el.hasAttribute('class') && el.classList.length === 0) {
+                                        el.removeAttribute('class');
+                                    }
+                                });
+                                // --- END: NEW CLEANUP LOGIC ---
+
                                 tableClone.querySelectorAll('.highlighted-cell, .cell-hover').forEach(c => {
                                     c.classList.remove('highlighted-cell', 'cell-hover');
                                 });
@@ -2877,12 +2924,10 @@ return table;
                                     if (el.classList.length === 0) el.removeAttribute('class');
                                 });
                                 window.parent.postMessage({ type: 'updateTableContent', tableHtml: tableClone.outerHTML }, '*');
-                            }, 250); // Increased timeout slightly for stability
+                            }, 250);
                         }
                     }
                     
-                    // --- THIS IS THE FIX ---
-                    // This listener receives commands from the main page's buttons
                     window.addEventListener('message', (event) => {
                         if (!event.data || !event.data.type) return;
 
@@ -2904,7 +2949,6 @@ return table;
 </html>`;
         customizePreviewIframe.srcdoc = baseHtml;
     }
-
 
     /**
      * CRITICAL FIX: Formats a specific table using the Monaco Editor's API for safe, accurate replacement.
@@ -2980,7 +3024,7 @@ return table;
 
         const managedClasses = [
             'table', 'table-bordered', 'table-striped', 'table-hover', 'table-condensed',
-            'small', 'active', 'text-left', 'text-center', 'text-right', 'nowrap', 'wb-inv',
+            'small', 'active', 'text-left', 'text-center', 'text-right', 'nowrap',
             'fnt-nrml', 'text-white', 'bg-dark'
         ];
 
@@ -3089,7 +3133,7 @@ return table;
 
         const managedClasses = [
             'table', 'table-bordered', 'table-striped', 'table-hover', 'table-condensed',
-            'small', 'active', 'text-left', 'text-center', 'text-right', 'nowrap', 'wb-inv',
+            'small', 'active', 'text-left', 'text-center', 'text-right', 'nowrap',
             'fnt-nrml', 'text-white', 'bg-dark'
         ];
 
