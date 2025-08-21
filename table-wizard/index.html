@@ -691,6 +691,11 @@
                 <i class="fas fa-trash-alt"></i>
             </button>
         </div>
+        <div class="attached-button-group" role="group">
+            <button id="toggle-interactive" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-600 focus:ring-opacity-50 font-bold">
+            Toggle Interactive
+        </button>
+        </div>
 </div>
 			<div class="flex items-center mb-4 flex-wrap">
                     <div class="inline-flex rounded-md shadow-sm" role="group">
@@ -1227,11 +1232,15 @@
             </div>
 
             
-                 <div class="flex justify-between items-center mt-4 gap-4 flex-wrap border-t border-zinc-700 pt-4">
+                 <div class="flex justify-between items-center gap-4 flex-wrap border-zinc-700 pt-4">
                     <div class="cell-actions-group">
-                        <div class="attached-button-group font-semibold">
+                        <div class="attached-button-group font-bold">
                         <button id="unbold-th-btn">Toggle Bold TH</button>
-                        <button id="bold-td-btn">Toggle Bold TD</button></div>
+                        <button id="bold-td-btn">Toggle Bold TD</button>
+                        <button id="active-cell-btn">Toggle Active</button>
+                <button id="bgdark-cell-btn">Toggle BG Dark</button>
+                <button id="textW-cell-btn">Toggle White Text</button>
+                    </div>
                         <div class="attached-button-group">
                         <button id="align-left-btn" title="Align text Left">Align Left</button>
                         <button id="align-center-btn" title="Align text Center">Center</button>
@@ -1791,6 +1800,35 @@
         }
         return currentIndex;
     }
+
+/**
+     * Updates the visual state of the 'Toggle Interactive' button based on the selected table.
+     */
+    function updateInteractiveButtonState() {
+        const toggleBtn = document.getElementById('toggle-interactive');
+        if (!toggleBtn) return;
+
+        // Reset to default style first
+        toggleBtn.classList.remove('bg-yellow-400', 'text-black', 'font-bold');
+        toggleBtn.classList.add('bg-gray-700', 'text-white', 'font-bold');
+
+        const selectedValue = tableSearchDropdown.value;
+        if (!selectedValue) return; // Exit if no table is selected
+
+        const tableInfo = tableDataMap.get(selectedValue);
+        if (!tableInfo) return;
+
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = tableInfo.outerHTML;
+        const table = tempDiv.querySelector('table');
+
+        // Apply active style if the class is present
+        if (table && table.classList.contains('wb-tables')) {
+            toggleBtn.classList.add('bg-yellow-400', 'text-black', 'font-bold');
+            toggleBtn.classList.remove('bg-gray-700', 'text-white');
+        }
+    }
+
     /**
      * REGRESSION FIX: Populates the table dropdown using a robust scanning method.
      * This correctly finds all tables and their exact positions in the editor.
@@ -1875,10 +1913,11 @@
             clearMonacoHighlight();
             updateCustomizeModalPreview('');
         }
+        updateInteractiveButtonState();
     }
     
 
-    /**
+     /**
      * Contains the core logic for formatting a single HTML table.
      * This function is designed to be reusable by both universal and specific table formatting.
      * @param {HTMLElement} table - The table DOM element to format.
@@ -1887,13 +1926,13 @@
     function formatTableLogic(table, options) {
         const globallyManagedClasses = [
             'table', 'table-condensed', 'table-bordered', 'table-striped', 'table-hover',
-            'small', 'active', 'wb-inv'
+            'small', 'active'
         ];
         const financeRegex = /^\s*[-+]?(?:\d{1,3}(?:[,\s]\d{3})*|\d+)(?:[.,]\d+)?\s*$/;
         const smallClass = 'small';
         const alignmentClasses = ['text-left', 'text-center', 'text-right'];
 
-        // --- MODIFIED Cleanup ---
+        // --- Cleanup: 'wb-inv' is no longer globally removed ---
         table.classList.remove(...globallyManagedClasses);
         Array.from(table.querySelectorAll('*')).forEach(el => {
             if (!options.specificTableId) {
@@ -1901,7 +1940,8 @@
                 el.removeAttribute('headers');
                 el.removeAttribute('scope');
             }
-            el.classList.remove('active', 'wb-inv');
+            // Only 'active' is globally managed here. 'wb-inv' is now handled separately for captions.
+            el.classList.remove('active');
         });
 
         // --- Apply Table-level ID and Classes ---
@@ -1934,13 +1974,16 @@
                 existingCaptionElement = document.createElement('caption');
                 table.insertBefore(existingCaptionElement, table.firstChild);
             }
+            
+            // --- Manage wb-inv ONLY on the caption ---
+            existingCaptionElement.classList.remove('wb-inv');
+            if (options.applyInvisibleCaption) {
+                existingCaptionElement.classList.add('wb-inv');
+            }
+
              // Apply caption alignment only if NOT in manual mode to preserve manual cell edits
             if (options.currentCaptionAlignment !== 'manual') {
                 applyAlignment(existingCaptionElement, options.currentCaptionAlignment, alignmentClasses);
-            }
-
-            if (options.applyInvisibleCaption) {
-                existingCaptionElement.classList.add('wb-inv');
             }
 
             if (options.applyAutoCaption) {
@@ -2073,14 +2116,17 @@
             if (options.applyFixEmptyCells && cell.textContent.trim() === '' && !cell.innerHTML.includes('&nbsp;') && !cell.innerHTML.includes('&#160;')) {
                 cell.innerHTML = '&#160;';
             }
-            if (options.applyRemovePTags) {
+            
+            // --- THIS IS THE FIX ---
+            // Only remove <p> tags if the cell is NOT inside a <tfoot>
+            if (options.applyRemovePTags && !cell.closest('tfoot')) {
                 Array.from(cell.querySelectorAll('p')).forEach(p => {
                     while (p.firstChild) p.parentNode.insertBefore(p.firstChild, p);
                     p.remove();
                 });
             }
 
-            // --- FIX: Ignore all alignment operations for any cell within a TFOOT. ---
+            // --- Ignore all alignment operations for any cell within a TFOOT. ---
             if (cell.closest('tfoot')) {
                 return; // Skip to the next cell.
             }
@@ -2588,220 +2634,272 @@ return table;
     <script src="https://www.canada.ca/etc/designs/canada/wet-boew/js/wet-boew.min.js"><\/script>
     <script src="https://www.canada.ca/etc/designs/canada/wet-boew/js/theme.min.js"><\/script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const table = document.querySelector('table');
-            if (!table) return;
+                document.addEventListener('DOMContentLoaded', () => {
+                    const table = document.querySelector('table');
+                    if (!table) return;
 
-            const selectedCells = new Set();
-            let lastClickedCell = null;
-            let isDragging = false;
-            let dragStarted = false;
-            let startCellForDrag = null;
-            const grid = [];
+                    const selectedCells = new Set();
+                    let lastClickedCell = null;
+                    let isDragging = false;
+                    let dragStarted = false;
+                    let startCellForDrag = null;
+                    const grid = [];
 
-            const buildGrid = () => {
-                grid.length = 0;
-                Array.from(table.rows).forEach((row, rIndex) => {
-                    grid[rIndex] = grid[rIndex] || [];
-                    let cIndex = 0;
-                    Array.from(row.cells).forEach(cell => {
-                        while (grid[rIndex][cIndex]) cIndex++;
-                        const colspan = parseInt(cell.getAttribute('colspan') || '1');
-                        const rowspan = parseInt(cell.getAttribute('rowspan') || '1');
-                        for (let rs = 0; rs < rowspan; rs++) {
-                            for (let cs = 0; cs < colspan; cs++) {
-                                if (!grid[rIndex + rs]) grid[rIndex + rs] = [];
-                                grid[rIndex + rs][cIndex + cs] = cell;
+                    const buildGrid = () => {
+                        grid.length = 0;
+                        Array.from(table.rows).forEach((row, rIndex) => {
+                            grid[rIndex] = grid[rIndex] || [];
+                            let cIndex = 0;
+                            Array.from(row.cells).forEach(cell => {
+                                while (grid[rIndex][cIndex]) cIndex++;
+                                const colspan = parseInt(cell.getAttribute('colspan') || '1');
+                                const rowspan = parseInt(cell.getAttribute('rowspan') || '1');
+                                for (let rs = 0; rs < rowspan; rs++) {
+                                    for (let cs = 0; cs < colspan; cs++) {
+                                        if (!grid[rIndex + rs]) grid[rIndex + rs] = [];
+                                        grid[rIndex + rs][cIndex + cs] = cell;
+                                    }
+                                }
+                                cIndex += colspan;
+                            });
+                        });
+                    };
+                    buildGrid();
+
+                    const findCellCoords = (cell) => {
+                        for (let r = 0; r < grid.length; r++) {
+                            for (let c = 0; c < (grid[r] ? grid[r].length : 0); c++) {
+                                if (grid[r][c] === cell) return { r, c };
                             }
                         }
-                        cIndex += colspan;
+                        return null;
+                    };
+
+                    const clearAllHighlights = () => {
+                        selectedCells.forEach(c => c.classList.remove('highlighted-cell'));
+                        selectedCells.clear();
+                    };
+
+                    table.addEventListener('mouseover', (e) => {
+                        document.querySelectorAll('.cell-hover').forEach(c => c.classList.remove('cell-hover'));
+                        const targetCell = e.target.closest('th, td, caption');
+                        if (targetCell) targetCell.classList.add('cell-hover');
+
+                        if (isDragging && startCellForDrag && targetCell) {
+                            dragStarted = true;
+                            clearAllHighlights();
+                            const startCoords = findCellCoords(startCellForDrag);
+                            const currentCoords = findCellCoords(targetCell);
+                            if (startCoords && currentCoords) {
+                                const r1 = Math.min(startCoords.r, currentCoords.r);
+                                const r2 = Math.max(startCoords.r, currentCoords.r);
+                                const c1 = Math.min(startCoords.c, currentCoords.c);
+                                const c2 = Math.max(startCoords.c, currentCoords.c);
+                                for (let i = r1; i <= r2; i++) {
+                                    for (let j = c1; j <= c2; j++) {
+                                        const cell = grid[i] && grid[i][j];
+                                        if (cell && !selectedCells.has(cell)) {
+                                            cell.classList.add('highlighted-cell');
+                                            selectedCells.add(cell);
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     });
-                });
-            };
-            buildGrid();
 
-            const findCellCoords = (cell) => {
-                for (let r = 0; r < grid.length; r++) {
-                    for (let c = 0; c < (grid[r] ? grid[r].length : 0); c++) {
-                        if (grid[r][c] === cell) return { r, c };
-                    }
-                }
-                return null;
-            };
+                    table.addEventListener('mouseleave', () => {
+                        document.querySelectorAll('.cell-hover').forEach(c => c.classList.remove('cell-hover'));
+                    });
 
-            const clearAllHighlights = () => {
-                selectedCells.forEach(c => c.classList.remove('highlighted-cell'));
-                selectedCells.clear();
-            };
+                    table.addEventListener('mousedown', (e) => {
+                        const targetCell = e.target.closest('th, td, caption');
+                        if (!targetCell) return;
+                        
+                        isDragging = true;
+                        dragStarted = false;
+                        startCellForDrag = targetCell;
 
-            table.addEventListener('mouseover', (e) => {
-                document.querySelectorAll('.cell-hover').forEach(c => c.classList.remove('cell-hover'));
-                const targetCell = e.target.closest('th, td, caption');
-                if (targetCell) targetCell.classList.add('cell-hover');
-
-                if (isDragging && startCellForDrag && targetCell) {
-                    dragStarted = true;
-                    clearAllHighlights();
-                    const startCoords = findCellCoords(startCellForDrag);
-                    const currentCoords = findCellCoords(targetCell);
-                    if (startCoords && currentCoords) {
-                        const r1 = Math.min(startCoords.r, currentCoords.r);
-                        const r2 = Math.max(startCoords.r, currentCoords.r);
-                        const c1 = Math.min(startCoords.c, currentCoords.c);
-                        const c2 = Math.max(startCoords.c, currentCoords.c);
-                        for (let i = r1; i <= r2; i++) {
-                            for (let j = c1; j <= c2; j++) {
-                                const cell = grid[i] && grid[i][j];
-                                if (cell && !selectedCells.has(cell)) {
-                                    cell.classList.add('highlighted-cell');
-                                    selectedCells.add(cell);
+                        if (e.shiftKey && lastClickedCell) {
+                            clearAllHighlights();
+                            const startCoords = findCellCoords(lastClickedCell);
+                            const endCoords = findCellCoords(targetCell);
+                            if (startCoords && endCoords) {
+                                 const r1 = Math.min(startCoords.r, endCoords.r);
+                                 const r2 = Math.max(startCoords.r, endCoords.r);
+                                 const c1 = Math.min(startCoords.c, endCoords.c);
+                                 const c2 = Math.max(startCoords.c, endCoords.c);
+                                 for (let i = r1; i <= r2; i++) {
+                                    for (let j = c1; j <= c2; j++) {
+                                        const cell = grid[i] && grid[i][j];
+                                        if(cell) selectedCells.add(cell);
+                                    }
                                 }
+                                selectedCells.forEach(c => c.classList.add('highlighted-cell'));
+                            }
+                        } else if (e.ctrlKey) {
+                            if (selectedCells.has(targetCell)) {
+                                targetCell.classList.remove('highlighted-cell');
+                                selectedCells.delete(targetCell);
+                            } else {
+                                targetCell.classList.add('highlighted-cell');
+                                selectedCells.add(targetCell);
+                            }
+                        } else {
+                            clearAllHighlights();
+                            targetCell.classList.add('highlighted-cell');
+                            selectedCells.add(targetCell);
+                        }
+                    });
+
+                    document.addEventListener('mouseup', (e) => {
+                        if (isDragging && !dragStarted) {
+                            const targetCell = e.target.closest('th, td, caption');
+                             if (targetCell && !e.shiftKey) {
+                                lastClickedCell = targetCell;
                             }
                         }
-                    }
-                }
-            });
+                        isDragging = false;
+                        startCellForDrag = null;
+                    });
 
-            table.addEventListener('mouseleave', () => {
-                document.querySelectorAll('.cell-hover').forEach(c => c.classList.remove('cell-hover'));
-            });
+                    table.addEventListener('dblclick', (e) => {
+                        e.preventDefault();
+                        const targetCell = e.target.closest('th, td');
 
-            table.addEventListener('mousedown', (e) => {
-                const targetCell = e.target.closest('th, td, caption');
-                if (!targetCell) return;
-                
-                isDragging = true;
-                dragStarted = false;
-                startCellForDrag = targetCell;
-
-                if (e.shiftKey && lastClickedCell) {
-                    clearAllHighlights();
-                    const startCoords = findCellCoords(lastClickedCell);
-                    const endCoords = findCellCoords(targetCell);
-                    if (startCoords && endCoords) {
-                         const r1 = Math.min(startCoords.r, endCoords.r);
-                         const r2 = Math.max(startCoords.r, endCoords.r);
-                         const c1 = Math.min(startCoords.c, endCoords.c);
-                         const c2 = Math.max(startCoords.c, endCoords.c);
-                         for (let i = r1; i <= r2; i++) {
-                            for (let j = c1; j <= c2; j++) {
-                                const cell = grid[i] && grid[i][j];
-                                if(cell) selectedCells.add(cell);
-                            }
+                        if (!targetCell || targetCell.closest('tfoot')) {
+                            return;
                         }
-                        selectedCells.forEach(c => c.classList.add('highlighted-cell'));
-                    }
-                } else if (e.ctrlKey) {
-                    if (selectedCells.has(targetCell)) {
-                        targetCell.classList.remove('highlighted-cell');
-                        selectedCells.delete(targetCell);
-                    } else {
-                        targetCell.classList.add('highlighted-cell');
-                        selectedCells.add(targetCell);
-                    }
-                } else {
-                    clearAllHighlights();
-                    targetCell.classList.add('highlighted-cell');
-                    selectedCells.add(targetCell);
-                }
-            });
 
-            document.addEventListener('mouseup', (e) => {
-                if (isDragging && !dragStarted) {
-                    const targetCell = e.target.closest('th, td, caption');
-                     if (targetCell && !e.shiftKey) {
-                        lastClickedCell = targetCell;
-                    }
-                }
-                isDragging = false;
-                startCellForDrag = null;
-            });
+                        clearAllHighlights();
 
-            table.addEventListener('dblclick', (e) => {
-                e.preventDefault();
-                const targetCell = e.target.closest('th, td');
-                if (!targetCell || targetCell.tagName !== 'TD') return;
-                
-                clearAllHighlights();
-                table.querySelectorAll('tbody td').forEach(td => {
-                    td.classList.add('highlighted-cell');
-                    selectedCells.add(td);
-                });
-                window.parent.postMessage({ type: 'allTdsSelected' }, '*');
-            });
-            
-            window.addEventListener('message', (event) => {
-                if (event.data && event.data.type === 'cellAction') {
-                    handleCellAction(event.data.payload);
-                }
-            });
+                        if (targetCell.tagName === 'TH') {
+                            const coords = findCellCoords(targetCell);
+                            if (!coords) return;
 
-            function handleCellAction(payload) {
-                if (selectedCells.size === 0) return;
-                const { action, value } = payload;
-                selectedCells.forEach(cell => {
-                    switch(action) {
-                        case 'toggle-unbold-th': if (cell.tagName === 'TH') cell.classList.toggle('fnt-nrml'); break;
-                        case 'toggle-bold-td':
-                            if (cell.tagName === 'TD') {
-                                const firstEl = cell.firstElementChild;
-                                if (firstEl && firstEl.tagName === 'STRONG' && cell.children.length === 1) {
-                                    while (firstEl.firstChild) cell.insertBefore(firstEl.firstChild, firstEl);
-                                    firstEl.remove();
-                                } else {
-                                    const strongEl = document.createElement('strong');
-                                    while (cell.firstChild) strongEl.appendChild(cell.firstChild);
-                                    cell.appendChild(strongEl);
+                            if (targetCell.closest('thead')) {
+                                for (let i = 0; i < grid.length; i++) {
+                                    const cellInColumn = grid[i] ? grid[i][coords.c] : undefined;
+                                    if (cellInColumn && !cellInColumn.closest('tfoot')) {
+                                        selectedCells.add(cellInColumn);
+                                    }
+                                }
+                            } else {
+                                const parentRow = targetCell.parentElement;
+                                if (parentRow) {
+                                    Array.from(parentRow.cells).forEach(cell => {
+                                        selectedCells.add(cell);
+                                    });
                                 }
                             }
-                            break;
-                        case 'set-alignment':
-                            cell.classList.remove('text-left', 'text-center', 'text-right');
-                            cell.style.textAlign = '';
-                            if (value !== 'none') {
-                                cell.classList.add('text-' + value);
-                            }
-                            break;
-                        case 'set-margin':
-                            const existingMarginDiv = cell.querySelector('div[class*="mrgn-lft-"]');
-                            if (existingMarginDiv) {
-                                while (existingMarginDiv.firstChild) cell.insertBefore(existingMarginDiv.firstChild, existingMarginDiv);
-                                existingMarginDiv.remove();
-                            }
-                            if (value !== '0') {
-                                const marginDiv = document.createElement('div');
-                                marginDiv.className = 'mrgn-lft-' + value;
-                                while (cell.firstChild) marginDiv.appendChild(cell.firstChild);
-                                cell.appendChild(marginDiv);
-                            }
-                            break;
-                        case 'add-custom-class': if (value) cell.classList.add(value); break;
-                        case 'reset-custom-classes':
-                            const protectedClasses = ['highlighted-cell', 'cell-hover', 'fnt-nrml', 'text-left', 'text-center', 'text-right'];
-                            const classesToRemove = Array.from(cell.classList).filter(c => !protectedClasses.includes(c));
-                            if (classesToRemove.length > 0) cell.classList.remove(...classesToRemove);
-                            break;
-                    }
-                });
+                        } else if (targetCell.tagName === 'TD') {
+                            const allTdsInTbody = table.querySelectorAll('tbody td');
+                            allTdsInTbody.forEach(td => {
+                                selectedCells.add(td);
+                            });
+                        }
+                        
+                        selectedCells.forEach(cell => cell.classList.add('highlighted-cell'));
+                    });
 
-                if (table) {
-                    clearTimeout(window.updateParentTimeout);
-                    window.updateParentTimeout = setTimeout(() => {
-                        const tableClone = table.cloneNode(true);
-                        tableClone.querySelectorAll('.highlighted-cell, .cell-hover').forEach(c => {
-                            c.classList.remove('highlighted-cell');
-                            c.classList.remove('cell-hover');
+                    function handleCellAction(payload) {
+                        if (selectedCells.size === 0) return;
+                        const { action, value } = payload;
+                        selectedCells.forEach(cell => {
+                            switch(action) {
+                                case 'toggle-unbold-th': if (cell.tagName === 'TH') cell.classList.toggle('fnt-nrml'); break;
+                                 case 'toggle-active':
+                                    // If we are adding 'active', remove 'bg-dark' first
+                                    if (!cell.classList.contains('active')) {
+                                        cell.classList.remove('bg-dark');
+                                    }
+                                    cell.classList.toggle('active');
+                                    break;
+                                case 'toggle-bg-dark':
+                                    // If we are adding 'bg-dark', remove 'active' first
+                                    if (!cell.classList.contains('bg-dark')) {
+                                        cell.classList.remove('active');
+                                    }
+                                    cell.classList.toggle('bg-dark');
+                                    break;
+                                case 'toggle-text-white':
+                                    cell.classList.toggle('text-white');
+                                    break;
+                                case 'toggle-bold-td':
+                                    if (cell.tagName === 'TD') {
+                                        const firstEl = cell.firstElementChild;
+                                        if (firstEl && firstEl.tagName === 'STRONG' && cell.children.length === 1) {
+                                            while (firstEl.firstChild) cell.insertBefore(firstEl.firstChild, firstEl);
+                                            firstEl.remove();
+                                        } else {
+                                            const strongEl = document.createElement('strong');
+                                            while (cell.firstChild) strongEl.appendChild(cell.firstChild);
+                                            cell.appendChild(strongEl);
+                                        }
+                                    }
+                                    break;
+                                case 'set-alignment':
+                                    cell.classList.remove('text-left', 'text-center', 'text-right');
+                                    if (value !== 'none') {
+                                        cell.classList.add('text-' + value);
+                                    }
+                                    break;
+                                case 'set-margin':
+                                    const existingMarginDiv = cell.querySelector('div[class*="mrgn-lft-"]');
+                                    if (existingMarginDiv) {
+                                        while (existingMarginDiv.firstChild) cell.insertBefore(existingMarginDiv.firstChild, existingMarginDiv);
+                                        existingMarginDiv.remove();
+                                    }
+                                    if (value !== '0') {
+                                        const marginDiv = document.createElement('div');
+                                        marginDiv.className = 'mrgn-lft-' + value;
+                                        while (cell.firstChild) marginDiv.appendChild(cell.firstChild);
+                                        cell.appendChild(marginDiv);
+                                    }
+                                    break;
+                                case 'add-custom-class': if (value) cell.classList.add(value); break;
+                                case 'reset-custom-classes':
+                                    const protectedClasses = ['highlighted-cell', 'cell-hover', 'fnt-nrml', 'text-left', 'text-center', 'text-right'];
+                                    const classesToRemove = Array.from(cell.classList).filter(c => !protectedClasses.includes(c));
+                                    if (classesToRemove.length > 0) cell.classList.remove(...classesToRemove);
+                                    break;
+                            }
                         });
-                        const elementsToClean = [tableClone, ...tableClone.querySelectorAll('[class]')];
-                        elementsToClean.forEach(el => {
-                            if (el.classList.length === 0) el.removeAttribute('class');
-                        });
-                        window.parent.postMessage({ type: 'updateTableContent', tableHtml: tableClone.outerHTML }, '*');
-                    }, 100);
-                }
-            }
-        });
-    <\/script>
+
+                        if (table) {
+                            clearTimeout(window.updateParentTimeout);
+                            window.updateParentTimeout = setTimeout(() => {
+                                const tableClone = table.cloneNode(true);
+                                tableClone.querySelectorAll('.highlighted-cell, .cell-hover').forEach(c => {
+                                    c.classList.remove('highlighted-cell', 'cell-hover');
+                                });
+                                [tableClone, ...tableClone.querySelectorAll('[class]')].forEach(el => {
+                                    if (el.classList.length === 0) el.removeAttribute('class');
+                                });
+                                window.parent.postMessage({ type: 'updateTableContent', tableHtml: tableClone.outerHTML }, '*');
+                            }, 250); // Increased timeout slightly for stability
+                        }
+                    }
+                    
+                    // --- THIS IS THE FIX ---
+                    // This listener receives commands from the main page's buttons
+                    window.addEventListener('message', (event) => {
+                        if (!event.data || !event.data.type) return;
+
+                        switch (event.data.type) {
+                            case 'cellAction':
+                                if (event.data.payload) {
+                                    handleCellAction(event.data.payload);
+                                }
+                                break;
+                            case 'resetCellStates':
+                                clearAllHighlights();
+                                break;
+                        }
+                    });
+
+                });
+            <\/script>
 </body>
 </html>`;
         customizePreviewIframe.srcdoc = baseHtml;
@@ -2882,7 +2980,8 @@ return table;
 
         const managedClasses = [
             'table', 'table-bordered', 'table-striped', 'table-hover', 'table-condensed',
-            'small', 'active', 'text-left', 'text-center', 'text-right', 'nowrap', 'wb-inv'
+            'small', 'active', 'text-left', 'text-center', 'text-right', 'nowrap', 'wb-inv',
+            'fnt-nrml', 'text-white', 'bg-dark'
         ];
 
         tables.forEach(table => {
@@ -2990,7 +3089,8 @@ return table;
 
         const managedClasses = [
             'table', 'table-bordered', 'table-striped', 'table-hover', 'table-condensed',
-            'small', 'active', 'text-left', 'text-center', 'text-right', 'nowrap', 'wb-inv'
+            'small', 'active', 'text-left', 'text-center', 'text-right', 'nowrap', 'wb-inv',
+            'fnt-nrml', 'text-white', 'bg-dark'
         ];
 
         [table, ...table.querySelectorAll('*')].forEach(el => {
@@ -4086,6 +4186,7 @@ return table;
         } else {
             updateCustomizeModalPreview('');
         }
+        updateInteractiveButtonState();
     });
 
     window.addEventListener('message', (event) => {
@@ -4130,13 +4231,17 @@ return table;
             populateTableSearchDropdown();
 
             monacoEditor.onDidChangeModelContent(() => {
-                if(isUndoingOrRedoing) return;
-                pushUndoState();
+                // Only save a new state to history if it's a direct user action (not an undo/redo)
+                if (!isUndoingOrRedoing) {
+                    pushUndoState();
+                }
+
+                // Always run the UI update logic after any content change
                 clearTimeout(window.monacoUpdateTimeout);
                 window.monacoUpdateTimeout = setTimeout(() => {
                     applyEntityHighlighting();
                     const currentSelection = tableSearchDropdown.value;
-                    populateTableSearchDropdown(currentSelection);
+                    populateTableSearchDropdown(currentSelection); // This will correctly call updateInteractiveButtonState()
                 }, 500);
             });
 
@@ -4208,6 +4313,9 @@ return table;
             const cellActionButtons = {
                 'unbold-th-btn': { action: 'toggle-unbold-th' },
                 'bold-td-btn': { action: 'toggle-bold-td' },
+                'active-cell-btn': { action: 'toggle-active' },
+                'bgdark-cell-btn': { action: 'toggle-bg-dark' },
+                'textW-cell-btn': { action: 'toggle-text-white' },
                 'align-left-btn': { action: 'set-alignment', value: 'left' },
                 'align-center-btn': { action: 'set-alignment', value: 'center' },
                 'align-right-btn': { action: 'set-alignment', value: 'right' },
@@ -4237,6 +4345,48 @@ return table;
 
             const customClassInput = document.getElementById('custom-class-input');
             const addClassBtn = document.getElementById('add-class-btn');
+            const toggleInteractiveBtn = document.getElementById('toggle-interactive');
+            if (toggleInteractiveBtn) {
+                toggleInteractiveBtn.addEventListener('click', () => {
+                    pushUndoState();
+                    const selectedValue = tableSearchDropdown.value;
+                    if (!selectedValue) {
+                        showMessage('Please select a table to make interactive.', 'info');
+                        return;
+                    }
+
+                    const tableInfo = tableDataMap.get(selectedValue);
+                    if (!tableInfo || !tableInfo.range) { return; }
+
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = tableInfo.outerHTML;
+                    const table = tempDiv.querySelector('table');
+                    
+                    if (table) {
+                        table.classList.toggle('wb-tables');
+                        cleanupEmptyClassAttributes(table); // Remove empty class="" attribute if it exists
+                    }
+
+                    const modifiedTableHtml = tempDiv.innerHTML;
+                    const editOperation = {
+                        range: tableInfo.range,
+                        text: modifiedTableHtml,
+                        forceMoveMarkers: true
+                    };
+                    monacoEditor.executeEdits('toggle-interactive-class', [editOperation]);
+
+                    // A brief delay to allow the editor change event to fire and repopulate the map
+                    setTimeout(() => {
+                        const newTableInfo = tableDataMap.get(selectedValue);
+                        if (newTableInfo) {
+                            newTableInfo.outerHTML = modifiedTableHtml;
+                        }
+                        updateInteractiveButtonState(); // Visually update the button immediately
+                        showMessage('Interactive table class toggled.', 'success');
+                    }, 100);
+                });
+            }
+
             const removeClassBtn = document.getElementById('remove-class-btn');
 
             if (addClassBtn) {
