@@ -1961,7 +1961,7 @@
                         if (elemClassAttr) {
                             const classes = elemClassAttr.split(/\s+/);
                             for (const cls of classes) {
-                                if (cls.includes('Mso') || cls.includes('Word') || cls.includes('BCX0')) {
+                                if (cls.includes('Mso') || cls.includes('Word') || cls.includes('Style') || cls.includes('DocumentTitle') || cls.includes('Heading') || cls.includes('BCX0')) {
                                     return true;
                                 }
                             }
@@ -2103,7 +2103,7 @@
                             if (elemClassAttr) {
                                 const classes = elemClassAttr.split(/\s+/);
                                 for (const cls of classes) {
-                                    if (cls.includes('Mso') || cls.includes('Word') || cls.includes('BCX0')) {
+                                    if (cls.includes('Mso') || cls.includes('Word') || cls.includes('Style') || cls.includes('DocumentTitle') || cls.includes('Heading') || cls.includes('BCX0')) {
                                         return true;
                                     }
                                 }
@@ -2463,7 +2463,7 @@
 
                 if (parentCell) {
                     const classAttr = p.getAttribute('class');
-                    if (classAttr && (classAttr.includes('Mso') || classAttr.includes('Aligned'))) {
+                    if (classAttr && (classAttr.includes('Mso') || cls.includes('Style') || cls.includes('DocumentTitle') || cls.includes('Heading') || classAttr.includes('Aligned'))) {
                         p.removeAttribute('class');
                     }
 
@@ -2751,7 +2751,7 @@
 
                 // Check if any class contains "Mso", "Word", or "BCX0" (case-sensitive)
                 const hasMsoWordBcx0Class = classAttr.split(/\s+/).some(cls =>
-                    cls.includes('Mso') || cls.includes('Word') || cls.includes('BCX0')
+                    cls.includes('Mso') || cls.includes('Style') || cls.includes('DocumentTitle') || cls.includes('Heading') || cls.includes('Word') || cls.includes('BCX0')
                 );
 
                 // Check if ID contains "Mso", "Word", or "BCX0" (case-sensitive)
@@ -2793,7 +2793,7 @@
                     // Clean the class attribute: remove the entire attribute if any class contains "Mso", "Word", or "BCX0"
                     if (classAttr) {
                         const hasDisallowedClass = classAttr.split(/\s+/).some(cls =>
-                            cls.includes('Mso') || cls.includes('Word') || cls.includes('BCX0')
+                            cls.includes('Mso') || cls.includes('Style') || cls.includes('DocumentTitle') || cls.includes('Heading') || cls.includes('Word') || cls.includes('BCX0')
                         );
                         if (hasDisallowedClass) {
                             element.removeAttribute('class');
