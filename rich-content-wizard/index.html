@@ -3080,43 +3080,11 @@
         /**
          * Inserts IDs to all heading tags (h1-h6), section, and table tags based on specified rules.
          * This function ensures full re-numbering on each run, allowing for dynamic updates
-         * after elements are added, deleted, or reordered.
-         *
-         * Rules:
-         * - H1s: Not ID'd.
-         * - H2s:
-         * - If text starts with a number (e.g., "1. Introduction"): ID is "toc<number>" (e.g., "toc1").
-         * - If text starts with "Appendix", or "Annexe": ID is "app<letter>" (e.g., "appA", "appB"),
-         * where the letter is derived from the text if present, otherwise sequentially generated.
-         * - Otherwise (general H2): ID is "toc<sequential_letter>" (e.g., "tocA", "tocB").
-         * - H3-H6: Nested IDs.
-         * - If text starts with "Appendix", or "Annexe": ID is "<parentID>-app<letter>",
-         * where the letter is derived from the text if present, otherwise sequentially generated within that parent's scope.
-         * - Otherwise (general H3-H6): ID is "<parentID>-<sequential_number>".
-         *
-         * - Sections:
-         * - Top-level sections (direct children of body or not nested within other sections) get "sec#" (e.g., "sec1").
-         * - Nested sections get "sec#-#", "sec#-#-#", etc., based on their parent section's ID.
-         * - Sections that already have an ID are not modified if their ID does not follow the "sec" pattern.
-         *
-         * - Tables:
-         * - Tables outside of a <figure> element get "tbl#" (e.g., "tbl1").
-         * - Tables within a <figure> element get "ftbl#" (e.g., "ftbl1").
-         * - "ftbl" IDs are numbered separately from "tbl" IDs.
-         * - Tables that already have an ID are not modified (similar to sections).
-         *
-         * - Figures:
-         * - Figure elements get "fig#" (e.g., "fig1").
-         * - Figures that already have an ID are not modified if their ID does not follow the "fig" pattern.
+         * after elements are added, deleted, or reordered. This version is resilient to missing
+         * <section> tags and imperfect heading structures.
          *
          * @param {string} htmlString - The HTML content to process.
          * @param {object} options - An object specifying which elements to ID.
-         * @param {boolean} options.idSections - Whether to ID sections.
-         * @param {boolean} options.idHeadings - Whether to ID headings.
-         * @param {boolean} options.occursOutsideIgnoredParent - Determines if heading is within ignored parent (used to skip ID).
-         * @param {boolean} options.idFigures - Whether to ID figures.
-         * @param {boolean} options.idTables - Whether to ID general tables.
-         * @param {boolean} options.idFigureTables - Whether to ID tables within figure elements.
          * @returns {string} The HTML content with IDs inserted.
          */
         function applyAutoId(htmlString, options = {}) {
@@ -3124,7 +3092,7 @@
             const defaultOptions = {
                 idSections: true,
                 idHeadings: true,
-                idFigures: true, // NEW default for figures
+                idFigures: true,
                 idTables: true,
                 idFigureTables: true
             };
@@ -3134,408 +3102,146 @@
             const doc = parser.parseFromString(htmlString, 'text/html');
             const body = doc.body;
 
-            // Map to store oldId: newId pairs for updating anchor links
             const idChangeMap = {};
 
-            // Helper function to convert a number to an uppercase alphabetical string (A, B, C, ..., Z, AA, AB, ...)
             function toAlpha(num) {
                 let s = '';
-                let t;
                 while (num > 0) {
-                    t = (num - 1) % 26;
+                    let t = (num - 1) % 26;
                     s = String.fromCharCode(65 + t) + s;
                     num = Math.floor((num - t) / 26);
                 }
                 return s || 'A';
             }
 
-            // Helper function to extract an alphabetical character from an appendix text
-            // e.g., "Appendix A" -> "A", "Annexe B" -> "B"
             function getLetterFromAppendixText(text) {
                 const match = text.match(/^(?:Appendix|Annexe)\s*([A-Z])?/i);
-                if (match && match[1]) {
-                    return match[1].toUpperCase();
-                }
-                return null;
+                return (match && match[1]) ? match[1].toUpperCase() : null;
             }
 
-            // Store existing IDs to avoid re-assigning if they match the desired pattern and are already present,
-            // though for full re-numbering, we will overwrite. This set helps track uniqueness.
             const existingIds = new Set();
-            // Collect existing IDs before processing to ensure no duplicate IDs are generated
-            // even if the user had some manually set.
             doc.querySelectorAll('[id]').forEach(el => existingIds.add(el.id));
 
-            // Headings counters - these should be persistent and not reset each other
-            let h2_num_counter = 0; // For H2s starting with numbers (toc1, toc2)
-            let h2_general_alpha_counter = 0; // For general H2s (tocA, tocB)
-            let h2_appendix_alpha_counter = 0; // For H2s explicitly "Appendix" (appA, appB)
-
-            // Sub-level counters (H3-H6)
-            // Maps parent ID path string (e.g., "toc1" or "tocA-1") to its child counters
-            let sub_num_counters = new Map(); // Stores { "parent_id": next_numeric_count }
-            let sub_appendix_alpha_counters = new Map(); // Stores { "parent_id": next_alpha_count_for_appendices }
-
-            // This array will hold segments of the current heading's ID path
-            // e.g., ["toc1"], ["toc1", "1"], ["tocA", "appA"]
-            let currentHeadingIdPathSegments = [];
-
-            // Table counters
-            let tableCounter = 0; // For 'tbl#'
-            let figureTableCounter = 0; // For 'ftbl#'
-            let figureCounter = 0; // NEW: For 'fig#'
-
-            // Section specific counters: Maps parent section ID to its next child number
-            // 'root' key is used for top-level sections (children of body)
-            let sectionChildCounters = { 'root': 0 };
-
             if (currentOptions.idHeadings) {
-                // --- Pre-scan: Determine if any H2 is numerically prefaced and global level adjustment ---
-                let hasAnyNumberedH2 = false; // Flag to track if *any* regular H2 starts with a number (influences other regular H2s)
-                let levelAdjustmentForGlobalShift = 0; // The numerical shift to apply to all relevant headings (+1 for H1->H2, -1 for H3->H2 etc.)
-                let foundFirstRegularH2ForAdjustment = false; // Flag to ensure global shift is based on the *very first* regular H2
+                let h2_num_counter = 0;
+                let h2_general_alpha_counter = 0;
+                let h2_appendix_alpha_counter = 0;
+                let sub_num_counters = new Map();
+                let sub_appendix_alpha_counters = new Map();
 
-                const allHeadingsForPreScan = Array.from(body.querySelectorAll('h1, h2, h3, h4, h5, h6'));
-                const specialH1ForPreScan = allHeadingsForPreScan.find(h =>
-                    h.tagName.toLowerCase() === 'h1' &&
-                    h.getAttribute('property') === 'name' &&
-                    h.id === 'wb-cont'
-                );
+                // --- MODIFICATION START: Use a more robust tracking method ---
+                // This tracks the full ID of the last seen heading at each level.
+                const lastSeenHeadingIds = {
+                    2: '', 3: '', 4: '', 5: '', 6: ''
+                };
+                // --- MODIFICATION END ---
 
-                for (const h of allHeadingsForPreScan) {
-                    // Skip the special H1 in this pre-scan
-                    if (h === specialH1ForPreScan) continue;
+                let hasAnyNumberedH2 = Array.from(body.querySelectorAll('h2')).some(h => h.textContent.trim().match(/^\s*(\d+)(?:\.|\s|\)|\-)?/));
 
-                    // Skip if inside an ignored parent
-                    const ignoredParentsPreScan = ['aside', 'caption', 'figure', 'figcaption', 'table'];
-                    let isInsideIgnoredParentPreScan = false;
-                    let currentParentPreScan = h.parentNode;
-                    while (currentParentPreScan && currentParentPreScan !== body) {
-                        if (ignoredParentsPreScan.includes(currentParentPreScan.tagName.toLowerCase())) {
-                            isInsideIgnoredParentPreScan = true;
-                            break;
-                        }
-                        currentParentPreScan = currentParentPreScan.parentNode;
-                    }
-                    if (isInsideIgnoredParentPreScan) continue;
-
-                    // Check if this is a potential "special first H2" (content-based or existing ID)
-                    const textContentLower = h.textContent.trim().toLowerCase();
-                    const isPotentialSpecialFirstH2 = (h.tagName.toLowerCase() === 'h2' && (h.hasAttribute('id') ||
-                        textContentLower.includes('on this page') ||
-                        textContentLower.includes('sur cette page') ||
-                        textContentLower.includes('in this section') ||
-                        textContentLower.includes('dans cette section') ||
-                        textContentLower.includes('table of contents') ||
-                        textContentLower.includes('table des matières') ||
-                        textContentLower.replace(/:/g, '').trim() === 'on this page' ||
-                        textContentLower.replace(/:/g, '').trim() === 'sur cette page' ||
-                        textContentLower.replace(/:/g, '').trim() === 'in this section' ||
-                        textContentLower.replace(/:/g, '').trim() === 'dans cette section' ||
-                        textContentLower.replace(/:/g, '').trim() === 'table of contents' ||
-                        textContentLower.replace(/:/g, '').trim() === 'table des matières'
-                    ));
-
-                    if (!foundFirstRegularH2ForAdjustment && isPotentialSpecialFirstH2) {
-                        // If the very first *relevant* H2 is special, we don't base the global shift on it.
-                        // We'll wait for the next *regular* H2.
-                        continue;
-                    }
-
-                    const currentActualLevel = parseInt(h.tagName.substring(1), 10);
-                    if (!foundFirstRegularH2ForAdjustment) {
-                        // This is the first *actual* regular heading that will receive a numbered/lettered ID.
-                        levelAdjustmentForGlobalShift = 2 - currentActualLevel;
-                        foundFirstRegularH2ForAdjustment = true; // Mark as found
-                    }
-
-                    // Check if this heading is numerically prefaced (for `hasAnyNumberedH2`)
-                    const text = h.textContent.trim();
-                    if (h.tagName.toLowerCase() === 'h2' && text.match(/^\s*(\d+)(?:\.|\s|\)|\-)?/)) {
-                        hasAnyNumberedH2 = true;
-                    }
-                }
-                // --- End Pre-scan ---
-
-                let initialH2ProcessedInLoop = false; // Flag to ensure the special 'toc' H2 logic runs only once for the first qualifying H2.
-
-                // Process all headings (H1, H2, H3, H4, H5, H6)
                 doc.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(heading => {
                     const level = parseInt(heading.tagName.substring(1), 10);
                     const text = heading.textContent.trim();
                     const oldId = heading.id;
-                    let newId = oldId; // Initialize newId with oldId, only change if logic dictates
+                    let newId = oldId;
 
-                    // 1. Handle special H1 (wb-cont)
-                    if (level === 1 && heading.getAttribute('property') === 'name' && heading.id === 'wb-cont') {
-                        currentHeadingIdPathSegments = [];
-                        sub_num_counters.clear();
-                        sub_appendix_alpha_counters.clear();
-                        effectivePreviousLevel = 1;
-                        // Since this is an H1, it doesn't affect the `initialH2ProcessedInLoop` flag specifically for H2s.
-                        return;
-                    }
-
-                    // 2. Handle ignored parent
                     const ignoredParents = ['aside', 'caption', 'figure', 'figcaption', 'table'];
-                    let isInsideIgnoredParent = false;
-                    let currentParent = heading.parentNode;
-                    while (currentParent && currentParent !== body) {
-                        if (ignoredParents.includes(currentParent.tagName.toLowerCase())) {
-                            isInsideIgnoredParent = true;
-                            break;
-                        }
-                        currentParent = currentParent.parentNode;
-                    }
-                    if (isInsideIgnoredParent) {
-                        return;
+                    if (heading.closest(ignoredParents.join(','))) {
+                        return; // Skip headings inside these elements
                     }
 
-                    // 3. Special handling for the very first H2 that is not a special H1 and not in an ignored parent
-                    // This logic only applies to the *first* H2 encountered that passes the above checks.
-                    // NEW: Check if the heading already has a valid ID. If so, respect it and skip re-IDing.
-                    if (oldId && (oldId.startsWith('toc') || oldId.startsWith('app'))) {
-                        // It has a valid-looking ID. We need to parse it to set the context for subheadings.
-                        currentHeadingIdPathSegments = oldId.split('-');
-                        // Reset sub-counters for this path to ensure children are numbered correctly.
-                        sub_num_counters.clear();
-                        sub_appendix_alpha_counters.clear();
-                        effectivePreviousLevel = level;
-                        initialH2ProcessedInLoop = true; // Consider it processed to not interfere with sequential numbering.
-                        return; // Skip the rest of the logic for this heading.
-                    }
-                    
-                    if (level === 2 && !initialH2ProcessedInLoop) {
-                        const textContentLower = heading.textContent.trim().toLowerCase();
-                        const textMatchesCriteria =
-                            textContentLower.includes('on this page') ||
-                            textContentLower.includes('sur cette page') ||
-                            textContentLower.includes('in this section') ||
-                            textContentLower.includes('dans cette section') ||
-                            textContentLower.includes('table of contents') ||
-                            textContentLower.includes('table des matières');
-
-                        // Check for optional colon variants
-                        const textWithoutColon = textContentLower.replace(/:/g, '').trim();
-                        const textMatchesCriteriaWithoutColon =
-                            textWithoutColon === 'on this page' ||
-                            textWithoutColon === 'sur cette page' ||
-                            textWithoutColon === 'in this section' ||
-                            textWithoutColon === 'dans cette section' ||
-                            textWithoutColon === 'table of contents' ||
-                            textWithoutColon === 'table des matières';
-
-                        if (heading.hasAttribute('id') || textMatchesCriteria || textMatchesCriteriaWithoutColon) {
-                            // If it has an existing ID, keep it. Otherwise, set to "toc".
-                            if (!heading.hasAttribute('id')) {
-                                newId = 'toc';
-                            } else {
-                                newId = oldId; // Keep existing ID
-                            }
-                            // Only set ID if different or if it was empty
-                            if (oldId !== newId || !oldId) {
-                                heading.setAttribute('id', newId);
-                                idChangeMap[oldId] = newId; // Track the change
-                                existingIds.add(newId);
-                            }
-
-                            currentHeadingIdPathSegments = [newId]; // This sets the path for subsequent headings
-                            sub_num_counters.clear(); // Reset sub-counters as this is a new "root" for them
-                            sub_appendix_alpha_counters.clear();
-                            effectivePreviousLevel = 2; // Treat this as an H2 for subsequent level calculation
-                            initialH2ProcessedInLoop = true; // Mark as handled, so this block won't run again for another H2
-                            return; // Done with this heading, move to the next in the loop
-                        }
-                    }
-
-                    // This block runs for all headings (H2, H3, H4, H5, H6) that are NOT the special 'toc' H2.
-                    // This is where regular numerical/alphabetical ID assignment occurs.
+                    if (level === 1) return; // Skip H1s as per original logic
 
                     let id_segment = '';
                     const isNumericHeading = text.match(/^\s*(\d+)(?:\.|\s|\)|\-)?/);
-                    const isAppendixHeading = text.match(/^(?:Appendix|Annexe)\s*(?:([A-Z]))?/i);
+                    const isAppendixHeading = text.match(/^(?:Appendix|Annexe)/i);
 
                     if (level === 2) {
-                        // This is a regular H2 (not the special 'toc' type).
-                        // If it's the very first *regular* H2, ensure counters are reset for its sequence.
-                        if (!initialH2ProcessedInLoop) { // This means it's the very first *actual* numbered/lettered H2.
-                            h2_num_counter = 0;
-                            h2_general_alpha_counter = 0;
-                            h2_appendix_alpha_counter = 0;
-                            initialH2ProcessedInLoop = true; // Mark that a *regular* H2 has now been processed
-                        }
-
                         if (isAppendixHeading) {
-                            const letterFromText = getLetterFromAppendixText(text);
-                            if (letterFromText) {
-                                id_segment = `app${letterFromText}`;
-                            } else {
-                                h2_appendix_alpha_counter++;
-                                id_segment = `app${toAlpha(h2_appendix_alpha_counter)}`;
-                            }
-                        } else if (hasAnyNumberedH2) { // Global check from pre-scan
-                            if (isNumericHeading) {
-                                h2_num_counter++;
-                                id_segment = `toc${h2_num_counter}`;
-                            } else {
-                                h2_general_alpha_counter++;
-                                id_segment = `toc${toAlpha(h2_general_alpha_counter)}`;
-                            }
-                        } else { // No numbered H2s in the document, all H2s get numeric IDs
-                            h2_num_counter++;
-                            id_segment = `toc${h2_num_counter}`;
+                            const letter = getLetterFromAppendixText(text) || toAlpha(++h2_appendix_alpha_counter);
+                            id_segment = `app${letter}`;
+                        } else if (hasAnyNumberedH2) {
+                            id_segment = isNumericHeading ? `toc${++h2_num_counter}` : `toc${toAlpha(++h2_general_alpha_counter)}`;
+                        } else {
+                            id_segment = `toc${++h2_num_counter}`;
                         }
-                        currentHeadingIdPathSegments = [id_segment];
-                        sub_num_counters.clear();
-                        sub_appendix_alpha_counters.clear();
+                        newId = id_segment;
+                        lastSeenHeadingIds[2] = newId; // Track the new H2 ID
 
                     } else { // For H3, H4, H5, H6
-                        currentHeadingIdPathSegments.length = level - 2; // Trim path to parent's level
-                        const parent_id_path_string = currentHeadingIdPathSegments.join('-');
+                        // --- MODIFICATION START: Robust Parent ID lookup ---
+                        // Find the parent ID from the last seen heading of the level above.
+                        const parent_id = lastSeenHeadingIds[level - 1];
+                        if (!parent_id) { // If no parent found (e.g., an H3 before any H2), skip IDing
+                            return;
+                        }
+                        // --- MODIFICATION END ---
 
                         if (isAppendixHeading) {
-                            const letterFromText = getLetterFromAppendixText(text);
-                            if (letterFromText) {
-                                id_segment = `app${letterFromText}`;
-                            } else {
-                                const currentAppCount = (sub_appendix_alpha_counters.get(parent_id_path_string) || 0) + 1;
-                                sub_appendix_alpha_counters.set(parent_id_path_string, currentAppCount);
-                                id_segment = `app${toAlpha(currentAppCount)}`;
-                            }
-                            sub_num_counters.delete(parent_id_path_string);
+                            const currentAppCount = (sub_appendix_alpha_counters.get(parent_id) || 0) + 1;
+                            sub_appendix_alpha_counters.set(parent_id, currentAppCount);
+                            id_segment = `app${getLetterFromAppendixText(text) || toAlpha(currentAppCount)}`;
                         } else {
-                            const currentNumCount = (sub_num_counters.get(parent_id_path_string) || 0) + 1;
-                            sub_num_counters.set(parent_id_path_string, currentNumCount);
+                            const currentNumCount = (sub_num_counters.get(parent_id) || 0) + 1;
+                            sub_num_counters.set(parent_id, currentNumCount);
                             id_segment = String(currentNumCount);
-                            sub_appendix_alpha_counters.delete(parent_id_path_string);
                         }
-                        currentHeadingIdPathSegments.push(id_segment);
+                        newId = `${parent_id}-${id_segment}`;
                     }
 
-                    newId = currentHeadingIdPathSegments.join('-');
+                    lastSeenHeadingIds[level] = newId; // Track the new ID for this level
                     if (oldId && oldId !== newId) {
                         idChangeMap[oldId] = newId;
                     }
                     heading.setAttribute('id', newId);
                     existingIds.add(newId);
-                    effectivePreviousLevel = level;
                 });
             }
 
-
+            // --- Section, Figure, and Table logic remains the same as it is already safe ---
             if (currentOptions.idSections) {
-                // Process Sections
-                // The approach for sections already rebuilds IDs based on hierarchy on each run.
+                // This logic is safe. If no sections are found, it does nothing.
+                let sectionChildCounters = { 'root': 0 };
                 doc.querySelectorAll('section').forEach(section => {
-                    const existingId = section.getAttribute('id');
-                    const oldId = section.id; // Capture old ID
-
-                    // IMPORTANT CHANGE: If section already has an ID AND it does NOT match the "sec" pattern OR has a class, skip it.
-                    // This allows manual section IDs to persist.
-                    if (existingId && (!/^sec\d+(-\d+)*$/.test(existingId) || section.hasAttribute('class'))) {
-                        return; // Do not overwrite non-standard section IDs or sections with classes
-                    }
-
-                    let parentSectionId = 'root'; // Default for top-level sections
-                    let tempParent = section.parentNode;
-
-                    // Traverse up to find the closest parent section with an ID that follows the "sec" pattern
-                    while (tempParent && tempParent !== body) {
-                        if (tempParent.tagName.toLowerCase() === 'section' && tempParent.id && /^sec\d+(-\d+)*$/.test(tempParent.id)) {
-                            parentSectionId = tempParent.id;
-                            break;
-                        }
-                        tempParent = tempParent.parentNode;
-                    }
-
-                    // Increment the counter for the current parent's children
-                    sectionChildCounters[parentSectionId] = (sectionChildCounters[parentSectionId] || 0) + 1;
-                    const newSectionNum = sectionChildCounters[parentSectionId];
-
-                    let newId;
-                    if (parentSectionId === 'root') {
-                        newId = `sec${newSectionNum}`;
-                    } else {
-                        newId = `${parentSectionId}-${newSectionNum}`;
-                    }
-
-                    if (oldId && oldId !== newId) {
-                        idChangeMap[oldId] = newId; // Store the ID change
-                    }
-                    section.setAttribute('id', newId);
-                    existingIds.add(newId); // Add newly assigned ID to set
+                    if (section.id && (!/^sec\d+(-\d+)*$/.test(section.id) || section.hasAttribute('class'))) return;
+                    let parentSection = section.parentElement.closest('section');
+                    let parentId = parentSection && parentSection.id && /^sec\d+(-\d+)*$/.test(parentSection.id) ? parentSection.id : 'root';
+                    sectionChildCounters[parentId] = (sectionChildCounters[parentId] || 0) + 1;
+                    const newNum = sectionChildCounters[parentId];
+                    const newId = (parentId === 'root') ? `sec${newNum}` : `${parentId}-${newNum}`;
+                    if (section.id && section.id !== newId) idChangeMap[section.id] = newId;
+                    section.id = newId;
                 });
             }
 
-            // NEW: Process Figures
             if (currentOptions.idFigures) {
-                doc.querySelectorAll('figure').forEach(figure => {
-                    const existingId = figure.getAttribute('id');
-                    const oldId = figure.id; // Capture old ID
-                    // Only assign a new ID if it doesn't already have one or if it's not a standard fig# ID.
-                    if (!existingId || !/^fig\d+$/.test(existingId)) {
-                        figureCounter++;
-                        const newId = `fig${figureCounter}`;
-                        if (oldId && oldId !== newId) {
-                            idChangeMap[oldId] = newId; // Store the ID change
-                        }
-                        figure.setAttribute('id', newId);
-                        existingIds.add(newId);
-                    }
+                let figureCounter = 0;
+                doc.querySelectorAll('figure:not([id])').forEach(figure => {
+                    figure.id = `fig${++figureCounter}`;
                 });
             }
 
             if (currentOptions.idTables || currentOptions.idFigureTables) {
-                // Process Tables
-                // Similar to sections, table IDing also rebuilds on each run.
+                let tableCounter = 0;
+                let figureTableCounter = 0;
                 doc.querySelectorAll('table').forEach(table => {
-                    const oldId = table.id; // Capture old ID
-                    // For full re-numbering, we will re-assign table IDs.
-                    const parentFigure = table.closest('figure');
-                    let newId = null;
-
-                    if (parentFigure && currentOptions.idFigureTables) {
-                        // It's inside a figure, assign ftbl#
-                        figureTableCounter++;
-                        newId = `ftbl${figureTableCounter}`;
-                    } else if (!parentFigure && currentOptions.idTables) {
-                        // It's not inside a figure, assign tbl#
-                        tableCounter++;
-                        newId = `tbl${tableCounter}`;
-                    }
-
-                    if (newId) {
-                        if (oldId && oldId !== newId) {
-                            idChangeMap[oldId] = newId; // Store the ID change
-                        }
-                        table.setAttribute('id', newId);
-                        existingIds.add(newId);
-                    } else {
-                        // If neither option is selected for this table type, ensure it has no ID.
-                        // If oldId existed and is now removed, it should be noted, but for simplicity
-                        // we focus on changed IDs as per request.
-                        if (oldId) {
-                             table.removeAttribute('id'); // Explicitly remove ID if it was there and no new one assigned
-                        }
+                    if (table.id) return; // Skip tables that already have an ID
+                    if (table.closest('figure') && currentOptions.idFigureTables) {
+                        table.id = `ftbl${++figureTableCounter}`;
+                    } else if (!table.closest('figure') && currentOptions.idTables) {
+                        table.id = `tbl${++tableCounter}`;
                     }
                 });
             }
 
-            // --- NEW: Update anchor links based on idChangeMap ---
-            const allLinks = doc.querySelectorAll('a[href^="#"]');
-            allLinks.forEach(link => {
-                const currentAnchor = link.getAttribute('href').substring(1); // Get the ID part without '#'
+            doc.querySelectorAll('a[href^="#"]').forEach(link => {
+                const currentAnchor = link.getAttribute('href').substring(1);
                 if (idChangeMap[currentAnchor]) {
                     link.setAttribute('href', `#${idChangeMap[currentAnchor]}`);
                 }
             });
-            // --- END NEW ANCHOR UPDATE ---
 
             return body.innerHTML;
         }
-
-        // REMOVED: generateToc function
-        // REMOVED: showTocModal function
 
 
         /**
@@ -3649,7 +3355,8 @@
                 }
 
                 // Run Auto-Encode and Auto-Indent when switching to HTML editor
-                autoEncodeBtn.click();
+                
+				autoFormatBtn.click();
 
                 // 3. Switch panel visibility.
                 richtextOutputPanel.classList.remove('panel-visible');
@@ -4406,10 +4113,19 @@ function showRegexGuideModal(triggeringButton, originalButtonText) {
             toggleEditorViewBtnCode.classList.add('bg-cyan-700', 'hover:bg-cyan-800');
             toggleEditorViewBtnCode.classList.remove('bg-cyan-700', 'hover:bg-cyan-800', 'bg-slate-800', 'hover:bg-slate-700'); /* Changed */
             updateGoToHtmlButtonColor(); // Call to set initial color for "Go to HTML" button
-			
+
             // Initialize Monaco Editor
             require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.49.0/min/vs' } });
             require(['vs/editor/editor.main'], function () {
+				monaco.languages.html.htmlDefaults.setOptions({
+					// Add your custom options here, for example:
+				//	  tabSize: 4,
+                //    insertSpaces: true,
+                //    scrollBeyondLastLine: false,
+                //    wordWrap: 'on',
+                //    wrappingIndent: 'same',
+				wrapLineLength: 500,
+				});
                 monacoEditorInstance = monaco.editor.create(monacoEditorContainer, { // Use monacoEditorContainer here
                     value: htmlOutputContent, // Set initial content
                     language: 'html',
@@ -6600,6 +6316,24 @@ function insertSectionToc(maxLevel, lang) {
     monacoEditorInstance.setValue(doc.body.innerHTML);
     autoFormatBtn.click();
 }
+
+document.getElementById('formatSelectedBtn').addEventListener('click', () => {
+    // Get the unformatted code from the editor
+    const unformattedCode = monacoEditorInstance.getValue();
+
+    // Define the options for the beautifier (you can customize these)
+    const options = {
+        indent_size: 2, // The number of spaces to indent with
+        space_in_empty_paren: true // Add a space inside empty parentheses
+    };
+
+    // Use the html_beautify function from the library you are already loading
+    const formattedCode = html_beautify(unformattedCode, options);
+
+    // Set the formatted code back into the editor
+    monacoEditorInstance.setValue(formattedCode);
+});
+
 			// now wire your buttons (you may already have these listeners; just point them at our new function)
 			enSecToCBtn.addEventListener('click', () => insertSectionToc(3, 'en'));
 			frSecToCBtn.addEventListener('click', () => insertSectionToc(3, 'fr'));
