@@ -692,6 +692,7 @@
     transition: max-height 0.3s ease-in, opacity 0.3s ease-in;
     pointer-events: auto;
 }
+
     </style>
 </head>
 <body>
@@ -3313,6 +3314,31 @@
                     console.warn("Rich Text Editor not ready for content retrieval on toggle. Using empty string.");
                     richTextContent = '';
                 }
+				
+				 // ================== NEW DOM-BASED SOLUTION ==================
+    try {
+        // Step 1: Parse the HTML string into a DOM document
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(richTextContent, 'text/html');
+
+        // Step 2: Find all <details> elements in the parsed document
+        const allDetails = doc.querySelectorAll('details');
+
+        // Step 3: Loop through them and remove the 'open' attribute
+        allDetails.forEach(detail => {
+            detail.removeAttribute('open');
+        });
+
+        // Step 4: Serialize the cleaned content back into an HTML string.
+        // We take the content from the <body> because the parser adds <html> and <body> tags.
+        richTextContent = doc.body.innerHTML;
+        
+    } catch (e) {
+        console.error("Failed to parse and clean HTML, proceeding with raw content.", e);
+        // If parsing fails for any reason, the old regex is a fallback.
+        richTextContent = richTextContent.replace(/<details[^>]*\s(open|open="")/gi, '<details');
+    }
+    // ============================================================
 
                 // Restore protected data attributes FIRST, as other cleaning might remove elements
                 let processedContent = restoreDataAttributes(richTextContent);
@@ -5391,7 +5417,16 @@ function findFullElementRange(model, initialStartOffset) {
                                 return '';
                             }
                         };
-
+						// Place the helper function here, before the hugerte.init call
+function openAllDetailsInEditor(editor) {
+    const editorDoc = editor.getDoc();
+    if (editorDoc) {
+        const detailsElements = editorDoc.querySelectorAll('details');
+        detailsElements.forEach(el => {
+            el.setAttribute('open', '');
+        });
+    }
+}
                         /**
                          * HugeRTE init
                          */
@@ -5415,32 +5450,42 @@ function findFullElementRange(model, initialStartOffset) {
                                 extended_valid_elements: 'dl[class|id],dt[class|id],dd[class|id],details[open],summary',
 								valid_children: '+body[dl],+dl[dt|dd],+dt[a|abbr|acronym|b|bdo|big|br|button|cite|code|del|dfn|em|i|img|input|ins|kbd|label|map|q|samp|select|small|span|strike|strong|sub|sup|textarea|tt|var|p],+dd[a|abbr|acronym|b|bdo|big|br|button|cite|code|del|dfn|em|i|img|input|ins|kbd|label|map|q|samp|select|small|span|strike|strong|sub|sup|textarea|tt|var|p|ul|ol|dl],+details[summary|p|div|ul|ol|table|h1|h2|h3|h4|h5|h6]',
 								custom_elements: 'dl,dt,dd,details,summary',
-								init_instance_callback: function(editorInstance) {
-                                    console.log('Iframe: HugeRTE editor initialized inside iframe.');
-                                    richTextEditorInstance = editorInstance; // Store the instance globally
-                                    // Expose the instance to the parent window
-                                    if (window.parent) {
-                                        window.parent.richTextEditorInstanceFromIframe = editorInstance;
-                                        console.log("Iframe: HugeRTE instance exposed to parent.");
-                                    }
+								 // --- START MODIFICATION ---
+    setup: function(editor) {
+        // This function runs when the content is set or changed
+        editor.on('SetContent', function(e) {
+            openAllDetailsInEditor(editor);
+        });
+    },
+    init_instance_callback: function(editorInstance) {
+        console.log('Iframe: HugeRTE editor initialized inside iframe.');
+        richTextEditorInstance = editorInstance; // Store the instance globally
 
-                                    // Handle Tab key for indentation and outdentation, especially for lists
-                                    editorInstance.on('keydown', (event) => {
-                                        if (event.key === 'Tab') {
-                                            event.preventDefault(); // Prevent default tab behavior (focus change)
-                                            // No content modification (no spaces, no styles)
-                                            editorInstance.focus(); // Explicitly refocus the editor after command
-                                        }
-                                    });
+        // NEW: Call the function to open details when the editor first loads
+        openAllDetailsInEditor(editorInstance);
 
-                                    // Initial content sync when editor loads
-                                    console.log('Iframe: HugeRTE editor ready.');
-                                    // Set initial content if parent already has some
-                                    if (window.parent.richTextContent) {
-                                        editorInstance.setContent(window.parent.richTextContent);
-                                        console.log("Iframe: Initial HugeRTE content set from parent.");
-                                    }
-                                }
+        // Expose the instance to the parent window
+        if (window.parent) {
+            window.parent.richTextEditorInstanceFromIframe = editorInstance;
+            console.log("Iframe: HugeRTE instance exposed to parent.");
+        }
+
+        // Handle Tab key
+        editorInstance.on('keydown', (event) => {
+            if (event.key === 'Tab') {
+                event.preventDefault();
+                editorInstance.focus();
+            }
+        });
+
+        // Initial content sync
+        if (window.parent.richTextContent) {
+            editorInstance.setContent(window.parent.richTextContent);
+            console.log("Iframe: Initial HugeRTE content set from parent.");
+            // Note: The 'SetContent' event handler will fire here, so openAllDetailsInEditor() is called automatically.
+        }
+    }
+    // --- END MODIFICATION ---
                             });
                         }
                     <\/script>
