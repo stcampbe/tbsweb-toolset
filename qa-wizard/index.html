@@ -2047,108 +2047,105 @@
             cleanUrlsBtn.addEventListener('click', () => handleButtonAction(cleanUrlsBtn, () => applyEditorChange(applyUrlCleaning), 'Cleaned!'));
             
             timeTagsBtn.addEventListener('click', () => handleButtonAction(timeTagsBtn, () => applyEditorChange(htmlContent => {
-                let htmlToProcessForTimeTags = applyNBSPPlaceholders(htmlContent);
-                const parser = new DOMParser();
+    let htmlToProcessForTimeTags = applyNBSPPlaceholders(htmlContent);
+    const parser = new DOMParser();
+    const tempDoc = parser.parseFromString(htmlToProcessForTimeTags, 'text/html');
 
-                // Step 1: Remove existing <time> tags to prevent re-processing.
-                const tempDoc = parser.parseFromString(htmlToProcessForTimeTags, 'text/html');
-                tempDoc.querySelectorAll('time').forEach(timeEl => {
-                    const tempDiv = tempDoc.createElement('div');
-                    tempDiv.innerHTML = timeEl.innerHTML;
-                    if (timeEl.parentNode) {
-                        while (tempDiv.firstChild) {
-                            timeEl.parentNode.insertBefore(tempDiv.firstChild, timeEl);
-                        }
-                        timeEl.parentNode.removeChild(timeEl);
-                    }
-                });
-                htmlToProcessForTimeTags = tempDoc.body.innerHTML;
+    // Remove existing <time> tags to prevent re-processing.
+    tempDoc.querySelectorAll('time').forEach(timeEl => {
+        if (timeEl.parentNode) {
+            // Replace the <time> tag with its own content
+            while (timeEl.firstChild) {
+                timeEl.parentNode.insertBefore(timeEl.firstChild, timeEl);
+            }
+            timeEl.parentNode.removeChild(timeEl);
+        }
+    });
 
-                const monthMap = {
-                    'january': '01', 'jan': '01', 'janvier': '01',
-                    'february': '02', 'feb': '02', 'février': '02',
-                    'march': '03', 'mar': '03', 'mars': '03',
-                    'april': '04', 'apr': '04', 'avril': '04',
-                    'may': '05', 'mai': '05',
-                    'june': '06', 'jun': '06', 'juin': '06',
-                    'july': '07', 'jul': '07', 'juillet': '07',
-                    'august': '08', 'aug': '08', 'août': '08',
-                    'september': '09', 'sep': '09', 'septembre': '09',
-                    'october': '10', 'oct': '10', 'octobre': '10',
-                    'november': '11', 'nov': '11', 'novembre': '11',
-                    'december': '12', 'dec': '12', 'décembre': '12'
-                };
+    const monthMap = {
+        'january': '01', 'jan': '01', 'janvier': '01',
+        'february': '02', 'feb': '02', 'février': '02',
+        'march': '03', 'mar': '03', 'mars': '03',
+        'april': '04', 'apr': '04', 'avril': '04',
+        'may': '05', 'mai': '05',
+        'june': '06', 'jun': '06', 'juin': '06',
+        'july': '07', 'jul': '07', 'juillet': '07',
+        'august': '08', 'aug': '08', 'août': '08',
+        'september': '09', 'sep': '09', 'septembre': '09',
+        'october': '10', 'oct': '10', 'octobre': '10',
+        'november': '11', 'nov': '11', 'novembre': '11',
+        'december': '12', 'dec': '12', 'décembre': '12'
+    };
+    
+    function getMonthNumber(monthName) {
+        return monthMap[monthName.toLowerCase()] || null;
+    }
 
-                function getMonthNumber(monthName) {
-                    return monthMap[monthName.toLowerCase()] || null;
-                }
+    const sortedMonthKeys = Object.keys(monthMap).sort((a, b) => b.length - a.length);
+    const monthPattern = sortedMonthKeys.map(m => m.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|');
+    const spaceOrNBSPChar = `(?:\\s|${NBSP_ENTITY_PLACEHOLDER})+`;
+    const daySuffixPattern = '(?:<sup>er<\\/sup>|<sup>st<\\/sup>|<sup>nd<\\/sup>|<sup>rd<\\/sup>|<sup>th<\\/sup>|er|st|nd|rd|th)?';
+    
+    // Regular expressions for various date formats
+    const regexIsoDateFull = new RegExp(`(?<![a-zA-Z0-9="'])(?:>|\\s|^)(\\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\\d|3[01]))(?![a-zA-Z0-9-"'])`, 'g');
+    const regexMonthDayYear = new RegExp(`(?<![a-zA-Z0-9="'])(?:>|\\s|^)(${monthPattern})${spaceOrNBSPChar}(\\d{1,2}${daySuffixPattern})\\s*,?${spaceOrNBSPChar}(\\d{4})(?![a-zA-Z0-9-"'])`, 'gi');
+    const regexDayMonthYear = new RegExp(`(?<![a-zA-Z0-9="'])(?:>|\\s|^)(?:le|the)?${spaceOrNBSPChar}?(\\d{1,2}${daySuffixPattern})${spaceOrNBSPChar}(${monthPattern})\\s*,?${spaceOrNBSPChar}(\\d{4})(?![a-zA-Z0-9-"'])`, 'gi');
 
-                const sortedMonthKeys = Object.keys(monthMap).sort((a, b) => b.length - a.length);
-                const monthPattern = sortedMonthKeys.map(m => m.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|');
-                const spaceOrNBSPChar = `(?:\\s|${NBSP_ENTITY_PLACEHOLDER})+`;
-                const daySuffixPattern = '(?:<sup>er<\\/sup>|<sup>st<\\/sup>|<sup>nd<\\/sup>|<sup>rd<\\/sup>|<sup>th<\\/sup>|er|st|nd|rd|th)?';
+    // Create a TreeWalker to iterate over only text nodes
+    const walker = tempDoc.createTreeWalker(tempDoc.body, NodeFilter.SHOW_TEXT, null, false);
+    let node;
+    const textNodesToReplace = [];
 
-                const regexIsoDateFull = /(?<!\d)(\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01]))(?!\d)/g;
-                const regexMonthDayYear = new RegExp(`(?<!\\d)\\b(${monthPattern})\\b${spaceOrNBSPChar}(\\d{1,2}${daySuffixPattern})\\s*,?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'i');
-                const regexDayMonthYear = new RegExp(`(?<!\\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2}${daySuffixPattern})${spaceOrNBSPChar}\\b(${monthPattern})\\b\\s*,?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'i');
-                const regexMonthYear = new RegExp(`(?<!\\d)\\b(${monthPattern})\\b${spaceOrNBSPChar}(\\d{4})(?!\\d|(?:${spaceOrNBSPChar}\\d{1,2}))`, 'i');
-                const regexMonthDayNoYear = new RegExp(`(?<!\\d)\\b(${monthPattern})\\b${spaceOrNBSPChar}(\\d{1,2}${daySuffixPattern})(?!\\d|(?:${spaceOrNBSPChar}\\d{4}))(?!-)`, 'i');
-                const regexDayMonthNoYear = new RegExp(`(?<!\\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2}${daySuffixPattern})${spaceOrNBSPChar}\\b(${monthPattern})\\b(?!\d|(?:${spaceOrNBSPChar}\\d{4}))(?!-)`, 'i');
+    while (node = walker.nextNode()) {
+        let text = node.nodeValue;
+        
+        // This check prevents tagging dates inside script, style, or existing time tags
+        if (node.parentElement.closest('script, style, time')) {
+            continue;
+        }
 
-                let allMatches = [];
-                const patternsToTest = [
-                    { name: 'IsoDateFull', regex: regexIsoDateFull, handler: (match) => { const [, yearMonthDay] = match; return yearMonthDay; }, priority: 3 },
-                    { name: 'MonthDayYear', regex: regexMonthDayYear, handler: (match) => { const [, month, dayPart, year] = match; const monthNum = getMonthNumber(month); let cleanDay = dayPart.replace(/(?:<sup>er<\/sup>|<sup>st<\/sup>|<sup>nd<\/sup>|<sup>rd<\/sup>|<sup>th<\/sup>|er|st|nd|rd|th)/gi, '').trim(); const parsedDay = parseInt(cleanDay); if (!monthNum || isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) return null; return `${year}-${monthNum}-${String(parsedDay).padStart(2, '0')}`; }, priority: 2 },
-                    { name: 'DayMonthYear', regex: regexDayMonthYear, handler: (match) => { const [, dayPart, month, year] = match; const monthNum = getMonthNumber(month); let cleanDay = dayPart.replace(/(?:<sup>er<\/sup>|<sup>st<\/sup>|<sup>nd<\/sup>|<sup>rd<\/sup>|<sup>th<\/sup>|er|st|nd|rd|th)/gi, '').trim(); const parsedDay = parseInt(cleanDay); if (!monthNum || isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) return null; return `${year}-${monthNum}-${String(parsedDay).padStart(2, '0')}`; }, priority: 2 },
-                    { name: 'MonthYear', regex: regexMonthYear, handler: (match) => { const [, month, year] = match; const monthNum = getMonthNumber(month); if (!monthNum) return null; return `${year}-${monthNum}`; }, priority: 2 },
-                    { name: 'MonthDayNoYear', regex: regexMonthDayNoYear, handler: (match) => { const [, month, dayPart] = match; const monthNum = getMonthNumber(month); let cleanDay = dayPart.replace(/(?:<sup>er<\/sup>|<sup>st<\/sup>|<sup>nd<\/sup>|<sup>rd<\/sup>|<sup>th<\/sup>|er|st|nd|rd|th)/gi, '').trim(); const parsedDay = parseInt(cleanDay); if (!monthNum || isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) return null; return `${monthNum}-${String(parsedDay).padStart(2, '0')}`; }, priority: 1 },
-                    { name: 'DayMonthNoYear', regex: regexDayMonthNoYear, handler: (match) => { const [, dayPart, month] = match; const monthNum = getMonthNumber(month); let cleanDay = dayPart.replace(/(?:<sup>er<\/sup>|<sup>st<\/sup>|<sup>nd<\/sup>|<sup>rd<\/sup>|<sup>th<\/sup>|er|st|nd|rd|th)/gi, '').trim(); const parsedDay = parseInt(cleanDay); if (!monthNum || isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) return null; return `${monthNum}-${String(parsedDay).padStart(2, '0')}`; }, priority: 1 }
-                ];
+        let hasMatch = false;
 
-                patternsToTest.forEach(pattern => {
-                    let localRegex = new RegExp(pattern.regex.source, pattern.regex.flags + (pattern.regex.flags.includes('g') ? '' : 'g'));
-                    let match;
-                    while ((match = localRegex.exec(htmlToProcessForTimeTags)) !== null) {
-                        if (match[0].includes('<time') && match[0].includes('</time>')) continue;
-                        const datetimeValue = pattern.handler(match);
-                        if (datetimeValue) {
-                            allMatches.push({ start: match.index, end: match.index + match[0].length, original: match[0], datetime: datetimeValue, priority: pattern.priority });
-                        }
-                    }
-                });
+        // Apply regex replacements for dates
+        text = text.replace(regexIsoDateFull, (match, date) => {
+            hasMatch = true;
+            return `<time class="nowrap" datetime="${date}">${date}</time>`;
+        });
+        text = text.replace(regexMonthDayYear, (match, month, dayPart, year) => {
+            const monthNum = getMonthNumber(month);
+            const cleanDay = dayPart.replace(/(?:<sup>.*?<\/sup>|er|st|nd|rd|th)/gi, '').trim();
+            if (monthNum) {
+                hasMatch = true;
+                const fullDate = `${year}-${monthNum}-${String(cleanDay).padStart(2, '0')}`;
+                return `<time class="nowrap" datetime="${fullDate}">${match}</time>`;
+            }
+            return match;
+        });
+        text = text.replace(regexDayMonthYear, (match, dayPart, month, year) => {
+            const monthNum = getMonthNumber(month);
+            const cleanDay = dayPart.replace(/(?:<sup>.*?<\/sup>|er|st|nd|rd|th)/gi, '').trim();
+            if (monthNum) {
+                hasMatch = true;
+                const fullDate = `${year}-${monthNum}-${String(cleanDay).padStart(2, '0')}`;
+                return `<time class="nowrap" datetime="${fullDate}">${match}</time>`;
+            }
+            return match;
+        });
 
-                allMatches.sort((a, b) => {
-                    if (a.start !== b.start) return a.start - b.start;
-                    if (a.original.length !== b.original.length) return b.original.length - a.original.length;
-                    return b.priority - a.priority;
-                });
+        // If a match was found, schedule this text node for replacement
+        if (hasMatch) {
+            textNodesToReplace.push({ node: node, newContent: text });
+        }
+    }
 
-                let nonOverlappingMatches = [];
-                if (allMatches.length > 0) {
-                    nonOverlappingMatches.push(allMatches[0]);
-                    for (let i = 1; i < allMatches.length; i++) {
-                        const currentMatch = allMatches[i];
-                        const lastAddedMatch = nonOverlappingMatches[nonOverlappingMatches.length - 1];
-                        if (currentMatch.start >= lastAddedMatch.end) {
-                            nonOverlappingMatches.push(currentMatch);
-                        }
-                    }
-                }
+    // Perform replacements after iterating to avoid modifying the DOM tree during traversal
+    textNodesToReplace.forEach(item => {
+        const replacementFragment = document.createRange().createContextualFragment(item.newContent);
+        item.node.parentNode.replaceChild(replacementFragment, item.node);
+    });
 
-                if (nonOverlappingMatches.length > 0) {
-                    let resultParts = [];
-                    let currentIndex = 0;
-                    nonOverlappingMatches.forEach(match => {
-                        resultParts.push(htmlToProcessForTimeTags.substring(currentIndex, match.start));
-                        resultParts.push(`<time class="nowrap" datetime="${match.datetime}">${match.original}</time>`);
-                        currentIndex = match.end;
-                    });
-                    resultParts.push(htmlToProcessForTimeTags.substring(currentIndex));
-                    htmlToProcessForTimeTags = resultParts.join('');
-                }
-
-                return revertNBSPPlaceholders(htmlToProcessForTimeTags);
-            }), 'Tagged!'));
+    return revertNBSPPlaceholders(tempDoc.body.innerHTML);
+}), 'Tagged!'));
 
             fixFnIdsBtn.addEventListener('click', () => handleButtonAction(fixFnIdsBtn, () => applyEditorChange(htmlContent => {
                  let processedHtml = applyNBSPPlaceholders(htmlContent);
