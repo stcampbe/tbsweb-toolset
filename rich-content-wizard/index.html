@@ -2894,8 +2894,7 @@
             // Find the special H1, if it exists, which should be preserved.
             const specialH1 = headings.find(h =>
                 h.tagName.toLowerCase() === 'h1' &&
-                h.getAttribute('property') === 'name' &&
-                h.id === 'wb-cont'
+                (h.getAttribute('property') === 'name' || h.id === 'wb-cont')
             );
 
             let levelAdjustmentForGlobalShift = 0; // The numerical shift to apply to all relevant headings (+1 for H1->H2, -1 for H3->H2 etc.)
@@ -5608,30 +5607,49 @@ function openAllDetailsInEditor(editor) {
                         console.log("Auto-Section applied. Content length:", currentContent.length);
                     }
                     if (toggleTimeTags.checked) {
-                        // Time tags functionality - copied from original timeTagsBtn.click()
+                        // --- START: MODIFIED TIME TAG LOGIC ---
+                        // This new logic parses the HTML and operates on text nodes directly,
+                        // which prevents it from incorrectly tagging dates inside HTML attributes.
                         const parser = new DOMParser();
                         const doc = parser.parseFromString(currentContent, 'text/html');
-                        let htmlToProcessForTimeTags = doc.body.innerHTML; // Directly use innerHTML
+                        const body = doc.body;
 
-// Step 1: Remove existing <time> tags and extract their text content.
-// This is crucial to prevent re-processing already tagged dates and infinite loops.
-                        const tempDoc = parser.parseFromString(htmlToProcessForTimeTags, 'text/html');
-                        const existingTimeElements = tempDoc.querySelectorAll('time');
-                        existingTimeElements.forEach(timeEl => {
-                            // Replace the <time> element with its innerHTML to retain any nested tags like sup.
-                            // Create a temporary element to hold the innerHTML for correct node insertion.
-                            const tempDiv = tempDoc.createElement('div');
-                            tempDiv.innerHTML = timeEl.innerHTML;
-                            if (timeEl.parentNode) {
-                                while (tempDiv.firstChild) {
-                                    timeEl.parentNode.insertBefore(tempDiv.firstChild, timeEl);
+                        // First, unwrap any existing <time> tags to prevent re-wrapping and allow for re-evaluation.
+                        body.querySelectorAll('time').forEach(timeEl => {
+                            const parent = timeEl.parentNode;
+                            if (parent) {
+                                while (timeEl.firstChild) {
+                                    parent.insertBefore(timeEl.firstChild, timeEl);
                                 }
-                                timeEl.parentNode.removeChild(timeEl);
+                                parent.removeChild(timeEl);
                             }
                         });
-                        htmlToProcessForTimeTags = tempDoc.body.innerHTML; // Update with untagged content
 
+                        // Use a TreeWalker to safely iterate over only text nodes.
+                        const walker = doc.createTreeWalker(
+                            body,
+                            NodeFilter.SHOW_TEXT,
+                            {
+                                acceptNode: function(node) {
+                                    // Reject text nodes within elements where tagging is undesirable.
+                                    const parentTag = node.parentNode.tagName.toLowerCase();
+                                    if (['script', 'style', 'time'].includes(parentTag)) {
+                                        return NodeFilter.FILTER_REJECT;
+                                    }
+                                    return NodeFilter.FILTER_ACCEPT;
+                                }
+                            },
+                            false
+                        );
 
+                        // Collect all text nodes to process.
+                        const textNodes = [];
+                        let currentNode;
+                        while (currentNode = walker.nextNode()) {
+                            textNodes.push(currentNode);
+                        }
+
+                        // Define date patterns and helpers.
                         const monthMap = {
                             'january': '01', 'jan': '01', 'janvier': '01',
                             'february': '02', 'feb': '02', 'février': '02',
@@ -5651,42 +5669,23 @@ function openAllDetailsInEditor(editor) {
                             return monthMap[monthName.toLowerCase()] || null;
                         }
 
-                        // Sort month keys by length descending to match longer names first
                         const sortedMonthKeys = Object.keys(monthMap).sort((a, b) => b.length - a.length);
-                        // Escape special characters in month names for regex
                         const monthPattern = sortedMonthKeys.map(m => m.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|');
-                        // Assuming NBSP_PLACEHOLDER is defined elsewhere, or replace with actual NBSP.
                         const spaceOrNBSPChar = `(?:\\s|${NBSP_PLACEHOLDER})+`;
-
-                        // NEW: Prioritize matching HTML-tag suffixes first in the OR group.
                         const daySuffixPattern = '(?:<sup>er<\\/sup>|<sup>st<\\/sup>|<sup>nd<\\/sup>|<sup>rd<\\/sup>|<sup>th<\\/sup>|er|st|nd|rd|th)?';
-
-
+                        
                         const regexIsoDateFull = /(?<!\d)(\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01]))(?!\d)/g;
+                        const regexMonthDayYear = new RegExp(`(?<!\\d)\\b(${monthPattern})\\b${spaceOrNBSPChar}(\\d{1,2}${daySuffixPattern})\\s*,?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'gi');
+                        const regexDayMonthYear = new RegExp(`(?<!\\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2}${daySuffixPattern})${spaceOrNBSPChar}\\b(${monthPattern})\\b\\s*,?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'gi');
+                        const regexMonthYear = new RegExp(`(?<!\\d)\\b(${monthPattern})\\b${spaceOrNBSPChar}(\\d{4})(?!\\d|(?:${spaceOrNBSPChar}\\d{1,2}))`, 'gi');
+                        const regexMonthDayNoYear = new RegExp(`(?<!\\d)\\b(${monthPattern})\\b${spaceOrNBSPChar}(\\d{1,2}${daySuffixPattern})(?!\\d|(?:${spaceOrNBSPChar}\\d{4}))(?!-)`, 'gi');
+                        const regexDayMonthNoYear = new RegExp(`(?<!\\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2}${daySuffixPattern})${spaceOrNBSPChar}\\b(${monthPattern})\\b(?!\d|(?:${spaceOrNBSPChar}\\d{4}))(?!-)`, 'gi');
 
-                        // Regexes now correctly capture day with its suffix (HTML or plain)
-                        // and handle optional comma with spaces around it
-                        const regexMonthDayYear = new RegExp(`(?<!\\d)\\b(${monthPattern})\\b${spaceOrNBSPChar}(\\d{1,2}${daySuffixPattern})\\s*,?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'i');
-                        const regexDayMonthYear = new RegExp(`(?<!\\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2}${daySuffixPattern})${spaceOrNBSPChar}\\b(${monthPattern})\\b\\s*,?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'i');
-
-                        const regexMonthYear = new RegExp(`(?<!\\d)\\b(${monthPattern})\\b${spaceOrNBSPChar}(\\d{4})(?!\\d|(?:${spaceOrNBSPChar}\\d{1,2}))`, 'i');
-
-                        // Lookahead ensures it doesn't match if a year is present after the day/month.
-                        const regexMonthDayNoYear = new RegExp(`(?<!\\d)\\b(${monthPattern})\\b${spaceOrNBSPChar}(\\d{1,2}${daySuffixPattern})(?!\\d|(?:${spaceOrNBSPChar}\\d{4}))(?!-)`, 'i');
-                        const regexDayMonthNoYear = new RegExp(`(?<!\\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2}${daySuffixPattern})${spaceOrNBSPChar}\\b(${monthPattern})\\b(?!\d|(?:${spaceOrNBSPChar}\\d{4}))(?!-)`, 'i');
-
-
-                        // Instead of iterating text nodes, we will apply regex to the whole HTML string.
-                        let allMatches = [];
                         const patternsToTest = [
-                            { name: 'IsoDateFull', regex: regexIsoDateFull, handler: (match) => {
-                                const [fullMatch, yearMonthDay] = match;
-                                return yearMonthDay;
-                            }, priority: 3 },
+                            { name: 'IsoDateFull', regex: regexIsoDateFull, handler: (match) => match[1], priority: 3 },
                             { name: 'MonthDayYear', regex: regexMonthDayYear, handler: (match) => {
                                 const [, month, dayPart, year] = match;
                                 const monthNum = getMonthNumber(month);
-                                // Clean all possible suffixes, including `<sup>` tags
                                 let cleanDay = dayPart.replace(/(?:<sup>er<\/sup>|<sup>st<\/sup>|<sup>nd<\/sup>|<sup>rd<\/sup>|<sup>th<\/sup>|er|st|nd|rd|th)/gi, '').trim();
                                 const parsedDay = parseInt(cleanDay);
                                 if (!monthNum || isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) return null;
@@ -5695,7 +5694,6 @@ function openAllDetailsInEditor(editor) {
                             { name: 'DayMonthYear', regex: regexDayMonthYear, handler: (match) => {
                                 const [, dayPart, month, year] = match;
                                 const monthNum = getMonthNumber(month);
-                                // Clean all possible suffixes, including `<sup>` tags
                                 let cleanDay = dayPart.replace(/(?:<sup>er<\/sup>|<sup>st<\/sup>|<sup>nd<\/sup>|<sup>rd<\/sup>|<sup>th<\/sup>|er|st|nd|rd|th)/gi, '').trim();
                                 const parsedDay = parseInt(cleanDay);
                                 if (!monthNum || isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) return null;
@@ -5710,7 +5708,6 @@ function openAllDetailsInEditor(editor) {
                             { name: 'MonthDayNoYear', regex: regexMonthDayNoYear, handler: (match) => {
                                 const [, month, dayPart] = match;
                                 const monthNum = getMonthNumber(month);
-                                // Clean all possible suffixes, including `<sup>` tags
                                 let cleanDay = dayPart.replace(/(?:<sup>er<\/sup>|<sup>st<\/sup>|<sup>nd<\/sup>|<sup>rd<\/sup>|<sup>th<\/sup>|er|st|nd|rd|th)/gi, '').trim();
                                 const parsedDay = parseInt(cleanDay);
                                 if (!monthNum || isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) return null;
@@ -5719,7 +5716,6 @@ function openAllDetailsInEditor(editor) {
                             { name: 'DayMonthNoYear', regex: regexDayMonthNoYear, handler: (match) => {
                                 const [, dayPart, month] = match;
                                 const monthNum = getMonthNumber(month);
-                                // Clean all possible suffixes, including `<sup>` tags
                                 let cleanDay = dayPart.replace(/(?:<sup>er<\/sup>|<sup>st<\/sup>|<sup>nd<\/sup>|<sup>rd<\/sup>|<sup>th<\/sup>|er|st|nd|rd|th)/gi, '').trim();
                                 const parsedDay = parseInt(cleanDay);
                                 if (!monthNum || isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) return null;
@@ -5727,80 +5723,92 @@ function openAllDetailsInEditor(editor) {
                             }, priority: 1 }
                         ];
 
-                        patternsToTest.forEach(pattern => {
-                            let localRegex = new RegExp(pattern.regex.source, pattern.regex.flags);
-                            if (!localRegex.flags.includes('g')) {
-                                localRegex = new RegExp(localRegex.source, localRegex.flags + 'g');
-                            }
-
-                            let match;
-                            // Apply regex to the entire HTML string.
-                            // Reset lastIndex for global regex in a loop when called on the same string
-                            localRegex.lastIndex = 0;
-                            while ((match = localRegex.exec(htmlToProcessForTimeTags)) !== null) {
-                                // To avoid issues with nested time tags or matches within already-processed ones,
-                                // we should ensure the current match doesn't contain a <time> tag within itself.
-                                // This is a simple check, more robust would be a DOM-based approach.
-                                // However, our `nonOverlappingMatches` logic should largely handle this.
-                                if (match[0].includes('<time') && match[0].includes('</time>')) {
-                                    continue; // Skip if it matched an already-wrapped time tag
+                        // Process nodes in reverse to avoid issues with DOM manipulation affecting subsequent nodes.
+                        for (let i = textNodes.length - 1; i >= 0; i--) {
+                            const node = textNodes[i];
+                            const text = node.nodeValue;
+                            
+                            let allMatchesInNode = [];
+                            patternsToTest.forEach(pattern => {
+                                let localRegex = new RegExp(pattern.regex.source, 'gi'); // Use 'gi' for global, case-insensitive
+                                let match;
+                                while ((match = localRegex.exec(text)) !== null) {
+                                    const datetimeValue = pattern.handler(match);
+                                    if (datetimeValue) {
+                                        allMatchesInNode.push({
+                                            start: match.index,
+                                            end: match.index + match[0].length,
+                                            original: match[0],
+                                            datetime: datetimeValue,
+                                            priority: pattern.priority
+                                        });
+                                    }
                                 }
-
-                                const datetimeValue = pattern.handler(match);
-                                if (datetimeValue) {
-                                    allMatches.push({
-                                        start: match.index,
-                                        end: match.index + match[0].length,
-                                        original: match[0], // match[0] is the full matched string, including any HTML
-                                        datetime: datetimeValue,
-                                        priority: pattern.priority
-                                    });
-                                }
-                            }
-                        });
-
-                        allMatches.sort((a, b) => {
-                            // Primary sort: by start position (earlier first)
-                            if (a.start !== b.start) {
-                                return a.start - b.start;
-                            }
-                            // Secondary sort: if same start, longest match first (more specific)
-                            if (a.original.length !== b.original.length) {
-                                return b.original.length - a.original.length;
-                            }
-                            // Tertiary sort: if same start and length, higher priority first
-                            return b.priority - a.priority;
-                        });
-
-                        let nonOverlappingMatches = [];
-                        if (allMatches.length > 0) {
-                            nonOverlappingMatches.push(allMatches[0]);
-                            for (let i = 1; i < allMatches.length; i++) {
-                                const currentMatch = allMatches[i];
-                                const lastAddedMatch = nonOverlappingMatches[nonOverlappingMatches.length - 1];
-
-                                // Only add if it doesn't overlap with the last added match.
-                                // The sorting (longest first for same start) should mean we don't need to replace.
-                                if (currentMatch.start >= lastAddedMatch.end) {
-                                    nonOverlappingMatches.push(currentMatch);
-                                }
-                            }
-                        }
-
-                        if (nonOverlappingMatches.length > 0) {
-                            let resultParts = [];
-                            let currentIndex = 0;
-                            nonOverlappingMatches.forEach(match => {
-                                resultParts.push(htmlToProcessForTimeTags.substring(currentIndex, match.start));
-                                resultParts.push(`<time class="nowrap" datetime="${match.datetime}">${match.original}</time>`);
-                                currentIndex = match.end;
                             });
-                            resultParts.push(htmlToProcessForTimeTags.substring(currentIndex));
-                            htmlToProcessForTimeTags = resultParts.join('');
+
+                            if (allMatchesInNode.length === 0) continue;
+
+                            // Sort and filter for non-overlapping matches.
+                            allMatchesInNode.sort((a, b) => {
+                                if (a.start !== b.start) return a.start - b.start;
+                                if (a.original.length !== b.original.length) return b.original.length - a.original.length;
+                                return b.priority - a.priority;
+                            });
+
+                            let nonOverlappingMatches = [];
+                            if (allMatchesInNode.length > 0) {
+                                nonOverlappingMatches.push(allMatchesInNode[0]);
+                                for (let j = 1; j < allMatchesInNode.length; j++) {
+                                    const currentMatch = allMatchesInNode[j];
+                                    const lastAddedMatch = nonOverlappingMatches[nonOverlappingMatches.length - 1];
+                                    if (currentMatch.start >= lastAddedMatch.end) {
+                                        nonOverlappingMatches.push(currentMatch);
+                                    }
+                                }
+                            }
+
+                            if (nonOverlappingMatches.length > 0) {
+                                const parent = node.parentNode;
+                                const fragment = doc.createDocumentFragment();
+                                let lastIndex = 0;
+
+                                nonOverlappingMatches.forEach(match => {
+                                    // Add text before the match
+                                    if (match.start > lastIndex) {
+                                        fragment.appendChild(doc.createTextNode(text.substring(lastIndex, match.start)));
+                                    }
+                                    // Add the <time> element
+                                    const timeEl = doc.createElement('time');
+                                    timeEl.className = 'nowrap';
+                                    timeEl.setAttribute('datetime', match.datetime);
+                                    
+                                    // The matched text might contain HTML (like <sup>), so parse it.
+                                    const tempDiv = doc.createElement('div');
+                                    tempDiv.innerHTML = match.original;
+                                    while(tempDiv.firstChild) {
+                                        timeEl.appendChild(tempDiv.firstChild);
+                                    }
+                                    fragment.appendChild(timeEl);
+
+                                    lastIndex = match.end;
+                                });
+
+                                // Add any remaining text after the last match
+                                if (lastIndex < text.length) {
+                                    fragment.appendChild(doc.createTextNode(text.substring(lastIndex)));
+                                }
+
+                                // Replace the original text node with the new fragment.
+                                if (parent) {
+                                    parent.replaceChild(fragment, node);
+                                }
+                            }
                         }
 
-                        currentContent = htmlToProcessForTimeTags; // Update currentContent after time tag processing
-                        console.log("Time Tags applied. Content length:", currentContent.length);
+                        // Serialize the modified DOM back to a string.
+                        currentContent = body.innerHTML;
+                        console.log("Time Tags applied using DOM walker. Content length:", currentContent.length);
+                        // --- END: MODIFIED TIME TAG LOGIC ---
                     }
 					
 					
