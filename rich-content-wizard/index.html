@@ -1159,7 +1159,7 @@
         let richTextEditorInstanceFromIframe;
 
         // NEW: Simplified NBSP Placeholder
-        const NBSP_PLACEHOLDER = '__NBSP_PLACEHOLDER__'; // A unique string that won't conflict with content
+        const NBSP_PLACEHOLDER = '&#160;'; // A unique string that won't conflict with content
 
          /**
          * Updates the enabled/disabled state of the undo and redo buttons.
@@ -5808,6 +5808,7 @@ function openAllDetailsInEditor(editor) {
                         currentContent = body.innerHTML;
                         console.log("Time Tags applied using DOM walker. Content length:", currentContent.length);
                         // --- END: MODIFIED TIME TAG LOGIC ---
+						
                     }
 					
 					
