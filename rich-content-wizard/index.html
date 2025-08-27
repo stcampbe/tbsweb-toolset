@@ -3379,8 +3379,7 @@
                     console.warn('Monaco editor not yet initialized. Content will be set once ready.');
                 }
 
-                // Run Auto-Encode and Auto-Indent when switching to HTML editor
-                
+                // Auto-Indent when switching to HTML editor
 				autoFormatBtn.click();
 
                 // 3. Switch panel visibility.
@@ -6376,7 +6375,23 @@ document.getElementById('formatSelectedBtn').addEventListener('click', () => {
 
     // Define the options for the beautifier (you can customize these)
     const options = {
-        indent_size: 2, // The number of spaces to indent with
+        indent_size: 4, // The number of spaces to indent with
+        space_in_empty_paren: true // Add a space inside empty parentheses
+    };
+
+    // Use the html_beautify function from the library you are already loading
+    const formattedCode = html_beautify(unformattedCode, options);
+
+    // Set the formatted code back into the editor
+    monacoEditorInstance.setValue(formattedCode);
+});
+document.getElementById('cleanMsoBtn').addEventListener('click', () => {
+    // Get the unformatted code from the editor
+    const unformattedCode = monacoEditorInstance.getValue();
+
+    // Define the options for the beautifier (you can customize these)
+    const options = {
+        indent_size: 4, // The number of spaces to indent with
         space_in_empty_paren: true // Add a space inside empty parentheses
     };
 
