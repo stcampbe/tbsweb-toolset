@@ -4,10 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BeforeYouPost™ - QA/Prototype Wizard</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.0/beautify-html.min.js"></script>
-    <!-- Font Awesome CDN for icons -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.15.4/beautify-html.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs/loader.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         /* Custom styles for the editor */
@@ -136,20 +135,18 @@
 
         /* Monaco Editor custom highlight style for HTML entities */
         .monaco-editor .entity-highlight {
-            color: yellow; /* Changed from background-color to color */
+            color: gold; /* Changed from background-color to color */
             border-radius: 2px;
         }
 
         /* Toggle Switch Styles (copied from index.html) */
         .toggle-switch-container {
             display: flex;
-            align-items: center;
-            padding: 0.25rem 0; /* Reduced vertical padding */
-            gap: 0.5rem; /* Space between toggle and label */
-            justify-content: flex-start; /* Align contents to the start */
-            background-color: #475569; /* Medium slate for background */
-            border-radius: 0.5rem; /* Rounded corners */
-            padding: 0.5rem 0.75rem; /* Padding inside the container */
+  align-items: center;
+  margin-bottom: 0.25rem;
+  padding: 0.25rem 0;
+  gap: 0.5rem;
+  justify-content: flex-start;
         }
 
         .toggle-switch-label {
@@ -522,17 +519,20 @@
         }
 
         /* Sidebar for validation controls */
-        .validation-sidebar {
-            width: 240px; /* Fixed width for the sidebar */
-            background-color: #2d3748;
-            border-radius: 0.75rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-            padding: 1rem;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            flex-shrink: 0; /* Prevent sidebar from shrinking */
-            height: 100%; /* Fill available height in main-content-area */
+        .sidebar-panel {
+            flex-basis: 300px;
+  flex-grow: 0;
+  flex-shrink: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+  background-color: #2d3748;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
         }
     </style>
 </head>
@@ -550,6 +550,23 @@
         
 
         <div class="code-panel">
+            <div class="flex items-center mb-4 flex-wrap">
+                <button id="previewBtn" class="px-4 py-2 text-base bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 font-bold">
+                        <i class="fa-solid fa-eye"></i> View Preview
+                    </button>
+            <!-- Auto-Check Toggle -->
+            <div class="ml-4 p-2 bg-slate-700 rounded-lg flex items-center gap-2">
+                <label class="toggle-switch is-checked" for="toggleAutoCheckOnSwitch">
+                    <input type="checkbox" id="toggleAutoCheckOnSwitch" checked>
+                    <span class="toggle-switch-slider"></span>
+                </label>
+                <span class="toggle-switch-label text-white text-sm">Auto-Validate</span>
+            </div>
+            <!-- Validate Button -->
+            <button id="validateNowBtn" class="ml-4 px-4 py-2 text-base bg-blue-700 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold" disabled>
+               <i class="fa-solid fa-check-double"></i> Validate
+            </button>
+            </div>
             <!-- Removed the h2 "QA Wizard" from here -->
             <div class="flex items-center mb-4 flex-wrap">
                     <div class="inline-flex rounded-md shadow-sm" role="group">
@@ -576,7 +593,7 @@
                     
                 </div>
 
-            <div id="monacoEditorContainer"></div>
+            <div id="monacoEditorContainer" class="flex-grow border border-slate-700 rounded-lg overflow-hidden"></div>
 
             <!-- Validation Results Section - Always visible at the bottom -->
             <div id="validationResultsContainer">
@@ -586,35 +603,58 @@
             </div>
         </div>
         <!-- Right Sidebar for Validation Controls -->
-        <div class="validation-sidebar">
+        <div class="sidebar-panel">
             
-            <button id="previewBtn" class="px-3 py-3 text-base bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 font-bold">
-                        <i class="fa-solid fa-eye"></i> View Preview
-                    </button>
-            <!-- Auto-Check Toggle -->
-            <div class="toggle-switch-container">
-                <label class="toggle-switch is-checked" for="toggleAutoCheckOnSwitch">
-                    <input type="checkbox" id="toggleAutoCheckOnSwitch" checked>
-                    <span class="toggle-switch-slider"></span>
-                </label>
-                <span class="toggle-switch-label text-white text-base"><strong>Auto-Validate</strong></span>
-            </div>
-            <!-- Validate Button -->
-            <button id="validateNowBtn" class="px-3 py-3 text-base bg-blue-700 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold" disabled>
-               <i class="fa-solid fa-check-double"></i> Validate
-            </button>
-            <button id="cleanSpacesBtn" class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">Clean Spaces</button>
-            <button id="cleanUrlsBtn" class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">Clean URLs</button>
-            <button id="timeTagsBtn" class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">Time Tags</button>
-            <button id="fixFnIdsBtn" class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">Fix FN ID's</button>
-            <button id="colophonBtn" class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">Colophon</button>
-            <button id="autoEncodeBtn" class="px-4 py-1 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 font-semibold">
+            <h3 class="text-lg font-semibold text-white mb-4">Quick Formatting</h3>
+            <div class="button-list">
+                    <!-- Clean Spaces Toggle -->
+                    <div class="toggle-switch-container">
+                        <label class="toggle-switch is-checked" for="toggleCleanSpaces">
+                            <input type="checkbox" id="toggleCleanSpaces" checked>
+                            <span class="toggle-switch-slider"></span>
+                        </label>
+                        <span class="toggle-switch-label text-white text-sm">Clean Spaces</span>
+                    </div>
+
+                    <!-- Clean URLs Toggle -->
+                    <div class="toggle-switch-container">
+                        <label class="toggle-switch is-checked" for="toggleCleanUrls">
+                            <input type="checkbox" id="toggleCleanUrls" checked>
+                            <span class="toggle-switch-slider"></span>
+                        </label>
+                        <span class="toggle-switch-label text-white text-sm">Clean URLs</span>
+                    </div>
+                    
+                    <!-- Set Time Tags Toggle -->
+                    <div class="toggle-switch-container">
+                        <label class="toggle-switch is-checked" for="toggleTimeTags">
+                            <input type="checkbox" id="toggleTimeTags" checked>
+                            <span class="toggle-switch-slider"></span>
+                        </label>
+                        <span class="toggle-switch-label text-white text-sm">Set Time Tags</span>
+                    </div>
+
+                    <!-- Fix FN ID's Toggle -->
+                    <div class="toggle-switch-container">
+                        <label class="toggle-switch is-checked" for="toggleFixFnIds">
+                            <input type="checkbox" id="toggleFixFnIds" checked>
+                            <span class="toggle-switch-slider"></span>
+                        </label>
+                        <span class="toggle-switch-label text-white text-sm">Fix FN ID's</span>
+                    </div>
+                </div>
+            
+            <button id="formatSelectedBtn" class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold mb-2 mt-2">
+                    Format
+                </button>
+            <button id="autoEncodeBtn" class="px-4 py-2 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50  font-bold mb-2">
                     Auto-Encode
                 </button>
-                <button id="autoFormatBtn" class="px-4 py-1 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 font-semibold">
+                <button id="autoFormatBtn" class="px-4 py-2 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50  font-bold mb-2">
                     Auto-Indent
                 </button>
-                
+            <h3 class="text-lg font-semibold text-white mb-4 mt-4">Quick Insert</h3>
+            <button id="colophonBtn" class="px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded-md font-bold">Colophon</button>
         </div>
     </div>
 
@@ -716,7 +756,6 @@
     </div>
 
     <!-- Monaco Editor Loader -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.29.1/min/vs/loader.min.js"></script>
     <script>
     let editor;
     let htmlModel;
@@ -750,11 +789,13 @@
     const exportPrototypeBtn = document.getElementById('exportPrototypeBtn');
 
     // New Sidebar Buttons
-    const cleanSpacesBtn = document.getElementById('cleanSpacesBtn');
-    const cleanUrlsBtn = document.getElementById('cleanUrlsBtn');
-    const timeTagsBtn = document.getElementById('timeTagsBtn');
-    const fixFnIdsBtn = document.getElementById('fixFnIdsBtn');
+    const formatSelectedBtn = document.getElementById('formatSelectedBtn');
     const colophonBtn = document.getElementById('colophonBtn');
+    const toggleCleanSpaces = document.getElementById('toggleCleanSpaces');
+    const toggleCleanUrls = document.getElementById('toggleCleanUrls');
+    const toggleTimeTags = document.getElementById('toggleTimeTags');
+    const toggleFixFnIds = document.getElementById('toggleFixFnIds');
+
 
     // All interactive buttons for disabling/enabling
     const allInteractiveButtons = [
@@ -764,10 +805,7 @@
         clearAllBtn,
         previewBtn,
         validateNowBtn,
-        cleanSpacesBtn,
-        cleanUrlsBtn,
-        timeTagsBtn,
-        fixFnIdsBtn,
+        formatSelectedBtn,
         colophonBtn,
         autoEncodeBtn,
         autoFormatBtn,
@@ -824,48 +862,168 @@
     let modalLastSearchTerm = '';
     let modalCurrentBreakpoint = 'full';
 
-
-    // Define placeholders globally for &nbsp; and &#160;
-	const NBSP_PLACEHOLDER = '__NBSP__'; // A unique string that won't conflict with content
-    const NBSP_ENTITY_PLACEHOLDER = '__NBSP_ENTITY_PLACEHOLDER__';
-    const NUMERIC_NBSP_ENTITY_PLACEHOLDER = '__NUMERIC_NBSP_ENTITY_PLACEHOLDER__';
-    const LITERAL_NBSP_CHAR_PLACEHOLDER = '__LITERAL_NBSP_CHAR_PLACEHOLDER__';
-
+    const NBSP_PLACEHOLDER = '&#160;';
 
     // Sets of elements for HTML validation
-    const selfClosingTags = new Set([
-        'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input',
-        'link', 'meta', 'param', 'source', 'track', 'wbr'
-    ]);
-
-    const deprecatedTags = new Set([
-        'acronym', 'applet', 'basefont', 'big', 'center', 'dir', 'font',
-        'frame', 'frameset', 'noframes', 'strike', 'tt', 'u'
-    ]);
-
-    const blockElements = new Set([
-        'address', 'article', 'aside', 'blockquote', 'canvas', 'dd', 'div', 'dl', 'dt',
-        'fieldset', 'figcaption', 'figure', 'footer', 'form', 'h1', 'h2', 'h3', 'h4',
-        'h5', 'h6', 'header', 'hr', 'li', 'main', 'nav', 'noscript', 'ol', 'p',
-        'pre', 'section', 'table', 'tfoot', 'ul', 'video'
-    ]);
-
-    const inlineElements = new Set([
-        'a', 'abbr', 'b', 'bdo', 'br', 'button', 'cite', 'code',
-        'dfn', 'em', 'i', 'img', 'input', 'kbd', 'label', 'map', 'object', 'q',
-        'samp', 'script', 'select', 'small', 'span', 'strong', 'sub', 'sup',
-        'textarea', 'time', 'var'
-    ]);
-
-    const mediaSizingElements = new Set([
-        'img', 'iframe', 'video', 'canvas', 'object', 'embed'
-    ]);
-
+    const selfClosingTags = new Set(['area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr']);
+    const deprecatedTags = new Set(['acronym','applet','basefont','big','center','dir','font','frame','frameset','noframes','strike','tt','u']);
+    const blockElements = new Set(['address','article','aside','blockquote','canvas','dd','div','dl','dt','fieldset','figcaption','figure','footer','form','h1','h2','h3','h4','h5','h6','header','hr','li','main','nav','noscript','ol','p','pre','section','table','tfoot','ul','video']);
+    const inlineElements = new Set(['a','abbr','b','bdo','br','button','cite','code','dfn','em','i','img','input','kbd','label','map','object','q','samp','script','select','small','span','strong','sub','sup','textarea','time','var']);
+    const mediaSizingElements = new Set(['img','iframe','video','canvas','object','embed']);
     const targetValidElements = new Set(['a', 'form']);
+    const ignoredTags = new Set(['doc']);
+    
+    /**
+     * Replaces all forms of non-breaking spaces with a single, unique placeholder.
+     * @param {string} htmlString - The HTML string to process.
+     * @returns {string} The HTML string with NBSP replaced by placeholders.
+     */
+    function applyNBSPPlaceholders(htmlString) {
+        let processedString = htmlString;
+        processedString = processedString.replace(/&nbsp;|&#160;|\u00A0/g, NBSP_PLACEHOLDER);
+        return processedString;
+    }
 
-    const ignoredTags = new Set([
-        'doc'
-    ]);
+    /**
+     * Reverts the unique placeholder back to the numeric HTML entity for non-breaking space.
+     * @param {string} htmlString - The HTML string with NBSP placeholders.
+     * @returns {string} The HTML string with original NBSP entities restored.
+     */
+    function revertNBSPPlaceholders(htmlString) {
+        let processedString = htmlString;
+        processedString = processedString.replace(new RegExp(NBSP_PLACEHOLDER, 'g'), '&#160;');
+        return processedString;
+    }
+    
+    /**
+     * Applies URL cleaning to HTML content.
+     * @param {string} htmlString - The HTML content to clean.
+     * @returns {string} The cleaned HTML content.
+     */
+    function applyUrlCleaning(htmlString) {
+        const parser = new DOMParser();
+        const tempDiv = parser.parseFromString(htmlString, 'text/html').body;
+        const urlMappings = [{'old':'https://canada-preview.adobecqms.net/en/treasury-board-secretariat','new':'/content/canadasite/en/treasury-board-secretariat'},{'old':'https://canada-preview.adobecqms.net/fr/secretariat-conseil-tresor','new':'/content/canadasite/fr/secretariat-conseil-tresor'},{'old':'https://canada-preview.adobecqms.net/en/government','new':'/content/canadasite/en/government'},{'old':'https://canada-preview.adobecqms.net/fr/gouvernement','new':'/content/canadasite/fr/gouvernement'},{'old':'https://www.canada.ca/en/treasury-board-secretariat','new':'/content/canadasite/en/treasury-board-secretariat'},{'old':'https://www.canada.ca/fr/secretariat-conseil-tresor','new':'/content/canadasite/fr/secretaria-conseil-tresor'},{'old':'https://www.canada.ca/en/government','new':'/content/canadasite/en/government'},{'old':'https://www.canada.ca/fr/gouvernement','new':'/content/canadasite/fr/gouvernement'}];
+        const prependPatterns = ['/en/treasury-board-secretariat','en/treasury-board-secretariat','/fr/secretariat-conseil-tresor','fr/secretariat-conseil-tresor','/en/government','en/government','/fr/gouvernement','fr/gouvernement'];
+        const aElements = tempDiv.querySelectorAll('a');
+        aElements.forEach(a=>{let href=a.getAttribute('href');const name=a.getAttribute('name');if(name&&!href){const parent=a.parentNode;if(parent){while(a.firstChild){parent.insertBefore(a.firstChild,a)}parent.removeChild(a)}return}
+        if(href){if(href.startsWith('https://can01.safelinks.protection.outlook.com')){try{const urlObj=new URL(href);const actualUrlParam=urlObj.searchParams.get('url');if(actualUrlParam){href=decodeURIComponent(actualUrlParam);a.setAttribute('href',href)}}catch(e){console.error("Error parsing Outlook Safelink URL:",e)}}
+        let prepended=false;for(const pattern of prependPatterns){if(href.startsWith(pattern)){if(href.startsWith('/')){href='/content/canadasite'+href}else{href='/content/canadasite/'+href}a.setAttribute('href',href);prepended=true;break}}
+        if(prepended){if(a.hasAttribute('target'))a.removeAttribute('target');if(a.hasAttribute('rel'))a.removeAttribute('rel');return}
+        if(href.includes('/content/canadasite')||href.includes('/content/dam')){const contentPath=href.includes('/content/canadasite')?'/content/canadasite':'/content/dam';const contentIndex=href.indexOf(contentPath);if(contentIndex!==0){href=href.substring(contentIndex)}a.setAttribute('href',href)}else{for(const mapping of urlMappings){if(href.startsWith(mapping.old)){href=href.replace(mapping.old,mapping.new);a.setAttribute('href',href);break}}}}
+        if(a.hasAttribute('target'))a.removeAttribute('target');if(a.hasAttribute('rel'))a.removeAttribute('rel')});
+        const imgElements=tempDiv.querySelectorAll('img');imgElements.forEach(img=>{let src=img.getAttribute('src');if(src&&src.includes('/content/dam')){const contentDamIndex=src.indexOf('/content/dam');if(contentDamIndex!==0){src=src.substring(contentDamIndex);img.setAttribute('src',src)}}
+        if(img.hasAttribute('target'))img.removeAttribute('target');if(img.hasAttribute('rel'))img.removeAttribute('rel')});
+        return tempDiv.innerHTML;
+    }
+
+    /**
+     * Applies auto-spacing and cleans multiple <br> tags in HTML content.
+     * @param {string} htmlString - The HTML content to clean.
+     * @returns {string} The cleaned HTML content.
+     */
+    function applyAutoSpacing(htmlString) {
+        const parser = new DOMParser();
+        let doc = parser.parseFromString(htmlString, 'text/html');
+        const body = doc.body;
+        const elementsToUnwrap=Array.from(body.querySelectorAll('div, span'));elementsToUnwrap.forEach(element=>{if(element.attributes.length===0){const parent=element.parentNode;if(parent){while(element.firstChild){parent.insertBefore(element.firstChild,element)}parent.removeChild(element)}}});
+        const spacerunSpans=body.querySelectorAll('span[style*="mso-spacerun: yes"]');spacerunSpans.forEach(span=>{const parent=span.parentNode;if(parent){if(span.textContent.includes(' ')){parent.replaceChild(doc.createTextNode(' '),span)}else{parent.removeChild(span)}}});
+        const walker=doc.createTreeWalker(body,NodeFilter.SHOW_TEXT,{acceptNode:function(node){const txt=node.nodeValue;if(txt.trim()===''&&(txt.length>1||/[\r\n\t]/.test(txt))){return NodeFilter.FILTER_ACCEPT}return NodeFilter.FILTER_REJECT}},false);
+        const nodesToRemove=[];let currentNode;while(currentNode=walker.nextNode()){nodesToRemove.push(currentNode)}
+        nodesToRemove.forEach(node=>{if(node.parentNode){node.parentNode.removeChild(node)}});
+        let cleanedHtml=body.innerHTML;cleanedHtml=cleanedHtml.replace(/(?:&#160;|\u00A0|&nbsp;){2,}/gi,'&#160;');cleanedHtml=cleanedHtml.replace(/\s+(&#160;|\u00A0|&nbsp;)/gi,'&#160;');cleanedHtml=cleanedHtml.replace(/(&#160;|\u00A0|&nbsp;)\s+/gi,'&#160;');cleanedHtml=cleanedHtml.replace(/(<br\s*\/?>\s*){2,}/gi,'</p><p>');cleanedHtml=cleanedHtml.replace(/<br\s+clear=["']?(all|ALL)["']?\s*\/?>/gi,'');
+        doc.body.innerHTML=cleanedHtml;const finalBody=doc.body;
+        const elementsToCheckForEmptiness=Array.from(finalBody.querySelectorAll('p, li, div, span, strong, em, u, b, i, section'));for(let i=elementsToCheckForEmptiness.length-1;i>=0;i--){const element=elementsToCheckForEmptiness[i];const tagName=element.tagName.toLowerCase();const trimmedContent=element.innerHTML.trim();const containsOnlyNBSP=(trimmedContent==='&#160;'||trimmedContent==='&nbsp;'||trimmedContent==='\u00A0');const containsOnlySpace=(trimmedContent===' ');
+        if(tagName==='p'){const isInsideTable=element.closest('table');if(!isInsideTable&&(trimmedContent===''||containsOnlyNBSP)){if(element.parentNode)element.parentNode.removeChild(element)}else if(!isInsideTable&&containsOnlySpace){if(element.parentNode)element.parentNode.replaceChild(doc.createTextNode(' '),element)}}else{if(['div','span','section'].includes(tagName)&&element.attributes.length>0){continue}
+        if(element.textContent===' '&&['strong','em','u','b','i'].includes(tagName)){element.parentNode.replaceChild(doc.createTextNode(' '),element);continue}
+        if(trimmedContent===''||containsOnlyNBSP){if(element.parentNode)element.parentNode.removeChild(element)}else if(containsOnlySpace){if(element.parentNode)element.parentNode.replaceChild(doc.createTextNode(' '),element)}}}
+        const elementsToTrim=finalBody.querySelectorAll('p, h1, h2, h3, h4, h5, h6, li');elementsToTrim.forEach(element=>{let currentHtml=element.innerHTML;currentHtml=currentHtml.replace(/^(?:&nbsp;|\s|&#160;|\u00A0)+/,'');currentHtml=currentHtml.replace(/(?:&nbsp;|\s|&#160;|\u00A0)+$/,'');element.innerHTML=currentHtml});
+        return finalBody.innerHTML;
+    }
+
+    /**
+     * Applies time tagging to dates found in the HTML content.
+     * @param {string} htmlContent - The HTML content to process.
+     * @returns {string} The processed HTML content with <time> tags.
+     */
+    function applyTimeTagging(htmlContent) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlContent, 'text/html');
+        const body = doc.body;
+        body.querySelectorAll('time').forEach(timeEl => {
+            const parent = timeEl.parentNode;
+            if (parent) {
+                while (timeEl.firstChild) {
+                    parent.insertBefore(timeEl.firstChild, timeEl);
+                }
+                parent.removeChild(timeEl);
+            }
+        });
+        const walker = doc.createTreeWalker(body, NodeFilter.SHOW_TEXT, {
+            acceptNode: function(node) {
+                const parentTag = node.parentNode.tagName.toLowerCase();
+                if (['script', 'style', 'time'].includes(parentTag)) {
+                    return NodeFilter.FILTER_REJECT;
+                }
+                return NodeFilter.FILTER_ACCEPT;
+            }
+        }, false);
+        const textNodes = [];
+        let currentNode;
+        while (currentNode = walker.nextNode()) {
+            textNodes.push(currentNode);
+        }
+        const monthMap = {'january':'01','jan':'01','janvier':'01','february':'02','feb':'02','février':'02','march':'03','mar':'03','mars':'03','april':'04','apr':'04','avril':'04','may':'05','mai':'05','june':'06','jun':'06','juin':'06','july':'07','jul':'07','juillet':'07','august':'08','aug':'08','août':'08','september':'09','sep':'09','septembre':'09','october':'10','oct':'10','octobre':'10','november':'11','nov':'11','novembre':'11','december':'12','dec':'12','décembre':'12'};
+        function getMonthNumber(monthName){return monthMap[monthName.toLowerCase()]||null}
+        const sortedMonthKeys=Object.keys(monthMap).sort((a,b)=>b.length-a.length);
+        const monthPattern=sortedMonthKeys.map(m=>m.replace(/[-\/\\^$*+?.()|[\]{}]/g,'\\$&')).join('|');
+        const spaceOrNBSPChar=`(?:\\s|${NBSP_PLACEHOLDER})+`;
+        const daySuffixPattern='(?:<sup>er<\\/sup>|<sup>st<\\/sup>|<sup>nd<\\/sup>|<sup>rd<\\/sup>|<sup>th<\\/sup>|er|st|nd|rd|th)?';
+        const regexIsoDateFull=/(?<!\d)(\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01]))(?!\d)/g;
+        const regexMonthDayYear=new RegExp(`(?<!\\d)\\b(${monthPattern})\\b${spaceOrNBSPChar}(\\d{1,2}${daySuffixPattern})\\s*,?${spaceOrNBSPChar}(\\d{4})(?!\\d)`,'gi');
+        const regexDayMonthYear=new RegExp(`(?<!\\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2}${daySuffixPattern})${spaceOrNBSPChar}\\b(${monthPattern})\\b\\s*,?${spaceOrNBSPChar}(\\d{4})(?!\\d)`,'gi');
+        const regexMonthYear=new RegExp(`(?<!\\d)\\b(${monthPattern})\\b${spaceOrNBSPChar}(\\d{4})(?!\\d|(?:${spaceOrNBSPChar}\\d{1,2}))`,'gi');
+        const regexMonthDayNoYear=new RegExp(`(?<!\\d)\\b(${monthPattern})\\b${spaceOrNBSPChar}(\\d{1,2}${daySuffixPattern})(?!\\d|(?:${spaceOrNBSPChar}\\d{4}))(?!-)`,'gi');
+        const regexDayMonthNoYear=new RegExp(`(?<!\\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2}${daySuffixPattern})${spaceOrNBSPChar}\\b(${monthPattern})\\b(?!\d|(?:${spaceOrNBSPChar}\\d{4}))(?!-)`,'gi');
+        const patternsToTest=[{name:'IsoDateFull',regex:regexIsoDateFull,handler:(match)=>match[1],priority:3},{name:'MonthDayYear',regex:regexMonthDayYear,handler:(match)=>{const[,month,dayPart,year]=match;const monthNum=getMonthNumber(month);let cleanDay=dayPart.replace(/(?:<sup>er<\/sup>|<sup>st<\/sup>|<sup>nd<\/sup>|<sup>rd<\/sup>|<sup>th<\/sup>|er|st|nd|rd|th)/gi,'').trim();const parsedDay=parseInt(cleanDay);if(!monthNum||isNaN(parsedDay)||parsedDay<1||parsedDay>31)return null;return`${year}-${monthNum}-${String(parsedDay).padStart(2,'0')}`},priority:2},{name:'DayMonthYear',regex:regexDayMonthYear,handler:(match)=>{const[,dayPart,month,year]=match;const monthNum=getMonthNumber(month);let cleanDay=dayPart.replace(/(?:<sup>er<\/sup>|<sup>st<\/sup>|<sup>nd<\/sup>|<sup>rd<\/sup>|<sup>th<\/sup>|er|st|nd|rd|th)/gi,'').trim();const parsedDay=parseInt(cleanDay);if(!monthNum||isNaN(parsedDay)||parsedDay<1||parsedDay>31)return null;return`${year}-${monthNum}-${String(parsedDay).padStart(2,'0')}`},priority:2},{name:'MonthYear',regex:regexMonthYear,handler:(match)=>{const[,month,year]=match;const monthNum=getMonthNumber(month);if(!monthNum)return null;return`${year}-${monthNum}`},priority:2},{name:'MonthDayNoYear',regex:regexMonthDayNoYear,handler:(match)=>{const[,month,dayPart]=match;const monthNum=getMonthNumber(month);let cleanDay=dayPart.replace(/(?:<sup>er<\/sup>|<sup>st<\/sup>|<sup>nd<\/sup>|<sup>rd<\/sup>|<sup>th<\/sup>|er|st|nd|rd|th)/gi,'').trim();const parsedDay=parseInt(cleanDay);if(!monthNum||isNaN(parsedDay)||parsedDay<1||parsedDay>31)return null;return`${monthNum}-${String(parsedDay).padStart(2,'0')}`},priority:1},{name:'DayMonthNoYear',regex:regexDayMonthNoYear,handler:(match)=>{const[,dayPart,month]=match;const monthNum=getMonthNumber(month);let cleanDay=dayPart.replace(/(?:<sup>er<\/sup>|<sup>st<\/sup>|<sup>nd<\/sup>|<sup>rd<\/sup>|<sup>th<\/sup>|er|st|nd|rd|th)/gi,'').trim();const parsedDay=parseInt(cleanDay);if(!monthNum||isNaN(parsedDay)||parsedDay<1||parsedDay>31)return null;return`${monthNum}-${String(parsedDay).padStart(2,'0')}`},priority:1}];
+        for(let i=textNodes.length-1;i>=0;i--){const node=textNodes[i];const text=node.nodeValue;let allMatchesInNode=[];patternsToTest.forEach(pattern=>{let localRegex=new RegExp(pattern.regex.source,'gi');let match;while((match=localRegex.exec(text))!==null){const datetimeValue=pattern.handler(match);if(datetimeValue){allMatchesInNode.push({start:match.index,end:match.index+match[0].length,original:match[0],datetime:datetimeValue,priority:pattern.priority})}}});if(allMatchesInNode.length===0)continue;allMatchesInNode.sort((a,b)=>{if(a.start!==b.start)return a.start-b.start;if(a.original.length!==b.original.length)return b.original.length-a.original.length;return b.priority-a.priority});let nonOverlappingMatches=[];if(allMatchesInNode.length>0){nonOverlappingMatches.push(allMatchesInNode[0]);for(let j=1;j<allMatchesInNode.length;j++){const currentMatch=allMatchesInNode[j];const lastAddedMatch=nonOverlappingMatches[nonOverlappingMatches.length-1];if(currentMatch.start>=lastAddedMatch.end){nonOverlappingMatches.push(currentMatch)}}}
+        if(nonOverlappingMatches.length>0){const parent=node.parentNode;const fragment=doc.createDocumentFragment();let lastIndex=0;nonOverlappingMatches.forEach(match=>{if(match.start>lastIndex){fragment.appendChild(doc.createTextNode(text.substring(lastIndex,match.start)))}
+        const timeEl=doc.createElement('time');timeEl.className='nowrap';timeEl.setAttribute('datetime',match.datetime);const tempDiv=doc.createElement('div');tempDiv.innerHTML=match.original;while(tempDiv.firstChild){timeEl.appendChild(tempDiv.firstChild)}
+        fragment.appendChild(timeEl);lastIndex=match.end});if(lastIndex<text.length){fragment.appendChild(doc.createTextNode(text.substring(lastIndex)))}
+        if(parent){parent.replaceChild(fragment,node)}}}
+        return body.innerHTML;
+    }
+
+    /**
+     * Fixes footnote IDs and their corresponding anchor links.
+     * @param {string} htmlContent - The HTML content to process.
+     * @returns {string} The processed HTML with fixed footnote IDs.
+     */
+    function applyFixFnIds(htmlContent) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlContent, 'text/html');
+        const baseIdToSupElements = new Map();
+        doc.querySelectorAll('sup[id$="-rf"]').forEach(sup => {
+            const baseId = sup.id.replace(/-rf$/, '');
+            if (!baseIdToSupElements.has(baseId)) baseIdToSupElements.set(baseId, []);
+            baseIdToSupElements.get(baseId).push(sup);
+        });
+        const idMapping = {};
+        for (const [baseId, supList] of baseIdToSupElements.entries()) {
+            let canonicalTargetId = supList[0].id;
+            if (supList.length > 1) {
+                canonicalTargetId = `${baseId}-rf-0`;
+                supList.forEach((sup, index) => sup.id = `${baseId}-rf-${index}`);
+            }
+            supList.forEach(sup => idMapping[sup.id] = canonicalTargetId);
+            if (supList.length > 1) idMapping[`${baseId}-rf`] = canonicalTargetId;
+        }
+        doc.querySelectorAll('a[href^="#"]').forEach(link => {
+            const anchor = link.getAttribute('href').substring(1);
+            if (idMapping.hasOwnProperty(anchor)) link.setAttribute('href', `#${idMapping[anchor]}`);
+        });
+        return doc.body.innerHTML;
+    }
 
     function isBlockElement(tagName) {
         return blockElements.has(tagName);
@@ -1036,132 +1194,6 @@
             }
         }
         return xmlDeclaration + processedHtml;
-    }
-
-    /**
-     * Helper function to apply placeholders for &nbsp; and &#160; and literal non-breaking space character.
-     * @param {string} htmlString - The HTML string to process.
-     * @returns {string} The HTML string with placeholders.
-     */
-    function applyNBSPPlaceholders(htmlString) {
-        htmlString = htmlString.replace(/&#160;/g, NUMERIC_NBSP_ENTITY_PLACEHOLDER);
-        htmlString = htmlString.replace(/&nbsp;/g, NBSP_ENTITY_PLACEHOLDER);
-        htmlString = htmlString.replace(/\u00A0/g, LITERAL_NBSP_CHAR_PLACEHOLDER);
-        return htmlString;
-    }
-
-    /**
-     * Helper function to revert placeholders back to their original &nbsp; or &#160; forms.
-     * @param {string} htmlString - The HTML string with placeholders.
-     * @returns {string} The HTML string with original entities restored.
-     */
-    function revertNBSPPlaceholders(htmlString) {
-        htmlString = htmlString.replace(new RegExp(NBSP_ENTITY_PLACEHOLDER, 'g'), '&nbsp;');
-        htmlString = htmlString.replace(new RegExp(NUMERIC_NBSP_ENTITY_PLACEHOLDER, 'g'), '&#160;');
-        htmlString = htmlString.replace(new RegExp(LITERAL_NBSP_CHAR_PLACEHOLDER, 'g'), '\u00A0');
-        return htmlString;
-    }
-
-    /**
-     * Applies URL cleaning to HTML content.
-     * @param {string} htmlString - The HTML content to clean.
-     * @returns {string} The cleaned HTML content.
-     */
-    function applyUrlCleaning(htmlString) {
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = htmlString;
-
-        const urlMappings = [
-            { old: 'https://canada-preview.adobecqms.net/en/treasury-board-secretariat', new: '/content/canadasite/en/treasury-board-secretariat' },
-            { old: 'https://canada-preview.adobecqms.net/fr/secretariat-conseil-tresor', new: '/content/canadasite/fr/secretariat-conseil-tresor' },
-            { old: 'https://canada-preview.adobecqms.net/en/government', new: '/content/canadasite/en/government' },
-            { old: 'https://canada-preview.adobecqms.net/fr/gouvernement', new: '/content/canadasite/fr/gouvernement' },
-            { old: 'https://www.canada.ca/en/treasury-board-secretariat', new: '/content/canadasite/en/treasury-board-secretariat' },
-            { old: 'https://www.canada.ca/fr/secretariat-conseil-tresor', new: '/content/canadasite/fr/secretaria-conseil-tresor' },
-            { old: 'https://www.canada.ca/en/government', new: '/content/canadasite/en/government' },
-            { old: 'https://www.canada.ca/fr/gouvernement', new: '/content/canadasite/fr/gouvernement' }
-        ];
-
-        const prependPatterns = [
-            '/en/treasury-board-secretariat', 'en/treasury-board-secretariat',
-            '/fr/secretariat-conseil-tresor', 'fr/secretariat-conseil-tresor',
-            '/en/government', 'en/government',
-            '/fr/gouvernement', 'fr/gouvernement'
-        ];
-
-        const aElements = tempDiv.querySelectorAll('a');
-        aElements.forEach(a => {
-            let href = a.getAttribute('href');
-            const name = a.getAttribute('name');
-
-            if (name && !href) {
-                const parent = a.parentNode;
-                if (parent) {
-                    while (a.firstChild) {
-                        parent.insertBefore(a.firstChild, a);
-                    }
-                    parent.removeChild(a);
-                }
-                return;
-            }
-
-            if (href) {
-                if (href.startsWith('https://can01.safelinks.protection.outlook.com')) {
-                    try {
-                        const urlObj = new URL(href);
-                        const actualUrlParam = urlObj.searchParams.get('url');
-                        if (actualUrlParam) {
-                            href = decodeURIComponent(actualUrlParam);
-                            a.setAttribute('href', href);
-                        }
-                    } catch (e) {
-                        console.error("Error parsing Outlook Safelink URL:", e);
-                    }
-                }
-
-                let prepended = false;
-                for (const pattern of prependPatterns) {
-                    if (href.startsWith(pattern)) {
-                        if (href.startsWith('/')) {
-                            href = '/content/canadasite' + href;
-                        } else {
-                            href = '/content/canadasite/' + href;
-                        }
-                        a.setAttribute('href', href);
-                        prepended = true;
-                        break;
-                    }
-                }
-
-                if (prepended) {
-                    if (a.hasAttribute('target')) a.removeAttribute('target');
-                    if (a.hasAttribute('rel')) a.removeAttribute('rel');
-                    return;
-                }
-
-                if (href.includes('/content/canadasite') || href.includes('/content/dam')) {
-                    const contentPath = href.includes('/content/canadasite') ? '/content/canadasite' : '/content/dam';
-                    const contentIndex = href.indexOf(contentPath);
-                    if (contentIndex !== 0) {
-                        href = href.substring(contentIndex);
-                    }
-                    a.setAttribute('href', href);
-                } else {
-                    for (const mapping of urlMappings) {
-                        if (href.startsWith(mapping.old)) {
-                            href = href.replace(mapping.old, mapping.new);
-                            a.setAttribute('href', href);
-                            break;
-                        }
-                    }
-                }
-            }
-
-            if (a.hasAttribute('target')) a.removeAttribute('target');
-            if (a.hasAttribute('rel')) a.removeAttribute('rel');
-        });
-
-        return tempDiv.innerHTML;
     }
 
     /**
@@ -1519,7 +1551,6 @@
      */
     function updatePreviewButtonState(isXmlLike) {
         previewBtn.disabled = isXmlLike;
-        cleanUrlsBtn.disabled = isXmlLike;
         colophonBtn.disabled = isXmlLike;
     }
 
@@ -1931,16 +1962,23 @@
 
     // Initialize Monaco Editor and set up event listeners on window load
     window.onload = function() {
-        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.29.1/min/vs' } });
+        require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs' } });
         require(['vs/editor/editor.main'], function() {
             const monacoEditorContainer = document.getElementById('monacoEditorContainer');
             htmlModel = monaco.editor.createModel('', 'html');
             editor = monaco.editor.create(monacoEditorContainer, {
                 model: htmlModel,
-                theme: 'vs-dark',
-                automaticLayout: true,
-                minimap: { enabled: true },
-                wordWrap: 'on'
+                language: 'html',
+                    theme: 'hc-black', // Or 'hc-black'
+                    automaticLayout: true, // Important for responsiveness
+                    minimap: { enabled: true },
+                    fontSize: 14,
+                    tabSize: 4,
+                    insertSpaces: true,
+                    // Additional options for better UX
+                    scrollBeyondLastLine: false,
+                    wordWrap: 'on',
+                    wrappingIndent: 'same'
             });
 
             validationResultsDiv.addEventListener('click', handleResultClick);
@@ -1965,15 +2003,16 @@
 
             // --- Event Listeners ---
 
-            toggleAutoCheckOnSwitch.addEventListener('change', async (event) => {
+            toggleAutoCheckOnSwitch.addEventListener('change', (event) => {
                 isAutoCheckEnabled = event.target.checked;
                 const parentLabel = event.target.closest('.toggle-switch');
                 parentLabel.classList.toggle('is-checked', isAutoCheckEnabled);
+                validateNowBtn.disabled = isAutoCheckEnabled;
                 if (isAutoCheckEnabled) {
-                    const isXmlLike = await validateHtmlContent(editor.getValue());
-                    updatePreviewButtonState(isXmlLike);
+                    validateHtmlContent(editor.getValue()).then(isXmlLike => {
+                        updatePreviewButtonState(isXmlLike);
+                    });
                 }
-                updateValidateButtonState();
             });
 
             validateNowBtn.addEventListener('click', async () => {
@@ -1999,7 +2038,6 @@
                 }
             });
 
-            // Undo/Redo button listeners
             undoBtn.addEventListener('click', () => {
                 editor.trigger('undo', 'undo', null);
                 editor.focus();
@@ -2035,149 +2073,78 @@
 
             autoEncodeBtn.addEventListener('click', () => handleButtonAction(autoEncodeBtn, () => applyEditorChange(convertAllEntitiesToNumeric), 'Encoded!'));
             autoFormatBtn.addEventListener('click', () => handleButtonAction(autoFormatBtn, () => applyEditorChange(v => html_beautify(v, { indent_size: 4, indent_char: ' ' })), 'Formatted!'));
-            cleanSpacesBtn.addEventListener('click', () => handleButtonAction(cleanSpacesBtn, () => applyEditorChange(originalCode => {
-                let processedCode = applyNBSPPlaceholders(originalCode);
-                processedCode = processedCode.replace(/\s+(__NBSP_ENTITY_PLACEHOLDER__|__NUMERIC_NBSP_ENTITY_PLACEHOLDER__|__LITERAL_NBSP_CHAR_PLACEHOLDER__)/g, '$1');
-                processedCode = processedCode.replace(/(__NBSP_ENTITY_PLACEHOLDER__|__NUMERIC_NBSP_ENTITY_PLACEHOLDER__|__LITERAL_NBSP_CHAR_PLACEHOLDER__)\s+/g, '$1');
-                const lines = processedCode.split('\n');
-                const processedLines = lines.map(line => line.trim().replace(/ {2,}/g, ' ')).filter(line => line.length > 0);
-                let finalCleanedContent = processedLines.join('\n');
-                return revertNBSPPlaceholders(finalCleanedContent);
-            }), 'Cleaned!'));
             
-            cleanUrlsBtn.addEventListener('click', () => handleButtonAction(cleanUrlsBtn, () => applyEditorChange(applyUrlCleaning), 'Cleaned!'));
-            
-            timeTagsBtn.addEventListener('click', () => handleButtonAction(timeTagsBtn, () => applyEditorChange(htmlContent => {
-                // First, run the auto-encode logic to standardize character entities
-                let encodedContent = convertAllEntitiesToNumeric(htmlContent);
-                
-                // Now, proceed with the time tagging logic on the encoded content
-                let htmlToProcessForTimeTags = applyNBSPPlaceholders(encodedContent);
-                const parser = new DOMParser();
-                const tempDoc = parser.parseFromString(htmlToProcessForTimeTags, 'text/html');
+            const quickFormattingToggles = [toggleCleanSpaces, toggleCleanUrls, toggleTimeTags, toggleFixFnIds];
 
-                // Remove existing <time> tags to prevent re-processing.
-                tempDoc.querySelectorAll('time').forEach(timeEl => {
-                    if (timeEl.parentNode) {
-                        // Replace the <time> tag with its own content
-                        while (timeEl.firstChild) {
-                            timeEl.parentNode.insertBefore(timeEl.firstChild, timeEl);
-                        }
-                        timeEl.parentNode.removeChild(timeEl);
-                    }
+            function updateFormatButtonState() {
+                const anySelected = quickFormattingToggles.some(toggle => toggle.checked);
+                formatSelectedBtn.disabled = !anySelected;
+            }
+
+            quickFormattingToggles.forEach(toggle => {
+                toggle.addEventListener('change', (event) => {
+                    const parentLabel = event.target.closest('.toggle-switch');
+                    parentLabel.classList.toggle('is-checked', event.target.checked);
+                    updateFormatButtonState();
                 });
+            });
 
-                const monthMap = {
-                    'january': '01', 'jan': '01', 'janvier': '01',
-                    'february': '02', 'feb': '02', 'février': '02',
-                    'march': '03', 'mar': '03', 'mars': '03',
-                    'april': '04', 'apr': '04', 'avril': '04',
-                    'may': '05', 'mai': '05',
-                    'june': '06', 'jun': '06', 'juin': '06',
-                    'july': '07', 'jul': '07', 'juillet': '07',
-                    'august': '08', 'aug': '08', 'août': '08',
-                    'september': '09', 'sep': '09', 'septembre': '09',
-                    'october': '10', 'oct': '10', 'octobre': '10',
-                    'november': '11', 'nov': '11', 'novembre': '11',
-                    'december': '12', 'dec': '12', 'décembre': '12'
-                };
-                
-                function getMonthNumber(monthName) {
-                    return monthMap[monthName.toLowerCase()] || null;
-                }
-
-                const sortedMonthKeys = Object.keys(monthMap).sort((a, b) => b.length - a.length);
-                const monthPattern = sortedMonthKeys.map(m => m.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|');
-                // CORRECTED: This now correctly looks for standard spaces OR any of our non-breaking space placeholders
-                const spaceOrNBSPChar = `(?:\\s|${LITERAL_NBSP_CHAR_PLACEHOLDER}|${NBSP_ENTITY_PLACEHOLDER}|${NUMERIC_NBSP_ENTITY_PLACEHOLDER})+`;
-                const daySuffixPattern = '(?:<sup>er<\\/sup>|<sup>st<\\/sup>|<sup>nd<\\/sup>|<sup>rd<\\/sup>|<sup>th<\\/sup>|er|st|nd|rd|th)?';
-                
-                // Regular expressions for various date formats
-                const regexIsoDateFull = new RegExp(`(?<![a-zA-Z0-9="'])(?:>|\\s|^)(\\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\\d|3[01]))(?![a-zA-Z0-9-"'])`, 'g');
-                const regexMonthDayYear = new RegExp(`(?<![a-zA-Z0-9="'])(?:>|\\s|^)(${monthPattern})${spaceOrNBSPChar}(\\d{1,2}${daySuffixPattern})\\s*,?${spaceOrNBSPChar}(\\d{4})(?![a-zA-Z0-9-"'])`, 'gi');
-                const regexDayMonthYear = new RegExp(`(?<![a-zA-Z0-9="'])(?:>|\\s|^)(?:le|the)?${spaceOrNBSPChar}?(\\d{1,2}${daySuffixPattern})${spaceOrNBSPChar}(${monthPattern})\\s*,?${spaceOrNBSPChar}(\\d{4})(?![a-zA-Z0-9-"'])`, 'gi');
-
-                // Create a TreeWalker to iterate over only text nodes
-                const walker = tempDoc.createTreeWalker(tempDoc.body, NodeFilter.SHOW_TEXT, null, false);
-                let node;
-                const textNodesToReplace = [];
-
-                while (node = walker.nextNode()) {
-                    let text = node.nodeValue;
+            updateFormatButtonState();
+            
+            formatSelectedBtn.addEventListener('click', async () => {
+                if (editor) {
+                    const model = editor.getModel();
+                    const fullRange = model.getFullModelRange();
+                    let currentContent = editor.getValue();
                     
-                    // This check prevents tagging dates inside script, style, or existing time tags
-                    if (node.parentElement.closest('script, style, time')) {
-                        continue;
+                    editor.pushUndoStop();
+
+                    currentContent = applyNBSPPlaceholders(currentContent);
+
+                    if (toggleCleanSpaces.checked) {
+                        currentContent = applyAutoSpacing(currentContent);
                     }
-
-                    let hasMatch = false;
-
-                    // Apply regex replacements for dates
-                    text = text.replace(regexIsoDateFull, (match, date) => {
-                        hasMatch = true;
-                        return `<time class="nowrap" datetime="${date}">${date}</time>`;
-                    });
-                    text = text.replace(regexMonthDayYear, (match, month, dayPart, year) => {
-                        const monthNum = getMonthNumber(month);
-                        const cleanDay = dayPart.replace(/(?:<sup>.*?<\/sup>|er|st|nd|rd|th)/gi, '').trim();
-                        if (monthNum) {
-                            hasMatch = true;
-                            const fullDate = `${year}-${monthNum}-${String(cleanDay).padStart(2, '0')}`;
-                            return `<time class="nowrap" datetime="${fullDate}">${match}</time>`;
-                        }
-                        return match;
-                    });
-                    text = text.replace(regexDayMonthYear, (match, dayPart, month, year) => {
-                        const monthNum = getMonthNumber(month);
-                        const cleanDay = dayPart.replace(/(?:<sup>.*?<\/sup>|er|st|nd|rd|th)/gi, '').trim();
-                        if (monthNum) {
-                            hasMatch = true;
-                            const fullDate = `${year}-${monthNum}-${String(cleanDay).padStart(2, '0')}`;
-                            return `<time class="nowrap" datetime="${fullDate}">${match}</time>`;
-                        }
-                        return match;
-                    });
-
-                    // If a match was found, schedule this text node for replacement
-                    if (hasMatch) {
-                        textNodesToReplace.push({ node: node, newContent: text });
+                    if (toggleCleanUrls.checked) {
+                        currentContent = applyUrlCleaning(currentContent);
                     }
+                    if (toggleTimeTags.checked) {
+                        currentContent = applyTimeTagging(currentContent);
+                    }
+                    if (toggleFixFnIds.checked) {
+                        currentContent = applyFixFnIds(currentContent);
+                    }
+                    
+                    currentContent = revertNBSPPlaceholders(currentContent);
+                    currentContent = convertAllEntitiesToNumeric(currentContent);
+                    currentContent = html_beautify(currentContent, { 
+    indent_size: 4, 
+    indent_char: ' ', 
+    extra_liners: [], 
+    max_preserve_newlines: 0 
+});
+
+                    model.pushEditOperations([], [{ range: fullRange, text: currentContent }], () => null);
+                    editor.pushUndoStop();
+
+                    highlightHtmlEntities();
+
+                    const originalText = formatSelectedBtn.textContent;
+                    formatSelectedBtn.textContent = 'Formatted!';
+                    formatSelectedBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                    formatSelectedBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                    formatSelectedBtn.disabled = true;
+                    formatSelectedBtn.setAttribute('data-temp-active', 'true');
+                    updateAllInteractiveButtonStates();
+                    setTimeout(() => {
+                        formatSelectedBtn.textContent = originalText;
+                        formatSelectedBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                        formatSelectedBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                        formatSelectedBtn.removeAttribute('data-temp-active');
+                        updateAllInteractiveButtonStates();
+                        updateFormatButtonState();
+                    }, 1500);
                 }
-
-                // Perform replacements after iterating to avoid modifying the DOM tree during traversal
-                textNodesToReplace.forEach(item => {
-                    const replacementFragment = document.createRange().createContextualFragment(item.newContent);
-                    item.node.parentNode.replaceChild(replacementFragment, item.node);
-                });
-
-                return revertNBSPPlaceholders(tempDoc.body.innerHTML);
-            }), 'Tagged!'));
-
-            fixFnIdsBtn.addEventListener('click', () => handleButtonAction(fixFnIdsBtn, () => applyEditorChange(htmlContent => {
-                 let processedHtml = applyNBSPPlaceholders(htmlContent);
-                const doc = new DOMParser().parseFromString(processedHtml, 'text/html');
-                const baseIdToSupElements = new Map();
-                doc.querySelectorAll('sup[id$="-rf"]').forEach(sup => {
-                    const baseId = sup.id.replace(/-rf$/, '');
-                    if (!baseIdToSupElements.has(baseId)) baseIdToSupElements.set(baseId, []);
-                    baseIdToSupElements.get(baseId).push(sup);
-                });
-                const idMapping = {};
-                for (const [baseId, supList] of baseIdToSupElements.entries()) {
-                    let canonicalTargetId = supList[0].id;
-                    if (supList.length > 1) {
-                        canonicalTargetId = `${baseId}-rf-0`;
-                        supList.forEach((sup, index) => sup.id = `${baseId}-rf-${index}`);
-                    }
-                    supList.forEach(sup => idMapping[sup.id] = canonicalTargetId);
-                    if (supList.length > 1) idMapping[`${baseId}-rf`] = canonicalTargetId;
-                }
-                doc.querySelectorAll('a[href^="#"]').forEach(link => {
-                    const anchor = link.getAttribute('href').substring(1);
-                    if (idMapping.hasOwnProperty(anchor)) link.setAttribute('href', `#${idMapping[anchor]}`);
-                });
-                return revertNBSPPlaceholders(doc.body.innerHTML);
-            }), 'Fixed!'));
+            });
 
             colophonBtn.addEventListener('click', () => {
                 const originalHtml = colophonBtn.innerHTML;
@@ -2221,7 +2188,7 @@
                 `;
                 showModal('Insert Colophon', colophonHtmlContent, colophonBtn, originalHtml);
             });
-
+            
             copyCodeBtn.addEventListener('click', () => {
                 const originalHtml = copyCodeBtn.innerHTML;
                 const iconHtml = copyCodeBtn.querySelector('i')?.outerHTML || '';
@@ -2246,14 +2213,14 @@
                 }, 1500);
             });
 
-            clearAllBtn.addEventListener('click', () => handleButtonAction(clearAllBtn, () => editor.setValue(''), 'Cleared!'));
+            clearAllBtn.addEventListener('click', () => handleButtonAction(clearAllBtn, () => applyEditorChange(() => ''), 'Cleared!'));
             
             importHtmlBtn.addEventListener('click', () => htmlFileInput.click());
             htmlFileInput.addEventListener('change', (event) => {
                 const file = event.target.files[0];
                 if (file) {
                     const reader = new FileReader();
-                    reader.onload = (e) => handleButtonAction(importHtmlBtn, () => editor.setValue(e.target.result), 'Imported!');
+                    reader.onload = (e) => handleButtonAction(importHtmlBtn, () => applyEditorChange(() => e.target.result), 'Imported!');
                     reader.readAsText(file);
                 }
                 htmlFileInput.value = null;
