@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WordToCode™ - Rich Content Wizard</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.0/beautify-html.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.49.0/min/vs/loader.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.15.4/beautify-html.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs/loader.js"></script>
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         /* Custom styles for the editor */
@@ -4139,7 +4139,7 @@ function showRegexGuideModal(triggeringButton, originalButtonText) {
             updateGoToHtmlButtonColor(); // Call to set initial color for "Go to HTML" button
 
             // Initialize Monaco Editor
-            require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.49.0/min/vs' } });
+            require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs' } });
             require(['vs/editor/editor.main'], function () {
 				monaco.languages.html.htmlDefaults.setOptions({
 					// Add your custom options here, for example:
@@ -4155,7 +4155,7 @@ function showRegexGuideModal(triggeringButton, originalButtonText) {
                     language: 'html',
                     theme: 'vs-dark', // Or 'hc-black'
                     automaticLayout: true, // Important for responsiveness
-                    minimap: { enabled: false },
+                    minimap: { enabled: true },
                     fontSize: 14,
                     tabSize: 4,
                     insertSpaces: true,
