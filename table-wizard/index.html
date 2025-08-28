@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AutoTabler™ - HTML Table Wizard</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.0/beautify-html.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.15.4/beautify-html.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs/loader.js"></script>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
     /* Custom styles for the editor */
     html, body {
@@ -1270,7 +1271,6 @@
         </div>
     </div>
 
-<script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.49.0/min/vs/loader.js"></script>
 <script>
     let monacoEditor; // Declare editor variable globally
     let entityDecorations = []; // Variable to store Monaco decorations for entities
@@ -4259,13 +4259,20 @@
     });
 
     window.onload = function() {
-        require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.49.0/min/vs' }});
+        require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs' }});
         require(['vs/editor/editor.main'], function() {
             monacoEditor = monaco.editor.create(document.getElementById('editor-container'), {
                 language: 'html',
-                theme: 'vs-dark',
-                automaticLayout: true,
-                minimap: { enabled: false }
+                    theme: 'vs-dark', // Or 'hc-black'
+                    automaticLayout: true, // Important for responsiveness
+                    minimap: { enabled: true },
+                    fontSize: 14,
+                    tabSize: 4,
+                    insertSpaces: true,
+                    // Additional options for better UX
+                    scrollBeyondLastLine: false,
+                    wordWrap: 'on',
+                    wrappingIndent: 'same',
             });
 
             pushUndoState();
