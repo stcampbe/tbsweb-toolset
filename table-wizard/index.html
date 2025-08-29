@@ -1277,6 +1277,7 @@
     let messageTimeoutId; // Timeout for message box
     let tableDataMap = new Map(); // Stores {optionValue: {startIndex: ...}} for jump functionality
     let currentHighlightDecorationId = []; // Stores the ID of the current highlight decoration
+	let originalTableHtmlForCancel = '';
 
     // --- NEW: Undo/Redo History Management ---
     let undoStack = [];
@@ -1301,6 +1302,7 @@
     window.isCustomizeManualColHeaderAlign = false;
     window.isCustomizeManualRowHeaderAlign = false;
     window.isCustomizeManualColspanAlign = false;
+	window.originalTableState = null;
 
     // --- NEW: Undo/Redo Functions ---
     /**
@@ -1662,11 +1664,22 @@
         optionsModalOverlay.classList.add('hidden');
     }
 
-    /**
+/**
      * Closes the customize table modal.
      * Also sends a message to the customize preview iframe to reset cell states.
      */
     function closeCustomizeModal() {
+	 // --- FIX START: Restore original table state on cancel ---
+        const selectedValue = tableSearchDropdown.value;
+        if (selectedValue && window.originalTableState) {
+            const tableInfo = tableDataMap.get(selectedValue);
+            if (tableInfo) {
+                // Restore the HTML content from when the modal was opened
+                tableInfo.outerHTML = window.originalTableState;
+            }
+        }
+        window.originalTableState = null; // Clear the stored state
+        // --- FIX END ---
         customizeModalOverlay.classList.add('hidden');
         if (customizePreviewIframe && customizePreviewIframe.contentWindow) {
             // Send a message to the iframe to reset its cell states
@@ -2012,7 +2025,8 @@
                 }
                 existingCaptionElement.textContent = extractedContent || `[insert table caption]`;
             } else if (!existingCaptionElement.textContent.trim() || existingCaptionElement.textContent.trim() === '[insert table caption]') {
-                existingCaptionElement.textContent = `[insert table caption]`;
+                // Use the preserved text if available, otherwise use the placeholder
+                existingCaptionElement.textContent = options.preservedCaptionText || `[insert table caption]`;
             }
         } else {
             if (existingCaptionElement) existingCaptionElement.remove();
@@ -2194,7 +2208,12 @@
 
 
         // --- Apply Active Classes (Additive, which is correct) ---
-        if (options.applyActiveColHeaders) Array.from(table.querySelectorAll('thead tr')).forEach(tr => tr.classList.add('active'));
+        const theadRows = Array.from(table.querySelectorAll('thead tr'));
+        if (options.applyActiveColHeaders) {
+            theadRows.forEach(tr => tr.classList.add('active'));
+        } else {
+            theadRows.forEach(tr => tr.classList.remove('active'));
+        }
         if (options.activeColspanHeadersCheckboxValue) Array.from(table.querySelectorAll('tbody th[colspan]')).forEach(th => th.classList.add('active'));
         if (options.activeRowHeadersCheckboxValue) Array.from(table.querySelectorAll('tbody tr > th:first-child')).forEach(th => th.classList.add('active'));
 
@@ -2524,8 +2543,13 @@
         if (!clonedTable) { console.error("Failed to clone table for preview."); return ''; }
 
         const customId = customizePageIdPrefixInput.value.trim();
+		
+		 const tempOriginalDiv = document.createElement('div');
+        tempOriginalDiv.innerHTML = tableInfo.outerHTML;
+        const originalCaption = tempOriginalDiv.querySelector('caption');
         
         const customizeOptions = {
+		preservedCaptionText: originalCaption ? originalCaption.innerHTML : null, // Add this line
             tableIdPrefix: customId,
             applyClassTables: customizeClassTablesCheckbox.checked,
             applyCaption: customizeCaptionCheckbox.checked,
@@ -2950,7 +2974,7 @@
         customizePreviewIframe.srcdoc = baseHtml;
     }
 
-    /**
+   /**
      * CRITICAL FIX: Formats a specific table using the Monaco Editor's API for safe, accurate replacement.
      * This completely prevents the bug where code outside the table was being deleted.
      */
@@ -2970,10 +2994,16 @@
             return;
         }
 
-        closeCustomizeModal();
-
         // Get the final, formatted HTML from the in-memory map (updated by the preview iframe)
         const formattedTableOuterHTML = tableInfo.outerHTML;
+        
+        // --- FIX START: Close the modal and clear the cancel state ---
+        window.originalTableState = null; // Formatting, so we don't want to revert on close
+        customizeModalOverlay.classList.add('hidden');
+        if (customizePreviewIframe && customizePreviewIframe.contentWindow) {
+            customizePreviewIframe.contentWindow.postMessage({ type: 'resetCellStates' }, '*');
+        }
+        // --- FIX END ---
 
         // Use Monaco's API to perform a safe, range-based replacement
         const editOperation = {
@@ -3736,11 +3766,20 @@
     fraNumberButton.addEventListener('click', () => formatTableNumbers('fra'));
 
 
-    customizeButton.addEventListener('click', () => {
-        if (!tableSearchDropdown.value) {
+customizeButton.addEventListener('click', () => {
+        const selectedValue = tableSearchDropdown.value; // --- FIX: Get selected value here ---
+        if (!selectedValue) { // --- FIX: Check selected value ---
             showMessage('Please select a table from the dropdown first.', 'info');
             return;
         }
+        
+        // --- FIX START: Store original table state on open ---
+        const tableInfo = tableDataMap.get(selectedValue);
+        if (tableInfo) {
+            window.originalTableState = tableInfo.outerHTML;
+        }
+        // --- FIX END ---
+
         customizeModalOverlay.classList.remove('hidden'); 
         tableSearchDropdown.dispatchEvent(new Event('change'));
     });
