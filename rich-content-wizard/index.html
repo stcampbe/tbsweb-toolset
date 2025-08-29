@@ -445,10 +445,6 @@
             overflow: hidden;
             /* Unified transition for smoother effect */
             transition: max-height 0.5s ease-in-out, padding 0.5s ease-in-out;
-            /* Transition max-height and padding */
-            padding: 0 1rem;
-            /* Padding for content area, default to 0 for collapsed */
-            background-color: #475569;
             /* Match header background */
             border-radius: 0 0 0.5rem 0.5rem;
             /* Rounded bottom corners */
@@ -618,274 +614,249 @@
             color: white;
             border-color: #4338CA;
         }
-		
-		/* Preview Modal Specific Styles */
-        #previewModal .modal-content {
-            width: 98%; /* Wider for better preview */
-            max-width: 1500px; /* Max width for large screens */
-            height: 95%; /* Taller for better preview */
-            display: flex;
-            flex-direction: column;
-            overflow: hidden; /* Prevent modal content from scrolling, iframe handles it */
-            padding: 1.5rem; /* Reduced padding for modal content */
-        }
 
-        #previewModal .modal-content .modal-header-controls {
-            display: flex;
-            align-items: center; /* Vertically align items */
-            /* Removed justify-content: space-between; to allow title and buttons to be close */
-            margin-bottom: 0.75rem; /* Reduced space below header */
-            flex-wrap: wrap;
-        }
-
-        #previewModal .modal-content h3 {
-            font-size: 1.25rem; /* Slightly smaller title */
-            text-align: left; /* Keep title left-aligned */
-            margin-bottom: 0; /* Adjusted for inline elements */
-            /* Removed flex-grow: 1; to prevent it from pushing buttons too far */
-            margin-right: 0.75rem; /* Space between title and buttons */
-        }
-
-        #previewModal iframe {
+        /* Modal styles */
+        .preview-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
-            border: 1px solid #4a5568;
-            border-radius: 0.5rem;
-            background-color: #ffffff;
-            flex-grow: 1; /* Allow iframe to take available space */
-        }
-
-        /* Customize section styles for modal */
-        #previewModal .customize-section {
-            background-color: #3b455a;
-            border-radius: 0.5rem;
-            padding: 0.75rem; /* Reduced padding */
-            margin-bottom: 0.75rem; /* Reduced margin */
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
-        }
-
-        #previewModal .customize-header {
+            background-color: rgba(0, 0, 0, 0.7);
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
-            cursor: pointer;
+            z-index: 1000;
         }
 
-        #previewModal .customize-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease-out;
+        .preview-modal-content {
+            background-color: #2d3748;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            color: #ffffff;
+            text-align: left; /* Left align content */
+            max-width: 90%;
+            width: 400px;
+            position: relative; /* For absolute positioning of close button */
         }
 
-        #previewModal .customize-content.expanded {
-            max-height: 500px; /* Adjust as needed to fit content */
-            transition: max-height 0.5s ease-in;
-            padding-top: 0.5rem;
+        .preview-modal-content h3 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            text-align: left; /* Ensure title is left aligned */
         }
 
-        #previewModal .customize-header svg {
-            transition: transform 0.3s ease;
+        .preview-modal-content p {
+            margin-bottom: 1.5rem;
         }
 
-        #previewModal .customize-header.expanded svg {
-            transform: rotate(180deg);
+        .preview-modal-content button {
+            color: white;
+            border-radius: 0.5rem;
+            font-weight: bold;
+            transition: background-color 0.2s ease;
+            
         }
 
-        /* Button group styles for modal customize section (from index.html) */
-        #previewModal .button-group {
-            display: flex;
-            width: 100%; /* Make it span full width */
-            border-radius: 0.5rem; /* rounded-md */
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow-sm */
-            border: 1px solid #4a5568; /* Darker border for button group */
-            flex-wrap: wrap; /* Keep for responsiveness on smaller screens */
+        #modalWetGcdsToggleBtn {
+            font-family: 'Courier New', Courier, monospace;
         }
 
-        #previewModal .button-group button {
-            flex: 1; /* Make buttons take up equal space */
-            border-radius: 0; /* Remove individual button rounded corners */
-            border: none; /* Remove individual button borders */
-            margin: 0; /* Remove individual button margins */
-            padding: 0.5rem 0.75rem; /* Consistent padding */
-            font-size: 0.875rem; /* text-sm */
-            line-height: 1.25rem; /* leading-5 */
-            position: relative; /* For z-index if needed */
-            color: #ffffff; /* White text for all buttons */
-            font-weight: bold; /* Make buttons bold */
-        }
-
-        #previewModal .button-group button:hover {
+        .preview-modal-content button:hover {
             background-color: #3182ce; /* Blue-600 */
         }
+		
+		/* Preview Modal Specific Styles */
+#previewModal .preview-modal-content {
+    position: relative; /* Add this for close button positioning */
+    width: 98%; /* Wider for better preview */
+    max-width: 1500px; /* Max width for large screens */
+    height: 95%; /* Taller for better preview */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Prevent modal content from scrolling, iframe handles it */
+    padding: 1.5rem; /* Reduced padding for modal content */
+}
 
-        /* Adjust border between buttons in the main button groups */
-        #previewModal .button-group:not(.no-border-buttons) button:not(:last-child) {
-            border-right: 1px solid rgba(74, 85, 104, 0.5); /* Darker separator between buttons */
-        }
-        #previewModal .button-group.no-border-buttons button:not(:last-child) {
-            border-right: none; /* Remove border for this specific group */
-        }
+#previewModal .preview-modal-content .preview-modal-header-controls {
+    display: flex;
+    align-items: center; /* Vertically align items */
+    margin-bottom: 0.75rem; /* Reduced space below header */
+    flex-wrap: wrap;
+}
 
-        /* Specific styling for the byline and URL/Image source button groups */
-        #previewModal .button-group.individual-rounded-buttons {
-            border: none; /* Remove group border */
-            box-shadow: none; /* Remove group shadow */
-            width: auto; /* Allow the group to size to content */
-            gap: 0.5rem; /* Add gap between individual buttons */
-        }
+#previewModal .preview-modal-content h3 {
+    font-size: 1.25rem; /* Slightly smaller title */
+    text-align: left; /* Keep title left-aligned */
+    margin-bottom: 0; /* Adjusted for inline elements */
+    margin-right: 0.75rem; /* Space between title and buttons */
+}
 
-        #previewModal .button-group.individual-rounded-buttons button {
-            flex: none; /* Do not make buttons take equal space */
-            border-radius: 0.5rem; /* Ensure rounded corners */
-            border: 1px solid #4a5568; /* Add individual button border */
-            padding: 0.5rem 0.75rem; /* Consistent padding */
-        }
-        /* Remove right border for individual rounded buttons */
-        #previewModal .button-group.individual-rounded-buttons button:not(:last-child) {
-            border-right: 1px solid #4a5568; /* Keep individual border */
-        }
+#previewModal iframe {
+    width: 100%;
+    height: 100%;
+    border: 1px solid #4a5568;
+    border-radius: 0.5rem;
+    background-color: #ffffff;
+    flex-grow: 1; /* Allow iframe to take available space */
+}
 
-        #previewModal .button-group button:first-child {
-            border-top-left-radius: 0.5rem;
-            border-bottom-left-radius: 0.5rem;
-        }
+/* Customize section styles for modal */
+#previewModal .customize-section {
+    background-color: #3b455a;
+    border-radius: 0.5rem;
+    padding: 0.75rem; /* Reduced padding */
+    margin-bottom: 0.75rem; /* Reduced margin */
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
 
-        #previewModal .button-group button:last-child {
-            border-top-right-radius: 0.5rem;
-            border-bottom-right-radius: 0.5rem;
-        }
+#previewModal .customize-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+}
 
-        #previewModal .button-group button.active:hover {
-            z-index: 1; /* Bring hovered button to front to show full border/shadow */
-			background-color: #3182ce !important;
-        }
-		#previewModal .button-group button.active:hover {
-            z-index: 1; /* Bring hovered button to front to show full border/shadow */
-			background-color: #3182ce !important;
-        }
+#previewModal .customize-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
 
-        /* Active states for buttons in modal, matching QA Wizard */
-        #previewModal .button-group button.active {
-			color: white !important;
-			background-color: #4a5568 !important;
-		}
-        /* Specific active state for WET4 button */
-        #previewModal #modalWetGcdsToggleBtn.active {
-            background-color: #2563eb !important; /* Blue-600 for WET4 active */
-            border-color: #2563eb !important;
-        }
-        #previewModal #modalWetGcdsToggleBtn.hover {
-            background-color: #2563eb !important; /* Blue-600 for WET4 active */
-            border-color: #2563eb !important;
-        }
-        /* Specific active state for GCDS/WET+ button */
-        #previewModal #modalWetGcdsToggleBtn[class*="indigo-600"].active {
-            background-color: #4f46e5 !important; /* Indigo-600 for GCDS/WET+ active */
-            border-color: #4f46e5 !important;
-        }
+#previewModal .customize-content.expanded {
+    max-height: 500px; /* Adjust as needed to fit content */
+    transition: max-height 0.5s ease-in;
+    padding-top: 0.5rem;
+}
 
-        /* Specific styling for the Sections and Headings buttons in modal */
-        #previewModal #modalToggleSectionsBtn,
-        #previewModal #modalToggleHeadingsBtn {
-            flex: none; /* Override flex: 1; for these specific buttons */
-            width: auto; /* Allow buttons to size based on content */
-            border: 1px solid #4a5568; /* Add border back for individual buttons */
-            border-radius: 0.5rem; /* Add rounded corners back for individual buttons */
-            padding: 0.3rem 0.6rem; /* Reduced padding */
-            font-size: 0.75rem; /* Smaller font size */
-        }
-        #previewModal #modalToggleSectionsBtn.active,
-        #previewModal #modalToggleHeadingsBtn.active {
-            background-color: #facc15 !important; /* Tailwind yellow-400 */
-            color: #1f2937 !important; /* Dark gray for text */
-            border-color: #facc15 !important;
-        }
-        /* Default state for Sections/Headings buttons */
-        #previewModal #modalToggleSectionsBtn,
-        #previewModal #modalToggleHeadingsBtn {
-            background-color: #374151; /* Tailwind gray-700 */
-            color: #ffffff;
-        }
-        #previewModal #modalToggleSectionsBtn:hover,
-        #previewModal #modalToggleHeadingsBtn:hover {
-            background-color: #4b5563; /* Tailwind gray-600 */
-        }
+#previewModal .customize-header svg {
+    transition: transform 0.3s ease;
+}
 
-        /* Input and Label styles for modal */
-        #previewModal input[type="text"] {
-            background-color: #4a5568; /* Darker background for input */
-            color: #ffffff; /* White text for input */
-            border-color: #4a5568; /* Darker border for input */
-            border-radius: 0.5rem; /* rounded-md */
-            padding: 0.5rem 0.75rem; /* Consistent padding */
-            font-size: 0.875rem; /* text-sm */
-            line-height: 1.25rem; /* leading-5 */
-        }
-        #previewModal input[type="text"]::placeholder {
-            color: #a0aec0; /* Lighter placeholder text */
-        }
-        #previewModal label {
-            color: #cbd5e0; /* Lighter gray for labels */
-        }
+#previewModal .customize-header.expanded svg {
+    transform: rotate(180deg);
+}
 
-        /* Styles for Prev/Next buttons in modal */
-        #modalPreviewFindPrevBtn,
-        #modalPreviewFindNextBtn {
-            padding: 0.25rem 0.5rem !important; /* px-2 py-1 */
-            font-size: 0.75rem !important; /* text-xs */
-            background-color: #2563eb !important;
-            color: #ffffff !important; /* White text */
-            border-radius: 0.375rem !important; /* rounded-md */
-            transition: background-color 0.2s ease;
-        }
-        #modalPreviewFindPrevBtn:hover,
-        #modalPreviewFindNextBtn:hover {
-            background-color: #3182ce !important; /* Blue-600 */
-        }
+/* Button group styles for modal customize section */
+#previewModal .button-group {
+    display: flex;
+    width: 100%; /* Make it span full width */
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    border: 1px solid #4a5568;
+    flex-wrap: wrap;
+}
 
-        /* Styles for WET4, EN, FR buttons in modal header */
-        #modalWetGcdsToggleBtn,
-        #modalLangEnBtn, /* Apply to both EN and FR buttons */
-        #modalLangFrBtn {
-            padding: 0.3rem 0.6rem; /* Reduced padding */
-            font-size: 0.75rem; /* Smaller font size */
-        }
-        /* EN/FR active state */
-        #modalLangEnBtn.active,
-        #modalLangFrBtn.active {
-            background-color: #2563eb !important; /* Indigo-600 for active state */
-            color: white !important;
-            border-color: #2563eb !important;
-        }
+#previewModal .button-group button {
+    flex: 1;
+    border-radius: 0;
+    border: none;
+    margin: 0;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    position: relative;
+    color: #ffffff;
+    font-weight: bold;
+}
 
-        /* EN/FR hover state */
-        #modalLangEnBtn:hover,
-        #modalLangFrBtn:hover {
-            background-color: #3182ce !important; /* Blue-600 */
-        }
+#previewModal .button-group button:hover {
+    background-color: #3182ce; /* Blue-600 */
+}
 
-        /* "X" Close Button styling */
-        #closePreviewModalBtn {
-            background-color: transparent; /* Make it transparent by default */
-            color: #cbd5e0; /* Lighter gray for the X symbol */
-            border: none;
-            transition: background-color 0.2s ease, color 0.2s ease;
-            cursor: pointer;
-            border-radius: 50%; /* Make it round */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 2rem; /* w-8 */
-            height: 2rem; /* h-8 */
-            font-size: 1.5rem; /* text-2xl */
-            font-weight: bold;
-            line-height: none; /* Remove extra line height */
-            padding: 0; /* Remove padding */
-        }
-        #closePreviewModalBtn:hover {
-            background-color: rgba(255, 255, 255, 0.1); /* Subtle background on hover */
-            color: #ffffff; /* White on hover */
-        }
+#previewModal .button-group button:not(:last-child) {
+    border-right: 1px solid rgba(74, 85, 104, 0.5);
+}
+
+#previewModal .button-group.individual-rounded-buttons {
+    border: none;
+    box-shadow: none;
+    width: auto;
+    gap: 0.5rem;
+}
+
+#previewModal .button-group.individual-rounded-buttons button {
+    flex: none;
+    border-radius: 0.5rem;
+    border: 1px solid #4a5568;
+}
+
+#previewModal .button-group button:first-child {
+    border-top-left-radius: 0.5rem;
+    border-bottom-left-radius: 0.5rem;
+}
+
+#previewModal .button-group button:last-child {
+    border-top-right-radius: 0.5rem;
+    border-bottom-right-radius: 0.5rem;
+}
+
+/* General Active State */
+#previewModal .button-group button.active {
+    color: white !important;
+    background-color: #4a5568 !important;
+}
+
+/* Specific Active/Hover states */
+#previewModal #modalWetGcdsToggleBtn.active,
+#previewModal #modalLangEnBtn.active,
+#previewModal #modalLangFrBtn.active {
+    background-color: #2563eb !important; /* Blue-600 */
+    border-color: #2563eb !important;
+}
+#previewModal #modalWetGcdsToggleBtn[class*="indigo-600"].active {
+    background-color: #4f46e5 !important; /* Indigo-600 */
+    border-color: #4f46e5 !important;
+}
+#previewModal #modalToggleSectionsBtn.active,
+#previewModal #modalToggleHeadingsBtn.active {
+    background-color: #facc15 !important; /* yellow-400 */
+    color: #1f2937 !important; /* Dark gray text */
+    border-color: #facc15 !important;
+}
+#previewModal .button-group.individual-rounded-buttons button.active {
+    background-color: #2563eb !important;
+}
+
+#previewModal input[type="text"] {
+    background-color: #4a5568;
+    color: #ffffff;
+    border-color: #4a5568;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+}
+
+#previewModal label {
+    color: #cbd5e0;
+}
+
+#modalPreviewFindPrevBtn,
+#modalPreviewFindNextBtn {
+    background-color: #2563eb !important;
+}
+
+/* "X" Close Button styling */
+#closePreviewModalBtn {
+    background-color: transparent;
+    color: #cbd5e0;
+    border: none;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    cursor: pointer;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+#closePreviewModalBtn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+}
 
         .message-box {
             /* This is probably not needed if you have your own system */
@@ -1318,6 +1289,9 @@
 					<button id="validateNowBtn" class="ml-4 px-4 py-2 text-base bg-blue-700 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold">
 					   <i class="fa-solid fa-check-double"></i> Validate
 					</button>
+                    <button id="previewBtn" class="ml-4 px-4 py-2 text-base bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 font-bold">
+                        <i class="fa-solid fa-eye"></i> View Preview
+                    </button>
                 </div>
                 <!-- New row for Copy, Clear, Import, Export buttons -->
                 <div class="flex items-center mb-4 flex-wrap">
@@ -1583,8 +1557,113 @@
                 </div>
             </div>
         </div>
+        <!-- Preview Modal Structure -->
+    <div id="previewModal" class="preview-modal-overlay hidden">
+        <div class="preview-modal-content">
+            <!-- "X" Close Button -->
+            
+            <button id="closePreviewModalBtn" class="absolute top-4 right-4">
+                &times;
+            </button>
 
+            <!-- Header with Title and Language/Framework Toggles -->
+            <div class="preview-modal-header-controls">
+                <h3 class="text-xl font-semibold text-white">Live Preview</h3>
+                <div class="inline-flex space-x-1"> <!-- Removed ml-auto -->
+                    <button id="modalWetGcdsToggleBtn" class="px-2 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold">WET4</button>
+                    <button id="modalLangEnBtn" class="px-2 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">EN</button>
+                    <button id="modalLangFrBtn" class="px-2 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">FR</button>
+                    <button id="exportPrototypeBtn" class="px-2 py-1 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 font-bold">Export Prototype</button>
+                </div>
+            </div>
+
+            <!-- Customize Section in Modal -->
+            <div class="customize-section">
+                <div id="modalCustomizeHeader" class="customize-header">
+                    <h3 class="text-lg font-semibold text-white">Customize</h3>
+                    <svg id="modalCustomizeToggleIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-white">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                    </svg>
+                </div>
+                <div id="modalCustomizeContent" class="customize-content">
+                    <div class="flex flex-col space-y-2 w-full mb-4">
+                        <div class="flex flex-col items-start w-full">
+                            <div class="button-group flex-wrap w-full">
+                                <button id="modalToggleContainerBtn" class="bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">Custom Width</button>
+                                <button id="modalToggleTitleBtn" class="bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">Hide Title</button>
+                                <button id="modalToggleCssBtn" class="bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">Disable CSS</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-4" id="modalH1TitleInputContainer">
+                        <input type="text" id="modalH1TitleInput" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., My Custom ENG Title">
+                    </div>
+                    <div class="flex flex-col space-y-2 w-full">
+                        <div class="flex flex-row flex-wrap justify-center sm:justify-start w-full mt-2 space-x-4">
+                            <div class="flex flex-col items-start mt-2 sm:mt-0">
+                                <span class="text-sm font-medium text-gray-200 mb-1">Byline:</span>
+                                <div class="button-group individual-rounded-buttons flex-wrap justify-center sm:justify-start">
+                                    <button id="modalNoneBylineBtn" class="bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">None</button>
+                                    <button id="modalEnglishBylineBtn" class="bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">English</button>
+                                    <button id="modalFrenchBylineBtn" class="bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">French</button>
+                                </div>
+                            </div>
+                            <div class="flex flex-col items-start">
+                                <span class="text-sm font-medium text-gray-200 mb-1">Image source:</span>
+                                <div class="button-group individual-rounded-buttons flex-wrap justify-center sm:justify-start">
+                                    <button id="modalLocalImagesBtn" class="bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">Local</button>
+                                    <button id="modalPreviewImagesBtn" class="bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50" title="Users MUST be on TBS network">Preview</button>
+                                    <button id="modalToggleLiveImagesBtn" class="bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">Live</button>
+                                </div>
+                            </div>
+                            <div class="flex flex-col items-start mt-2 sm:mt-0">
+                                <span class="text-sm font-medium text-gray-200 mb-1">URL source:</span>
+                                <div class="button-group individual-rounded-buttons flex-wrap justify-center sm:justify-start">
+                                    <button id="modalLocalUrlsBtn" class="bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">Local</button>
+                                    <button id="modalPreviewUrlsBtn" class="bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50" title="Users MUST be on TBS network">Preview</button>
+                                    <button id="modalToggleLiveUrlsBtn" class="bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">Live</button>
+                                </div>
+                            </div>
+                            <!-- New Breakpoint buttons -->
+                            <div class="flex flex-col items-start mt-2 sm:mt-0">
+                                <span class="text-sm font-medium text-gray-200 mb-1">Breakpoint:</span>
+                                <div class="button-group individual-rounded-buttons flex-wrap justify-center sm:justify-start">
+                                    <button id="modalBreakpointXsBtn" class="bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">XS</button>
+                                    <button id="modalBreakpointSmBtn" class="bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">SM</button>
+                                    <button id="modalBreakpointMdBtn" class="bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">MD</button>
+                                    <button id="modalBreakpointFullBtn" class="bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">Full</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <iframe id="modalPreviewFrame" title="Live HTML Preview"></iframe>
+
+            <!-- Search and Section/Headings Toggles (moved below iframe) -->
+            <div class="mt-auto pt-4 flex flex-col space-y-2 w-full">
+                <div class="flex items-center space-x-2 w-full flex-wrap">
+                    <input type="text" id="modalPreviewSearchInput" placeholder="Find in preview..." class="px-2 py-1 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 flex-grow">
+                    <button id="modalPreviewFindPrevBtn" class="px-3 py-1 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold">Prev</button>
+                    <button id="modalPreviewFindNextBtn" class="px-3 py-1 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold">Next</button>
+                    <button id="modalToggleSectionsBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">Sections</button>
+                    <button id="modalToggleHeadingsBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">Headings</button>
+                </div>
+            </div>
+        </div>
+    </div>
         <script>
+            document.addEventListener('DOMContentLoaded', function() {
+            window.handleRichTextEditorReady = function(editorInstance) {
+                console.log("Parent: Received ready signal from iframe. HugeRTE instance captured.");
+                richTextEditorInstance = editorInstance;
+
+                // If there's initial content waiting, set it now
+                if (richTextContent) {
+                    richTextEditorInstance.setContent(cleanHtmlForRichTextDisplay(richTextContent));
+                }
+            };
             // Get references to the elements
             const default_ifr = document.getElementById('default_ifr');
             const codePanel = document.getElementById('codePanel');
@@ -1600,6 +1679,43 @@
             const htmlFileInput = document.getElementById('htmlFileInput');
             const clearAllBtn = document.getElementById('clearAllBtn');
             const cleanMsoBtn = document.getElementById('cleanMsoBtn'); // Ensure cleanMsoBtn is defined
+            // New Preview button and modal elements
+            const debouncedModalUpdate = debounce(updateModalPreview, 500);
+    const previewBtn = document.getElementById('previewBtn');
+    const previewModal = document.getElementById('previewModal');
+    const modalPreviewFrame = document.getElementById('modalPreviewFrame');
+    const closePreviewModalBtn = document.getElementById('closePreviewModalBtn');
+    const exportPrototypeBtn = document.getElementById('exportPrototypeBtn');
+            // Modal Preview Controls
+    const modalCustomizeHeader = document.getElementById('modalCustomizeHeader');
+    const modalCustomizeContent = document.getElementById('modalCustomizeContent');
+    const modalCustomizeToggleIcon = document.getElementById('modalCustomizeToggleIcon');
+    const modalToggleContainerBtn = document.getElementById('modalToggleContainerBtn');
+    const modalToggleTitleBtn = document.getElementById('modalToggleTitleBtn');
+    const modalToggleCssBtn = document.getElementById('modalToggleCssBtn');
+    const modalH1TitleInput = document.getElementById('modalH1TitleInput');
+    const modalH1TitleInputContainer = document.getElementById('modalH1TitleInputContainer');
+    const modalNoneBylineBtn = document.getElementById('modalNoneBylineBtn');
+    const modalEnglishBylineBtn = document.getElementById('modalEnglishBylineBtn');
+    const modalFrenchBylineBtn = document.getElementById('modalFrenchBylineBtn');
+    const modalLocalImagesBtn = document.getElementById('modalLocalImagesBtn');
+    const modalPreviewImagesBtn = document.getElementById('modalPreviewImagesBtn');
+    const modalToggleLiveImagesBtn = document.getElementById('modalToggleLiveImagesBtn');
+    const modalLocalUrlsBtn = document.getElementById('modalLocalUrlsBtn');
+    const modalPreviewUrlsBtn = document.getElementById('modalPreviewUrlsBtn');
+    const modalToggleLiveUrlsBtn = document.getElementById('modalToggleLiveUrlsBtn');
+    const modalPreviewSearchInput = document.getElementById('modalPreviewSearchInput');
+    const modalPreviewFindPrevBtn = document.getElementById('modalPreviewFindPrevBtn');
+    const modalPreviewFindNextBtn = document.getElementById('modalPreviewFindNextBtn');
+    const modalToggleSectionsBtn = document.getElementById('modalToggleSectionsBtn');
+    const modalToggleHeadingsBtn = document.getElementById('modalToggleHeadingsBtn');
+    const modalWetGcdsToggleBtn = document.getElementById('modalWetGcdsToggleBtn');
+    const modalLangEnBtn = document.getElementById('modalLangEnBtn');
+    const modalLangFrBtn = document.getElementById('modalLangFrBtn');
+    const modalBreakpointXsBtn = document.getElementById('modalBreakpointXsBtn');
+    const modalBreakpointSmBtn = document.getElementById('modalBreakpointSmBtn');
+    const modalBreakpointMdBtn = document.getElementById('modalBreakpointMdBtn');
+    const modalBreakpointFullBtn = document.getElementById('modalBreakpointFullBtn');
 
             // References for new Quick Formatting Toggles
             const toggleCleanSpaces = document.getElementById('toggleCleanSpaces');
@@ -1617,7 +1733,21 @@
             const colophonBtn = document.getElementById('colophonBtn'); // New: Colophon button
             const footnoteListBtn = document.getElementById('footnoteListBtn'); // New: Footnote List button
 
-
+            const undoBtn = document.getElementById('undoBtn');
+const redoBtn = document.getElementById('redoBtn');
+const enPageToCBtn = document.getElementById('enPageToCBtn');
+const enPageToCH3Btn = document.getElementById('enPageToCH3Btn');
+const frPageToCBtn = document.getElementById('frPageToCBtn');
+const frPageToCH3Btn = document.getElementById('frPageToCH3Btn');
+const enSecToCBtn = document.getElementById('enSecToCBtn');
+const enSecToCH4Btn = document.getElementById('enSecToCH4Btn');
+const enSecToCH5Btn = document.getElementById('enSecToCH5Btn');
+const enSecToCH6Btn = document.getElementById('enSecToCH6Btn');
+const frSecToCBtn = document.getElementById('frSecToCBtn');
+const frSecToCH4Btn = document.getElementById('frSecToCH4Btn');
+const frSecToCH5Btn = document.getElementById('frSecToCH5Btn');
+const frSecToCH6Btn = document.getElementById('frSecToCH6Btn');
+            
             // Monaco Resizer elements - now applies to panels
             const monacoEditorContainer = document.getElementById('monacoEditorContainer');
             // const panelResizer = document.getElementById('panelResizer'); // Removed: Resizer element
@@ -1644,6 +1774,8 @@
                 copyCodeBtn,
                 undoBtn,
                 redoBtn,
+                previewBtn,
+                validateNowBtn,
                 enPageToCBtn,
                 enPageToCH3Btn,
                 frPageToCBtn,
@@ -1678,7 +1810,24 @@
 
             // Variable to hold the HugeRTE editor instance from the iframe
             let richTextEditorInstanceFromIframe;
+            
 
+            // State variables for Preview Modal
+    let modalShowSections = false;
+    let modalShowHeadings = false;
+    let modalUseContainerDiv = true;
+    let modalShowTitle = true;
+    let modalImageSourceMode = 'local';
+    let modalBylineMode = 'none';
+    let modalIsCustomizeExpanded = false;
+    let modalEnableCss = true;
+    let modalUrlSourceMode = 'local';
+    let modalCurrentLanguage = 'en';
+    let modalCurrentFramework = 'wet';
+    let modalH1TitleEn = '';
+    let modalH1TitleFr = '';
+    let modalLastSearchTerm = '';
+    let modalCurrentBreakpoint = 'full';
             // NEW: Simplified NBSP Placeholder
             const NBSP_PLACEHOLDER = '&#160;'; // A unique string that won't conflict with content
 			
@@ -1697,102 +1846,7 @@ const ignoredTags = new Set(['doc']);
 const validationResultsDiv = document.getElementById('validationResults');
 validationResultsDiv.addEventListener('click', handleResultClick);
 			
-			const toggleBottomPanel = document.getElementById('toggleBottomPanel');
-    const searchAndValidatePanel = document.getElementById('searchAndValidatePanel');
-    const searchValidateToggle = document.getElementById('searchValidateToggle');
-
-    const openSearchControlsBtn = document.getElementById('openSearchControlsBtn');
-    const openValidationBtn = document.getElementById('openValidationBtn');
-    
-    const searchControlsView = document.getElementById('searchRegex');
-    const validationResultsView = document.getElementById('validationResultsContainer');
-	
-	const validateNowBtn = document.getElementById('validateNowBtn');
-
-    // --- Main Panel Show/Hide ---
-    toggleBottomPanel.addEventListener('click', () => {
-        const isPanelHidden = searchAndValidatePanel.classList.toggle('hidden');
-        searchValidateToggle.classList.toggle('hidden', isPanelHidden);
-        toggleBottomPanel.textContent = isPanelHidden ? 'Show Panel' : 'Hide Panel';
-    });
-
-    // --- Switch to Search View ---
-    openSearchControlsBtn.addEventListener('click', () => {
-        // Show Search controls
-        searchControlsView.classList.remove('view-hidden');
-        openSearchControlsBtn.classList.add('active');
-
-        // Hide Validation results
-        validationResultsView.classList.add('view-hidden');
-        openValidationBtn.classList.remove('active');
-    });
-
-    // --- Switch to Validation View ---
-    openValidationBtn.addEventListener('click', () => {
-        // Show Validation results
-        validationResultsView.classList.remove('view-hidden');
-        openValidationBtn.classList.add('active');
-
-        // Hide Search controls
-        searchControlsView.classList.add('view-hidden');
-        openSearchControlsBtn.classList.remove('active');
-    });
-validateNowBtn.addEventListener('click', async () => {
-    // 1. Switch the view to "Validation Results"
-    openValidationBtn.click();
-
-    // 2. Ensure the main panel is visible
-    if (searchAndValidatePanel.classList.contains('hidden')) {
-        toggleBottomPanel.click();
-    }
-    
-    // 3. Get the code from Monaco and run the validation function
-    if (monacoEditorInstance) {
-        const codeToValidate = monacoEditorInstance.getValue();
-        // The validateHtmlContent function returns the 'errors' array now.
-        const errors = await validateHtmlContent(codeToValidate); 
-
-        // Temporarily disable the button to prevent rapid clicks
-        validateNowBtn.disabled = true;
-
-        // 4. Change button color based on validation results
-        if (errors.length === 0) {
-            // SUCCESS: Turn green
-            validateNowBtn.classList.remove('bg-blue-700', 'hover:bg-blue-600', 'bg-red-600', 'hover:bg-red-700');
-            validateNowBtn.classList.add('bg-green-600', 'hover:bg-green-700');
-            validateNowBtn.innerHTML = '<i class="fa-solid fa-check"></i> Valid!';
-        } else {
-            // FAILURE: Turn red
-            validateNowBtn.classList.remove('bg-blue-700', 'hover:bg-blue-600', 'bg-green-600', 'hover:bg-green-700');
-            validateNowBtn.classList.add('bg-red-600', 'hover:bg-red-700');
-            validateNowBtn.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> ${errors.length} Errors`;
-        }
-
-        // 5. Revert the button to its original state after a delay
-        setTimeout(() => {
-            validateNowBtn.classList.remove('bg-green-600', 'hover:bg-green-700', 'bg-red-600', 'hover:bg-red-700');
-            validateNowBtn.classList.add('bg-blue-700', 'hover:bg-blue-600');
-            validateNowBtn.innerHTML = '<i class="fa-solid fa-check-double"></i> Validate';
-            validateNowBtn.disabled = false;
-        }, 2500); // Revert after 2.5 seconds
-
-    } else {
-        const validationResultsDiv = document.getElementById('validationResults');
-        validationResultsDiv.innerHTML = '<p class="text-red-700 text-center">Error: Editor not found.</p>';
-    }
-});
-    // --- Set Initial State on Page Load ---
-    function initializeViews() {
-        // Start with search controls visible
-        searchControlsView.classList.remove('view-hidden');
-        openSearchControlsBtn.classList.add('active');
-        
-        // Ensure validation results are hidden
-        validationResultsView.classList.add('view-hidden');
-        openValidationBtn.classList.remove('active');
-    }
-
-    initializeViews();
+			
 			
 			/**
  * Handles clicks on the validation error list items to highlight the line in Monaco.
@@ -2042,6 +2096,17 @@ async function validateHtmlContent(fullHtmlCode) {
                 updateUndoRedoButtons();
             }
             // --- End Undo/Redo Manager ---
+
+previewBtn.addEventListener('click', showPreviewModal);
+            previewModal.addEventListener('click', (event) => {
+                if (event.target === previewModal) previewModal.classList.add('hidden');
+            });
+            closePreviewModalBtn.addEventListener('click', () => previewModal.classList.add('hidden'));
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && !previewModal.classList.contains('hidden')) {
+                    closePreviewModalBtn.click();
+                }
+            });
 
             // --- Undo/Redo Event Listeners ---
             undoBtn.addEventListener('click', () => {
@@ -4163,6 +4228,202 @@ async function validateHtmlContent(fullHtmlCode) {
             };
 
             /**
+     * Generates the full HTML content for the preview.
+     * @param {object} options - Options for generating HTML (e.g., showSections, enableCss, etc.)
+     * @param {boolean} forExport - If true, removes highlight CSS.
+     * @returns {string} The complete HTML string.
+     */
+    function generateFullHtml(options, forExport = false) {
+        const bodyContent = monacoEditorInstance.getValue();
+        let customH1Title = (options.currentLanguage === 'en' ? options.h1TitleEn : options.h1TitleFr).trim();
+        if (customH1Title === '') {
+            customH1Title = (options.currentLanguage === 'en') ? 'Canada.ca Page Title (EN)' : 'Titre de la page Canada.ca (FR)';
+        }
+        const pageTitle = customH1Title;
+
+        let dynamicTitleHtml = '';
+        if (options.showTitle) {
+            if (options.currentFramework === 'wet' || options.currentFramework === 'wet+') {
+                dynamicTitleHtml = `<h1 property="name" id="wb-cont">${customH1Title}</h1>`;
+            } else if (options.currentFramework === 'gcds') {
+                dynamicTitleHtml = `<gcds-heading tag="h1">${customH1Title}</gcds-heading>`;
+            }
+        }
+
+        let bylineHtml = '';
+        if (options.bylineMode === 'english') {
+            if (options.currentFramework === 'wet' || options.currentFramework === 'wet+') {
+                bylineHtml = '<p class="gc-byline"><strong>From: <a href="/en/treasury-board-secretariat.html">Treasury Board of Canada of Canada Secretariat</a></strong></p>';
+            } else if (options.currentFramework === 'gcds') {
+                bylineHtml = `<gcds-text><strong>From: <gcds-link href="/en/treasury-board-secretariat.html">Treasury Board of Canada of Canada Secretariat</gcds-link></strong></gcds-text>`;
+            }
+        } else if (options.bylineMode === 'french') {
+            if (options.currentFramework === 'wet' || options.currentFramework === 'wet+') {
+                bylineHtml = '<p class="gc-byline"><strong>De : <a href="/fr/secretariat-conseil-tresor.html">Secrétariat du Conseil du Trésor du Canada</a></strong></p>';
+            } else if (options.currentFramework === 'gcds') {
+                bylineHtml = `<gcds-text><strong>De : <gcds-link href="/fr/secretariat-conseil-tresor.html">Secrétariat du Conseil du Conseil du Trésor du Canada</gcds-link></strong></gcds-text>`;
+            }
+        }
+
+        let h1AndBylineSection = `${dynamicTitleHtml}${bylineHtml}`;
+        if ((options.currentFramework === 'gcds') && (dynamicTitleHtml || bylineHtml)) {
+            h1AndBylineSection = `<section>${h1AndBylineSection}</section>`;
+        }
+
+        let contentToInject = options.useContainerDiv ? `<div class="container">${h1AndBylineSection}${bodyContent}</div>` : `${h1AndBylineSection}${bodyContent}`;
+
+        const parser = new DOMParser();
+        const tempDoc = parser.parseFromString(contentToInject, 'text/html');
+
+        const localPrefixes = ['/content/canadasite/en/treasury-board-secretariat', '/content/canadasite/fr/secretariat-conseil-tresor', '/content/canadasite/en/government', '/content/canadasite/fr/gouvernement'];
+        const previewPrefixes = ['https://canada-preview.adobecqms.net/en/treasury-board-secretariat', 'https://canada-preview.adobecqms.net/fr/secretariat-conseil-tresor', 'https://canada-preview.adobecqms.net/en/government', 'https://canada-preview.adobecqms.net/fr/gouvernement'];
+        const livePrefixes = ['https://www.canada.ca/en/treasury-board-secretariat', 'https://www.canada.ca/fr/secretariat-conseil-tresor', 'https://www.canada.ca/en/government', 'https://www.canada.ca/fr/gouvernement'];
+
+        function replaceUrlPrefix(url, currentPrefixes, targetPrefixes) {
+            for (let i = 0; i < currentPrefixes.length; i++) {
+                if (url.startsWith(currentPrefixes[i])) {
+                    return targetPrefixes[i] + url.substring(currentPrefixes[i].length);
+                }
+            }
+            return url;
+        }
+
+        tempDoc.querySelectorAll('img').forEach(img => {
+            let src = img.getAttribute('src');
+            if (src && !src.startsWith('http://') && !src.startsWith('https://') && !src.startsWith('//')) {
+                let baseUrl = '';
+                if (options.imageSourceMode === 'preview') baseUrl = 'https://canada-preview.adobecqms.net';
+                else if (options.imageSourceMode === 'live') baseUrl = 'https://www.canada.ca';
+                if (baseUrl) img.setAttribute('src', `${baseUrl}${src.startsWith('/') ? '' : '/'}${src}`);
+            }
+        });
+
+        tempDoc.querySelectorAll('a').forEach(link => {
+            let href = link.getAttribute('href');
+            if (href && (href.startsWith('/') || href.startsWith('http://') || href.startsWith('https://'))) {
+                if (options.urlSourceMode === 'local') {
+                    href = replaceUrlPrefix(href, previewPrefixes, localPrefixes);
+                    href = replaceUrlPrefix(href, livePrefixes, localPrefixes);
+                } else if (options.urlSourceMode === 'preview') {
+                    href = replaceUrlPrefix(href, localPrefixes, previewPrefixes);
+                    href = replaceUrlPrefix(href, livePrefixes, previewPrefixes);
+                } else if (options.urlSourceMode === 'live') {
+                    href = replaceUrlPrefix(href, localPrefixes, livePrefixes);
+                    href = replaceUrlPrefix(href, previewPrefixes, livePrefixes);
+                }
+                link.setAttribute('href', href);
+            }
+        });
+
+        contentToInject = tempDoc.body.innerHTML;
+
+        const bodyClassParts = [];
+        if (!forExport && options.showSections) bodyClassParts.push('show-sections-outline');
+        if (!forExport && options.showHeadings) bodyClassParts.push('show-headings-outline');
+        const bodyClass = bodyClassParts.join(' ');
+
+        let cssLinks = '';
+        if (options.enableCss) {
+            if (options.currentFramework === 'wet') cssLinks = `<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css"><link rel="stylesheet" href="https://www.canada.ca/etc/designs/canada/wet-boew/css/theme.min.css">`;
+            else if (options.currentFramework === 'gcds') cssLinks = `<link rel="stylesheet" href="https://cdn.design-system.alpha.canada.ca/@cdssnc/gcds-utility@latest/dist/gcds-utility.min.css"><link rel="stylesheet" href="https://cdn.design-system.alpha.canada.ca/@cdssnc/gcds-components@latest/dist/gcds/gcds.css">`;
+            else if (options.currentFramework === 'wet+') cssLinks = `<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css"><link rel="stylesheet" href="https://www.canada.ca/etc/designs/canada/wet-boew/css/theme.min.css"><link rel="stylesheet" href="https://cdn.design-system.alpha.canada.ca/@cdssnc/gcds-components@latest/dist/gcds/gcds.css">`;
+        }
+
+        let jsScripts = '';
+        if (options.currentFramework === 'wet') jsScripts = `<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"><\/script><script src="https://www.canada.ca/etc/designs/canada/wet-boew/js/wet-boew.min.js"><\/script><script src="https://www.canada.ca/etc/designs/canada/wet-boew/js/theme.min.js"><\/script>`;
+        else if (options.currentFramework === 'gcds') jsScripts = `<script type="module" src="https://cdn.design-system.alpha.canada.ca/@cdssnc/gcds-components@latest/dist/gcds/gcds.esm.js"><\/script><script nomodule src="https://cdn.design-system.alpha.canada.ca/@cdssnc/gcds-components@latest/dist/gcds/gcds.js"><\/script>`;
+        else if (options.currentFramework === 'wet+') jsScripts = `<script type="module" src="https://cdn.design-system.alpha.canada.ca/@cdssnc/gcds-components@latest/dist/gcds/gcds.esm.js"><\/script><script nomodule src="https://cdn.design-system.alpha.canada.ca/@cdssnc/gcds-components@latest/dist/gcds/gcds.js"><\/script><script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"><\/script><script src="https://www.canada.ca/etc/designs/canada/wet-boew/js/wet-boew.min.js"><\/script><script src="https://www.canada.ca/etc/designs/canada/wet-boew/js/theme.min.js"><\/script>`;
+
+        let mainContentWrapper = '';
+        if (options.currentFramework === 'wet' || options.currentFramework === 'wet+') mainContentWrapper = `<main property="mainContentOfPage" resource="#wb-main" typeof="WebPageElement">${contentToInject}</main>`;
+        else if (options.currentFramework === 'gcds') mainContentWrapper = `<gcds-container id="main-content" main-container size="xl" centered tag="main">${contentToInject}</gcds-container>`;
+
+        return `
+<!DOCTYPE html>
+<html class="no-js" lang="${options.currentLanguage}" dir="ltr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${pageTitle}</title>
+    ${cssLinks}
+    <style>
+        body { text-align: left; font-family: 'Noto Sans', sans-serif; }
+        ${!forExport ? `
+        .show-sections-outline section { border: 2px dashed #007bff; padding: 10px; margin-bottom: 10px; }
+        .show-sections-outline section:hover { background-color: rgba(0, 123, 255, 0.1); }
+        .show-headings-outline h1, .show-headings-outline gcds-heading[tag="h1"] { border: 2px solid #FF0000; background-color: rgba(255,0,0,0.1); padding: 5px; }
+        .show-headings-outline h2, .show-headings-outline gcds-heading[tag="h2"] { border: 2px solid #FF7F00; background-color: rgba(255,127,0,0.1); padding: 5px; }
+        .show-headings-outline h3, .show-headings-outline gcds-heading[tag="h3"] { border: 2px solid #FFFF00; background-color: rgba(255,255,0,0.1); padding: 5px; }
+        .show-headings-outline h4, .show-headings-outline gcds-heading[tag="h4"] { border: 2px solid #00FF00; background-color: rgba(0,255,0,0.1); padding: 5px; }
+        .show-headings-outline h5, .show-headings-outline gcds-heading[tag="h5"] { border: 2px solid #0000FF; background-color: rgba(0,0,255,0.1); padding: 5px; }
+        .show-headings-outline h6, .show-headings-outline gcds-heading[tag="h6"] { border: 2px solid #4B0082; background-color: rgba(75,0,130,0.1); padding: 5px; }
+        ` : ''}
+        .table tbody tr.active { background-color: #e0f2f7; }
+        .nowrap { white-space: nowrap; }
+    </style>
+</head>
+<body class="${bodyClass}">
+    ${mainContentWrapper}
+    ${jsScripts}
+</body>
+</html>`;
+    }
+
+
+    /**
+     * Updates the content of the modal iframe.
+     */
+    function updateModalPreview() {
+        const previewOptions = {
+            showSections: modalShowSections,
+            showHeadings: modalShowHeadings,
+            useContainerDiv: modalUseContainerDiv,
+            showTitle: modalShowTitle,
+            imageSourceMode: modalImageSourceMode,
+            bylineMode: modalBylineMode,
+            enableCss: modalEnableCss,
+            urlSourceMode: modalUrlSourceMode,
+            currentLanguage: modalCurrentLanguage,
+            currentFramework: modalCurrentFramework,
+            h1TitleEn: modalH1TitleEn,
+            h1TitleFr: modalH1TitleFr
+        };
+        const fullHtml = generateFullHtml(previewOptions);
+        const iframeDocument = modalPreviewFrame.contentDocument || modalPreviewFrame.contentWindow.document;
+        iframeDocument.open();
+        iframeDocument.write(fullHtml);
+        iframeDocument.close();
+
+        let iframeWidth = '100%';
+        switch (modalCurrentBreakpoint) {
+            case 'xs': iframeWidth = '375px'; break;
+            case 'sm': iframeWidth = '640px'; break;
+            case 'md': iframeWidth = '992px'; break;
+            case 'full': iframeWidth = '100%'; break;
+        }
+        modalPreviewFrame.style.width = iframeWidth;
+        modalPreviewFrame.style.margin = (iframeWidth === '100%') ? '0' : '0 auto';
+    }
+
+    /**
+     * Shows the preview modal with the current editor content.
+     */
+    function showPreviewModal() {
+        previewModal.classList.remove('hidden');
+        updateModalSettingsButtonStates();
+        updateModalBylineButtonStates();
+        updateModalImageSourceButtonStates();
+        updateModalUrlSourceButtonStates();
+        updateModalSectionHeadingButtonStates();
+        updateModalWetGcdsButtonState();
+        updateModalLanguageButtonStates();
+        updateModalBreakpointButtonStates();
+        modalH1TitleInputContainer.style.display = modalShowTitle ? 'block' : 'none';
+        modalH1TitleInput.value = (modalCurrentLanguage === 'en') ? modalH1TitleEn : modalH1TitleFr;
+        updateModalPreview();
+    }
+
+            /**
              * Updates the disabled state of all interactive buttons.
              * Buttons are disabled if any button has 'data-temp-active' set to 'true'.
              */
@@ -5013,8 +5274,190 @@ async function validateHtmlContent(fullHtmlCode) {
                 return processedContent;
             }
 
+            // Functions to update button states for the MODAL preview controls
+    function updateModalSettingsButtonStates() {
+        [modalToggleContainerBtn, modalToggleTitleBtn, modalToggleCssBtn].forEach(btn => btn.classList.remove('active', 'bg-indigo-600', 'bg-red-600'));
+        if (modalUseContainerDiv) modalToggleContainerBtn.classList.add('active', 'bg-indigo-600');
+        if (modalShowTitle) modalToggleTitleBtn.classList.add('active', 'bg-indigo-600');
+        if (!modalEnableCss) modalToggleCssBtn.classList.add('bg-red-600');
+        modalToggleContainerBtn.textContent = modalUseContainerDiv ? 'Custom Width' : 'Default Width';
+        modalToggleTitleBtn.textContent = modalShowTitle ? 'Hide Title' : 'Show Title';
+        modalToggleCssBtn.textContent = modalEnableCss ? 'Disable CSS' : 'Enable CSS';
+    }
+
+    function updateModalBylineButtonStates() {
+        [modalNoneBylineBtn, modalEnglishBylineBtn, modalFrenchBylineBtn].forEach(btn => btn.classList.remove('active', 'bg-indigo-600'));
+        if (modalBylineMode === 'none') modalNoneBylineBtn.classList.add('active', 'bg-indigo-600');
+        else if (modalBylineMode === 'english') modalEnglishBylineBtn.classList.add('active', 'bg-indigo-600');
+        else if (modalBylineMode === 'french') modalFrenchBylineBtn.classList.add('active', 'bg-indigo-600');
+        modalEnglishBylineBtn.style.display = (modalCurrentLanguage === 'en') ? 'inline-block' : 'none';
+        modalFrenchBylineBtn.style.display = (modalCurrentLanguage === 'fr') ? 'inline-block' : 'none';
+    }
+
+    function updateModalImageSourceButtonStates() {
+        [modalLocalImagesBtn, modalPreviewImagesBtn, modalToggleLiveImagesBtn].forEach(btn => btn.classList.remove('active', 'bg-indigo-600'));
+        if (modalImageSourceMode === 'local') modalLocalImagesBtn.classList.add('active', 'bg-indigo-600');
+        else if (modalImageSourceMode === 'preview') modalPreviewImagesBtn.classList.add('active', 'bg-indigo-600');
+        else if (modalImageSourceMode === 'live') modalToggleLiveImagesBtn.classList.add('active', 'bg-indigo-600');
+    }
+
+    function updateModalUrlSourceButtonStates() {
+        [modalLocalUrlsBtn, modalPreviewUrlsBtn, modalToggleLiveUrlsBtn].forEach(btn => btn.classList.remove('active', 'bg-indigo-600'));
+        if (modalUrlSourceMode === 'local') modalLocalUrlsBtn.classList.add('active', 'bg-indigo-600');
+        else if (modalUrlSourceMode === 'preview') modalPreviewUrlsBtn.classList.add('active', 'bg-indigo-600');
+        else if (modalUrlSourceMode === 'live') modalToggleLiveUrlsBtn.classList.add('active', 'bg-indigo-600');
+    }
+
+    function updateModalSectionHeadingButtonStates() {
+        modalToggleSectionsBtn.classList.toggle('active', modalShowSections);
+        modalToggleHeadingsBtn.classList.toggle('active', modalShowHeadings);
+    }
+
+    function updateModalWetGcdsButtonState() {
+        modalWetGcdsToggleBtn.classList.remove('bg-blue-600', 'bg-indigo-600');
+        modalWetGcdsToggleBtn.innerHTML = ''; // Clear content
+        if (modalCurrentFramework === 'wet') {
+            modalWetGcdsToggleBtn.classList.add('bg-blue-600');
+            modalWetGcdsToggleBtn.textContent = 'WET4';
+        } else if (modalCurrentFramework === 'gcds') {
+            modalWetGcdsToggleBtn.classList.add('bg-indigo-600');
+            modalWetGcdsToggleBtn.textContent = 'GCDS';
+        } else if (modalCurrentFramework === 'wet+') {
+            modalWetGcdsToggleBtn.classList.add('bg-indigo-600');
+            modalWetGcdsToggleBtn.innerHTML = '<strong><u>WET+</u></strong>';
+        }
+    }
+
+    function updateModalLanguageButtonStates() {
+        modalLangEnBtn.classList.remove('active', 'bg-indigo-600');
+        modalLangFrBtn.classList.remove('active', 'bg-indigo-600');
+        if (modalCurrentLanguage === 'en') {
+            modalLangEnBtn.classList.add('active', 'bg-indigo-600');
+            modalH1TitleInput.placeholder = 'e.g., My Custom ENG Title';
+            modalH1TitleInput.value = modalH1TitleEn;
+        } else {
+            modalLangFrBtn.classList.add('active', 'bg-indigo-600');
+            modalH1TitleInput.placeholder = 'e.g., Mon titre FRA personnalisé';
+            modalH1TitleInput.value = modalH1TitleFr;
+        }
+        updateModalBylineButtonStates();
+    }
+
+    function updateModalBreakpointButtonStates() {
+        [modalBreakpointXsBtn, modalBreakpointSmBtn, modalBreakpointMdBtn, modalBreakpointFullBtn].forEach(btn => btn.classList.remove('active', 'bg-indigo-600'));
+        if (modalCurrentBreakpoint === 'xs') modalBreakpointXsBtn.classList.add('active', 'bg-indigo-600');
+        else if (modalCurrentBreakpoint === 'sm') modalBreakpointSmBtn.classList.add('active', 'bg-indigo-600');
+        else if (modalCurrentBreakpoint === 'md') modalBreakpointMdBtn.classList.add('active', 'bg-indigo-600');
+        else if (modalCurrentBreakpoint === 'full') modalBreakpointFullBtn.classList.add('active', 'bg-indigo-600');
+    }
+
             // Initialize and set up event listeners on window load
             window.onload = function() {
+                const toggleBottomPanel = document.getElementById('toggleBottomPanel');
+    const searchAndValidatePanel = document.getElementById('searchAndValidatePanel');
+    const searchValidateToggle = document.getElementById('searchValidateToggle');
+
+    const openSearchControlsBtn = document.getElementById('openSearchControlsBtn');
+    const openValidationBtn = document.getElementById('openValidationBtn');
+    
+    const searchControlsView = document.getElementById('searchRegex');
+    const validationResultsView = document.getElementById('validationResultsContainer');
+	
+	const validateNowBtn = document.getElementById('validateNowBtn');
+
+    // --- Main Panel Show/Hide ---
+    toggleBottomPanel.addEventListener('click', () => {
+        const isPanelHidden = searchAndValidatePanel.classList.toggle('hidden');
+        searchValidateToggle.classList.toggle('hidden', isPanelHidden);
+        toggleBottomPanel.textContent = isPanelHidden ? 'Show Panel' : 'Hide Panel';
+    });
+
+    // --- Switch to Search View ---
+    openSearchControlsBtn.addEventListener('click', () => {
+        // Show Search controls
+        searchControlsView.classList.remove('view-hidden');
+        openSearchControlsBtn.classList.add('active');
+
+        // Hide Validation results
+        validationResultsView.classList.add('view-hidden');
+        openValidationBtn.classList.remove('active');
+    });
+
+    // --- Switch to Validation View ---
+    openValidationBtn.addEventListener('click', () => {
+        // Show Validation results
+        validationResultsView.classList.remove('view-hidden');
+        openValidationBtn.classList.add('active');
+
+        // Hide Search controls
+        searchControlsView.classList.add('view-hidden');
+        openSearchControlsBtn.classList.remove('active');
+    });
+validateNowBtn.addEventListener('click', async () => {
+    // 1. Switch the view to "Validation Results"
+    openValidationBtn.click();
+
+    // 2. Ensure the main panel is visible
+    if (searchAndValidatePanel.classList.contains('hidden')) {
+        toggleBottomPanel.click();
+    }
+    
+    // 3. Get the code from Monaco and run the validation function
+    if (monacoEditorInstance) {
+        const codeToValidate = monacoEditorInstance.getValue();
+        // The validateHtmlContent function returns the 'errors' array now.
+        const errors = await validateHtmlContent(codeToValidate); 
+
+        // Temporarily disable the button to prevent rapid clicks
+        validateNowBtn.disabled = true;
+
+        // 4. Change button color based on validation results
+        if (errors.length === 0) {
+            // SUCCESS: Turn green
+            validateNowBtn.classList.remove('bg-blue-700', 'hover:bg-blue-600', 'bg-red-600', 'hover:bg-red-700');
+            validateNowBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+            validateNowBtn.innerHTML = '<i class="fa-solid fa-check"></i> Valid!';
+        } else {
+            // FAILURE: Turn red
+            validateNowBtn.classList.remove('bg-blue-700', 'hover:bg-blue-600', 'bg-green-600', 'hover:bg-green-700');
+            validateNowBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+            validateNowBtn.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> ${errors.length} Errors`;
+        }
+
+        // 5. Revert the button to its original state after a delay
+        setTimeout(() => {
+            validateNowBtn.classList.remove('bg-green-600', 'hover:bg-green-700', 'bg-red-600', 'hover:bg-red-700');
+            validateNowBtn.classList.add('bg-blue-700', 'hover:bg-blue-600');
+            validateNowBtn.innerHTML = '<i class="fa-solid fa-check-double"></i> Validate';
+            validateNowBtn.disabled = false;
+        }, 2500); // Revert after 2.5 seconds
+
+    } else {
+        const validationResultsDiv = document.getElementById('validationResults');
+        validationResultsDiv.innerHTML = '<p class="text-red-700 text-center">Error: Editor not found.</p>';
+    }
+});
+    // --- Set Initial State on Page Load ---
+    function initializeViews() {
+        // Start with search controls visible
+        searchControlsView.classList.remove('view-hidden');
+        openSearchControlsBtn.classList.add('active');
+        
+        // Ensure validation results are hidden
+        validationResultsView.classList.add('view-hidden');
+        openValidationBtn.classList.remove('active');
+    }
+
+    initializeViews();
+    default_ifr.src = 'about:blank?cachebust=' + new Date().getTime();
+    default_ifr.addEventListener('load', () => {
+    console.log("Parent: Iframe has loaded. Commanding editor initialization.");
+    if (default_ifr.contentWindow && typeof default_ifr.contentWindow.initializeEditor === 'function') {
+        default_ifr.contentWindow.initializeEditor();
+    } else {
+        console.error("Parent: Iframe loaded, but its initializeEditor function was not found.");
+    }
+});
                 console.log("Parent window.onload triggered.");
                 // Initial setup: Ensure rich text panel is visible and code panel is hidden
                 richtextOutputPanel.classList.add('panel-visible');
@@ -5060,7 +5503,16 @@ async function validateHtmlContent(fullHtmlCode) {
                         wrappingIndent: 'same',
                     });
                     console.log("Monaco editor initialized.");
+                    
+                    monacoEditorInstance.addCommand(monaco.KeyCode.KeyZ | monaco.KeyMod.CtrlCmd, () => {
+    // Trigger a click on your custom undo button
+    undoBtn.click();
+});
 
+monacoEditorInstance.addCommand(monaco.KeyCode.KeyY | monaco.KeyMod.CtrlCmd, () => {
+    // Trigger a click on your custom redo button
+    redoBtn.click();
+});
                     // --- START: MODIFICATION FOR UNDO/REDO ---
 
                     // 1. Initialize the Undo Manager with the editor's starting content.
@@ -5122,12 +5574,7 @@ async function validateHtmlContent(fullHtmlCode) {
                     const endIndexInput = document.getElementById('end-index');
                     const matchCountSpan = document.getElementById('match-count');
                     const regexGuideButton = document.getElementById('regex-guide-button');
-                    // Get a reference to the new toggle button
-                    const toggleBottomPanel = document.getElementById('toggleBottomPanel');
-                    // Get a reference to the container holding all search controls content
                     const searchRegex = document.getElementById('searchRegex'); // Changed ID here!
-                    // Get a reference to the outer panel div (for show/hide logic related to the panel itself)
-                    const searchAndValidatePanel = document.getElementById('searchAndValidatePanel'); // Keep reference to outer panel
                     // NOW, PUSH regexGuideButton onto the array here, after it's defined
                     allInteractiveButtons.push(regexGuideButton);
 
@@ -5188,7 +5635,7 @@ async function validateHtmlContent(fullHtmlCode) {
                      */
                     function populateTagDropdown() {
                         const currentSelection = tagDropdown.value; // Store current selection
-                        const editorValue = editor.getValue();
+                        const editorValue = monacoEditorInstance.getValue();
                         const tagRegex = /<(\w+)(?=\s|>)/g;
                         const uniqueTags = new Set();
                         let match;
@@ -6286,7 +6733,6 @@ async function validateHtmlContent(fullHtmlCode) {
                     <script type="text/javascript">
                         console.log("Iframe script started executing.");
                         // Global variable to hold the HugeRTE editor instance
-                        let richTextEditorInstance;
                         // Flag to prevent infinite loop when updating HugeRTE from CodeMirror
                         let isUpdatingFromCodeMirror = false;
 
@@ -6332,85 +6778,57 @@ function openAllDetailsInEditor(editor) {
         });
     }
 }
-                        /**
-                         * HugeRTE init
-                         */
-                        if (typeof hugerte === 'undefined') {
-                            console.error("Iframe: HugeRTE library not loaded!");
-                        }
-                        else {
-                            console.log("Iframe: HugeRTE library loaded. Initializing editor.");
-                            hugerte.init({
-                                selector: '#richEditor',
-								toolbar: 'undo redo styles bold italic alignleft aligncenter alignright numlist bullist link table',
-								plugins: [ 'table', 'lists', 'link' ], // 'lists' plugin is relevant for ol/ul, but not directly dl
-								height: '100%',
-								tab_focus: false,
-								formats: {
-									alignleft: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img', classes: 'text-left', exact: true },
-									aligncenter: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img', classes: 'text-center', exact: true },
-									alignright: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img', classes: 'text-right', exact: true },
-								},
-								content_style: 'body { max-width: 1170px; margin-left: auto; margin-right: auto; padding: 15px; box-sizing: border-box; } h1 { background-color: #FF6347; padding: 2px 5px; border-radius: 3px; display: inline-block; } h2 { background-color: #FE9900; padding: 2px 5px; border-radius: 3px; display: inline-block; } h3 { background-color: #FFDE59; padding: 2px 5px; border-radius: 3px; display: inline-block; } h4 { background-color: #7DDA58; padding: 2px 5px; border-radius: 3px; display: inline-block; } h5 { background-color: #5DE2E7; padding: 2px 5px; border-radius: 3px; display: inline-block; } h6 { background-color: #E7DDFF; padding: 2px 5px; border-radius: 3px; display: inline-block; } section { border: #060270 2px dashed; margin: 5px; padding: 5px;} div, aside { border: #8D6F64 2px solid; margin: 5px; padding: 5px;} details > *:not(summary) { display: block !important; } details summary { cursor: default !important; font-weight: bold; margin-bottom: 5px; color: #333; }',
-                                extended_valid_elements: 'dl[class|id],dt[class|id],dd[class|id],details[open],summary',
-								valid_children: '+body[dl],+dl[dt|dd],+dt[a|abbr|acronym|b|bdo|big|br|button|cite|code|del|dfn|em|i|img|input|ins|kbd|label|map|q|samp|select|small|span|strike|strong|sub|sup|textarea|tt|var|p],+dd[a|abbr|acronym|b|bdo|big|br|button|cite|code|del|dfn|em|i|img|input|ins|kbd|label|map|q|samp|select|small|span|strike|strong|sub|sup|textarea|tt|var|p|ul|ol|dl],+details[summary|p|div|ul|ol|table|h1|h2|h3|h4|h5|h6]',
-								custom_elements: 'dl,dt,dd,details,summary',
-								 // --- START MODIFICATION ---
-    setup: function(editor) {
-        // This function runs when the content is set or changed
-        editor.on('SetContent', function(e) {
-            openAllDetailsInEditor(editor);
-        });
-    },
-    init_instance_callback: function(editorInstance) {
-        console.log('Iframe: HugeRTE editor initialized inside iframe.');
-        richTextEditorInstance = editorInstance; // Store the instance globally
+                        // Expose an initialization function to be called by the parent
+window.initializeEditor = function() {
+    if (typeof hugerte !== 'undefined') {
+        console.log("Iframe: Parent commanded initialization. Initializing editor.");
+        hugerte.init({
+            selector: '#richEditor',
+            toolbar: 'undo redo styles bold italic alignleft aligncenter alignright numlist bullist link table',
+            plugins: ['table', 'lists', 'link'],
+            height: '100%',
+            tab_focus: false,
+            formats: {
+                alignleft: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img', classes: 'text-left', exact: true },
+                aligncenter: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img', classes: 'text-center', exact: true },
+                alignright: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img', classes: 'text-right', exact: true },
+            },
+            content_style: 'body { max-width: 1170px; margin-left: auto; margin-right: auto; padding: 15px; box-sizing: border-box; } h1 { background-color: #FF6347; padding: 2px 5px; border-radius: 3px; display: inline-block; } h2 { background-color: #FE9900; padding: 2px 5px; border-radius: 3px; display: inline-block; } h3 { background-color: #FFDE59; padding: 2px 5px; border-radius: 3px; display: inline-block; } h4 { background-color: #7DDA58; padding: 2px 5px; border-radius: 3px; display: inline-block; } h5 { background-color: #5DE2E7; padding: 2px 5px; border-radius: 3px; display: inline-block; } h6 { background-color: #E7DDFF; padding: 2px 5px; border-radius: 3px; display: inline-block; } section { border: #060270 2px dashed; margin: 5px; padding: 5px;} div, aside { border: #8D6F64 2px solid; margin: 5px; padding: 5px;} details > *:not(summary) { display: block !important; } details summary { cursor: default !important; font-weight: bold; margin-bottom: 5px; color: #333; }',
+            extended_valid_elements: 'dl[class|id],dt[class|id],dd[class|id],details[open],summary',
+            valid_children: '+body[dl],+dl[dt|dd],+dt[a|abbr|acronym|b|bdo|big|br|button|cite|code|del|dfn|em|i|img|input|ins|kbd|label|map|q|samp|select|small|span|strike|strong|sub|sup|textarea|tt|var|p],+dd[a|abbr|acronym|b|bdo|big|br|button|cite|code|del|dfn|em|i|img|input|ins|kbd|label|map|q|samp|select|small|span|strike|strong|sub|sup|textarea|tt|var|p|ul|ol|dl],+details[summary|p|div|ul|ol|table|h1|h2|h3|h4|h5|h6]',
+            custom_elements: 'dl,dt,dd,details,summary',
+            setup: function(editor) {
+                editor.on('SetContent', function(e) {
+                    openAllDetailsInEditor(editor);
+                });
+            },
+            init_instance_callback: function(editorInstance) {
+                console.log('Iframe: HugeRTE editor initialized inside iframe.');
+                richTextEditorInstance = editorInstance;
 
-        // NEW: Call the function to open details when the editor first loads
-        openAllDetailsInEditor(editorInstance);
+                openAllDetailsInEditor(editorInstance);
 
-        // Expose the instance to the parent window
-        if (window.parent) {
-            window.parent.richTextEditorInstanceFromIframe = editorInstance;
-            console.log("Iframe: HugeRTE instance exposed to parent.");
-        }
+                if (window.parent && typeof window.parent.handleRichTextEditorReady === 'function') {
+                    window.parent.handleRichTextEditorReady(editorInstance);
+                }
 
-        // Handle Tab key
-        editorInstance.on('keydown', (event) => {
-            if (event.key === 'Tab') {
-                event.preventDefault();
-                editorInstance.focus();
+                editorInstance.on('keydown', (event) => {
+                    if (event.key === 'Tab') {
+                        event.preventDefault();
+                        editorInstance.focus();
+                    }
+                });
             }
         });
-
-        // Initial content sync
-        if (window.parent.richTextContent) {
-            editorInstance.setContent(window.parent.richTextContent);
-            console.log("Iframe: Initial HugeRTE content set from parent.");
-            // Note: The 'SetContent' event handler will fire here, so openAllDetailsInEditor() is called automatically.
-        }
+    } else {
+        console.error("Iframe: Parent commanded initialization, but HugeRTE library not loaded!");
     }
-    // --- END MODIFICATION ---
-                            });
-                        }
+};
                     <\/script>
                 </body>
                 </html>
             `);
                 iframeDocument.close();
-
-                // After the iframe content is loaded and the editor is initialized within it,
-                // the iframe's script will assign its editor instance to window.parent.richTextEditorInstanceFromIframe
-                // We can then pick it up here.
-                default_ifr.onload = () => {
-                    console.log("Parent: Iframe finished loading.");
-                    if (default_ifr.contentWindow && default_ifr.contentWindow.richTextEditorInstanceFromIframe) {
-                        richTextEditorInstanceFromIframe = default_ifr.contentWindow.richTextEditorInstanceFromIframe;
-                        console.log("Parent: HugeRTE instance captured by parent.");
-                    } else {
-                        console.warn("Parent: Could not capture HugeRTE instance from iframe. Is HugeRTE initializing correctly inside?");
-                    }
-                };
 
                 // Event listeners for Auto-Clean MSO when switching toggles
                 toggleAutoCleanMsoOnSwitchRichText.addEventListener('change', (event) => {
@@ -7389,6 +7807,68 @@ function openAllDetailsInEditor(editor) {
 
                 // Initial call to set the state of the Clean Mso button on load
                 updateCleanMsoButtonState();
+                
+                // --- Modal Event Listeners ---
+            modalCustomizeHeader.addEventListener('click', () => {
+                modalIsCustomizeExpanded = !modalIsCustomizeExpanded;
+                modalCustomizeContent.classList.toggle('expanded', modalIsCustomizeExpanded);
+                modalCustomizeHeader.classList.toggle('expanded', modalIsCustomizeExpanded);
+            });
+            modalToggleContainerBtn.addEventListener('click', () => { modalUseContainerDiv = !modalUseContainerDiv; updateModalSettingsButtonStates(); updateModalPreview(); });
+            modalToggleTitleBtn.addEventListener('click', () => { modalShowTitle = !modalShowTitle; modalH1TitleInputContainer.style.display = modalShowTitle ? 'block' : 'none'; updateModalSettingsButtonStates(); updateModalPreview(); });
+            modalToggleCssBtn.addEventListener('click', () => { modalEnableCss = !modalEnableCss; updateModalSettingsButtonStates(); updateModalPreview(); });
+            modalH1TitleInput.addEventListener('input', () => {
+                if (modalCurrentLanguage === 'en') modalH1TitleEn = modalH1TitleInput.value; else modalH1TitleFr = modalH1TitleInput.value;
+                updateModalPreview();
+            });
+            modalNoneBylineBtn.addEventListener('click', () => { modalBylineMode = 'none'; updateModalBylineButtonStates(); updateModalPreview(); });
+            modalEnglishBylineBtn.addEventListener('click', () => { modalBylineMode = 'english'; updateModalBylineButtonStates(); updateModalPreview(); });
+            modalFrenchBylineBtn.addEventListener('click', () => { modalBylineMode = 'french'; updateModalBylineButtonStates(); updateModalPreview(); });
+            modalLocalImagesBtn.addEventListener('click', () => { modalImageSourceMode = 'local'; updateModalImageSourceButtonStates(); updateModalPreview(); });
+            modalPreviewImagesBtn.addEventListener('click', () => { modalImageSourceMode = 'preview'; updateModalImageSourceButtonStates(); updateModalPreview(); });
+            modalToggleLiveImagesBtn.addEventListener('click', () => { modalImageSourceMode = 'live'; updateModalImageSourceButtonStates(); updateModalPreview(); });
+            modalLocalUrlsBtn.addEventListener('click', () => { modalUrlSourceMode = 'local'; updateModalUrlSourceButtonStates(); updateModalPreview(); });
+            modalPreviewUrlsBtn.addEventListener('click', () => { modalUrlSourceMode = 'preview'; updateModalUrlSourceButtonStates(); updateModalPreview(); });
+            modalToggleLiveUrlsBtn.addEventListener('click', () => { modalUrlSourceMode = 'live'; updateModalUrlSourceButtonStates(); updateModalPreview(); });
+            modalToggleSectionsBtn.addEventListener('click', () => { modalShowSections = !modalShowSections; updateModalSectionHeadingButtonStates(); updateModalPreview(); });
+            modalToggleHeadingsBtn.addEventListener('click', () => { modalShowHeadings = !modalShowHeadings; updateModalSectionHeadingButtonStates(); updateModalPreview(); });
+            modalWetGcdsToggleBtn.addEventListener('click', () => {
+                const frameworks = ['wet', 'gcds', 'wet+'];
+                const currentIndex = frameworks.indexOf(modalCurrentFramework);
+                modalCurrentFramework = frameworks[(currentIndex + 1) % frameworks.length];
+                updateModalWetGcdsButtonState(); updateModalPreview();
+            });
+            modalLangEnBtn.addEventListener('click', () => { if (modalBylineMode === 'french') modalBylineMode = 'english'; modalCurrentLanguage = 'en'; updateModalLanguageButtonStates(); updateModalPreview(); });
+            modalLangFrBtn.addEventListener('click', () => { if (modalBylineMode === 'english') modalBylineMode = 'french'; modalCurrentLanguage = 'fr'; updateModalLanguageButtonStates(); updateModalPreview(); });
+            modalBreakpointXsBtn.addEventListener('click', () => { modalCurrentBreakpoint = 'xs'; updateModalBreakpointButtonStates(); updateModalPreview(); });
+            modalBreakpointSmBtn.addEventListener('click', () => { modalCurrentBreakpoint = 'sm'; updateModalBreakpointButtonStates(); updateModalPreview(); });
+            modalBreakpointMdBtn.addEventListener('click', () => { modalCurrentBreakpoint = 'md'; updateModalBreakpointButtonStates(); updateModalPreview(); });
+            modalBreakpointFullBtn.addEventListener('click', () => { modalCurrentBreakpoint = 'full'; updateModalBreakpointButtonStates(); updateModalPreview(); });
+
+            function performModalPreviewSearch(forward = true) {
+                const term = modalPreviewSearchInput.value;
+                if (!term || !modalPreviewFrame.contentWindow) return;
+                if (term !== modalLastSearchTerm) modalPreviewFrame.contentWindow.getSelection().removeAllRanges();
+                modalLastSearchTerm = term;
+                modalPreviewFrame.contentWindow.find(term, false, !forward, true, false, false, false);
+            }
+            modalPreviewFindNextBtn.addEventListener('click', () => performModalPreviewSearch(true));
+            modalPreviewFindPrevBtn.addEventListener('click', () => performModalPreviewSearch(false));
+            modalPreviewSearchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); performModalPreviewSearch(true); } });
+
+            exportPrototypeBtn.addEventListener('click', () => {
+                const prototypeHtml = generateFullHtml({
+                    showSections: false, showHeadings: false, useContainerDiv: modalUseContainerDiv, showTitle: modalShowTitle,
+                    imageSourceMode: modalImageSourceMode, bylineMode: modalBylineMode, enableCss: modalEnableCss, urlSourceMode: modalUrlSourceMode,
+                    currentLanguage: modalCurrentLanguage, currentFramework: modalCurrentFramework, h1TitleEn: modalH1TitleEn, h1TitleFr: modalH1TitleFr
+                }, true);
+                const blob = new Blob([prototypeHtml], { type: 'text/html' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'prototype.html';
+                a.click();
+                URL.revokeObjectURL(a.href);
+            });
 
                 // Add browser warning for unsaved changes
                 window.onbeforeunload = function() {
@@ -7399,6 +7879,7 @@ function openAllDetailsInEditor(editor) {
                     // If you return nothing or undefined, the browser will not show a warning.
                 };
             };
+            });
         </script>
 </body>
 
