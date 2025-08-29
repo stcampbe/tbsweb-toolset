@@ -2308,7 +2308,7 @@ previewBtn.addEventListener('click', showPreviewModal);
                         new: '/content/canadasite/fr/gouvernement'
                     }
                 ];
-
+				
                 const prependPatterns = [
                     '/en/treasury-board-secretariat', 'en/treasury-board-secretariat',
                     '/fr/secretariat-conseil-tresor', 'fr/secretariat-conseil-tresor',
@@ -2320,7 +2320,7 @@ previewBtn.addEventListener('click', showPreviewModal);
                 aElements.forEach(a => {
                     let href = a.getAttribute('href');
                     const name = a.getAttribute('name');
-
+					
                     // Case 1: Remove <a> tags that ONLY contain a name attribute (no href)
                     if (name && !href) {
                         const parent = a.parentNode;
@@ -2332,6 +2332,17 @@ previewBtn.addEventListener('click', showPreviewModal);
                         }
                         return; // Skip further processing for this <a> tag
                     }
+					
+					if (a.attributes.length === 0) {
+						const parent = a.parentNode;
+                        if (parent) {
+                            while (a.firstChild) {
+                                parent.insertBefore(a.firstChild, a);
+                            }
+                            parent.removeChild(a);
+                        }
+                        return;
+					}
 
                     // Case 2: Process <a> tags with href
                     if (href) {
@@ -2410,7 +2421,9 @@ previewBtn.addEventListener('click', showPreviewModal);
                     if (a.hasAttribute('rel')) {
                         a.removeAttribute('rel');
                     }
+					
                 });
+				
 
                 // NEW: Handle <img> tags with src attributes containing "/content/dam"
                 const imgElements = tempDiv.querySelectorAll('img');
@@ -2534,7 +2547,7 @@ previewBtn.addEventListener('click', showPreviewModal);
 
                 // 7. Remove/Replace empty tags
                 // Include <section> in elements to check for emptiness now as well
-                const elementsToCheckForEmptiness = Array.from(finalBody.querySelectorAll('p, li, div, span, strong, em, u, b, i, section'));
+                const elementsToCheckForEmptiness = Array.from(finalBody.querySelectorAll('p, ul, li, div, span, strong, em, u, b, i, section, article, code, h1, h2, h3, h4, h5, h6'));
 
                 // Process in reverse to avoid issues with DOM changes affecting iteration
                 for (let i = elementsToCheckForEmptiness.length - 1; i >= 0; i--) {
