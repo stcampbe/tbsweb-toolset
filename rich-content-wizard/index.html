@@ -1263,7 +1263,15 @@
                     </label>
                     <span class="toggle-switch-label text-white text-sm">Auto-Clean MSO</span>
                 </div>
+                <div class="ml-4 p-2 bg-slate-700 rounded-lg flex items-center gap-2">
+                    <label class="toggle-switch is-checked">
+                        <input type="checkbox" id="toggleRichTextStyles" checked>
+                        <span class="toggle-switch-slider"></span>
+                    </label>
+                    <span class="toggle-switch-label text-white text-sm">Guide Markings</span>
+                </div>
             </div>
+            
             <iframe id="default_ifr"></iframe>
         </div>
 
@@ -1357,6 +1365,9 @@
                     <input type="checkbox" id="enable-regex" class="form-checkbox h-5 w-5 text-blue-600 rounded">
                     <span>REGEX</span>
                 </label>
+                <button id="searchReset" class="px-3 py-1 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 font-bold">
+						Reset/Clear
+					</button>
             </div>
         </div>
         <div id="sequence-container" class="flex flex-wrap items-center space-x-4 text-white overflow-hidden max-h-40 opacity-100 transition-all duration-300 ease-in-out mb-1 mt-1">
@@ -1513,7 +1524,12 @@
                     <button id="autoIdBtn" class="px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded-md">
                         Element ID's
                     </button>
-
+                    <button id="figDescBtn" class="px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded-md">
+                        Figure (w/ desc)
+                    </button>
+                    <button id="defListBtn" class="px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded-md">
+                        Definition List
+                    </button>
                     <!-- Footnote List Button -->
                     <button id="footnoteListBtn" class="px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded-md">
                         Footnote List
@@ -1731,6 +1747,8 @@
 
             const autoIdBtn = document.getElementById('autoIdBtn'); // New: Auto-ID button
             const colophonBtn = document.getElementById('colophonBtn'); // New: Colophon button
+            const figDescBtn = document.getElementById('figDescBtn');
+            const defListBtn = document.getElementById('defListBtn'); // New: Footnote List button
             const footnoteListBtn = document.getElementById('footnoteListBtn'); // New: Footnote List button
 
             const undoBtn = document.getElementById('undoBtn');
@@ -1748,6 +1766,47 @@ const frSecToCH4Btn = document.getElementById('frSecToCH4Btn');
 const frSecToCH5Btn = document.getElementById('frSecToCH5Btn');
 const frSecToCH6Btn = document.getElementById('frSecToCH6Btn');
             
+const urlMappings = [{
+                        old: 'https://canada-preview.adobecqms.net/en/treasury-board-secretariat',
+                        new: '/content/canadasite/en/treasury-board-secretariat'
+                    },
+                    {
+                        old: 'https://canada-preview.adobecqms.net/fr/secretariat-conseil-tresor',
+                        new: '/content/canadasite/fr/secretariat-conseil-tresor'
+                    },
+                    {
+                        old: 'https://canada-preview.adobecqms.net/en/government',
+                        new: '/content/canadasite/en/government'
+                    },
+                    {
+                        old: 'https://canada-preview.adobecqms.net/fr/gouvernement',
+                        new: '/content/canadasite/fr/gouvernement'
+                    },
+                    {
+                        old: 'https://www.canada.ca/en/treasury-board-secretariat',
+                        new: '/content/canadasite/en/treasury-board-secretariat'
+                    },
+                    {
+                        old: 'https://www.canada.ca/fr/secretariat-conseil-tresor',
+                        new: '/content/canadasite/fr/secretariat-conseil-tresor'
+                    },
+                    {
+                        old: 'https://www.canada.ca/en/government',
+                        new: '/content/canadasite/en/government'
+                    },
+                    {
+                        old: 'https://www.canada.ca/fr/gouvernement',
+                        new: '/content/canadasite/fr/gouvernement'
+                    }
+                ];
+				
+                const prependPatterns = [
+                    '/en/treasury-board-secretariat', 'en/treasury-board-secretariat',
+                    '/fr/secretariat-conseil-tresor', 'fr/secretariat-conseil-tresor',
+                    '/en/government', 'en/government',
+                    '/fr/gouvernement', 'fr/gouvernement'
+                ];
+
             // Monaco Resizer elements - now applies to panels
             const monacoEditorContainer = document.getElementById('monacoEditorContainer');
             // const panelResizer = document.getElementById('panelResizer'); // Removed: Resizer element
@@ -1766,6 +1825,8 @@ const frSecToCH6Btn = document.getElementById('frSecToCH6Btn');
                 exportHtmlBtn,
                 formatSelectedBtn,
                 autoIdBtn,
+                figDescBtn,
+                defListBtn,
                 footnoteListBtn,
                 colophonBtn,
                 clearAllBtn,
@@ -2275,46 +2336,7 @@ previewBtn.addEventListener('click', showPreviewModal);
                 const parser = new DOMParser(); // Create a new parser instance
                 const tempDiv = parser.parseFromString(htmlString, 'text/html').body; // Parse string into a temporary DOM body
 
-                const urlMappings = [{
-                        old: 'https://canada-preview.adobecqms.net/en/treasury-board-secretariat',
-                        new: '/content/canadasite/en/treasury-board-secretariat'
-                    },
-                    {
-                        old: 'https://canada-preview.adobecqms.net/fr/secretariat-conseil-tresor',
-                        new: '/content/canadasite/fr/secretariat-conseil-tresor'
-                    },
-                    {
-                        old: 'https://canada-preview.adobecqms.net/en/government',
-                        new: '/content/canadasite/en/government'
-                    },
-                    {
-                        old: 'https://canada-preview.adobecqms.net/fr/gouvernement',
-                        new: '/content/canadasite/fr/gouvernement'
-                    },
-                    {
-                        old: 'https://www.canada.ca/en/treasury-board-secretariat',
-                        new: '/content/canadasite/en/treasury-board-secretariat'
-                    },
-                    {
-                        old: 'https://www.canada.ca/fr/secretariat-conseil-tresor',
-                        new: '/content/canadasite/fr/secretariat-conseil-tresor'
-                    },
-                    {
-                        old: 'https://www.canada.ca/en/government',
-                        new: '/content/canadasite/en/government'
-                    },
-                    {
-                        old: 'https://www.canada.ca/fr/gouvernement',
-                        new: '/content/canadasite/fr/gouvernement'
-                    }
-                ];
-				
-                const prependPatterns = [
-                    '/en/treasury-board-secretariat', 'en/treasury-board-secretariat',
-                    '/fr/secretariat-conseil-tresor', 'fr/secretariat-conseil-tresor',
-                    '/en/government', 'en/government',
-                    '/fr/gouvernement', 'fr/gouvernement'
-                ];
+                
 
                 const aElements = tempDiv.querySelectorAll('a');
                 aElements.forEach(a => {
@@ -4208,7 +4230,17 @@ previewBtn.addEventListener('click', showPreviewModal);
                 return body.innerHTML;
             }
 
-
+            window.updateEditorStyles = function(enableCustomStyles) {
+                            if (richTextEditorInstance) {
+                                const editorDoc = richTextEditorInstance.getDoc();
+                                // TinyMCE injects the content_style into a <style> tag with this ID
+                                const customStyleSheet = editorDoc.getElementById('tinymce-custom-content-css'); 
+                                if (customStyleSheet) {
+                                    // Enable or disable the stylesheet without reloading the editor
+                                    customStyleSheet.disabled = !enableCustomStyles;
+                                }
+                            }
+                        };
             /**
              * Function to set the content of the HugeRTE editor.
              * This is called from the parent window.
@@ -4489,8 +4521,60 @@ previewBtn.addEventListener('click', showPreviewModal);
                             detail.removeAttribute('open');
                         });
 
+                        // =========== START: INSERTED URL CLEANING LOGIC ===========
+                        // Clean <a> tag hrefs
+                        doc.querySelectorAll('a[href]').forEach(a => {
+                            let href = a.getAttribute('href');
+                            const originalHref = href;
+
+                            // --- ADDED: Handle Outlook Safelinks FIRST ---
+                            if (href.startsWith('https://can01.safelinks.protection.outlook.com')) {
+                                try {
+                                    const urlObj = new URL(href);
+                                    const actualUrlParam = urlObj.searchParams.get('url');
+                                    if (actualUrlParam) {
+                                        // Decode the actual URL to get the clean link.
+                                        // This updates the 'href' variable for the next cleaning step.
+                                        href = decodeURIComponent(actualUrlParam);
+                                    }
+                                } catch (e) {
+                                    console.error("Error parsing Outlook Safelink URL:", e);
+                                    // If parsing fails, the original safelink href will be used in the next step.
+                                }
+                            }
+                            
+                            // --- EXISTING LOGIC ---
+                            // Now process the (potentially cleaned) href for internal content paths.
+                            if (href.includes('/content/canadasite') || href.includes('/content/dam')) {
+                                const contentPath = href.includes('/content/canadasite') ? '/content/canadasite' : '/content/dam';
+                                const contentIndex = href.indexOf(contentPath);
+                                // If the path is not at the beginning (index > 0), trim preceding characters.
+                                if (contentIndex > 0) {
+                                    href = href.substring(contentIndex);
+                                }
+                            }
+
+                            // Finally, if the href was modified by any step, update the attribute.
+                            if (href !== originalHref) {
+                                a.setAttribute('href', href);
+                            }
+                        });
+
+                        // Clean <img> tag srcs containing /content/dam
+                        doc.querySelectorAll('img[src]').forEach(img => {
+                            let src = img.getAttribute('src');
+                            if (src.includes('/content/dam')) {
+                                const contentIndex = src.indexOf('/content/dam');
+                                // If the path is not at the beginning (index > 0), trim the preceding characters.
+                                if (contentIndex > 0) {
+                                    src = src.substring(contentIndex);
+                                    img.setAttribute('src', src);
+                                }
+                            }
+                        });
+                        // =========== END: INSERTED URL CLEANING LOGIC ===========
+
                         // Step 4: Serialize the cleaned content back into an HTML string.
-                        // We take the content from the <body> because the parser adds <html> and <body> tags.
                         richTextContent = doc.body.innerHTML;
 
                     } catch (e) {
@@ -4516,17 +4600,9 @@ previewBtn.addEventListener('click', showPreviewModal);
                         // Apply Clean Mso Code (includes IMGs now)
                         processedContent = applyCleanMsoCode(processedContent);
                         console.log("Clean MSO Code (including IMGs) applied.");
-                        // Apply URL cleaning
-                        processedContent = applyUrlCleaning(processedContent);
-                        console.log("Clean URLs applied.");
                         // Apply Clean Spaces
                         processedContent = applyAutoSpacing(processedContent);
                         console.log("Clean Spaces applied.");
-                    } else {
-                        // If auto-clean MSO is not checked, still apply URL cleaning on switch.
-                        // URL cleaning is always applied when switching to HTML.
-                        processedContent = applyUrlCleaning(processedContent);
-                        console.log("URL cleaning applied (not part of Auto-Clean MSO, but always on switch).");
                     }
 
                     // 2. Update HTML output content and Monaco editor.
@@ -4550,23 +4626,17 @@ previewBtn.addEventListener('click', showPreviewModal);
                     mainEditorArea.classList.add('panel-visible');
 
                     // 4. Update button styles.
-                    // "Go to HTML" button (toggleEditorViewBtnRichText) is now inactive/hidden.
-                    // Remove all color classes and set to default slate.
                     toggleEditorViewBtnRichText.classList.remove('bg-green-600', 'hover:bg-green-700', 'bg-cyan-700', 'hover:bg-cyan-800');
                     toggleEditorViewBtnRichText.classList.add('bg-slate-800', 'hover:bg-slate-700');
 
-                    // "Go to Rich-Text" button (toggleEditorViewBtnCode) is now active/visible.
-                    // It should be cyan.
                     toggleEditorViewBtnCode.classList.remove('bg-green-600', 'hover:bg-green-700', 'bg-slate-800', 'hover:bg-slate-700');
                     toggleEditorViewBtnCode.classList.add('bg-cyan-700', 'hover:bg-cyan-800');
 
                     currentView = 'code';
                     console.log("Switched to Code View.");
-                    updateCleanMsoButtonState(); // Ensure Clean Mso button state is correct after view switch
+                    updateCleanMsoButtonState();
                 } else { // currentView === 'code'
                     // --- Logic when switching FROM Code TO Rich-Text ---
-                    // No auto-clean MSO should happen when switching TO the Rich-Text editor.
-                    // 1. Get content from Monaco editor.
                     if (monacoEditorInstance) {
                         htmlOutputContent = monacoEditorInstance.getValue();
                         console.log("Syncing from HTML to Rich Text. HTML Output Content length:", htmlOutputContent.length);
@@ -4575,12 +4645,10 @@ previewBtn.addEventListener('click', showPreviewModal);
                         htmlOutputContent = '';
                     }
 
-                    // Protect data attributes BEFORE sending to TinyMCE
                     let contentToSendToRichText = protectDataAttributes(htmlOutputContent);
                     console.log("Data attributes protected before sending to Rich Text editor.");
 
-                    // 2. Update Rich Text content and editor.
-                    richTextContent = contentToSendToRichText; // Use the protected content
+                    richTextContent = contentToSendToRichText;
                     if (default_ifr.contentWindow && default_ifr.contentWindow.setRichEditorContent) {
                         default_ifr.contentWindow.setRichEditorContent(cleanHtmlForRichTextDisplay(richTextContent));
                         console.log("HugeRTE editor updated with HTML content.");
@@ -4588,25 +4656,19 @@ previewBtn.addEventListener('click', showPreviewModal);
                         console.warn("Rich Text Editor not ready for content setting on toggle.");
                     }
 
-                    // 3. Switch panel visibility.
-                    mainEditorArea.classList.remove('panel-visible'); // Hide main editor area
+                    mainEditorArea.classList.remove('panel-visible');
                     mainEditorArea.classList.add('panel-hidden');
                     richtextOutputPanel.classList.remove('panel-hidden');
                     richtextOutputPanel.classList.add('panel-visible');
 
-                    // 4. Update button styles.
-                    // "Go to Rich-Text" button (toggleEditorViewBtnCode) is now inactive/hidden.
-                    // It should be cyan.
                     toggleEditorViewBtnCode.classList.remove('bg-green-600', 'hover:bg-green-700', 'bg-slate-800', 'hover:bg-slate-700');
                     toggleEditorViewBtnCode.classList.add('bg-cyan-700', 'hover:bg-cyan-800');
 
-                    // "Go to HTML" button (toggleEditorViewBtnRichText) is now active/visible.
-                    // Its color depends on the MSO toggle.
-                    updateGoToHtmlButtonColor(); // This function handles its specific coloring.
+                    updateGoToHtmlButtonColor();
 
                     currentView = 'richtext';
                     console.log("Switched to Rich Text View.");
-                    updateCleanMsoButtonState(); // Ensure Clean Mso button state is correct after view switch
+                    updateCleanMsoButtonState();
                 }
             }
 
@@ -4701,7 +4763,17 @@ previewBtn.addEventListener('click', showPreviewModal);
                     monacoEditorInstance.layout();
                 }
             }, 200); // Debounce for window resize, not internal panel resize
+            const toggleRichTextStyles = document.getElementById('toggleRichTextStyles');
+            toggleRichTextStyles.addEventListener('change', (event) => {
+                const isEnabled = event.target.checked;
+                // Visually update the toggle switch
+                event.target.closest('.toggle-switch').classList.toggle('is-checked', isEnabled);
 
+                // Call the function inside the iframe to update the editor's styles
+                if (default_ifr.contentWindow && typeof default_ifr.contentWindow.updateEditorStyles === 'function') {
+                    default_ifr.contentWindow.updateEditorStyles(isEnabled);
+                }
+            });
             /**
              * Displays a modal dialog with a given title and HTML content.
              * Note: This `showModal` function is specifically for the Colophon, and is distinct from `showFootnoteModal`.
@@ -4812,6 +4884,7 @@ previewBtn.addEventListener('click', showPreviewModal);
                         input.value = input.value.substring(0, 4);
                     }
                 });
+                
 
                 // Insert button logic
                 modalInsertBtn.addEventListener('click', () => {
@@ -4867,6 +4940,140 @@ previewBtn.addEventListener('click', showPreviewModal);
                     }, 1500);
                 });
             }
+/**
+ * Displays a modal dialog for configuring and inserting a Figure with description.
+ * @param {HTMLElement} triggeringButton - The button that opened this modal.
+ * @param {string} originalButtonText - The original text of the triggering button.
+ */
+function showFigureModal(triggeringButton, originalButtonText) {
+    const figureModalContentHtml = `
+        <div class="flex flex-col space-y-4">
+            <div>
+                <span class="text-sm font-medium text-gray-200 mr-2">Language:</span>
+                <div class="button-group inline-flex">
+                    <button id="figLangEnglishBtn" class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50 font-bold">English</button>
+                    <button id="figLangFrenchBtn" class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50 font-bold">French</button>
+                </div>
+            </div>
+            <div>
+                <label for="figTitleInput" class="block text-sm font-medium text-gray-200">Title (figcaption):</label>
+                <input type="text" id="figTitleInput" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., Figure 1: Annual Growth Rate">
+            </div>
+            <div>
+                <label for="figNumInput" class="block text-sm font-medium text-gray-200">Figure # (summary):</label>
+                <input type="text" id="figNumInput" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., Figure 1">
+            </div>
+            <div>
+                <label for="figSrcInput" class="block text-sm font-medium text-gray-200">AEM image source:</label>
+                <input type="text" id="figSrcInput" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., /content/dam/figure1.png">
+            </div>
+            <div>
+                <label for="figAltInput" class="block text-sm font-medium text-gray-200">Image alt text:</label>
+                <input type="text" id="figAltInput" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., Bar chart showing annual growth...">
+            </div>
+            <p>NOTE: Placeholder text description will be inserted. Manually place content in the editor.</p>
+        </div>
+    `;
+
+    const modalOverlay = document.createElement('div');
+    modalOverlay.className = 'modal-overlay';
+    modalOverlay.innerHTML = `
+        <div class="modal-content">
+            <h3>Insert Figure (w/ desc)</h3>
+            <div id="modalBody">${figureModalContentHtml}</div>
+            <div class="flex justify-end mt-4 space-x-2">
+                <button id="modalCancelFigBtn" class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600">Cancel</button>
+                <button id="modalInsertFigBtn" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">Insert</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modalOverlay);
+
+    function closeModalAndReEnableButtons() {
+        modalOverlay.remove();
+        triggeringButton.removeAttribute('data-temp-active');
+        triggeringButton.textContent = originalButtonText;
+        triggeringButton.classList.remove('bg-green-500', 'hover:bg-green-600');
+        triggeringButton.classList.add('bg-slate-600', 'hover:bg-slate-500');
+        updateAllInteractiveButtonStates();
+    }
+
+    document.getElementById('modalCancelFigBtn').addEventListener('click', closeModalAndReEnableButtons);
+
+    const figLangEnglishBtn = document.getElementById('figLangEnglishBtn');
+    const figLangFrenchBtn = document.getElementById('figLangFrenchBtn');
+    const modalInsertFigBtn = document.getElementById('modalInsertFigBtn');
+
+    let selectedLanguage = 'English';
+
+    function updateButtonActiveState(buttons, activeBtn) {
+        buttons.forEach(btn => btn.classList.remove('active', 'bg-indigo-600'));
+        activeBtn.classList.add('active', 'bg-indigo-600');
+    }
+
+    updateButtonActiveState([figLangEnglishBtn, figLangFrenchBtn], figLangEnglishBtn);
+
+    figLangEnglishBtn.addEventListener('click', () => {
+        selectedLanguage = 'English';
+        updateButtonActiveState([figLangEnglishBtn, figLangFrenchBtn], figLangEnglishBtn);
+    });
+
+    figLangFrenchBtn.addEventListener('click', () => {
+        selectedLanguage = 'French';
+        updateButtonActiveState([figLangEnglishBtn, figLangFrenchBtn], figLangFrenchBtn);
+    });
+
+    modalInsertFigBtn.addEventListener('click', () => {
+        const title = document.getElementById('figTitleInput').value.trim() || '<mark>[Figure title]</mark>';
+        const figNum = document.getElementById('figNumInput').value.trim() || '<mark>[Figure #]</mark>';
+        const imgSrc = document.getElementById('figSrcInput').value.trim() || '/content/dam/...';
+        const altText = document.getElementById('figAltInput').value.trim() || '[alt text]';
+
+        const altSuffix = selectedLanguage === 'English' ? 'Text version below:' : 'Version textuelle en bas :';
+        const summaryText = selectedLanguage === 'English' ? 'Text version' : 'Version textuelle';
+
+        const figureHtml = `<figure>
+    <figcaption><strong>${title}</strong></figcaption>
+    <img class="img-responsive center-block" src="${imgSrc}" alt="${altText}. ${altSuffix}">
+    <details>
+        <summary data-toggle="{&quot;print&quot;:&quot;on&quot;}">${figNum} - ${summaryText}</summary>
+        <p><mark>[Insert text description]</mark></p>
+    </details>
+</figure>`;
+
+        if (monacoEditorInstance) {
+            monacoEditorInstance.trigger('keyboard', 'type', { text: figureHtml });
+            
+            // *** THE FIX IS HERE ***
+            // Delay the format command slightly to allow the editor to update its content first.
+            setTimeout(() => {
+                autoFormatBtn.click();
+            }, 100); 
+        }
+        
+        closeModalAndReEnableButtons();
+
+        triggeringButton.textContent = 'Inserted!';
+        triggeringButton.classList.add('bg-green-500', 'hover:bg-green-600');
+        triggeringButton.classList.remove('bg-slate-600', 'hover:bg-slate-500');
+        setTimeout(() => {
+            triggeringButton.textContent = originalButtonText;
+            triggeringButton.classList.remove('bg-green-500', 'hover:bg-green-600');
+            triggeringButton.classList.add('bg-slate-600', 'hover:bg-slate-500');
+        }, 1500);
+    });
+}
+
+// Event listener for the "Figure (w/ desc)" button
+figDescBtn.addEventListener('click', () => {
+    const originalText = figDescBtn.textContent;
+    figDescBtn.textContent = 'Opening...';
+    figDescBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+    figDescBtn.classList.remove('bg-slate-600', 'hover:bg-slate-500');
+    figDescBtn.setAttribute('data-temp-active', 'true');
+    updateAllInteractiveButtonStates();
+    showFigureModal(figDescBtn, originalText);
+});
 
             /**
              * Displays a modal dialog for configuring and inserting footnote lists.
@@ -5398,6 +5605,7 @@ previewBtn.addEventListener('click', showPreviewModal);
 
     // --- Switch to Validation View ---
     openValidationBtn.addEventListener('click', () => {
+        searchReset.click();
         // Show Validation results
         validationResultsView.classList.remove('view-hidden');
         openValidationBtn.classList.add('active');
@@ -5407,6 +5615,7 @@ previewBtn.addEventListener('click', showPreviewModal);
         openSearchControlsBtn.classList.remove('active');
     });
 validateNowBtn.addEventListener('click', async () => {
+    searchReset.click();
     // 1. Switch the view to "Validation Results"
     openValidationBtn.click();
 
@@ -6332,6 +6541,43 @@ monacoEditorInstance.addCommand(monaco.KeyCode.KeyY | monaco.KeyMod.CtrlCmd, () 
                     highlightAllCheckbox.addEventListener('change', updateDecorations);
                     findInput.addEventListener('input', () => resetSearchState(true));
 
+                    searchReset.addEventListener('click', () => {
+                        // Reset input fields
+                        findInput.value = '';
+                        replaceInput.value = '';
+                        
+                        // Reset dropdowns
+                        tagDropdown.value = 'all';
+                        idDropdown.value = 'all';
+
+                        // Reset checkboxes and trigger UI updates
+                        if (matchCaseCheckbox.checked) {
+                            matchCaseCheckbox.checked = false;
+                        }
+                        if (highlightAllCheckbox.checked) {
+                            highlightAllCheckbox.checked = false;
+                        }
+                        if (enableRegexCheckbox.checked) {
+                            enableRegexCheckbox.checked = false;
+                            toggleSequenceVisibility();
+                            toggleRegexBorder();
+                        }
+                        if (sequenceCheckbox.checked) {
+                            sequenceCheckbox.checked = false;
+                            sequenceRangeContainer.classList.add('opacity-0', 'pointer-events-none');
+                        }
+
+                        // Reset sequence inputs
+                        startIndexInput.value = '1';
+                        endIndexInput.value = '';
+
+                        // Clear match count display
+                        matchCountSpan.innerHTML = '';
+
+                        // Force a full reset of the search state (which also clears decorations)
+                        resetSearchState(true);
+                    });
+
                     // The original replace button is now Replace All
                     replaceAllButton.addEventListener('click', () => {
                         const findText = findInput.value;
@@ -6614,8 +6860,8 @@ monacoEditorInstance.addCommand(monaco.KeyCode.KeyY | monaco.KeyMod.CtrlCmd, () 
                         console.log("Clean MSO Tables applied by Clean MSO button.");
                         currentContent = applyCleanMsoCode(currentContent);
                         console.log("Clean MSO Code (including IMGs) applied by Clean MSO button.");
-                        currentContent = applyUrlCleaning(currentContent);
-                        console.log("Clean URLs applied by Clean Mso button.");
+                        //currentContent = applyUrlCleaning(currentContent);
+                        //console.log("Clean URLs applied by Clean Mso button.");
                         currentContent = applyAutoSpacing(currentContent);
                         console.log("Clean Spaces applied by Clean MSO button.");
 
@@ -6745,98 +6991,121 @@ monacoEditorInstance.addCommand(monaco.KeyCode.KeyY | monaco.KeyMod.CtrlCmd, () 
                     </form>
                     <script type="text/javascript">
                         console.log("Iframe script started executing.");
-                        // Global variable to hold the HugeRTE editor instance
-                        // Flag to prevent infinite loop when updating HugeRTE from CodeMirror
+                        
+                        let richTextEditorInstance;
                         let isUpdatingFromCodeMirror = false;
 
-                        /**
-                         * Function to set the content of the HugeRTE editor.
-                         * This is called from the parent window.
-                         */
+                        // Add this constant at the top of the iframe's script
+                        const defaultContentStyle = 'body { max-width: 1170px; margin-left: auto; margin-right: auto; padding: 15px; box-sizing: border-box; } h1, .h1 { background-color: #FF6347; padding: 2px 5px; border-radius: 3px;} h2, .h2 { background-color: #FE9900; padding: 2px 5px; border-radius: 3px;} h3, .h3 { background-color: #FFDE59; padding: 2px 5px; border-radius: 3px;} h4, .h4 { background-color: #7DDA58; padding: 2px 5px; border-radius: 3px;} h5, .h5 { background-color: #5DE2E7; padding: 2px 5px; border-radius: 3px;} h6, .h6 { background-color: #E7DDFF; padding: 2px 5px; border-radius: 3px;} section { border: #060270 2px dashed; margin: 5px; padding: 5px;} figure { display: block !important; border: #1e81b0 2px solid; margin: 5px; padding: 5px;} div { border: #e28743 2px solid; margin: 5px; padding: 5px;} aside { border: #8D6F64 2px solid; margin: 5px; padding: 5px;} details > *:not(summary) { display: block !important; } dl { border: #A270C5 2px solid; margin: 5px; padding: 5px; } details { border: #42902C 2px solid; margin: 5px; padding: 5px; } details summary { cursor: default !important; font-weight: bold; margin-bottom: 5px; color: #333; } time { background-color: #ffd6f9; padding: 2px 5px; border-radius: 3px;} div.well { background-color: #dadada; }';
+
+                        // Function to set content, called from the parent
                         window.setRichEditorContent = function(content) {
-                            // console.log("Iframe: setRichEditorContent called by parent.");
                             if (richTextEditorInstance && !isUpdatingFromCodeMirror) {
                                 isUpdatingFromCodeMirror = true;
                                 richTextEditorInstance.setContent(content);
-                                richTextEditorInstance.focus(); // Re-focus the rich editor after content update
-                                // console.log('Iframe: HugeRTE updated from parent.');
+                                richTextEditorInstance.focus();
                                 isUpdatingFromCodeMirror = false;
                             } else {
-                                console.warn('Iframe: HugeRTE editor not yet initialized or isUpdatingFromCodeMirror is true. Content will be set once ready.');
+                                console.warn('Iframe: HugeRTE editor not yet initialized or isUpdatingFromCodeMirror is true.');
                             }
                         };
 
-                        /**
-                         * Function to get the content from the HugeRTE editor.
-                         * This is called from the parent window.
-                         */
+                        // Function to get content, called from the parent
                         window.getRichEditorContent = function() {
-                            // console.log("Iframe: getRichEditorContent called by parent.");
                             if (richTextEditorInstance) {
-                                const content = richTextEditorInstance.getContent();
-                                // console.log("Iframe: HugeRTE content requested by parent.");
-                                return content;
-                            } else {
-                                console.warn('Iframe: HugeRTE editor not yet initialized. Cannot get content.');
-                                return '';
+                                return richTextEditorInstance.getContent();
+                            }
+                            console.warn('Iframe: HugeRTE editor not yet initialized. Cannot get content.');
+                            return '';
+                        };
+
+                        // Function to toggle custom styles, called from the parent
+                        window.updateEditorStyles = function(enableCustomStyles) {
+                            if (richTextEditorInstance) {
+                                const editorDoc = richTextEditorInstance.getDoc();
+                                if (!editorDoc) return;
+
+                                // First, try to find the stylesheet by its expected ID.
+                                let customStyleSheet = editorDoc.getElementById('tinymce-custom-content-css');
+
+                                // If the stylesheet is not found by ID (which is the likely issue),
+                                // we'll try a fallback method to find it based on its content.
+                                if (!customStyleSheet) {
+                                    const styleSheets = editorDoc.head.querySelectorAll('style');
+                                    // Iterate through the stylesheets to find the one containing our custom styles.
+                                    // We'll look for a unique color from our style string.
+                                    for (let i = 0; i < styleSheets.length; i++) {
+                                        if (styleSheets[i].innerHTML.includes('FF6347')) { // A unique color from your H1 style
+                                            customStyleSheet = styleSheets[i];
+                                            // To make future toggles faster, we'll assign the ID now that we've found it.
+                                            customStyleSheet.id = 'tinymce-custom-content-css';
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                // If we found the stylesheet (either by ID or by the fallback method), toggle it.
+                                if (customStyleSheet) {
+                                    customStyleSheet.disabled = !enableCustomStyles;
+                                }
                             }
                         };
-						// Place the helper function here, before the hugerte.init call
-function openAllDetailsInEditor(editor) {
-    const editorDoc = editor.getDoc();
-    if (editorDoc) {
-        const detailsElements = editorDoc.querySelectorAll('details');
-        detailsElements.forEach(el => {
-            el.setAttribute('open', '');
-        });
-    }
-}
-                        // Expose an initialization function to be called by the parent
-window.initializeEditor = function() {
-    if (typeof hugerte !== 'undefined') {
-        console.log("Iframe: Parent commanded initialization. Initializing editor.");
-        hugerte.init({
-            selector: '#richEditor',
-            toolbar: 'undo redo styles bold italic alignleft aligncenter alignright numlist bullist link table',
-            plugins: ['table', 'lists', 'link'],
-            height: '100%',
-            tab_focus: false,
-            formats: {
-                alignleft: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img', classes: 'text-left', exact: true },
-                aligncenter: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img', classes: 'text-center', exact: true },
-                alignright: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img', classes: 'text-right', exact: true },
-            },
-            content_style: 'body { max-width: 1170px; margin-left: auto; margin-right: auto; padding: 15px; box-sizing: border-box; } h1 { background-color: #FF6347; padding: 2px 5px; border-radius: 3px; display: inline-block; } h2 { background-color: #FE9900; padding: 2px 5px; border-radius: 3px; display: inline-block; } h3 { background-color: #FFDE59; padding: 2px 5px; border-radius: 3px; display: inline-block; } h4 { background-color: #7DDA58; padding: 2px 5px; border-radius: 3px; display: inline-block; } h5 { background-color: #5DE2E7; padding: 2px 5px; border-radius: 3px; display: inline-block; } h6 { background-color: #E7DDFF; padding: 2px 5px; border-radius: 3px; display: inline-block; } section { border: #060270 2px dashed; margin: 5px; padding: 5px;} div, aside { border: #8D6F64 2px solid; margin: 5px; padding: 5px;} details > *:not(summary) { display: block !important; } details summary { cursor: default !important; font-weight: bold; margin-bottom: 5px; color: #333; }',
-            extended_valid_elements: 'dl[class|id],dt[class|id],dd[class|id],details[open],summary',
-            valid_children: '+body[dl],+dl[dt|dd],+dt[a|abbr|acronym|b|bdo|big|br|button|cite|code|del|dfn|em|i|img|input|ins|kbd|label|map|q|samp|select|small|span|strike|strong|sub|sup|textarea|tt|var|p],+dd[a|abbr|acronym|b|bdo|big|br|button|cite|code|del|dfn|em|i|img|input|ins|kbd|label|map|q|samp|select|small|span|strike|strong|sub|sup|textarea|tt|var|p|ul|ol|dl],+details[summary|p|div|ul|ol|table|h1|h2|h3|h4|h5|h6]',
-            custom_elements: 'dl,dt,dd,details,summary',
-            setup: function(editor) {
-                editor.on('SetContent', function(e) {
-                    openAllDetailsInEditor(editor);
-                });
-            },
-            init_instance_callback: function(editorInstance) {
-                console.log('Iframe: HugeRTE editor initialized inside iframe.');
-                richTextEditorInstance = editorInstance;
 
-                openAllDetailsInEditor(editorInstance);
+                        // Helper function to open all <details> tags in the editor
+                        function openAllDetailsInEditor(editor) {
+                            const editorDoc = editor.getDoc();
+                            if (editorDoc) {
+                                const detailsElements = editorDoc.querySelectorAll('details');
+                                detailsElements.forEach(el => {
+                                    el.setAttribute('open', '');
+                                });
+                            }
+                        }
 
-                if (window.parent && typeof window.parent.handleRichTextEditorReady === 'function') {
-                    window.parent.handleRichTextEditorReady(editorInstance);
-                }
-
-                editorInstance.on('keydown', (event) => {
-                    if (event.key === 'Tab') {
-                        event.preventDefault();
-                        editorInstance.focus();
-                    }
-                });
-            }
-        });
-    } else {
-        console.error("Iframe: Parent commanded initialization, but HugeRTE library not loaded!");
-    }
-};
+                        // Main initialization function, called by the parent
+                        window.initializeEditor = function() {
+                            if (typeof hugerte !== 'undefined') {
+                                console.log("Iframe: Parent commanded initialization. Initializing editor.");
+                                hugerte.init({
+                                    selector: '#richEditor',
+                                    toolbar: 'undo redo styles bold italic alignleft aligncenter alignright numlist bullist link table',
+                                    plugins: ['table', 'lists', 'link'],
+                                    height: '100%',
+                                    tab_focus: false,
+                                    formats: {
+                                        alignleft: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img', classes: 'text-left', exact: true },
+                                        aligncenter: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img', classes: 'text-center', exact: true },
+                                        alignright: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img', classes: 'text-right', exact: true },
+                                    },
+                                    // *** THIS IS THE FIX: Use the constant here ***
+                                    content_style: defaultContentStyle,
+                                     extended_valid_elements: 'dl[class|id],dt[class|id],dd[class|id],details[open|class|id],summary[class|id]',
+                                    valid_children: '+body[dl],+dl[dt|dd],+dt[a|abbr|acronym|b|bdo|big|br|button|cite|code|del|dfn|em|i|img|input|ins|kbd|label|map|q|samp|select|small|span|strike|strong|sub|sup|textarea|tt|var|p],+dd[a|abbr|acronym|b|bdo|big|br|button|cite|code|del|dfn|em|i|img|input|ins|kbd|label|map|q|samp|select|small|span|strike|strong|sub|sup|textarea|tt|var|p|ul|ol|dl],+details[summary|p|div|ul|ol|table|h1|h2|h3|h4|h5|h6]',
+                                    custom_elements: 'dl,dt,dd,details,summary',
+                                    setup: function(editor) {
+                                        editor.on('SetContent', function(e) {
+                                            openAllDetailsInEditor(editor);
+                                        });
+                                    },
+                                    init_instance_callback: function(editorInstance) {
+                                        console.log('Iframe: HugeRTE editor initialized inside iframe.');
+                                        richTextEditorInstance = editorInstance;
+                                        openAllDetailsInEditor(editorInstance);
+                                        if (window.parent && typeof window.parent.handleRichTextEditorReady === 'function') {
+                                            window.parent.handleRichTextEditorReady(editorInstance);
+                                        }
+                                        editorInstance.on('keydown', (event) => {
+                                            if (event.key === 'Tab') {
+                                                event.preventDefault();
+                                                editorInstance.focus();
+                                            }
+                                        });
+                                    }
+                                });
+                            } else {
+                                console.error("Iframe: Parent commanded initialization, but HugeRTE library not loaded!");
+                            }
+                        };
                     <\/script>
                 </body>
                 </html>
@@ -7337,7 +7606,153 @@ window.initializeEditor = function() {
                 `;
                     showModal('Insert Colophon', colophonHtmlContent, colophonBtn, originalText); // Pass original text
                 });
+                
+                
 
+              defListBtn.addEventListener('click', () => {
+    if (!monacoEditorInstance) return;
+
+    const originalText = defListBtn.textContent;
+    const htmlString = monacoEditorInstance.getValue();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlString, 'text/html');
+    const body = doc.body;
+
+    // MODIFIED: Also ignore <dl> tags inside <aside> elements
+    const allDls = Array.from(body.querySelectorAll('dl')).filter(dl => !dl.closest('table') && !dl.closest('aside'));
+
+    if (allDls.length === 0) {
+        defListBtn.textContent = 'ERROR: Insert <dl> tag first!';
+        defListBtn.classList.add('bg-red-500', 'hover:bg-red-600');
+        defListBtn.classList.remove('bg-slate-600', 'hover:bg-slate-500');
+        defListBtn.disabled = true;
+        setTimeout(() => {
+            defListBtn.textContent = originalText;
+            defListBtn.classList.remove('bg-red-500', 'hover:bg-red-600');
+            defListBtn.classList.add('bg-slate-600', 'hover:bg-slate-500');
+            defListBtn.disabled = false;
+        }, 2500);
+        return;
+    }
+
+    const unformattedDls = allDls.filter(dl => dl.querySelector(':scope > p, :scope > h1, :scope > h2, :scope > h3, :scope > h4, :scope > h5, :scope > h6'));
+
+    if (unformattedDls.length === 0) {
+        defListBtn.textContent = 'Already formatted!';
+        defListBtn.classList.add('bg-blue-500', 'hover:bg-blue-600');
+        defListBtn.classList.remove('bg-slate-600', 'hover:bg-slate-500');
+        defListBtn.disabled = true;
+        setTimeout(() => {
+            defListBtn.textContent = originalText;
+            defListBtn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+            defListBtn.classList.add('bg-slate-600', 'hover:bg-slate-500');
+            defListBtn.disabled = false;
+        }, 2000);
+        return;
+    }
+    
+    defListBtn.textContent = 'Formatting...';
+    defListBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+    defListBtn.classList.remove('bg-slate-600', 'hover:bg-slate-500');
+    defListBtn.disabled = true;
+    defListBtn.setAttribute('data-temp-active', 'true');
+    updateAllInteractiveButtonStates();
+
+    try {
+        unformattedDls.forEach(dl => {
+            const newChildren = [];
+            let currentDdNodes = [];
+
+            const flushDdContent = () => {
+                if (currentDdNodes.length > 0) {
+                    const dd = doc.createElement('dd');
+                    currentDdNodes.forEach(node => dd.appendChild(node));
+                    newChildren.push(dd);
+                    currentDdNodes = [];
+                }
+            };
+
+            const originalChildren = Array.from(dl.childNodes);
+
+            originalChildren.forEach(node => {
+                let isDtPattern = false;
+                
+                if (node.nodeType === Node.ELEMENT_NODE) {
+                    const tagName = node.tagName.toLowerCase();
+                    if (/^h[1-6]$/.test(tagName)) {
+                        isDtPattern = true;
+                    } 
+                    else if (tagName === 'p') {
+                        const significantChildren = Array.from(node.childNodes).filter(n =>
+                            n.nodeType === Node.ELEMENT_NODE || (n.nodeType === Node.TEXT_NODE && n.textContent.trim() !== '')
+                        );
+                        if (significantChildren.length === 1 && significantChildren[0].tagName?.toLowerCase() === 'strong') {
+                            isDtPattern = true;
+                        }
+                    }
+                }
+                
+                if (isDtPattern) {
+                    flushDdContent();
+                    const dt = doc.createElement('dt');
+                    let contentSourceNode = node;
+                    if (node.tagName.toLowerCase() === 'p') {
+                        contentSourceNode = node.querySelector('strong');
+                    }
+                    while (contentSourceNode.firstChild) {
+                        dt.appendChild(contentSourceNode.firstChild);
+                    }
+                    newChildren.push(dt);
+                } else {
+                    if (node.nodeType === Node.ELEMENT_NODE || (node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== '')) {
+                        currentDdNodes.push(node);
+                    }
+                }
+            });
+
+            flushDdContent();
+            dl.innerHTML = '';
+            newChildren.forEach(newNode => dl.appendChild(newNode));
+        });
+
+        body.querySelectorAll('dd').forEach(dd => {
+            const significantChildren = Array.from(dd.childNodes).filter(node => 
+                node.nodeType === Node.ELEMENT_NODE || (node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== '')
+            );
+            if (significantChildren.length === 1 && significantChildren[0].nodeType === Node.ELEMENT_NODE && significantChildren[0].tagName.toLowerCase() === 'p') {
+                const p = significantChildren[0];
+                while (p.firstChild) {
+                    dd.appendChild(p.firstChild);
+                }
+                dd.removeChild(p);
+            }
+        });
+
+        const rawUpdatedHtml = body.innerHTML;
+        const formattedHtml = html_beautify(rawUpdatedHtml, {
+            indent_size: 4,
+            extra_liners: ['dl', 'dt', 'dd', 'p', 'ul', 'ol', 'li'] 
+        });
+
+        monacoEditorInstance.setValue(formattedHtml);
+        defListBtn.textContent = 'Formatted!';
+
+    } catch (error) {
+        console.error("Error formatting definition lists:", error);
+        defListBtn.textContent = 'Error!';
+        defListBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+        defListBtn.classList.add('bg-red-500', 'hover:bg-red-600');
+    }
+
+    setTimeout(() => {
+        defListBtn.textContent = originalText;
+        defListBtn.classList.remove('bg-green-500', 'hover:bg-green-600', 'bg-red-500', 'hover:bg-red-600');
+        defListBtn.classList.add('bg-slate-600', 'hover:bg-slate-500');
+        defListBtn.disabled = false;
+        defListBtn.removeAttribute('data-temp-active');
+        updateAllInteractiveButtonStates();
+    }, 1500);
+});
                 // Footnote List button event listener
                 footnoteListBtn.addEventListener('click', () => {
                     const originalText = footnoteListBtn.textContent;
@@ -7495,7 +7910,7 @@ window.initializeEditor = function() {
 
                     relevantHeadings.forEach(h => {
                         const hLevel = parseInt(h.tagName.substring(1), 10);
-                        const txt = h.textContent.trim();
+                        const txt = h.innerHTML.trim();
                         const id = h.id;
                         const liClass = pageTocLiClassMap.get(id) || '';
                         const aClass = pageTocALinkClassMap.get(id) || '';
@@ -7505,7 +7920,7 @@ window.initializeEditor = function() {
                         if (liClass) li.setAttribute('class', liClass);
                         const a = doc.createElement('a');
                         a.setAttribute('href', `#${id}`);
-                        a.textContent = txt;
+                        a.innerHTML = txt;
                         if (aClass) a.setAttribute('class', aClass);
                         li.appendChild(a);
 
@@ -7713,7 +8128,7 @@ window.initializeEditor = function() {
                             const a = doc.createElement('a');
                             const hrefTargetId = el.id;
                             a.href = `#${hrefTargetId}`;
-                            a.textContent = el.textContent.trim();
+                            a.innerHTML = el.innerHTML.trim();
 
                             if (liClassMap.has(hrefTargetId)) {
                                 li.setAttribute('class', liClassMap.get(hrefTargetId));
