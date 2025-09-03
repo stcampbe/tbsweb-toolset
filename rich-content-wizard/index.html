@@ -2324,7 +2324,95 @@ previewBtn.addEventListener('click', showPreviewModal);
                 // Ensure content passed to rich text editor is also decoded
                 return decodeHtmlEntities(content);
             }
+            /**
+             * Protects gcds-* tags by converting them to styled divs that display the original tag and attributes
+             * in a non-editable block, while preserving the inner content for rich text editing.
+             * This version correctly handles nested tags and escapes attribute values.
+             */
+            function protectGcdsTags(htmlString) {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(htmlString, 'text/html');
+                const allElements = doc.body.querySelectorAll('*');
 
+                for (let i = allElements.length - 1; i >= 0; i--) {
+                    const el = allElements[i];
+                    if (el.tagName.toLowerCase().startsWith('gcds-')) {
+                        const tagName = el.tagName.toLowerCase();
+                        const innerContent = el.innerHTML;
+                        
+                        const attributes = {};
+                        let attributesDisplayHtml = '';
+                        for (const attr of el.attributes) {
+                            attributes[attr.name] = attr.value;
+                            // Create a simple text representation of the attribute for display
+                            attributesDisplayHtml += ` ${attr.name}="<span style='color: #c586c0;'>${attr.value}</span>"`;
+                        }
+                        const attributesJsonString = JSON.stringify(attributes);
+                        // *** FIX: HTML-encode the quotes in the JSON string to prevent breaking the attribute ***
+                        const safeAttributesJson = attributesJsonString.replace(/"/g, '&quot;');
+
+                        const wrapperDiv = doc.createElement('div');
+                        wrapperDiv.setAttribute('data-is-gcds-wrapper', 'true');
+                        wrapperDiv.setAttribute('data-gcds-tag-name', tagName);
+                        wrapperDiv.setAttribute('data-gcds-attributes-json', safeAttributesJson);
+                        
+                        // Create the non-editable info block that displays the tag and its attributes.
+                        const infoBlockHtml = `<div contenteditable="false" style="background-color: #2d3748; border: 1px solid #4a5568; border-radius: 4px; padding: 6px; font-family: monospace; font-size: 13px; margin-bottom: 8px; color: #a0aec0; user-select: none;">&lt;<span style="color: #569cd6;">${tagName}</span>${attributesDisplayHtml}&gt;</div>`;
+                        
+                        // The wrapper's content is the info block, followed by the original (now editable) inner content.
+                        wrapperDiv.innerHTML = infoBlockHtml + innerContent; 
+                        
+                        if (el.parentNode) {
+                            el.parentNode.replaceChild(wrapperDiv, el);
+                        }
+                    }
+                }
+                return doc.body.innerHTML;
+            }
+
+            /**
+             * Restores gcds-* tags from their protective div wrappers. It removes the info block,
+             * reconstructs the original tag with its preserved attributes, and populates it
+             * with the (potentially edited) inner content from the wrapper.
+             */
+            function restoreGcdsTags(htmlString) {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(htmlString, 'text/html');
+                const wrappers = doc.body.querySelectorAll('div[data-is-gcds-wrapper="true"]');
+
+                for (let i = wrappers.length - 1; i >= 0; i--) {
+                    const wrapper = wrappers[i];
+                    const tagName = wrapper.getAttribute('data-gcds-tag-name');
+                    // The browser automatically decodes &quot; back to " when we get the attribute value.
+                    const attributesJson = wrapper.getAttribute('data-gcds-attributes-json');
+                    
+                    // Remove the non-editable info block before capturing the inner content.
+                    const infoBlock = wrapper.querySelector('div[contenteditable="false"]');
+                    if (infoBlock) {
+                        infoBlock.remove();
+                    }
+                    const innerContent = wrapper.innerHTML; // Get the user-edited content.
+
+                    if (!tagName || !attributesJson) continue;
+
+                    try {
+                        const newGcdsElement = doc.createElement(tagName);
+                        // This will now parse correctly because of the escaped quotes.
+                        const attributes = JSON.parse(attributesJson); 
+                        for (const attr in attributes) {
+                            newGcdsElement.setAttribute(attr, attributes[attr]);
+                        }
+                        newGcdsElement.innerHTML = innerContent;
+
+                        if (wrapper.parentNode) {
+                            wrapper.parentNode.replaceChild(newGcdsElement, wrapper);
+                        }
+                    } catch (e) {
+                        console.error("Failed to restore GCDS tag. JSON was:", attributesJson, "Error:", e);
+                    }
+                }
+                return doc.body.innerHTML;
+            }
             /**
              * Applies URL cleaning to HTML content.
              * Converts specific absolute URLs to relative paths and removes target/rel attributes from <a> tags.
@@ -4498,164 +4586,104 @@ previewBtn.addEventListener('click', showPreviewModal);
                 console.log("Toggle Editor View triggered. Current view:", currentView);
                 if (currentView === 'richtext') {
                     // --- Logic when switching FROM Rich-Text TO Code ---
-                    // 1. Get content from Rich-Text editor.
                     if (default_ifr.contentWindow && default_ifr.contentWindow.getRichEditorContent) {
                         richTextContent = default_ifr.contentWindow.getRichEditorContent();
-                        console.log("Syncing from Rich Text to HTML. Rich Text Content length:", richTextContent.length);
                     } else {
-                        console.warn("Rich Text Editor not ready for content retrieval on toggle. Using empty string.");
                         richTextContent = '';
                     }
 
-                    // ================== NEW DOM-BASED SOLUTION ==================
+                    // *** THIS IS THE FIX: Restore GCDS tags immediately after getting content from the editor ***
+                    richTextContent = restoreGcdsTags(richTextContent);
+
+                    // Now, perform other cleaning on the fully restored HTML
                     try {
-                        // Step 1: Parse the HTML string into a DOM document
                         const parser = new DOMParser();
                         const doc = parser.parseFromString(richTextContent, 'text/html');
 
-                        // Step 2: Find all <details> elements in the parsed document
-                        const allDetails = doc.querySelectorAll('details');
+                        // Clean <details> tags
+                        doc.querySelectorAll('details').forEach(detail => detail.removeAttribute('open'));
 
-                        // Step 3: Loop through them and remove the 'open' attribute
-                        allDetails.forEach(detail => {
-                            detail.removeAttribute('open');
-                        });
-
-                        // =========== START: INSERTED URL CLEANING LOGIC ===========
-                        // Clean <a> tag hrefs
+                        // URL Cleaning logic
                         doc.querySelectorAll('a[href]').forEach(a => {
                             let href = a.getAttribute('href');
                             const originalHref = href;
-
-                            // --- ADDED: Handle Outlook Safelinks FIRST ---
                             if (href.startsWith('https://can01.safelinks.protection.outlook.com')) {
                                 try {
                                     const urlObj = new URL(href);
                                     const actualUrlParam = urlObj.searchParams.get('url');
-                                    if (actualUrlParam) {
-                                        // Decode the actual URL to get the clean link.
-                                        // This updates the 'href' variable for the next cleaning step.
-                                        href = decodeURIComponent(actualUrlParam);
-                                    }
-                                } catch (e) {
-                                    console.error("Error parsing Outlook Safelink URL:", e);
-                                    // If parsing fails, the original safelink href will be used in the next step.
-                                }
+                                    if (actualUrlParam) href = decodeURIComponent(actualUrlParam);
+                                } catch (e) { console.error("Error parsing Outlook Safelink URL:", e); }
                             }
-                            
-                            // --- EXISTING LOGIC ---
-                            // Now process the (potentially cleaned) href for internal content paths.
                             if (href.includes('/content/canadasite') || href.includes('/content/dam')) {
                                 const contentPath = href.includes('/content/canadasite') ? '/content/canadasite' : '/content/dam';
                                 const contentIndex = href.indexOf(contentPath);
-                                // If the path is not at the beginning (index > 0), trim preceding characters.
-                                if (contentIndex > 0) {
-                                    href = href.substring(contentIndex);
-                                }
+                                if (contentIndex > 0) href = href.substring(contentIndex);
                             }
-
-                            // Finally, if the href was modified by any step, update the attribute.
-                            if (href !== originalHref) {
-                                a.setAttribute('href', href);
-                            }
+                            if (href !== originalHref) a.setAttribute('href', href);
                         });
-
-                        // Clean <img> tag srcs containing /content/dam
                         doc.querySelectorAll('img[src]').forEach(img => {
                             let src = img.getAttribute('src');
                             if (src.includes('/content/dam')) {
                                 const contentIndex = src.indexOf('/content/dam');
-                                // If the path is not at the beginning (index > 0), trim the preceding characters.
                                 if (contentIndex > 0) {
                                     src = src.substring(contentIndex);
                                     img.setAttribute('src', src);
                                 }
                             }
                         });
-                        // =========== END: INSERTED URL CLEANING LOGIC ===========
-
-                        // Step 4: Serialize the cleaned content back into an HTML string.
+                        
                         richTextContent = doc.body.innerHTML;
 
                     } catch (e) {
                         console.error("Failed to parse and clean HTML, proceeding with raw content.", e);
-                        // If parsing fails for any reason, the old regex is a fallback.
-                        richTextContent = richTextContent.replace(/<details[^>]*\s(open|open="")/gi, '<details');
                     }
-                    // ============================================================
 
-                    // Restore protected data attributes FIRST, as other cleaning might remove elements
                     let processedContent = restoreDataAttributes(richTextContent);
-                    console.log("Data attributes restored after Rich Text editor roundtrip.");
 
-                    // Apply Auto-Clean MSO in the specified order when switching to HTML editor
                     if (toggleAutoCleanMsoOnSwitchRichText.checked) {
-                        console.log("Auto-Clean MSO applied when switching to HTML editor.");
-                        // Apply Clean Mso Lists
                         processedContent = applyCleanLists(processedContent);
-                        console.log("Clean MSO Lists applied.");
-                        // Apply Clean Mso Tables
                         processedContent = applyCleanTablesBasic(processedContent);
-                        console.log("Clean MSO Tables applied.");
-                        // Apply Clean Mso Code (includes IMGs now)
                         processedContent = applyCleanMsoCode(processedContent);
-                        console.log("Clean MSO Code (including IMGs) applied.");
-                        // Apply Clean Spaces
                         processedContent = applyAutoSpacing(processedContent);
-                        console.log("Clean Spaces applied.");
                     }
 
-                    // 2. Update HTML output content and Monaco editor.
                     htmlOutputContent = processedContent;
                     if (monacoEditorInstance) {
                         monacoEditorInstance.setValue(htmlOutputContent);
                         monacoEditorInstance.focus();
                         applyEntityHighlighting();
-                        console.log("Monaco editor updated with Rich Text content.");
-                    } else {
-                        console.warn('Monaco editor not yet initialized. Content will be set once ready.');
                     }
-
-                    // Auto-Indent when switching to HTML editor
                     autoFormatBtn.click();
-
-                    // 3. Switch panel visibility.
+                    
                     richtextOutputPanel.classList.remove('panel-visible');
                     richtextOutputPanel.classList.add('panel-hidden');
-                    mainEditorArea.classList.remove('panel-hidden'); // Show main editor area
+                    mainEditorArea.classList.remove('panel-hidden');
                     mainEditorArea.classList.add('panel-visible');
-
-                    // 4. Update button styles.
+                    
                     toggleEditorViewBtnRichText.classList.remove('bg-green-600', 'hover:bg-green-700', 'bg-cyan-700', 'hover:bg-cyan-800');
                     toggleEditorViewBtnRichText.classList.add('bg-slate-800', 'hover:bg-slate-700');
-
                     toggleEditorViewBtnCode.classList.remove('bg-green-600', 'hover:bg-green-700', 'bg-slate-800', 'hover:bg-slate-700');
                     toggleEditorViewBtnCode.classList.add('bg-cyan-700', 'hover:bg-cyan-800');
 
                     currentView = 'code';
-                    console.log("Switched to Code View.");
                     updateCleanMsoButtonState();
                 } else { // currentView === 'code'
                     // --- Logic when switching FROM Code TO Rich-Text ---
                     if (monacoEditorInstance) {
                         htmlOutputContent = monacoEditorInstance.getValue();
-                        console.log("Syncing from HTML to Rich Text. HTML Output Content length:", htmlOutputContent.length);
                     } else {
-                        console.warn("Monaco editor not ready for content retrieval on toggle. Using empty string.");
                         htmlOutputContent = '';
                     }
 
                     let contentToSendToRichText = protectDataAttributes(htmlOutputContent);
-                    console.log("Data attributes protected before sending to Rich Text editor.");
+                    // *** THIS IS THE FIX: Protect GCDS tags before sending content to the editor ***
+                    contentToSendToRichText = protectGcdsTags(contentToSendToRichText);
 
                     richTextContent = contentToSendToRichText;
                     if (default_ifr.contentWindow && default_ifr.contentWindow.setRichEditorContent) {
                         default_ifr.contentWindow.setRichEditorContent(cleanHtmlForRichTextDisplay(richTextContent));
-                        console.log("HugeRTE editor updated with HTML content.");
-                    } else {
-                        console.warn("Rich Text Editor not ready for content setting on toggle.");
                     }
-
+                    
                     mainEditorArea.classList.remove('panel-visible');
                     mainEditorArea.classList.add('panel-hidden');
                     richtextOutputPanel.classList.remove('panel-hidden');
@@ -4663,11 +4691,9 @@ previewBtn.addEventListener('click', showPreviewModal);
 
                     toggleEditorViewBtnCode.classList.remove('bg-green-600', 'hover:bg-green-700', 'bg-slate-800', 'hover:bg-slate-700');
                     toggleEditorViewBtnCode.classList.add('bg-cyan-700', 'hover:bg-cyan-800');
-
                     updateGoToHtmlButtonColor();
 
                     currentView = 'richtext';
-                    console.log("Switched to Rich Text View.");
                     updateCleanMsoButtonState();
                 }
             }
@@ -6995,8 +7021,8 @@ monacoEditorInstance.addCommand(monaco.KeyCode.KeyY | monaco.KeyMod.CtrlCmd, () 
                         let richTextEditorInstance;
                         let isUpdatingFromCodeMirror = false;
 
-                        // Add this constant at the top of the iframe's script
-                        const defaultContentStyle = 'body { max-width: 1170px; margin-left: auto; margin-right: auto; padding: 15px; box-sizing: border-box; } h1, .h1 { background-color: #FF6347; padding: 2px 5px; border-radius: 3px;} h2, .h2 { background-color: #FE9900; padding: 2px 5px; border-radius: 3px;} h3, .h3 { background-color: #FFDE59; padding: 2px 5px; border-radius: 3px;} h4, .h4 { background-color: #7DDA58; padding: 2px 5px; border-radius: 3px;} h5, .h5 { background-color: #5DE2E7; padding: 2px 5px; border-radius: 3px;} h6, .h6 { background-color: #E7DDFF; padding: 2px 5px; border-radius: 3px;} section { border: #060270 2px dashed; margin: 5px; padding: 5px;} figure { display: block !important; border: #1e81b0 2px solid; margin: 5px; padding: 5px;} div { border: #e28743 2px solid; margin: 5px; padding: 5px;} aside { border: #8D6F64 2px solid; margin: 5px; padding: 5px;} details > *:not(summary) { display: block !important; } dl { border: #A270C5 2px solid; margin: 5px; padding: 5px; } details { border: #42902C 2px solid; margin: 5px; padding: 5px; } details summary { cursor: default !important; font-weight: bold; margin-bottom: 5px; color: #333; } time { background-color: #ffd6f9; padding: 2px 5px; border-radius: 3px;} div.well { background-color: #dadada; } .text-center { text-align: center !important; } .text-right { text-align: right !important; } .text-left { text-align: left !important; }';
+                  
+                        const defaultContentStyle = 'body { max-width: 1170px; margin-left: auto; margin-right: auto; padding: 15px; box-sizing: border-box; } h1, .h1 { background-color: #FF6347; padding: 2px 5px; border-radius: 3px;} h2, .h2 { background-color: #FE9900; padding: 2px 5px; border-radius: 3px;} h3, .h3 { background-color: #FFDE59; padding: 2px 5px; border-radius: 3px;} h4, .h4 { background-color: #7DDA58; padding: 2px 5px; border-radius: 3px;} h5, .h5 { background-color: #5DE2E7; padding: 2px 5px; border-radius: 3px;} h6, .h6 { background-color: #E7DDFF; padding: 2px 5px; border-radius: 3px;} section { border: #060270 2px dashed; margin: 5px; padding: 5px;} figure { display: block !important; border: #1e81b0 2px solid; margin: 5px; padding: 5px;} div { border: #e28743 2px solid; margin: 5px; padding: 5px;} aside { border: #8D6F64 2px solid; margin: 5px; padding: 5px;} details > *:not(summary) { display: block !important; } dl { border: #A270C5 2px solid; margin: 5px; padding: 5px; } details { border: #42902C 2px solid; margin: 5px; padding: 5px; } details summary { cursor: default !important; font-weight: bold; margin-bottom: 5px; color: #333; } time { background-color: #ffd6f9; padding: 2px 5px; border-radius: 3px;} div.well { background-color: #dadada; } .text-center { text-align: center !important; } .text-right { text-align: right !important; } .text-left { text-align: left !important; } div[data-is-gcds-wrapper="true"] { border: 2px dotted #4f46e5; padding: 8px; margin: 8px 0; }';
 
                         // Function to set content, called from the parent
                         window.setRichEditorContent = function(content) {
@@ -7079,9 +7105,9 @@ monacoEditorInstance.addCommand(monaco.KeyCode.KeyY | monaco.KeyMod.CtrlCmd, () 
                                     },
                                     // *** THIS IS THE FIX: Use the constant here ***
                                     content_style: defaultContentStyle,
-                                    extended_valid_elements: 'dl[class|id],dt[class|id],dd[class|id],details[open|class|id|data-*],summary[class|id|data-*],gcds-[*]',
+                                    extended_valid_elements: 'dl[class|id],dt[class|id],dd[class|id],details[open|class|id|data-*],summary[class|id|data-*],div[data-*|class|id|style|contenteditable]',
                                     valid_children: '+body[dl],+dl[dt|dd],+dt[a|abbr|acronym|b|bdo|big|br|button|cite|code|del|dfn|em|i|img|input|ins|kbd|label|map|q|samp|select|small|span|strike|strong|sub|sup|textarea|tt|var|p],+dd[a|abbr|acronym|b|bdo|big|br|button|cite|code|del|dfn|em|i|img|input|ins|kbd|label|map|q|samp|select|small|span|strike|strong|sub|sup|textarea|tt|var|p|ul|ol|dl],+details[summary|p|div|section|code|a|img|em|strong|ul|ol|table|h1|h2|h3|h4|h5|h6]',
-                                    custom_elements: 'dl,dt,dd,details,summary,~gcds-*',
+                                    custom_elements: 'dl,dt,dd,details,summary',
                                     setup: function(editor) {
                                         editor.on('SetContent', function(e) {
                                             openAllDetailsInEditor(editor);
