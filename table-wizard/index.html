@@ -1998,34 +1998,39 @@
             }
 
             if (options.applyAutoCaption) {
-                let extractedContent = '';
-                 if (options.specificTableId) {
-                    const firstRow = table.querySelector('tr');
-                    if (firstRow) {
-                        const firstCell = firstRow.firstElementChild;
-                        if (firstCell && (firstCell.tagName.toLowerCase() === 'th' || firstCell.tagName.toLowerCase() === 'td')) {
-                            const colspan = parseInt(firstCell.getAttribute('colspan') || '1', 10);
-                            const totalColumns = getEffectiveColumnCount(firstRow);
-                            if (colspan === totalColumns && firstCell.textContent.trim() !== '') {
-                                extractedContent = firstCell.textContent.trim();
+                const captionContent = existingCaptionElement.textContent.trim();
+                const isPlaceholderCaption = captionContent === '' || captionContent === '[insert table caption]';
+
+                if (isPlaceholderCaption) {
+                    let extractedContent = '';
+                    if (options.specificTableId) {
+                        const firstRow = table.querySelector('tr');
+                        if (firstRow) {
+                            const firstCell = firstRow.firstElementChild;
+                            if (firstCell && (firstCell.tagName.toLowerCase() === 'th' || firstCell.tagName.toLowerCase() === 'td')) {
+                                const colspan = parseInt(firstCell.getAttribute('colspan') || '1', 10);
+                                const totalColumns = getEffectiveColumnCount(firstRow);
+                                if (colspan === totalColumns && firstCell.textContent.trim() !== '') {
+                                    extractedContent = firstCell.textContent.trim();
+                                }
                             }
                         }
-                    }
-                } else {
-                    let prevSibling = (table.parentNode.classList.contains('table-responsive') ? table.parentNode : table).previousElementSibling;
-                    while (prevSibling) {
-                        if (['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'].includes(prevSibling.tagName)) {
-                            extractedContent = prevSibling.textContent.trim();
-                            prevSibling.remove();
-                            break;
+                    } else {
+                        let prevSibling = (table.parentNode.classList.contains('table-responsive') ? table.parentNode : table).previousElementSibling;
+                        while (prevSibling) {
+                            if (['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'].includes(prevSibling.tagName)) {
+                                extractedContent = prevSibling.textContent.trim();
+                                prevSibling.remove();
+                                break;
+                            }
+                            if (prevSibling.nodeType === Node.TEXT_NODE && prevSibling.textContent.trim() !== '') break;
+                            prevSibling = prevSibling.previousElementSibling;
                         }
-                        if (prevSibling.nodeType === Node.TEXT_NODE && prevSibling.textContent.trim() !== '') break;
-                        prevSibling = prevSibling.previousElementSibling;
                     }
+                    existingCaptionElement.textContent = extractedContent || `[insert table caption]`;
                 }
-                existingCaptionElement.textContent = extractedContent || `[insert table caption]`;
+                // If the caption is not a placeholder, do nothing.
             } else if (!existingCaptionElement.textContent.trim() || existingCaptionElement.textContent.trim() === '[insert table caption]') {
-                // Use the preserved text if available, otherwise use the placeholder
                 existingCaptionElement.textContent = options.preservedCaptionText || `[insert table caption]`;
             }
         } else {
@@ -3650,6 +3655,71 @@
         });
     }
     
+    if (autoResponsiveBtn) {
+        autoResponsiveBtn.addEventListener('click', () => {
+            pushUndoState(); // Save state before action
+            if (!monacoEditor) { showMessage('Editor is still loading.', 'info'); return; }
+
+            const originalHtml = autoResponsiveBtn.innerHTML;
+            autoResponsiveBtn.innerHTML = 'Applying...';
+            autoResponsiveBtn.setAttribute('data-temp-active', 'true');
+            updateAllInteractiveButtonStates();
+
+            try {
+                const editorContent = getEditorContent();
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = editorContent;
+                
+                const tables = tempDiv.querySelectorAll('table');
+                if (tables.length === 0) {
+                    autoResponsiveBtn.innerHTML = 'ERROR: No tables!';
+                    setTimeout(() => {
+                        autoResponsiveBtn.innerHTML = originalHtml;
+                        autoResponsiveBtn.removeAttribute('data-temp-active');
+                        updateAllInteractiveButtonStates();
+                    }, 2000);
+                    return;
+                }
+
+                let wrappedCount = 0;
+
+                tables.forEach(table => {
+                    const parent = table.parentElement;
+                    if (!parent || !parent.classList.contains('table-responsive')) {
+                        const responsiveDiv = document.createElement('div');
+                        responsiveDiv.className = 'table-responsive';
+                        if (table.parentNode) {
+                            table.parentNode.insertBefore(responsiveDiv, table);
+                            responsiveDiv.appendChild(table);
+                            wrappedCount++;
+                        }
+                    }
+                });
+
+                let finalHtml = tempDiv.innerHTML;
+                finalHtml = html_beautify(finalHtml, { indent_size: 4, space_in_paren: true, preserve_newlines: false, extra_liners: [] });
+                finalHtml = convertAllEntitiesToNumeric(finalHtml);
+                setEditorContent(finalHtml);
+                applyEntityHighlighting();
+                populateTableSearchDropdown();
+
+                showMessage(`${wrappedCount} responsive wrappers added.`, 'success');
+
+            } catch (e) {
+                console.error("Error applying responsive wrappers:", e);
+                showMessage('An error occurred. Check console for details.', 'error');
+            } finally {
+                setTimeout(() => {
+                    if (autoResponsiveBtn.innerHTML !== 'ERROR: No tables!') {
+                        autoResponsiveBtn.innerHTML = originalHtml;
+                        autoResponsiveBtn.removeAttribute('data-temp-active');
+                        updateAllInteractiveButtonStates();
+                    }
+                }, 1500);
+            }
+        });
+    }
+    
     if (autoScopeBtn) {
         autoScopeBtn.addEventListener('click', () => {
             pushUndoState(); 
@@ -3664,6 +3734,12 @@
             const allTables = tempDiv.querySelectorAll('table');
 
             if (allTables.length === 0) {
+                autoScopeBtn.innerHTML = 'ERROR: No tables!';
+                setTimeout(() => {
+                    autoScopeBtn.innerHTML = originalHtml;
+                    autoScopeBtn.removeAttribute('data-temp-active');
+                    updateAllInteractiveButtonStates();
+                }, 2000);
                 return;
             }
 
@@ -3685,39 +3761,6 @@
                 updateAllInteractiveButtonStates();
                 showMessage('Auto-scoping complete!', 'success');
             }, 1500);
-        });
-    }
-
-    if (forceScopeButton) {
-        forceScopeButton.addEventListener('click', () => {
-            pushUndoState();
-            const selectedValue = tableSearchDropdown.value;
-            if (!selectedValue) {
-                showMessage('Please select a table to force scope.', 'info');
-                return;
-            }
-            
-            const tableInfo = tableDataMap.get(selectedValue);
-             if (!tableInfo) { return; }
-
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = tableInfo.outerHTML;
-            const tableToProcess = tempDiv.querySelector('table');
-            
-            autoScopeTableIDs(tableToProcess, 0, 'simple');
-
-            const modifiedTableHtml = cleanEmptyHeadersAttribute(convertAllEntitiesToNumeric(tableToProcess.outerHTML));
-            
-            const editOperation = {
-                range: tableInfo.range, text: modifiedTableHtml, forceMoveMarkers: true
-            };
-            monacoEditor.executeEdits('table-formatter-force-scope', [editOperation]);
-
-            setTimeout(() => {
-                applyEntityHighlighting();
-                populateTableSearchDropdown(selectedValue);
-                showMessage('Force Scope applied successfully!', 'success');
-            }, 100);
         });
     }
 
