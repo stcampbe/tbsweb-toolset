@@ -4217,6 +4217,14 @@ previewBtn.addEventListener('click', showPreviewModal);
                         const oldId = heading.id;
                         let newId = oldId;
 
+                        if (level === 2) {
+                            const lowerCaseText = text.toLowerCase();
+                            if (oldId === 'toc' || lowerCaseText === 'on this page' || lowerCaseText === 'sur cette page') {
+                                heading.setAttribute('id', 'toc');
+                                return; // Skip the rest of the auto-ID logic for this specific heading
+                            }
+                        }
+
                         const ignoredParents = ['aside', 'caption', 'figure', 'figcaption', 'table'];
                         if (heading.closest(ignoredParents.join(','))) {
                             return; // Skip headings inside these elements
