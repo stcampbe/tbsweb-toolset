@@ -2212,15 +2212,31 @@
         }
 
 
-        // --- Apply Active Classes (Additive, which is correct) ---
+        // --- FIX START: Corrected Active Class Application Logic ---
+        // Active Column Headers in THEAD
         const theadRows = Array.from(table.querySelectorAll('thead tr'));
         if (options.applyActiveColHeaders) {
             theadRows.forEach(tr => tr.classList.add('active'));
         } else {
             theadRows.forEach(tr => tr.classList.remove('active'));
         }
-        if (options.activeColspanHeadersCheckboxValue) Array.from(table.querySelectorAll('tbody th[colspan]')).forEach(th => th.classList.add('active'));
-        if (options.activeRowHeadersCheckboxValue) Array.from(table.querySelectorAll('tbody tr > th:first-child')).forEach(th => th.classList.add('active'));
+
+        // Active Colspan Headers in TBODY
+        const tbodyColspanHeaders = Array.from(table.querySelectorAll('tbody th[colspan]'));
+        if (options.activeColspanHeadersCheckboxValue) {
+            tbodyColspanHeaders.forEach(th => th.classList.add('active'));
+        } else {
+            tbodyColspanHeaders.forEach(th => th.classList.remove('active'));
+        }
+
+        // Active Row Headers in TBODY (specifically excluding those with a colspan)
+        const tbodyRowHeaders = Array.from(table.querySelectorAll('tbody tr > th:first-child:not([colspan])'));
+        if (options.activeRowHeadersCheckboxValue) {
+            tbodyRowHeaders.forEach(th => th.classList.add('active'));
+        } else {
+            tbodyRowHeaders.forEach(th => th.classList.remove('active'));
+        }
+        // --- FIX END ---
 
         // --- FINAL GENERAL CLASS CLEANUP: Remove any remaining empty class attributes ---
         cleanupEmptyClassAttributes(table); 
@@ -3597,63 +3613,7 @@
     closeOptionsModalButton.addEventListener('click', closeOptionsModal);
     formatButton.addEventListener('click', formatHtmlTables); // Universal Format button
     
-    if (autoResponsiveBtn) {
-        autoResponsiveBtn.addEventListener('click', () => {
-            pushUndoState(); // Save state before action
-            if (!monacoEditor) { showMessage('Editor is still loading.', 'info'); return; }
-
-            const originalHtml = autoResponsiveBtn.innerHTML;
-            autoResponsiveBtn.innerHTML = 'Applying...';
-            autoResponsiveBtn.setAttribute('data-temp-active', 'true');
-            updateAllInteractiveButtonStates();
-
-            try {
-                const editorContent = getEditorContent();
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = editorContent;
-                
-                const tables = tempDiv.querySelectorAll('table');
-                if (tables.length === 0) {
-                    showMessage('No tables found to apply responsive wrappers.', 'info');
-                    return;
-                }
-
-                let wrappedCount = 0;
-
-                tables.forEach(table => {
-                    const parent = table.parentElement;
-                    if (!parent || !parent.classList.contains('table-responsive')) {
-                        const responsiveDiv = document.createElement('div');
-                        responsiveDiv.className = 'table-responsive';
-                        if (table.parentNode) {
-                            table.parentNode.insertBefore(responsiveDiv, table);
-                            responsiveDiv.appendChild(table);
-                            wrappedCount++;
-                        }
-                    }
-                });
-
-                let finalHtml = tempDiv.innerHTML;
-                finalHtml = html_beautify(finalHtml, { indent_size: 4, space_in_paren: true, preserve_newlines: false, extra_liners: [] });
-                finalHtml = convertAllEntitiesToNumeric(finalHtml);
-                setEditorContent(finalHtml);
-                applyEntityHighlighting();
-                populateTableSearchDropdown();
-
-                showMessage(`${wrappedCount} responsive wrappers added.`, 'success');
-
-            } catch (e) {
-                console.error("Error applying responsive wrappers:", e);
-                showMessage('An error occurred. Check console for details.', 'error');
-            } finally {
-                setTimeout(() => {
-                    autoResponsiveBtn.innerHTML = originalHtml;
-                    autoResponsiveBtn.removeAttribute('data-temp-active');
-                    updateAllInteractiveButtonStates();
-                }, 1500);
-            }
-        });
-    }
+    
     
     if (autoResponsiveBtn) {
         autoResponsiveBtn.addEventListener('click', () => {
@@ -3695,6 +3655,11 @@
                         }
                     }
                 });
+
+                if (wrappedCount === 0) {
+                    showMessage('All tables are already responsive.', 'info');
+                    return;
+                }
 
                 let finalHtml = tempDiv.innerHTML;
                 finalHtml = html_beautify(finalHtml, { indent_size: 4, space_in_paren: true, preserve_newlines: false, extra_liners: [] });
@@ -4063,10 +4028,12 @@ customizeButton.addEventListener('click', () => {
             customizeStripedCheckbox.checked = tableClasses.includes('table-striped');
             customizeHoverCheckbox.checked = tableClasses.includes('table-hover');
             
+            // --- FIX START: Corrected 'active' class detection logic ---
             customizeActiveColHeadersCheckbox.checked = thead && Array.from(thead.querySelectorAll('tr')).some(tr => tr.classList.contains('active'));
-            customizeActiveColspanHeadersCheckbox.checked = Array.from(selectedTableElement.querySelectorAll('th[colspan]')).some(th => th.classList.contains('active'));
-            customizeActiveRowHeadersCheckbox.checked = Array.from(selectedTableElement.querySelectorAll('tbody tr > th:first-child')).some(th => th.classList.contains('active'));
-            
+            customizeActiveColspanHeadersCheckbox.checked = Array.from(selectedTableElement.querySelectorAll('tbody th[colspan]')).some(th => th.classList.contains('active'));
+            customizeActiveRowHeadersCheckbox.checked = Array.from(selectedTableElement.querySelectorAll('tbody tr > th:first-child:not([colspan])')).some(th => th.classList.contains('active'));
+            // --- FIX END ---
+
             const totalRow = Array.from(selectedTableElement.querySelectorAll('tbody > tr')).find(row => {
                 const th = row.querySelector('th');
                 return th && (th.textContent.trim().toLowerCase() === 'total' || th.textContent.trim().toLowerCase() === 'subtotal');
