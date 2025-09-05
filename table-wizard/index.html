@@ -892,13 +892,13 @@
                             </label>
                             <span class="toggle-switch-label text-gray-200">Add <strong>hover</strong></span>
                         </div>
-                        <div class="toggle-switch-container">
+                        <!-- <div class="toggle-switch-container">
                             <label class="toggle-switch" for="bold-totals-checkbox">
                                 <input type="checkbox" id="bold-totals-checkbox" class="hidden">
                                 <span class="toggle-switch-slider"></span>
                             </label>
                             <span class="toggle-switch-label text-gray-200">Bold Totals</span>
-                        </div>
+                        </div> -->
                         <div class="toggle-switch-container">
                             <label class="toggle-switch" for="finance-table-checkbox">
                                 <input type="checkbox" id="finance-table-checkbox" class="hidden">
@@ -1136,13 +1136,13 @@
                                 </label>
                                 <span class="toggle-switch-label text-gray-200">Add <strong>hover</strong></span>
                             </div>
-                            <div class="toggle-switch-container">
+                            <!-- <div class="toggle-switch-container">
                                 <label class="toggle-switch" for="customize-bold-totals-checkbox">
                                     <input type="checkbox" id="customize-bold-totals-checkbox" class="hidden">
                                     <span class="toggle-switch-slider"></span>
                                 </label>
                                 <span class="toggle-switch-label text-gray-200">Bold Totals</span>
-                            </div>
+                            </div> -->
                             <div class="toggle-switch-container">
                                 <label class="toggle-switch" for="customize-finance-table-checkbox">
                                     <input type="checkbox" id="customize-finance-table-checkbox" class="hidden">
@@ -2197,6 +2197,7 @@
         });
 
         // --- Bold Totals Toggle Logic (Preserved) ---
+		/**
         Array.from(newTbodyElement.querySelectorAll('tr')).forEach(row => {
             const thInRow = row.querySelector('th');
             if (thInRow && (thInRow.textContent.trim().toLowerCase() === 'total' || thInRow.textContent.trim().toLowerCase() === 'subtotal')) {
@@ -2212,7 +2213,7 @@
                 });
             }
         });
-
+		*/
 
         // --- Append the structural elements to the table in correct order ---
         if (newTheadElement.children.length > 0) table.appendChild(newTheadElement);
@@ -2311,7 +2312,7 @@
                         activeRowHeadersCheckboxValue: activeRowHeadersCheckbox.checked,
                         applyClassSmall: classSmallCheckboxElement.checked,
                         applyFinanceTable: financeTableCheckbox.checked,
-                        applyBoldTotals: boldTotalsCheckbox.checked,
+                        //applyBoldTotals: boldTotalsCheckbox.checked,
                         currentCaptionAlignment: window.captionAlignment,
                         currentColHeaderAlignment: window.colHeaderAlignment,
                         currentRowHeaderAlignment: window.rowHeaderAlignment,
@@ -2609,7 +2610,7 @@
             activeRowHeadersCheckboxValue: customizeActiveRowHeadersCheckbox.checked,
             applyClassSmall: customizeClassSmallCheckboxElement.checked,
             applyFinanceTable: customizeFinanceTableCheckbox.checked,
-            applyBoldTotals: customizeBoldTotalsCheckbox.checked,
+            //applyBoldTotals: customizeBoldTotalsCheckbox.checked,
             currentCaptionAlignment: window.customizeCaptionAlignment,
             currentColHeaderAlignment: window.isCustomizeManualColHeaderAlign ? 'manual' : window.customizeColHeaderAlignment,
             currentRowHeaderAlignment: window.isCustomizeManualRowHeaderAlign ? 'manual' : window.customizeRowHeaderAlignment,
@@ -3540,7 +3541,7 @@
     const classSmallCheckboxElement = document.getElementById('class-small-checkbox');
 
     const financeTableCheckbox = document.getElementById('finance-table-checkbox');
-    const boldTotalsCheckbox = document.getElementById('bold-totals-checkbox');
+    //const boldTotalsCheckbox = document.getElementById('bold-totals-checkbox');
 
     const messageBox = document.getElementById('message-box');
 
@@ -3596,7 +3597,7 @@
     const customizeActiveColspanHeadersCheckbox = document.getElementById('customize-active-colspan-headers-checkbox');
     const customizeActiveRowHeadersCheckbox = document.getElementById('customize-active-row-headers-checkbox');
     const customizeFinanceTableCheckbox = document.getElementById('customize-finance-table-checkbox');
-    const customizeBoldTotalsCheckbox = document.getElementById('customize-bold-totals-checkbox');
+    //const customizeBoldTotalsCheckbox = document.getElementById('customize-bold-totals-checkbox');
 
 
     // Populate allInteractiveButtons array after all button elements are defined
@@ -4073,7 +4074,7 @@ customizeButton.addEventListener('click', () => {
                 const th = row.querySelector('th');
                 return th && (th.textContent.trim().toLowerCase() === 'total' || th.textContent.trim().toLowerCase() === 'subtotal');
             });
-            customizeBoldTotalsCheckbox.checked = totalRow && Array.from(totalRow.querySelectorAll('td')).some(td => td.querySelector('strong'));
+            //customizeBoldTotalsCheckbox.checked = totalRow && Array.from(totalRow.querySelectorAll('td')).some(td => td.querySelector('strong'));
 
             customizeFinanceTableCheckbox.checked = Array.from(selectedTableElement.querySelectorAll('td')).some(td => td.classList.contains('nowrap'));
             
@@ -4404,7 +4405,7 @@ customizeButton.addEventListener('click', () => {
                 customizeClassSmallCheckboxElement, customizeAddSmallToTrCheckbox, customizeClassTablesCheckbox,
                 customizeHeaderCheckbox, customizeRowHeaderCheckbox, customizeBorderedCheckbox,
                 customizeStripedCheckbox, customizeHoverCheckbox, customizeActiveColHeadersCheckbox,
-                customizeActiveColspanHeadersCheckbox, customizeActiveRowHeadersCheckbox, customizeBoldTotalsCheckbox,
+                customizeActiveColspanHeadersCheckbox, customizeActiveRowHeadersCheckbox,
                 customizeFinanceTableCheckbox, customizeInvCaptionCheckbox
             ];
 
@@ -4421,7 +4422,7 @@ customizeButton.addEventListener('click', () => {
                 autoCaptionCheckbox, fixEmptyCellsCheckbox, removePTagsCheckbox,
                 classSmallCheckboxElement, addSmallToTrCheckbox, classTablesCheckbox, headerCheckbox,
                 rowHeaderCheckbox, activeColHeadersCheckbox, activeColspanHeadersCheckbox, activeRowHeadersCheckbox,
-                borderedCheckbox, stripedCheckbox, hoverCheckbox, boldTotalsCheckbox, financeTableCheckbox, invCaptionCheckbox
+                borderedCheckbox, stripedCheckbox, hoverCheckbox, financeTableCheckbox, invCaptionCheckbox
             ];
 
             universalFormatCheckboxes.forEach(checkbox => {
