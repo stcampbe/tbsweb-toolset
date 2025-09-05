@@ -3450,7 +3450,7 @@ previewBtn.addEventListener('click', showPreviewModal);
                 return doc.body.innerHTML;
             }
 
-            /**
+           /**
              * Applies basic cleaning to tables and their elements.
              * This includes removing colgroup/col tags, cleaning table/td/th attributes,
              * and handling paragraphs within table cells.
@@ -3463,98 +3463,80 @@ previewBtn.addEventListener('click', showPreviewModal);
                 const body = doc.body;
 
                 // Remove colgroup and col elements
-                const colgroupElements = doc.querySelectorAll('colgroup');
-                for (let i = colgroupElements.length - 1; i >= 0; i--) {
-                    if (colgroupElements[i].parentNode) {
-                        colgroupElements[i].parentNode.removeChild(colgroupElements[i]);
-                    }
-                }
-
-                const colElements = doc.querySelectorAll('col');
-                for (let i = colElements.length - 1; i >= 0; i--) {
-                    if (colElements[i].parentNode) {
-                        colElements[i].parentNode.removeChild(colElements[i]);
-                    }
-                }
+                doc.querySelectorAll('colgroup, col').forEach(el => el.remove());
 
                 // Clean attributes from table and its structural tags (thead, tbody, tfoot, tr, th, td)
-                const tableRelatedTags = doc.querySelectorAll('table, thead, tbody, tfoot, tr, th, td');
-                tableRelatedTags.forEach(element => {
+                doc.querySelectorAll('table, thead, tbody, tfoot, tr, th, td').forEach(element => {
                     const attributesToKeep = ['rowspan', 'colspan', 'class', 'id', 'headers', 'scope'];
-                    const attributesToRemove = [];
-                    for (let j = 0; j < element.attributes.length; j++) {
-                        const attr = element.attributes[j];
-                        if (!attributesToKeep.includes(attr.name.toLowerCase())) {
-                            attributesToRemove.push(attr.name);
-                        }
-                    }
-                    attributesToRemove.forEach(attrName => {
-                        element.removeAttribute(attrName);
-                    });
+                    const attributesToRemove = Array.from(element.attributes)
+                        .map(attr => attr.name)
+                        .filter(attrName => !attributesToKeep.includes(attrName.toLowerCase()));
+                    
+                    attributesToRemove.forEach(attrName => element.removeAttribute(attrName));
                 });
-
-                // Remove MsoTable class from tables
+                
+                // Process all tables found in the document
                 doc.querySelectorAll('table').forEach(table => {
-                    const classAttr = table.getAttribute('class');
-                    if (classAttr && classAttr.includes('MsoTable')) {
+                    // Remove MsoTable class from the table itself
+                    table.classList.remove('MsoTable');
+                    if (!table.getAttribute('class')) { // If class attribute is now empty
                         table.removeAttribute('class');
                     }
-                });
 
-                // Unwrap spans inside td with class^="xl"
-                doc.querySelectorAll('table td[class^="xl"] span').forEach(span => {
-                    if (span.parentNode) {
-                        while (span.firstChild) {
-                            span.parentNode.insertBefore(span.firstChild, span);
+                    // *** NEW: Remove all inline style attributes from the table and any element inside it ***
+                    table.removeAttribute('style'); // Remove from table itself
+                    table.querySelectorAll('*').forEach(descendant => {
+                        descendant.removeAttribute('style');
+                    });
+
+                    // Unwrap spans inside td with class^="xl"
+                    table.querySelectorAll('td[class^="xl"] span').forEach(span => {
+                        if (span.parentNode) {
+                            while (span.firstChild) {
+                                span.parentNode.insertBefore(span.firstChild, span);
+                            }
+                            span.parentNode.removeChild(span);
                         }
-                        span.parentNode.removeChild(span);
-                    }
-                });
+                    });
 
-                // Remove class^="xl" from td elements
-                doc.querySelectorAll('td').forEach(td => {
-                    const classAttr = td.getAttribute('class');
-                    if (classAttr && classAttr.startsWith('xl')) {
+                    // Remove class^="xl" from td elements
+                    table.querySelectorAll('td[class^="xl"]').forEach(td => {
                         td.removeAttribute('class');
-                    }
-                });
-
-                // Clean paragraphs within tables: remove Mso/Aligned classes, inline styles, and convert align attribute to Tailwind classes
-                doc.querySelectorAll('table p').forEach(p => {
-                    const parentCell = p.closest('td, th');
-
-                    if (parentCell) {
-                        const classAttr = p.getAttribute('class');
-                        if (classAttr && (classAttr.includes('Mso') || cls.includes('Style') || cls.includes('DocumentTitle') || cls.includes('Heading') || classAttr.includes('Aligned'))) {
-                            p.removeAttribute('class');
-                        }
-
-                        if (p.hasAttribute('style')) {
-                            p.removeAttribute('style');
-                        }
-
-                        const alignAttr = p.getAttribute('align');
-                        if (alignAttr) {
-                            p.removeAttribute('align');
-                            let tailwindAlignClass = ''; // Fixed typo from tailwclassName
-                            switch (alignAttr.toLowerCase()) {
-                                case 'left':
-                                    tailwindAlignClass = 'text-left';
-                                    break;
-                                case 'center':
-                                    tailwindAlignClass = 'text-center';
-                                    break;
-                                case 'right':
-                                    tailwindAlignClass = 'text-right';
-                                    break;
+                    });
+                    
+                    // Clean paragraphs within the current table
+                    table.querySelectorAll('p').forEach(p => {
+                        const parentCell = p.closest('td, th');
+                        if (parentCell) {
+                            const classAttr = p.getAttribute('class');
+                            // *** FIX: Corrected typo 'cls' to 'classAttr' ***
+                            if (classAttr && (classAttr.includes('Mso') || classAttr.includes('Style') || classAttr.includes('DocumentTitle') || classAttr.includes('Heading') || classAttr.includes('Aligned'))) {
+                                p.removeAttribute('class');
                             }
-                            if (tailwindAlignClass) {
-                                parentCell.classList.add(tailwindAlignClass);
+
+                            const alignAttr = p.getAttribute('align');
+                            if (alignAttr) {
+                                p.removeAttribute('align');
+                                let tailwindAlignClass = '';
+                                switch (alignAttr.toLowerCase()) {
+                                    case 'left':
+                                        tailwindAlignClass = 'text-left';
+                                        break;
+                                    case 'center':
+                                        tailwindAlignClass = 'text-center';
+                                        break;
+                                    case 'right':
+                                        tailwindAlignClass = 'text-right';
+                                        break;
+                                }
+                                if (tailwindAlignClass) {
+                                    parentCell.classList.add(tailwindAlignClass);
+                                }
                             }
                         }
-                    }
+                    });
                 });
-                return doc.body.innerHTML;
+                return body.innerHTML;
             }
 
             /**
@@ -4578,6 +4560,25 @@ previewBtn.addEventListener('click', showPreviewModal);
                 });
             }
 
+            /**
+             * Removes all inline 'style' attributes from tables and their descendant elements.
+             * This function is called unconditionally when switching to the HTML view.
+             * @param {string} htmlString - The HTML content to process.
+             * @returns {string} The cleaned HTML content.
+             */
+            function stripStylesFromTables(htmlString) {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(htmlString, 'text/html');
+                doc.querySelectorAll('table').forEach(table => {
+                    // Remove style from the table itself
+                    table.removeAttribute('style');
+                    // Remove style from all elements inside the table
+                    table.querySelectorAll('*').forEach(descendant => {
+                        descendant.removeAttribute('style');
+                    });
+                });
+                return doc.body.innerHTML;
+            }
 
             /**
              * Toggles the active editor view between 'richtext' and 'code'.
@@ -4602,6 +4603,8 @@ previewBtn.addEventListener('click', showPreviewModal);
 
                     // *** THIS IS THE FIX: Restore GCDS tags immediately after getting content from the editor ***
                     richTextContent = restoreGcdsTags(richTextContent);
+
+                    richTextContent = stripStylesFromTables(richTextContent);
 
                     // Now, perform other cleaning on the fully restored HTML
                     try {
