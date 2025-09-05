@@ -18,10 +18,6 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
-            /* Prevent body from scrolling; all scrolling should be within panels */
-        }
-
-        body {
             font-family: 'Inter', sans-serif;
             /* Using Inter font */
             display: flex;
@@ -1239,6 +1235,7 @@
 .view-hidden {
     display: none !important;
 }
+
     </style>
 </head>
 
@@ -7107,6 +7104,8 @@ monacoEditorInstance.addCommand(monaco.KeyCode.KeyY | monaco.KeyMod.CtrlCmd, () 
                                     selector: '#richEditor',
                                     toolbar: 'undo redo styles bold italic alignleft aligncenter alignright numlist bullist link table',
                                     plugins: ['table', 'lists', 'link'],
+									table_resize_bars: false,
+									object_resizing: false,
                                     height: '100%',
                                     tab_focus: false,
                                     formats: {
