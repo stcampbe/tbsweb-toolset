@@ -928,7 +928,7 @@
                         </div>
 
                         <div class="alignment-group-container">
-                            <label for="col-headers-alignment">Column Headers</label>
+                            <label for="col-headers-alignment">TH Col Headers (thead)</label>
                             <div id="col-headers-alignment-group" class="button-group">
                                 <button id="reset-colHAlign-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset/delete col header alignment">
                                     <i class="fas fa-trash-alt"></i>
@@ -940,7 +940,7 @@
                         </div>
 
                         <div class="alignment-group-container">
-                            <label for="row-headers-alignment">Row Headers</label>
+                            <label for="row-headers-alignment">TH Row Headers (tbody)</label>
                             <div id="row-headers-alignment-group" class="button-group">
                                 <button id="reset-rowHAlign-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset/delete row header alignment">
                                     <i class="fas fa-trash-alt"></i>
@@ -952,7 +952,7 @@
                         </div>
 
                         <div class="alignment-group-container">
-                            <label for="colspan-headers-alignment">Colspan Headers</label>
+                            <label for="colspan-headers-alignment">TH Colspan Headers (tbody)</label>
                             <div id="colspan-headers-alignment-group" class="button-group">
                                 <button id="reset-csHAlign-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset/delete colspan header alignment">
                                     <i class="fas fa-trash-alt"></i>
@@ -964,7 +964,7 @@
                         </div>
 
                         <div class="alignment-group-container">
-                            <label for="data-cells-alignment">Data Cells</label>
+                            <label for="data-cells-alignment">TD Cells (tbody)</label>
                             <div id="data-cells-alignment-group" class="button-group">
                                 <button id="reset-dataAlign-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset/delete data cell alignment">
                                     <i class="fas fa-trash-alt"></i>
@@ -1174,7 +1174,7 @@
 
                             <div class="alignment-group-container">
                                 <div class="flex items-center justify-between mb-1">
-                                <label for="customize-col-headers-alignment">Column Headers</label>
+                                <label for="customize-col-headers-alignment">TH Col Headers (thead)</label>
                                 <span id="manual-chalign-tag" class="hidden text-xs font-semibold px-2 py-0.5 rounded-full bg-red-600 text-white">(Manual)</span>
                                 </div>
                                 <div id="customize-col-headers-alignment-group" class="button-group">
@@ -1189,7 +1189,7 @@
 
                             <div class="alignment-group-container">
                                 <div class="flex items-center justify-between mb-1">
-                                <label for="customize-row-headers-alignment">Row Headers</label>
+                                <label for="customize-row-headers-alignment">TH Row Headers (tbody)</label>
                                 <span id="manual-rhalign-tag" class="hidden text-xs font-semibold px-2 py-0.5 rounded-full bg-red-600 text-white">(Manual)</span>
                                 </div>
                                 <div id="customize-row-headers-alignment-group" class="button-group">
@@ -1204,7 +1204,7 @@
 
                             <div class="alignment-group-container">
                                 <div class="flex items-center justify-between mb-1">
-                                <label for="customize-colspan-headers-alignment">Colspan Headers</label>
+                                <label for="customize-colspan-headers-alignment">TH Colspan Headers (tbody)</label>
                                 <span id="manual-csalign-tag" class="hidden text-xs font-semibold px-2 py-0.5 rounded-full bg-red-600 text-white">(Manual)</span>
                                 </div>
                                 <div id="customize-colspan-headers-alignment-group" class="button-group">
@@ -1219,8 +1219,8 @@
 
                             <div class="alignment-group-container">
                                 <div class="flex items-center justify-between mb-1">
-                                    <label for="customize-data-cells-alignment-group">Data Cells</label>
-                                    <span id="financial-align-tag" class="hidden text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-600 text-white">(Financial, right-align numbers)</span>
+                                    <label for="customize-data-cells-alignment-group">TD Cells (tbody)</label>
+                                    <span id="financial-align-tag" class="hidden text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-600 text-white">(Finance option set)</span>
                                     <span id="manual-align-tag" class="hidden text-xs font-semibold px-2 py-0.5 rounded-full bg-red-600 text-white">(Manual)</span>
                                 </div>
                                 <div id="customize-data-cells-alignment-group" class="button-group">
@@ -1292,7 +1292,7 @@
 
     // Initialize global state variables for alignment options
     // These are for the UNIVERSAL format modal
-    window.captionAlignment = 'none'; // Changed to 'left'
+    window.captionAlignment = 'left'; // Changed to 'left'
     window.colHeaderAlignment = 'none';
     window.rowHeaderAlignment = 'none';
     window.colspanHeaderAlignment = 'none'; // Changed to 'none'
@@ -2156,26 +2156,39 @@
             const isRowHeader = isTbodyCell && cell.tagName.toLowerCase() === 'th' && cell.parentElement.firstElementChild === cell;
 
             if (cell.tagName.toLowerCase() === 'td') {
-                if (options.currentDataCellsAlignment !== 'manual') {
-                    if (options.applyFinanceTable && financeRegex.test(cell.textContent.trim())) {
-                        applyAlignment(cell, 'right', alignmentClasses);
-                        cell.classList.add('nowrap');
-                    } else {
-                        // --- FIX: The faulty "!hasExistingAlignment" check is removed here ---
-                        applyAlignment(cell, options.currentDataCellsAlignment, alignmentClasses);
-                    }
+                // First, always remove the 'nowrap' class. This ensures that when the "Finance Table"
+                // option is toggled OFF, the style is correctly removed from the cell.
+                cell.classList.remove('nowrap','text-right');
+
+                // Priority 1: Re-apply financial styling if the option is currently active.
+                if (options.applyFinanceTable && financeRegex.test(cell.textContent.trim())) {
+                    applyAlignment(cell, 'right', alignmentClasses);
+                    cell.classList.add('nowrap'); // Add it back only if the condition is met.
+                }
+                // Priority 2: Apply general data cell alignment otherwise. The applyAlignment function
+                // already handles removing previous alignment classes (like 'text-right').
+                else if (options.currentDataCellsAlignment !== 'manual') {
+                    applyAlignment(cell, options.currentDataCellsAlignment, alignmentClasses);
                 }
             } else if (cell.tagName.toLowerCase() === 'th') {
-                // --- FIX: The faulty "!hasExistingAlignment" check is removed here ---
-                if (cell.hasAttribute('colspan')) {
-                    if (options.currentColspanHeaderAlignment !== 'manual') {
-                        applyAlignment(cell, options.currentColspanHeaderAlignment, alignmentClasses);
-                    }
-                } else if (isTheadCell) {
+                const isTheadCell = cell.closest('thead');
+                const isTbodyCell = cell.closest('tbody');
+                const isStandardRowHeader = isTbodyCell && cell.parentElement.firstElementChild === cell && !cell.hasAttribute('colspan');
+
+                // Priority 1: All <th> elements in <thead> are governed by Column Header alignment.
+                if (isTheadCell) {
                     if (options.currentColHeaderAlignment !== 'manual') {
                         applyAlignment(cell, options.currentColHeaderAlignment, alignmentClasses);
                     }
-                } else if (isRowHeader) {
+                }
+                // Priority 2: <th> elements in <tbody> that have a colspan are governed by Colspan Header alignment.
+                else if (isTbodyCell && cell.hasAttribute('colspan')) {
+                    if (options.currentColspanHeaderAlignment !== 'manual') {
+                        applyAlignment(cell, options.currentColspanHeaderAlignment, alignmentClasses);
+                    }
+                }
+                // Priority 3: Standard <th> row headers in <tbody> (first cell, no colspan) are governed by Row Header alignment.
+                else if (isStandardRowHeader) {
                     if (options.currentRowHeaderAlignment !== 'manual') {
                         applyAlignment(cell, options.currentRowHeaderAlignment, alignmentClasses);
                     }
@@ -3806,7 +3819,11 @@ customizeButton.addEventListener('click', () => {
     setupButtonGroup('row-headers-alignment-group', 'rowHeaderAlignment');
     setupButtonGroup('colspan-headers-alignment-group', 'colspanHeaderAlignment');
     setupButtonGroup('data-cells-alignment-group', 'dataCellsAlignment');
-
+// --- FIX: Set the initial default state for the Universal Caption Alignment button ---
+    const universalCaptionLeftBtn = document.querySelector('#caption-alignment-group button[data-align="left"]');
+    if (universalCaptionLeftBtn) {
+        universalCaptionLeftBtn.classList.add('active');
+    }
     setupButtonGroup('customize-caption-alignment-group', 'customizeCaptionAlignment', customizeModalOverlay, updateCustomizeModalPreview);
     
     const headerAlignmentCallback = () => {
