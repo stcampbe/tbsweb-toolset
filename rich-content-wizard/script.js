@@ -566,30 +566,28 @@ document.addEventListener('DOMContentLoaded', function () {
         return decodeURIComponent(escape(atob(str)));
     }
 
-    function protectDataAttributes(htmlString) {
-        const regex = /(data-[a-zA-Z0-9-]+)="([^"]*)"/g;
-        return htmlString.replace(regex, (match, attrName, value) => {
-            const encodedValue = encodeBase64(value);
-            return `data-temp-protected-${attrName}="${encodedValue}"`;
-        });
-    }
+	function protectDataAttributes(htmlString) {
+		const regex = /(data-[a-zA-Z0-9-]+)=(['"])(.*?)\2/g;
+		return htmlString.replace(regex, (match, attrName, quoteType, value) => {
+			const safeValue = value.replace(/"/g, '__DOUBLE_QUOTE_PLACEHOLDER__').replace(/'/g, '__SINGLE_QUOTE_PLACEHOLDER__');
+			const encodedValue = encodeBase64(safeValue);
+			return `data-temp-protected-${attrName}="${encodedValue}"`;
+		});
+	}
 
-    function restoreDataAttributes(htmlString) {
-        const regex = /data-temp-protected-(data-[a-zA-Z0-9-]+)="([^"]*)"/g;
-        return htmlString.replace(regex, (match, originalAttrName, encodedValue) => {
-            try {
-                let decodedValue = decodeBase64(encodedValue);
-                let safeValue = decodedValue.replace(/"/g, '&quot;');
-                safeValue = safeValue.replace(/&#34;/g, '&quot;');
-
-                return `${originalAttrName}="${safeValue}"`;
-            } catch (e) {
-                console.error("Error decoding or re-escaping Base64 data-attribute:", e);
-                return '';
-            }
-        });
-    }
-
+	function restoreDataAttributes(htmlString) {
+		const regex = /data-temp-protected-(data-[a-zA-Z0-9-]+)=(['"])(.*?)\2/g;
+		return htmlString.replace(regex, (match, originalAttrName, quoteType, encodedValue) => {
+			try {
+				let decodedValue = decodeBase64(encodedValue);
+				let safeValue = decodedValue.replace(/__DOUBLE_QUOTE_PLACEHOLDER__/g, '&quot;').replace(/__SINGLE_QUOTE_PLACEHOLDER__/g, '&apos;');
+				return `${originalAttrName}=${quoteType}${safeValue}${quoteType}`;
+			} catch (e) {
+				console.error("Error decoding or re-escaping Base64 data-attribute:", e);
+				return '';
+			}
+		});
+	}
 
     function decodeHtmlEntities(html) {
         const textarea = document.createElement('textarea');
