@@ -1146,7 +1146,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         if (elemClassAttr) {
                             const classes = elemClassAttr.split(/\s+/);
                             for (const cls of classes) {
-                                if (cls.includes('Mso') || cls.includes('Word') || cls.includes('Style') || cls.includes('DocumentTitle') || cls.includes('Heading') || cls.includes('BCX0')) {
+                                if (cls.includes('Mso') || cls.includes('Word') || cls.includes('Style') || cls.includes('DocumentTitle') || cls.includes('Heading') || cls.includes('BCX0') || cls.includes('Header') || cls.includes('paragraph')) {
                                     return true;
                                 }
                             }
@@ -1270,7 +1270,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         if (elemClassAttr) {
                             const classes = elemClassAttr.split(/\s+/);
                             for (const cls of classes) {
-                                if (cls.includes('Mso') || cls.includes('Word') || cls.includes('Style') || cls.includes('DocumentTitle') || cls.includes('Heading') || cls.includes('BCX0')) {
+                                if (cls.includes('Mso') || cls.includes('Word') || cls.includes('Style') || cls.includes('DocumentTitle') || cls.includes('Heading') || cls.includes('BCX0') || cls.includes('Header') || cls.includes('paragraph')) {
                                     return true;
                                 }
                             }
@@ -1838,7 +1838,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const hasMsoWordBcx0Class = classAttr.split(/\s+/)
                 .some(cls =>
-                    cls.includes('Mso') || cls.includes('Style') || cls.includes('DocumentTitle') || cls.includes('Heading') || cls.includes('Word') || cls.includes('BCX0')
+                    cls.includes('Mso') || cls.includes('Style') || cls.includes('DocumentTitle') || cls.includes('Heading') || cls.includes('Word') || cls.includes('BCX0') || cls.includes('Header') || cls.includes('paragraph')
                 );
 
             const hasMsoWordBcx0Id = idAttr.includes('Mso') || idAttr.includes('Word') || idAttr.includes('BCX0');
@@ -1874,7 +1874,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (classAttr) {
                     const hasDisallowedClass = classAttr.split(/\s+/)
                         .some(cls =>
-                            cls.includes('Mso') || cls.includes('Style') || cls.includes('DocumentTitle') || cls.includes('Heading') || cls.includes('Word') || cls.includes('BCX0')
+                            cls.includes('Mso') || cls.includes('Style') || cls.includes('DocumentTitle') || cls.includes('Heading') || cls.includes('Word') || cls.includes('BCX0') || cls.includes('Header') || cls.includes('paragraph')
                         );
                     if (hasDisallowedClass) {
                         element.removeAttribute('class');
