@@ -1,54 +1,97 @@
-# WordToCode™ - Rich Content Wizard Feature Guide
+# WordToCode™ - Rich Content Wizard 🧙‍♂️
 
-Welcome to WordToCode™, the all-in-one tool for cleaning, structuring, and preparing rich content for the web. This guide highlights the major features to help you streamline your workflow.
-
----
-
-## ✍️ Core Editors & Views
-
-The wizard is built around a powerful dual-editor system, allowing you to work visually or with the raw code.
-
-* **Dual-View Toggle**: Instantly switch between the **Rich-Text Editor** (a "what you see is what you get" interface) and the **HTML Code Editor** (a professional-grade Monaco editor for full control).
-* **Live Synchronization**: Content is automatically synced between the two views when you toggle.
+Welcome to WordToCode™, your all-in-one toolkit for transforming messy documents into clean, accessible, and standards-compliant web content. This wizard is packed with powerful automation, generation, and validation tools to dramatically speed up your workflow.
 
 ---
 
-## 🧹 Content Cleaning & Automation
+## 🖥️ Core Interface: Dual-View Editor
 
-This is the core of the wizard, designed to transform messy source documents (especially from Microsoft Word) into clean, web-ready HTML.
+The wizard is built around a powerful, synchronized dual-editor system, giving you the flexibility to work visually or dive into the code.
 
-* **Clean MSO**: The primary feature for removing Microsoft Office-specific junk code, unnecessary tags, and inline styles. This can be run manually with the **"Clean MSO"** button or set to run automatically every time you switch from the Rich-Text view to the HTML view.
-* **Quick Formatting Panel**: A sidebar with a suite of powerful, toggleable actions that can be applied together with a single "Format" button:
-    * **Structural Cleanup**: Automatically fix heading levels, wrap content in proper `<section>` tags, and clean up messy line breaks (`<br>`).
-    * **Code Hygiene**: Clean extra spaces, convert `<u>`, `<b>`, and `<i>` tags to their semantic equivalents (`<strong>`, `<em>`), and remove paragraphs from within table cells.
-    * **Link & ID Management**: Clean URLs to make them relative and fix footnote ID numbering.
-    * **Time Tags**: Automatically find dates in your text (e.g., "September 5, 2025") and wrap them in the correct `<time>` tag.
-* **Auto-Indent & Auto-Encode**: One-click buttons to beautify your code with proper indentation and convert special characters to their correct HTML entities.
+* **Rich-Text Editor**: A "what you see is what you get" (WYSIWYG) interface perfect for quick edits, pasting content, and visual arrangement. It includes guide markings to help visualize structural elements like sections and headings.
+* **HTML Code Editor**: A professional-grade **Monaco Editor** (the engine behind VS Code) for full control over the markup. It features syntax highlighting, undo/redo history, and advanced tools.
+* **Live Synchronization**: Seamlessly toggle between views with the "Go to HTML" and "Go to Rich-Text" buttons. Your content is automatically synced.
 
 ---
 
-## ➕ Quick Insert Tools
+## 🧹 Automated Content Cleaning & Formatting
 
-Generate complex, structured HTML blocks with easy-to-use modals.
+This is the heart of the wizard. These features are designed to instantly clean up messy source code, especially from Microsoft Word, and apply consistent formatting.
 
-* **Element IDs**: Opens a modal to automatically add structured, sequential IDs to your choice of elements: **sections**, **headings**, **figures**, and **tables**.
-* **Footnote List**: Generates a complete, accessible footnote `<aside>` block with the number of footnotes you specify.
-* **Colophon**: Generates the standard copyright and ISBN/ISSN block for the bottom of a page, with options for language and monarch.
-* **Table of Contents**:
+### One-Click MSO Cleanup
+* **Manual & Automatic Cleaning**: The **"Clean MSO"** button instantly removes Microsoft Office-specific junk code, empty tags, and messy inline styles.
+* **Auto-Clean on Toggle**: For an even faster workflow, enable the **"Auto-Clean MSO"** switch to have the cleanup process run automatically every time you switch from the Rich-Text to the HTML view.
+
+### Quick Formatting Panel
+The sidebar contains a suite of powerful, toggleable actions that can be applied all at once with the **"Format"** button. Mix and match these tools to suit your needs:
+* **Structural Formatting**:
+    * **Auto-Level Headings**: Intelligently restructures heading levels (e.g., `<h1>`, `<h2>`) to be logical and sequential.
+    * **Auto-Section**: Automatically wraps heading blocks in the proper `<section>` tags.
+    * **Clean Single Breaks**: Converts single `<br>` tags into proper paragraph structures.
+* **Code Hygiene**:
+    * **Clean Spaces**: Removes extra whitespace and redundant non-breaking spaces.
+    * **Clean `<p>` in Tables**: Removes paragraph tags from within table cells, a common issue from Word exports.
+    * **Clean Formatting Tags**: Converts non-semantic `<u>`, `<b>`, and `<i>` tags to their correct semantic equivalents (`<strong>` and `<em>`).
+* **Link & ID Management**:
+    * **Clean URLs**: Converts absolute Canada.ca URLs to the correct relative paths.
+    * **Fix FN IDs**: Corrects footnote ID numbering and references for accessibility.
+    * **Set Time Tags**: Automatically finds dates (e.g., "September 8, 2025") and wraps them in the correct `<time>` tag.
+* **Global Actions**:
+    * **Auto-Indent**: Beautifies your HTML with clean, consistent indentation.
+    * **Auto-Encode**: Converts special characters to their proper HTML entities.
+
+---
+
+## ➕ Intelligent Content Generation
+
+Generate complex, accessible HTML blocks in seconds using the "Quick Insert" tools.
+
+* **Table of Contents (ToC)**:
     * **Page ToC**: Creates an "On this page" list from the H2s (and optionally H3s) in your document.
-    * **Section ToC**: Creates "In this section" lists under each H2, built from the H3s, H4s, etc. that follow it.
+    * **Section ToC**: Creates "In this section" lists under each H2, built from the subsequent H3s, H4s, etc.
+    * *Both ToC types are available in English and French.*
+* **Element IDs**: Opens a modal to automatically add structured, sequential IDs to your choice of elements: **sections**, **headings**, **figures**, and **tables**.
+* **Figure (w/ desc)**: Inserts a complete, accessible `<figure>` block, including a `<figcaption>` and a `<details>` element for long descriptions.
+* **Footnote List**: Generates a complete WET-compliant footnote `<aside>` block with the number of footnotes you specify.
+* **Definition List**: Automatically formats a simple list of bolded terms and descriptions into a proper `<dl>`, `<dt>`, and `<dd>` structure.
+* **Colophon**: Inserts the standard copyright and ISBN/ISSN block, with options for language and the reigning monarch.
 
 ---
 
-## 🛠️ Advanced Editor Tools
+## 🛠️ Code Editor Power Tools
 
-For power users who need maximum control over the code.
+For users who need maximum control, the HTML view includes a set of advanced tools.
 
-* **Advanced Find & Replace**: A robust search panel built into the code editor.
-    * **Regex Support**: Use regular expressions for complex pattern matching.
-    * **Search Scoping**: Limit your search and replace actions to only the content within a specific **tag** (e.g., `<p>`) or a specific **ID** (e.g., `#my-section`).
-    * **Sequencing**: Perform replacements with an incrementing or decrementing number (e.g., rename multiple items to `image-1`, `image-2`, `image-3`).
-* **Undo/Redo**: Full undo and redo history for any changes made in the code editor.
-* **Import/Export HTML**: Easily load an HTML file into the editor or save your work.
-* **Unsaved Changes Warning**: If you try to close the tab with content in the editor, the browser will warn you to prevent accidental data loss.
-* **Entity Highlighting**: All HTML entities (e.g., `&#160;`) are highlighted in **<span style="color:gold;">gold</span>** directly in the code editor for better visibility.
+### Advanced Find & Replace
+A robust search panel with powerful capabilities:
+* **Regex Support**: Use regular expressions for complex pattern matching. A handy **Regex Guide** is included.
+* **Search Scoping**: Limit your search to the content within a specific **HTML tag** (e.g., only in `<p>` tags) or an element with a specific **ID** (e.g., only in `#my-section`).
+* **Sequencing**: Perform replacements with an incrementing or decrementing number. For example, you can rename multiple items to `image-1`, `image-2`, `image-3`, etc., in a single operation.
+
+### Built-in HTML Validator
+* Click the **"Validate"** button to check your code for errors.
+* The validator identifies issues like **duplicate IDs**, **mismatched tags**, improper element **nesting**, **deprecated tags/attributes**, and common **accessibility problems** (missing `alt` text, missing `scope` on table headers).
+* Results are displayed in a list, and clicking an error will instantly jump you to the corresponding line in the code editor.
+
+### Utility and File Management
+* **Undo/Redo**: Full history for all changes made in the code editor.
+* **Import/Export**: Easily load an HTML file into the editor or save your current work as an `index.html` file.
+* **Unsaved Changes Warning**: The tool will warn you before you close the tab if you have unsaved work.
+* **Entity Highlighting**: All HTML entities (like `&#160;`) are highlighted in gold for easy identification.
+
+---
+
+## 🚀 Live Preview & Prototyping
+
+Click the **"View Preview"** button to open a powerful, real-time preview of your content in a modal window.
+
+* **Framework Switching**: Instantly toggle the preview between **WET4**, **GCDS**, and a hybrid **WET+GCDS** environment.
+* **Language Toggling**: Switch between **English** and **French** page templates.
+* **Full Customization**:
+    * Set a custom page title (`<h1>`).
+    * Add a standard English or French **byline**.
+    * Simulate different environments by changing image and URL paths between **Local**, **Preview**, and **Live** sources.
+    * Toggle CSS on or off to check raw content structure.
+* **Responsive Breakpoint Testing**: Resize the preview to **XS, SM, MD,** or **Full** width to test responsiveness.
+* **Visual Helpers**: Overlay outlines on **sections** and **headings** to easily debug your document structure.
+* **Export Prototype**: Download a fully self-contained HTML file of the current preview, perfect for sharing and testing.
