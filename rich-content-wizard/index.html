@@ -4,20 +4,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WordToCode™ - Rich Content Wizard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.15.4/beautify-html.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs/loader.js"></script>
+    <title>TBS Web Content Wizard</title>
+	<meta name="author" content="Stratton Campbell - Communications Officer, Web Publishing @ Strategic Communications and Ministerial Affairs at Treasury Board of Canada Secretariat">
+    <script src="js/tailwind.js"></script>
+    <script src="js/beautify-html.min.js"></script>
+    <script src="js/loader.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
     <header class="content-wizard-header">
-        <h1 class="text-left"><i class="fa-solid fa-pen-to-square"></i> WordToCode™ - Rich Content Wizard</h1>
-        <a href="/tbsweb-toolset/rich-content-wizard/" class="px-3 py-1 text-sm text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold bg-gray-400 cursor-not-allowed opacity-60" disabled>Content Wizard</a>
-        <a href="/tbsweb-toolset/table-wizard/" class="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold">Table Wizard</a>
-        <a href="/tbsweb-toolset/qa-wizard/" class="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold">QA Wizard</a>
+        <h1 class="text-left"><i class="fa-solid fa-pen-to-square"></i> TBS Web Content Wizard <button id="infoBtn" class="px-2 py-1 text-lg font-semibold bg-gray-700 text-white rounded-xl hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-600 focus:ring-opacity-50 font-bold"><i class="fa-solid fa-circle-info"></i></button></h1>
+        <div id="editorModeToggle" class="inline-flex rounded-md shadow-sm" role="group">
+            <label for="table-search-dropdown" class="px-3 py-2 text-sm font-medium">Toolset:</label>
+            <button id="contentModeBtn" class="px-3 py-1 text-lg bg-gray-600 text-white rounded-l-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold"><i class="fa-solid fa-file-code"></i> Content Mode</button>
+            <button id="tableModeBtn" class="px-3 py-1 text-lg bg-gray-600 text-white rounded-r-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold"><i class="fa-solid fa-table"></i> Table Mode</button>
+        </div>
+        <a href="/tbsweb-toolset/qa-wizard/" class="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold">QA/XML Wizard <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
     </header>
 
     <div class="editor-container">
@@ -25,21 +29,21 @@
         <div id="richtextOutputPanel" class="richtext-output-panel panel-visible">
             <div class="flex items-center mb-4">
                 <button id="toggleEditorViewBtnRichText" class="px-4 py-2 text-base font-semibold bg-cyan-700 text-white rounded-md hover:bg-cyan-800 focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:ring-opacity-50 font-bold">
-                    Go to HTML
+                   <i class="fa-solid fa-code"></i> Go to HTML 
                 </button>
                 <div class="ml-4 p-2 bg-slate-700 rounded-lg flex items-center gap-2">
                     <label class="toggle-switch">
                         <input type="checkbox" id="toggleAutoCleanMsoOnSwitchRichText">
                         <span class="toggle-switch-slider"></span>
                     </label>
-                    <span class="toggle-switch-label text-white text-sm">Auto-Clean MSO</span>
+                    <span class="toggle-switch-label text-white text-sm">Auto-Clean MSO <i class="fa-solid fa-eraser"></i></span>
                 </div>
                 <div class="ml-4 p-2 bg-slate-700 rounded-lg flex items-center gap-2">
                     <label class="toggle-switch is-checked">
                         <input type="checkbox" id="toggleRichTextStyles" checked>
                         <span class="toggle-switch-slider"></span>
                     </label>
-                    <span class="toggle-switch-label text-white text-sm">Guide Markings</span>
+                    <span class="toggle-switch-label text-white text-sm">Guide Markings <i class="fa-solid fa-marker"></i></span>
                 </div>
             </div>
             <iframe id="default_ifr"></iframe>
@@ -48,29 +52,24 @@
         <div id="mainEditorArea" class="main-editor-area panel-hidden">
             
             <div id="codePanel" class="code-panel">
-                <div class="flex items-center mb-4 flex-wrap">
+                <div class="flex items-center flex-wrap">
                     <button id="toggleEditorViewBtnCode" class="px-4 py-2 text-base font-semibold bg-cyan-700 text-white rounded-md hover:bg-cyan-800 focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:ring-opacity-50 font-bold">
-                        Go to Rich-Text
+                       <i class="fa-solid fa-file-word"></i> Go to Rich-Text 
                     </button>
                     <div class="ml-4 p-2 bg-slate-700 rounded-lg flex items-center gap-2">
                         <label class="toggle-switch">
                             <input type="checkbox" id="toggleAutoCleanMsoOnSwitchCode">
                             <span class="toggle-switch-slider"></span>
                         </label>
-                        <span class="toggle-switch-label text-white text-sm">Auto-Clean MSO</span>
+                        <span class="toggle-switch-label text-white text-sm">Auto-Clean MSO <i class="fa-solid fa-eraser"></i></span>
                     </div>
                     <button id="cleanMsoBtn" class="ml-4 px-4 py-2 text-base bg-blue-700 text-white rounded-md hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold">
-                        Clean MSO
+                        <i class="fa-solid fa-eraser"></i> Clean MSO
                     </button>
-                    <button id="validateNowBtn" class="ml-4 px-4 py-2 text-base bg-blue-700 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold">
-                        <i class="fa-solid fa-check-double"></i> Validate
-                    </button>
-                    <button id="previewBtn" class="ml-4 px-4 py-2 text-base bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 font-bold">
-                        <i class="fa-solid fa-eye"></i> View Preview
-                    </button>
+                    
                 </div>
 
-                <!--<div class="flex items-center mb-2 flex-wrap">
+                <div class="flex items-center mb-2 flex-wrap">
                     <div class="flex space-x-2 items-center">
                         <div class="attached-tbl-button-group">
                             <button id="open-tbl-options-tbl-modal-btn" class="px-4 py-2 text-base bg-blue-700 text-white rounded-l-md hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-semibold">Format ALL Tables</button>
@@ -88,11 +87,11 @@
                             <button id="eng-number-button" class="px-3 py-1 text-sm bg-purple-700 text-white rounded-l-md hover:bg-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-opacity-50 font-bold">ENG Numbering</button>
                             <button id="fra-number-button" class="px-3 py-1 text-sm bg-purple-700 text-white rounded-r-md hover:bg-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-opacity-50 font-bold">FRA Numbering</button>
                         </div>
-                        <button id="autoTableIDBtn" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-600 focus:ring-opacity-50 font-bold">Quick Table ID's</button>
+                        <button id="autoTableIDBtn" class="px-3 py-1 text-sm bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">Quick Table ID's</button>
                     </div>
                 </div>
                 
-                <div class="flex mb-4 px-2 py-2 space-x-2 items-center bg-gray-800 rounded-md">
+                <div class="flex px-2 py-2 space-x-2 items-center bg-gray-700 rounded-md">
                     <label for="table-search-dropdown" class="text-sm font-medium">Table Select:</label>
                     <select id="table-search-dropdown" class="text-sm">
                         <option value="">-- Select a table --</option>
@@ -107,11 +106,11 @@
                         <button id="reset-tablescopeid-btn" class="trash-button bg-green-800 text-white rounded-r-md hover:bg-green-900 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-opacity-50 font-semibold" title="Reset Table Scope/IDs"><i class="fas fa-trash-alt"></i></button>
                     </div>
                     <div class="attached-tbl-button-group" role="group">
-                        <button id="tbl-toggle-interactive" class="px-3 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-600 focus:ring-opacity-50 font-bold">Toggle Interactive</button>
+                        <button id="tbl-toggle-interactive" class="px-3 py-1 text-sm bg-gray-800 text-white rounded-md hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-700 focus:ring-opacity-50 font-bold">Toggle Interactive</button>
                     </div>
-                </div>-->
+                </div>
                 
-                <div class="flex items-center mb-4 flex-wrap">
+                <div class="flex items-center mb-4 mt-4 flex-wrap">
                     <div class="inline-flex rounded-md shadow-sm" role="group">
                         <button id="copyCodeBtn" class="px-4 py-1 text-sm bg-zinc-700 text-white rounded-l-md hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-opacity-50 font-semibold">Copy Code <i class="fa-solid fa-copy"></i></button>
                         <button id="clearAllBtn" class="px-4 py-1 text-sm bg-zinc-700 text-white rounded-r-md hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-opacity-50 font-semibold">Clear All <i class="fa-solid fa-trash"></i></button>
@@ -125,6 +124,12 @@
                         <button id="exportHtmlBtn" class="px-3 py-1 text-sm bg-red-700 text-white rounded-r-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-bold">Export HTML <i class="fa-solid fa-file-export"></i></button>
                         <input type="file" id="htmlFileInput" accept=".html" style="display: none;">
                     </div>
+                    <button id="validateNowBtn" class="ml-4 px-4 py-2 text-base bg-blue-700 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold">
+                        <i class="fa-solid fa-check-double"></i> Validate
+                    </button>
+                    <button id="previewBtn" class="ml-4 px-4 py-2 text-base bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 font-bold">
+                        <i class="fa-solid fa-eye"></i> View Preview
+                    </button>
                 </div>
 
                 <div id="monacoEditorContainer" class="flex-grow border border-slate-700 rounded-lg overflow-hidden"></div>
@@ -132,8 +137,8 @@
                 <div class="w-full text-left mb-2 mt-2 flex items-center justify-between">
                     <button id="toggleBottomPanel" class="px-3 py-1 text-xs bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">Hide Panel</button>
                     <div id="searchValidateToggle" class="inline-flex rounded-md shadow-sm" role="group">
-                        <button id="openSearchControlsBtn" class="px-3 py-1 text-xs bg-gray-600 text-white rounded-l-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">Search</button>
-                        <button id="openValidationBtn" class="px-3 py-1 text-xs bg-gray-600 text-white rounded-r-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">Validation Results</button>
+                        <button id="openSearchControlsBtn" class="px-3 py-1 text-xs bg-gray-600 text-white rounded-l-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+                        <button id="openValidationBtn" class="px-3 py-1 text-xs bg-gray-600 text-white rounded-r-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold"><i class="fa-solid fa-check-double"></i> Validation Results</button>
                     </div>
                 </div>
                 
@@ -150,7 +155,7 @@
                                 <label for="match-case" class="flex items-center space-x-2"><input type="checkbox" id="match-case" class="form-checkbox h-5 w-5 text-blue-600 rounded"><span>Match case</span></label>
                                 <label for="highlight-all" class="flex items-center space-x-2"><input type="checkbox" id="highlight-all" class="form-checkbox h-5 w-5 text-blue-600 rounded"><span>Highlight all</span></label>
                                 <label for="enable-regex" class="flex items-center space-x-2"><input type="checkbox" id="enable-regex" class="form-checkbox h-5 w-5 text-blue-600 rounded"><span>REGEX</span></label>
-                                <button id="searchReset" class="px-3 py-1 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 font-bold">Reset/Clear</button>
+                                <button id="searchReset" class="px-3 py-1 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 font-bold">Reset/Clear <i class="fa-solid fa-trash"></i></button>
                             </div>
                         </div>
                         <div id="sequence-container" class="flex flex-wrap items-center space-x-4 text-white overflow-hidden max-h-40 opacity-100 transition-all duration-300 ease-in-out mb-1 mt-1">
@@ -189,7 +194,7 @@
             </div>
 
             <div id="sidebarPanel" class="sidebar-panel">
-                <h3 class="text-lg font-semibold text-white mb-4">Quick Formatting</h3>
+                <h3 class="text-lg font-semibold text-white mb-4"><i class="fa-solid fa-wand-magic-sparkles"></i> Quick Formatting</h3>
                 <div class="button-list">
                     <div class="toggle-switch-container">
                         <label class="toggle-switch is-checked" for="toggleCleanSpaces"><input type="checkbox" id="toggleCleanSpaces" checked><span class="toggle-switch-slider"></span></label>
@@ -232,7 +237,7 @@
                 <button id="autoEncodeBtn" class="px-4 py-2 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-bold mb-2">Auto-Encode</button>
                 <button id="autoFormatBtn" class="px-4 py-2 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-bold mb-2">Auto-Indent</button>
 
-                <h3 class="text-lg font-semibold text-white mb-4 mt-4">Quick Insert</h3>
+                <h3 class="text-lg font-semibold text-white mb-4 mt-4"><i class="fa-solid fa-right-to-bracket"></i> Quick Insert</h3>
                 <div class="button-list mb-2">
                     <button id="autoIdBtn" class="px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded-md">Element ID's</button>
                     <button id="figDescBtn" class="px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded-md">Figure (w/ desc)</button>
@@ -241,7 +246,7 @@
                     <button id="colophonBtn" class="px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded-md">Colophon</button>
                 </div>
 
-                <h4 class="text-md text-white mb-2">Page ToC ("On this page")</h4>
+                <h4 class="text-md text-white mb-2"><i class="fa-solid fa-clipboard-list"></i> Page ToC ("On this page")</h4>
                 <div class="button-list">
                     <div class="flex space-x-2">
                         <button id="enPageToCBtn" class="flex-1 px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 rounded-md mb-1">English</button>
@@ -253,7 +258,7 @@
                     </div>
                 </div>
 
-                <h4 class="text-md text-white mb-2">Section ToC ("In this section")</h4>
+                <h4 class="text-md text-white mb-2"><i class="fa-solid fa-bars-staggered"></i> Section ToC ("In this section")</h4>
                 <div class="button-list">
                     <div class="flex space-x-2">
                         <button id="enSecToCBtn" class="flex-1 px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 rounded-md mb-1">ENG</button>
@@ -353,8 +358,258 @@
             </div>
         </div>
     </div>
-    
-    <!--<div id="tbl-customize-modal-overlay" class="tbl-modal-overlay hidden">
+
+    <div id="tbl-options-tbl-modal-overlay" class="tbl-modal-overlay hidden">
+        <div class="tbl-modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-white mt-4">Formatting Options</h3>
+                <button id="close-tbl-options-tbl-modal-btn" class="text-gray-400 hover:text-gray-200">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <div class="tbl-modal-tbl-options-row">
+                <div class="tbl-options-section">
+                    <h4>Base Properties</h4>
+                    <div class="tbl-options-grid">
+                        <div class="tbl-toggle-switch-container">
+                            <label class="tbl-toggle-switch is-checked" for="id-checkbox">
+                                <input type="checkbox" id="id-checkbox" class="hidden" checked>
+                                <span class="tbl-toggle-switch-slider"></span>
+                            </label>
+                            <span class="tbl-toggle-switch-label text-gray-200">ID Tables</span>
+                        </div>
+                        <div class="tbl-option-text-input">
+                            <input type="text" id="page-id-prefix-input" class="w-auto" style="width: 60px;" placeholder="tbl">
+                            <label for="page-id-prefix-input" class="text-gray-200">Table ID Prefix</label>
+                        </div>
+                        <div class="tbl-option-text-input">
+                            <input type="text" id="figure-data-id-prefix-input" class="w-auto" style="width: 60px;" placeholder="ftbl">
+                            <label for="figure-data-id-prefix-input" class="text-gray-200">Figure Table ID Prefix</label>
+                        </div>
+                        <div class="tbl-toggle-switch-container">
+                            <label class="tbl-toggle-switch is-checked" for="fix-empty-cells-checkbox">
+                                <input type="checkbox" id="fix-empty-cells-checkbox" class="hidden" checked>
+                                <span class="tbl-toggle-switch-slider"></span>
+                            </label>
+                            <span class="tbl-toggle-switch-label text-gray-200">Fix Empty Cells</span>
+                        </div>
+                        <div class="tbl-toggle-switch-container">
+                            <label class="tbl-toggle-switch is-checked" for="make-tfoot-from-colspan-checkbox">
+                                <input type="checkbox" id="make-tfoot-from-colspan-checkbox" class="hidden" checked>
+                                <span class="tbl-toggle-switch-slider"></span>
+                            </label>
+                            <span class="tbl-toggle-switch-label text-gray-200">TFOOT from LAST COLSPAN</span>
+                        </div>
+						<div class="tbl-toggle-switch-container">
+                            <label class="tbl-toggle-switch is-checked" for="make-tfoot-before-tbody-checkbox">
+                                <input type="checkbox" id="make-tfoot-before-tbody-checkbox" class="hidden" checked>
+                                <span class="tbl-toggle-switch-slider"></span>
+                            </label>
+                            <span class="tbl-toggle-switch-label text-gray-200">TFOOT before TBODY</span>
+                        </div>
+                        <div class="tbl-toggle-switch-container">
+                            <label class="tbl-toggle-switch is-checked" for="caption-checkbox">
+                                <input type="checkbox" id="caption-checkbox" class="hidden" checked>
+                                <span class="tbl-toggle-switch-slider"></span>
+                            </label>
+                            <span class="tbl-toggle-switch-label text-gray-200">Caption (set manually)</span>
+                        </div>
+                        <div class="tbl-toggle-switch-container">
+                            <label class="tbl-toggle-switch" for="auto-caption-checkbox">
+                                <input type="checkbox" id="auto-caption-checkbox" class="hidden">
+                                <span class="tbl-toggle-switch-slider"></span>
+                            </label>
+                            <span class="tbl-toggle-switch-label text-gray-200">Auto-Caption</span>
+                        </div>
+						<div class="tbl-toggle-switch-container">
+                            <label class="tbl-toggle-switch" for="inv-caption-checkbox">
+                                <input type="checkbox" id="inv-caption-checkbox" class="hidden">
+                                <span class="tbl-toggle-switch-slider"></span>
+                            </label>
+                            <span class="tbl-toggle-switch-label text-gray-200">Invisible Captions</span>
+                        </div>
+                        
+                        <div class="tbl-toggle-switch-container">
+                            <label class="tbl-toggle-switch" for="remove-p-tags-checkbox">
+                                <input type="checkbox" id="remove-p-tags-checkbox" class="hidden">
+                                <span class="tbl-toggle-switch-slider"></span>
+                            </label>
+                            <span class="tbl-toggle-switch-label text-gray-200">Remove &lt;p&gt; Tags</span>
+                        </div>
+                        
+                        <div class="tbl-toggle-switch-container">
+                            <label class="tbl-toggle-switch" for="class-small-checkbox">
+                                <input type="checkbox" id="class-small-checkbox" class="hidden">
+                                <span class="tbl-toggle-switch-slider"></span>
+                            </label>
+                            <span class="tbl-toggle-switch-label text-gray-200">Add <strong>small</strong> to TABLE</span>
+                        </div>
+                        <div class="tbl-toggle-switch-container">
+                            <label class="tbl-toggle-switch" for="add-small-to-tr-checkbox">
+                                <input type="checkbox" id="add-small-to-tr-checkbox" class="hidden">
+                                <span class="tbl-toggle-switch-slider"></span>
+                            </label>
+                            <span class="tbl-toggle-switch-label text-gray-200">Add <strong>small</strong> to ALL TR</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tbl-options-section">
+                    <h4>Structure and Styling</h4>
+                    <div class="tbl-options-grid">
+                        <div class="tbl-toggle-switch-container">
+                            <label class="tbl-toggle-switch is-checked" for="class-tables-checkbox">
+                                <input type="checkbox" id="class-tables-checkbox" class="hidden" checked>
+                                <span class="tbl-toggle-switch-slider"></span>
+                            </label>
+                            <span class="tbl-toggle-switch-label text-gray-200">Basic Classes</span>
+                        </div>
+                        <div class="tbl-toggle-switch-container">
+                            <label class="tbl-toggle-switch is-checked" for="header-checkbox">
+                                <input type="checkbox" id="header-checkbox" class="hidden" checked>
+                                <span class="tbl-toggle-switch-slider"></span>
+                            </label>
+                            <span class="tbl-toggle-switch-label text-gray-200">TH COL Headers (1st row)</span>
+                        </div>
+                        <div class="tbl-toggle-switch-container">
+                            <label class="tbl-toggle-switch is-checked" for="row-header-checkbox">
+                                <input type="checkbox" id="row-header-checkbox" class="hidden" checked>
+                                <span class="tbl-toggle-switch-slider"></span>
+                            </label>
+                            <span class="tbl-toggle-switch-label text-gray-200">TH ROW Headers (1st col)</span>
+                        </div>
+                        <div class="tbl-toggle-switch-container">
+                            <label class="tbl-toggle-switch is-checked" for="active-col-headers-checkbox">
+                                <input type="checkbox" id="active-col-headers-checkbox" class="hidden" checked>
+                                <span class="tbl-toggle-switch-slider"></span>
+                            </label>
+                            <span class="tbl-toggle-switch-label text-gray-200"><strong>active</strong> COL Headers</span>
+                        </div>
+                        <div class="tbl-toggle-switch-container">
+                            <label class="tbl-toggle-switch is-checked" for="active-colspan-headers-checkbox">
+                                <input type="checkbox" id="active-colspan-headers-checkbox" class="hidden" checked>
+                                <span class="tbl-toggle-switch-slider"></span>
+                            </label>
+                            <span class="tbl-toggle-switch-label text-gray-200"><strong>active</strong> COLSPAN Headers</span>
+                        </div>
+                        <div class="tbl-toggle-switch-container">
+                            <label class="tbl-toggle-switch" for="active-row-headers-checkbox">
+                                <input type="checkbox" id="active-row-headers-checkbox" class="hidden">
+                                <span class="tbl-toggle-switch-slider"></span>
+                            </label>
+                            <span class="tbl-toggle-switch-label text-gray-200"><strong>active</strong> ROW Headers</span>
+                        </div>
+                        <div class="tbl-toggle-switch-container">
+                            <label class="tbl-toggle-switch is-checked" for="bordered-checkbox">
+                                <input type="checkbox" id="bordered-checkbox" class="hidden" checked>
+                                <span class="tbl-toggle-switch-slider"></span>
+                            </label>
+                            <span class="tbl-toggle-switch-label text-gray-200">Add <strong>bordered</strong></span>
+                        </div>
+                        <div class="tbl-toggle-switch-container">
+                            <label class="tbl-toggle-switch" for="striped-checkbox">
+                                <input type="checkbox" id="striped-checkbox" class="hidden">
+                                <span class="tbl-toggle-switch-slider"></span>
+                            </label>
+                            <span class="tbl-toggle-switch-label text-gray-200">Add <strong>striped</strong></span>
+                        </div>
+                        <div class="tbl-toggle-switch-container">
+                            <label class="tbl-toggle-switch" for="hover-checkbox">
+                                <input type="checkbox" id="hover-checkbox" class="hidden">
+                                <span class="tbl-toggle-switch-slider"></span>
+                            </label>
+                            <span class="tbl-toggle-switch-label text-gray-200">Add <strong>hover</strong></span>
+                        </div>
+                        <div class="tbl-toggle-switch-container">
+                            <label class="tbl-toggle-switch" for="finance-table-checkbox">
+                                <input type="checkbox" id="finance-table-checkbox" class="hidden">
+                                <span class="tbl-toggle-switch-slider"></span>
+                            </label>
+                            <span class="tbl-toggle-switch-label text-gray-200">Finance Tables</span>
+                        </div>
+                        
+                    </div>
+                </div>
+
+                <div class="tbl-options-section">
+                    <h4>Alignment</h4>
+                    <div class="tbl-options-grid">
+                        
+
+                        <div class="tbl-alignment-group-container">
+                            <label for="caption-alignment">Caption</label>
+                            <div id="caption-tbl-alignment-group" class="tbl-button-group">
+                                <button id="reset-capAlign-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset/delete caption alignment">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                                <button data-align="left">Left</button>
+                                <button data-align="center">Center</button>
+                                <button data-align="right">Right</button>
+                            </div>
+                        </div>
+
+                        <div class="tbl-alignment-group-container">
+                            <label for="col-headers-alignment">TH Col Headers (thead)</label>
+                            <div id="col-headers-tbl-alignment-group" class="tbl-button-group">
+                                <button id="reset-colHAlign-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset/delete col header alignment">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                                <button data-align="left">Left</button>
+                                <button data-align="center">Center</button>
+                                <button data-align="right">Right</button>
+                            </div>
+                        </div>
+
+                        <div class="tbl-alignment-group-container">
+                            <label for="row-headers-alignment">TH Row Headers (tbody)</label>
+                            <div id="row-headers-tbl-alignment-group" class="tbl-button-group">
+                                <button id="reset-rowHAlign-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset/delete row header alignment">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                                <button data-align="left">Left</button>
+                                <button data-align="center">Center</button>
+                                <button data-align="right">Right</button>
+                            </div>
+                        </div>
+
+                        <div class="tbl-alignment-group-container">
+                            <label for="colspan-headers-alignment">TH Colspan Headers (tbody)</label>
+                            <div id="colspan-headers-tbl-alignment-group" class="tbl-button-group">
+                                <button id="reset-csHAlign-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset/delete colspan header alignment">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                                <button data-align="left">Left</button>
+                                <button data-align="center">Center</button>
+                                <button data-align="right">Right</button>
+                            </div>
+                        </div>
+
+                        <div class="tbl-alignment-group-container">
+                            <label for="data-cells-alignment">TD Cells (tbody)</label>
+                            <div id="data-cells-tbl-alignment-group" class="tbl-button-group">
+                                <button id="reset-dataAlign-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset/delete data cell alignment">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                                <button data-align="left">Left</button>
+                                <button data-align="center">Center</button>
+                                <button data-align="right">Right</button>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+
+            <div class="tbl-modal-buttons">
+                <button id="format-tbl-button-modal" class="font-semibold mt-4">
+                    Format Tables
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="tbl-customize-modal-overlay" class="tbl-modal-overlay hidden">
         <div class="tbl-modal-content">
             <div class="flex justify-between items-center">
                 <h3 class="text-xl font-bold text-white mt-4">Customize Table</h3>
@@ -362,10 +617,12 @@
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
+
             <div class="tbl-customize-main-content-wrapper">
                 <div class="tbl-customize-preview-wrapper flex flex-col">
                     <iframe id="tbl-customize-preview-iframe" class="flex-grow"></iframe>
                 </div>
+
                 <div class="tbl-customize-options-panel">
                     <div class="tbl-options-section">
                         <h4>Base Properties</h4>
@@ -374,133 +631,207 @@
                                 <label for="tbl-customize-page-id-prefix-input" class="text-gray-200">Custom ID</label>
                                 <input type="text" id="tbl-customize-page-id-prefix-input" class="flex-grow bg-zinc-700 text-white border border-zinc-500 rounded-md p-1" placeholder="my-custom-id">
                             </div>
-                            <div class="tbl-toggle-switch-container">
-                                <label class="tbl-toggle-switch" for="tbl-customize-fix-empty-cells-checkbox"><input type="checkbox" id="tbl-customize-fix-empty-cells-checkbox" class="hidden" checked><span class="tbl-toggle-switch-slider"></span></label>
+							<div class="tbl-toggle-switch-container">
+                                <label class="tbl-toggle-switch" for="tbl-customize-fix-empty-cells-checkbox">
+                                    <input type="checkbox" id="tbl-customize-fix-empty-cells-checkbox" class="hidden" checked>
+                                    <span class="tbl-toggle-switch-slider"></span>
+                                </label>
                                 <span class="tbl-toggle-switch-label text-gray-200">Fix Empty Cells</span>
                             </div>
+
                             <div class="tbl-toggle-switch-container">
-                                <label class="tbl-toggle-switch" for="tbl-customize-make-tfoot-from-colspan-checkbox"><input type="checkbox" id="tbl-customize-make-tfoot-from-colspan-checkbox" class="hidden"><span class="tbl-toggle-switch-slider"></span></label>
+                                <label class="tbl-toggle-switch" for="tbl-customize-make-tfoot-from-colspan-checkbox">
+                                    <input type="checkbox" id="tbl-customize-make-tfoot-from-colspan-checkbox" class="hidden">
+                                    <span class="tbl-toggle-switch-slider"></span>
+                                </label>
                                 <span class="tbl-toggle-switch-label text-gray-200">TFOOT from LAST COLSPAN</span>
                             </div>
+							<div class="tbl-toggle-switch-container">
+                            <label class="tbl-toggle-switch is-checked" for="tbl-customize-make-tfoot-before-tbody-checkbox">
+                                <input type="checkbox" id="tbl-customize-make-tfoot-before-tbody-checkbox" class="hidden">
+                                <span class="tbl-toggle-switch-slider"></span>
+                            </label>
+                            <span class="tbl-toggle-switch-label text-gray-200">TFOOT before TBODY</span>
+                        </div>
+							<div class="tbl-toggle-switch-container">
+                            <label class="tbl-toggle-switch" for="tbl-customize-caption-checkbox">
+                                <input type="checkbox" id="tbl-customize-caption-checkbox" class="hidden">
+                                <span class="tbl-toggle-switch-slider"></span>
+                            </label>
+                            <span class="tbl-toggle-switch-label text-gray-200">Caption</span>
+                        </div>
                             <div class="tbl-toggle-switch-container">
-                                <label class="tbl-toggle-switch is-checked" for="tbl-customize-make-tfoot-before-tbody-checkbox"><input type="checkbox" id="tbl-customize-make-tfoot-before-tbody-checkbox" class="hidden"><span class="tbl-toggle-switch-slider"></span></label>
-                                <span class="tbl-toggle-switch-label text-gray-200">TFOOT before TBODY</span>
-                            </div>
+                            <label class="tbl-toggle-switch" for="tbl-customize-inv-caption-checkbox">
+                                <input type="checkbox" id="tbl-customize-inv-caption-checkbox" class="hidden">
+                                <span class="tbl-toggle-switch-slider"></span>
+                            </label>
+                            <span class="tbl-toggle-switch-label text-gray-200">Invisible Caption</span>
+                        </div>
                             <div class="tbl-toggle-switch-container">
-                                <label class="tbl-toggle-switch" for="tbl-customize-caption-checkbox"><input type="checkbox" id="tbl-customize-caption-checkbox" class="hidden"><span class="tbl-toggle-switch-slider"></span></label>
-                                <span class="tbl-toggle-switch-label text-gray-200">Caption</span>
-                            </div>
-                            <div class="tbl-toggle-switch-container">
-                                <label class="tbl-toggle-switch" for="tbl-customize-inv-caption-checkbox"><input type="checkbox" id="tbl-customize-inv-caption-checkbox" class="hidden"><span class="tbl-toggle-switch-slider"></span></label>
-                                <span class="tbl-toggle-switch-label text-gray-200">Invisible Caption</span>
-                            </div>
-                            <div class="tbl-toggle-switch-container">
-                                <label class="tbl-toggle-switch" for="tbl-customize-remove-p-tags-checkbox"><input type="checkbox" id="tbl-customize-remove-p-tags-checkbox" class="hidden"><span class="tbl-toggle-switch-slider"></span></label>
+                                <label class="tbl-toggle-switch" for="tbl-customize-remove-p-tags-checkbox">
+                                    <input type="checkbox" id="tbl-customize-remove-p-tags-checkbox" class="hidden">
+                                    <span class="tbl-toggle-switch-slider"></span>
+                                </label>
                                 <span class="tbl-toggle-switch-label text-gray-200">Remove &lt;p&gt; Tags</span>
                             </div>
+                            
                             <div class="tbl-toggle-switch-container">
-                                <label class="tbl-toggle-switch" for="tbl-customize-class-small-checkbox"><input type="checkbox" id="tbl-customize-class-small-checkbox" class="hidden"><span class="tbl-toggle-switch-slider"></span></label>
+                                <label class="tbl-toggle-switch" for="tbl-customize-class-small-checkbox">
+                                    <input type="checkbox" id="tbl-customize-class-small-checkbox" class="hidden">
+                                    <span class="tbl-toggle-switch-slider"></span>
+                                </label>
                                 <span class="tbl-toggle-switch-label text-gray-200">Add <strong>small</strong> to TABLE</span>
                             </div>
                             <div class="tbl-toggle-switch-container">
-                                <label class="tbl-toggle-switch" for="tbl-customize-add-small-to-tr-checkbox"><input type="checkbox" id="tbl-customize-add-small-to-tr-checkbox" class="hidden"><span class="tbl-toggle-switch-slider"></span></label>
+                                <label class="tbl-toggle-switch" for="tbl-customize-add-small-to-tr-checkbox">
+                                    <input type="checkbox" id="tbl-customize-add-small-to-tr-checkbox" class="hidden">
+                                    <span class="tbl-toggle-switch-slider"></span>
+                                </label>
                                 <span class="tbl-toggle-switch-label text-gray-200">Add <strong>small</strong> to ALL TR</span>
                             </div>
                         </div>
                     </div>
+
                     <div class="tbl-options-section">
                         <h4>Structure and Styling</h4>
                         <div class="tbl-options-grid">
-                            <div class="tbl-toggle-switch-container">
-                                <label class="tbl-toggle-switch" for="tbl-customize-class-tables-checkbox"><input type="checkbox" id="tbl-customize-class-tables-checkbox" class="hidden" checked><span class="tbl-toggle-switch-slider"></span></label>
+						<div class="tbl-toggle-switch-container">
+                                <label class="tbl-toggle-switch" for="tbl-customize-class-tables-checkbox">
+                                    <input type="checkbox" id="tbl-customize-class-tables-checkbox" class="hidden" checked>
+                                    <span class="tbl-toggle-switch-slider"></span>
+                                </label>
                                 <span class="tbl-toggle-switch-label text-gray-200">Basic Classes</span>
                             </div>
                             <div class="tbl-toggle-switch-container">
-                                <label class="tbl-toggle-switch" for="tbl-customize-header-checkbox"><input type="checkbox" id="tbl-customize-header-checkbox" class="hidden" checked><span class="tbl-toggle-switch-slider"></span></label>
+                                <label class="tbl-toggle-switch" for="tbl-customize-header-checkbox">
+                                    <input type="checkbox" id="tbl-customize-header-checkbox" class="hidden" checked>
+                                    <span class="tbl-toggle-switch-slider"></span>
+                                </label>
                                 <span class="tbl-toggle-switch-label text-gray-200">TH COL Headers (1st row)</span>
                             </div>
                             <div class="tbl-toggle-switch-container">
-                                <label class="tbl-toggle-switch" for="tbl-customize-row-header-checkbox"><input type="checkbox" id="tbl-customize-row-header-checkbox" class="hidden" checked><span class="tbl-toggle-switch-slider"></span></label>
+                                <label class="tbl-toggle-switch" for="tbl-customize-row-header-checkbox">
+                                    <input type="checkbox" id="tbl-customize-row-header-checkbox" class="hidden" checked>
+                                    <span class="tbl-toggle-switch-slider"></span>
+                                </label>
                                 <span class="tbl-toggle-switch-label text-gray-200">TH ROW Headers (1st col)</span>
                             </div>
                             <div class="tbl-toggle-switch-container">
-                                <label class="tbl-toggle-switch" for="tbl-customize-active-col-headers-checkbox"><input type="checkbox" id="tbl-customize-active-col-headers-checkbox" class="hidden" checked><span class="tbl-toggle-switch-slider"></span></label>
+                                <label class="tbl-toggle-switch" for="tbl-customize-active-col-headers-checkbox">
+                                    <input type="checkbox" id="tbl-customize-active-col-headers-checkbox" class="hidden" checked>
+                                    <span class="tbl-toggle-switch-slider"></span>
+                                </label>
                                 <span class="tbl-toggle-switch-label text-gray-200"><strong>active</strong> COL Headers</span>
                             </div>
                             <div class="tbl-toggle-switch-container">
-                                <label class="tbl-toggle-switch" for="tbl-customize-active-colspan-headers-checkbox"><input type="checkbox" id="tbl-customize-active-colspan-headers-checkbox" class="hidden" checked><span class="tbl-toggle-switch-slider"></span></label>
+                                <label class="tbl-toggle-switch" for="tbl-customize-active-colspan-headers-checkbox">
+                                    <input type="checkbox" id="tbl-customize-active-colspan-headers-checkbox" class="hidden" checked>
+                                    <span class="tbl-toggle-switch-slider"></span>
+                                </label>
                                 <span class="tbl-toggle-switch-label text-gray-200"><strong>active</strong> COLSPAN Headers</span>
                             </div>
                             <div class="tbl-toggle-switch-container">
-                                <label class="tbl-toggle-switch" for="tbl-customize-active-row-headers-checkbox"><input type="checkbox" id="tbl-customize-active-row-headers-checkbox" class="hidden"><span class="tbl-toggle-switch-slider"></span></label>
+                                <label class="tbl-toggle-switch" for="tbl-customize-active-row-headers-checkbox">
+                                    <input type="checkbox" id="tbl-customize-active-row-headers-checkbox" class="hidden">
+                                    <span class="tbl-toggle-switch-slider"></span>
+                                </label>
                                 <span class="tbl-toggle-switch-label text-gray-200"><strong>active</strong> ROW Headers</span>
                             </div>
                             <div class="tbl-toggle-switch-container">
-                                <label class="tbl-toggle-switch" for="tbl-customize-bordered-checkbox"><input type="checkbox" id="tbl-customize-bordered-checkbox" class="hidden" checked><span class="tbl-toggle-switch-slider"></span></label>
+                                <label class="tbl-toggle-switch" for="tbl-customize-bordered-checkbox">
+                                    <input type="checkbox" id="tbl-customize-bordered-checkbox" class="hidden" checked>
+                                    <span class="tbl-toggle-switch-slider"></span>
+                                </label>
                                 <span class="tbl-toggle-switch-label text-gray-200">Add <strong>bordered</strong></span>
                             </div>
                             <div class="tbl-toggle-switch-container">
-                                <label class="tbl-toggle-switch" for="tbl-customize-striped-checkbox"><input type="checkbox" id="tbl-customize-striped-checkbox" class="hidden"><span class="tbl-toggle-switch-slider"></span></label>
+                                <label class="tbl-toggle-switch" for="tbl-customize-striped-checkbox">
+                                    <input type="checkbox" id="tbl-customize-striped-checkbox" class="hidden">
+                                    <span class="tbl-toggle-switch-slider"></span>
+                                </label>
                                 <span class="tbl-toggle-switch-label text-gray-200">Add <strong>striped</strong></span>
                             </div>
                             <div class="tbl-toggle-switch-container">
-                                <label class="tbl-toggle-switch" for="tbl-customize-hover-checkbox"><input type="checkbox" id="tbl-customize-hover-checkbox" class="hidden"><span class="tbl-toggle-switch-slider"></span></label>
+                                <label class="tbl-toggle-switch" for="tbl-customize-hover-checkbox">
+                                    <input type="checkbox" id="tbl-customize-hover-checkbox" class="hidden">
+                                    <span class="tbl-toggle-switch-slider"></span>
+                                </label>
                                 <span class="tbl-toggle-switch-label text-gray-200">Add <strong>hover</strong></span>
                             </div>
                             <div class="tbl-toggle-switch-container">
-                                <label class="tbl-toggle-switch" for="tbl-customize-finance-table-checkbox"><input type="checkbox" id="tbl-customize-finance-table-checkbox" class="hidden"><span class="tbl-toggle-switch-slider"></span></label>
+                                <label class="tbl-toggle-switch" for="tbl-customize-finance-table-checkbox">
+                                    <input type="checkbox" id="tbl-customize-finance-table-checkbox" class="hidden">
+                                    <span class="tbl-toggle-switch-slider"></span>
+                                </label>
                                 <span class="tbl-toggle-switch-label text-gray-200">Finance Tables</span>
                             </div>
+                            
                         </div>
                     </div>
+
                     <div class="tbl-options-section">
                         <h4>Alignment</h4>
                         <div class="tbl-options-grid">
+                            
+                            
+
                             <div class="tbl-alignment-group-container">
                                 <label for="tbl-customize-caption-alignment">Caption</label>
                                 <div id="tbl-customize-caption-tbl-alignment-group" class="tbl-button-group">
-                                    <button id="resetCust-capAlign-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset/delete caption alignment"><i class="fas fa-trash-alt"></i></button>
+                                    <button id="resetCust-capAlign-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset/delete caption alignment">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
                                     <button data-align="left">Left</button>
                                     <button data-align="center">Center</button>
                                     <button data-align="right">Right</button>
                                 </div>
                             </div>
+
                             <div class="tbl-alignment-group-container">
                                 <div class="flex items-center justify-between mb-1">
-                                    <label for="tbl-customize-col-headers-alignment">TH Col Headers (thead)</label>
-                                    <span id="manual-chalign-tag" class="hidden text-xs font-semibold px-2 py-0.5 rounded-full bg-red-600 text-white">(Manual)</span>
+                                <label for="tbl-customize-col-headers-alignment">TH Col Headers (thead)</label>
+                                <span id="manual-chalign-tag" class="hidden text-xs font-semibold px-2 py-0.5 rounded-full bg-red-600 text-white">(Manual)</span>
                                 </div>
                                 <div id="tbl-customize-col-headers-tbl-alignment-group" class="tbl-button-group">
-                                    <button id="resetCust-colHAlign-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset/delete col header alignment"><i class="fas fa-trash-alt"></i></button>
+                                    <button id="resetCust-colHAlign-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset/delete col header alignment">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
                                     <button data-align="left">Left</button>
                                     <button data-align="center">Center</button>
                                     <button data-align="right">Right</button>
                                 </div>
                             </div>
+
                             <div class="tbl-alignment-group-container">
                                 <div class="flex items-center justify-between mb-1">
-                                    <label for="tbl-customize-row-headers-alignment">TH Row Headers (tbody)</label>
-                                    <span id="manual-rhalign-tag" class="hidden text-xs font-semibold px-2 py-0.5 rounded-full bg-red-600 text-white">(Manual)</span>
+                                <label for="tbl-customize-row-headers-alignment">TH Row Headers (tbody)</label>
+                                <span id="manual-rhalign-tag" class="hidden text-xs font-semibold px-2 py-0.5 rounded-full bg-red-600 text-white">(Manual)</span>
                                 </div>
                                 <div id="tbl-customize-row-headers-tbl-alignment-group" class="tbl-button-group">
-                                    <button id="resetCust-rowHAlign-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset/delete row header alignment"><i class="fas fa-trash-alt"></i></button>
+                                    <button id="resetCust-rowHAlign-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset/delete row header alignment">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
                                     <button data-align="left">Left</button>
                                     <button data-align="center">Center</button>
                                     <button data-align="right">Right</button>
                                 </div>
                             </div>
+
                             <div class="tbl-alignment-group-container">
                                 <div class="flex items-center justify-between mb-1">
-                                    <label for="tbl-customize-colspan-headers-alignment">TH Colspan Headers (tbody)</label>
-                                    <span id="manual-csalign-tag" class="hidden text-xs font-semibold px-2 py-0.5 rounded-full bg-red-600 text-white">(Manual)</span>
+                                <label for="tbl-customize-colspan-headers-alignment">TH Colspan Headers (tbody)</label>
+                                <span id="manual-csalign-tag" class="hidden text-xs font-semibold px-2 py-0.5 rounded-full bg-red-600 text-white">(Manual)</span>
                                 </div>
                                 <div id="tbl-customize-colspan-headers-tbl-alignment-group" class="tbl-button-group">
-                                    <button id="resetCust-csAlign-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset/delete colspan header alignment"><i class="fas fa-trash-alt"></i></button>
+                                    <button id="resetCust-csAlign-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset/delete colspan header alignment">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
                                     <button data-align="left">Left</button>
                                     <button data-align="center">Center</button>
                                     <button data-align="right">Right</button>
                                 </div>
                             </div>
+
                             <div class="tbl-alignment-group-container">
                                 <div class="flex items-center justify-between mb-1">
                                     <label for="tbl-customize-data-cells-tbl-alignment-group">TD Cells (tbody)</label>
@@ -508,49 +839,74 @@
                                     <span id="manual-align-tag" class="hidden text-xs font-semibold px-2 py-0.5 rounded-full bg-red-600 text-white">(Manual)</span>
                                 </div>
                                 <div id="tbl-customize-data-cells-tbl-alignment-group" class="tbl-button-group">
-                                    <button id="resetCust-dataAlign-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset/delete data cell alignment"><i class="fas fa-trash-alt"></i></button>
+                                    <button id="resetCust-dataAlign-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset/delete data cell alignment">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
                                     <button data-align="left">Left</button>
                                     <button data-align="center">Center</button>
                                     <button data-align="right">Right</button>
                                 </div>
                             </div>
+                            
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="flex justify-between items-center gap-4 flex-wrap border-zinc-700 pt-4">
-                <div class="tbl-cell-actions-group">
-                    <div class="attached-tbl-button-group font-bold">
+
+            
+                 <div class="flex justify-between items-center gap-4 flex-wrap border-zinc-700 pt-4">
+                    <div class="tbl-cell-actions-group">
+                        <div class="attached-tbl-button-group font-bold">
                         <button id="unbold-th-btn">Toggle Bold TH</button>
                         <button id="bold-td-btn">Toggle Bold TD</button>
                         <button id="active-tbl-cell-btn">Toggle Active</button>
-                        <button id="bgdark-tbl-cell-btn">Toggle BG Dark</button>
-                        <button id="textW-tbl-cell-btn">Toggle White Text</button>
+                <button id="bgdark-tbl-cell-btn">Toggle BG Dark</button>
+                <button id="textW-tbl-cell-btn">Toggle White Text</button>
                     </div>
-                    <div class="attached-tbl-button-group">
+                        <div class="attached-tbl-button-group">
                         <button id="align-left-btn" title="Align text Left">Align Left</button>
                         <button id="align-center-btn" title="Align text Center">Center</button>
                         <button id="align-right-btn" title="Align text Right">Right</button>
-                        <button id="reset-seltbl-cell-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset selected cell alignment"><i class="fas fa-trash-alt"></i></button>
-                    </div>
-                    <div class="attached-tbl-button-group">
+                    <button id="reset-seltbl-cell-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset selected cell alignment">
+                <i class="fas fa-trash-alt"></i>
+            </button></div>
+                        <div class="attached-tbl-button-group">
                         <button id="mrgn-sm-btn" title="Apply Small indent">Indent SM</button>
                         <button id="mrgn-md-btn" title="Apply Medium indent">MD</button>
                         <button id="mrgn-lg-btn" title="Apply Large indent">LG</button>
                         <button id="mrgn-xl-btn" title="Apply Extra Large indent">XL</button>
-                        <button id="mrgn-0-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset selected cell indent"><i class="fas fa-trash-alt"></i></button>
+                    <button id="mrgn-0-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset selected cell indent">
+                <i class="fas fa-trash-alt"></i>
+            </button></div>
+                        <div class="attached-tbl-button-group">
+                            <input type="text" id="custom-class-input" placeholder="custom-class" class="rounded-l-md">
+                            <button id="add-class-btn" class="rounded-r-md">Add</button>
+                            <button id="remove-class-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset selected custom class">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+                        </div>
                     </div>
-                    <div class="attached-tbl-button-group">
-                        <input type="text" id="custom-class-input" placeholder="custom-class" class="rounded-l-md">
-                        <button id="add-class-btn" class="rounded-r-md">Add</button>
-                        <button id="remove-class-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset selected custom class"><i class="fas fa-trash-alt"></i></button>
-                    </div>
+                    <button id="format-specific-table-button" class="font-semibold">Format Table</button>
                 </div>
-                <button id="format-specific-table-button" class="font-semibold">Format Table</button>
             </div>
         </div>
-    </div>-->
-    <script src="script.js"></script>
+    </div>
+	<div id="infoModal" class="fixed inset-0 z-50 overflow-y-auto hidden bg-gray-900 bg-opacity-75 flex items-center justify-center">
+    <div class="bg-gray-800 p-8 rounded-lg shadow-xl max-w-lg w-full text-white relative">
+        <button id="closeInfoModalBtn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-200">
+            <i class="fas fa-times"></i>
+        </button>
+        <h2 class="text-xl font-bold mb-4"><i class="fa-solid fa-circle-info"></i> App Info</h2>
+        <div class="info-modal-content text-sm text-gray-300 space-y-4">
+            <p>This browser-based web application is a tool designed to provide a free development environment for web services needs at <a href="https://www.canada.ca/en/treasury-board-secretariat.html">Treasury Board of Canada Secretariat</a>.</p>
+            <p>It's tailor-made to handle conversion of MS Office documents and offer quick, clean, accessible formatting of HTML for use on AEM (Adobe Experience Manager). It also provides a space to produce, validate and preview in real time before the need to interact with a live staging enivornment first. Compatible with WET4, GCWeb and the new GoC Design System.</p>
+            <p>Developed with help from the following tools and frameworks: <em><a href="https://hugerte.org/">HugeRTE</a>, <a href="https://microsoft.github.io/monaco-editor/">Monaco editor</a>, <a href="https://tailwindcss.com/">Tailwind CSS</a>, <a href="https://fontawesome.com/">Font Awesome</a>, <a href="https://github.com/beautifier/js-beautify">HTML Beautify</a> and Radia AI (primarily Google Gemini 2.5)</em>.</p>
+            <p>Project source code is <a href="https://github.com/stcampbe/tbsweb-toolset/tree/main/rich-content-wizard">available on GitHub</a>. For more detailed information or help, please contact:</p><p><strong>Stratton Campbell</strong><br> Communications Officer, Web Publishing @ Strategic Communications and Ministerial Affairs<br>Treasury Board of Canada Secretariat / Government of Canada<br><a href="mailto:Stratton.Campbell@tbs-sct.gc.ca">Stratton.Campbell@tbs-sct.gc.ca</a></p>
+        </div>
+    </div>
+</div>
+    <script src="js/script.js"></script>
+    <script src="js/tables.js"></script>
 </body>
 
 </html>
