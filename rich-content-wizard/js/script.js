@@ -1,4 +1,3 @@
-
 document.addEventListener('DOMContentLoaded', function () {
     window.handleRichTextEditorReady = function (editorInstance) {
         console.log("Parent: Received ready signal from iframe. HugeRTE instance captured.");
@@ -100,6 +99,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const frSecToCH4Btn = document.getElementById('frSecToCH4Btn');
     const frSecToCH5Btn = document.getElementById('frSecToCH5Btn');
     const frSecToCH6Btn = document.getElementById('frSecToCH6Btn');
+
+    [contentModeBtn, tableModeBtn].forEach(btn => {
+        btn.disabled = true;
+        btn.classList.add('opacity-50', 'cursor-not-allowed');
+    });
 
     const urlMappings = [{
             old: 'https://canada-preview.adobecqms.net/en/treasury-board-secretariat'
@@ -228,50 +232,43 @@ document.addEventListener('DOMContentLoaded', function () {
     validationResultsDiv.addEventListener('click', handleResultClick);
 
     function setEditorMode(mode) {
-        if (mode === 'content') {
-            // Style buttons
-            contentModeBtn.classList.remove('bg-gray-600', 'hover:bg-gray-700');
-            contentModeBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
-            tableModeBtn.classList.add('bg-gray-600', 'hover:bg-gray-700');
-            tableModeBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+    if (mode === 'content') {
+        // Style buttons
+        contentModeBtn.classList.remove('bg-gray-600', 'hover:bg-gray-700');
+        contentModeBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+        tableModeBtn.classList.add('bg-gray-600', 'hover:bg-gray-700');
+        tableModeBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
 
-            // Show content-specific UI elements
-            sidebarPanel.classList.remove('hidden');
-            toggleEditorViewBtnCode.classList.remove('hidden');
-            autoCleanMsoToggleCodeContainer.classList.remove('hidden');
-            cleanMsoBtn.classList.remove('hidden');
-            
-            bottomPanelContainer.classList.remove('hidden');
-            bottomPanelToggleBtn.classList.remove('hidden');
-            bottomPanelSwitch.classList.remove('hidden');
+        // Show content-specific UI elements
+        sidebarPanel.classList.remove('hidden');
+        toggleEditorViewBtnCode.classList.remove('hidden');
+        autoCleanMsoToggleCodeContainer.classList.remove('hidden');
+        cleanMsoBtn.classList.remove('hidden');
+        
 
-            // Hide table-specific UI elements
-            tableControlsRow1.classList.add('hidden');
-            tableControlsRow2.classList.add('hidden');
+        // Hide table-specific UI elements
+        tableControlsRow1.classList.add('hidden');
+        tableControlsRow2.classList.add('hidden');
 
-        } else if (mode === 'table') {
-            // Style buttons
-            tableModeBtn.classList.remove('bg-gray-600', 'hover:bg-gray-700');
-            tableModeBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
-            contentModeBtn.classList.add('bg-gray-600', 'hover:bg-gray-700');
-            contentModeBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+    } else if (mode === 'table') {
+        // Style buttons
+        tableModeBtn.classList.remove('bg-gray-600', 'hover:bg-gray-700');
+        tableModeBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+        contentModeBtn.classList.add('bg-gray-600', 'hover:bg-gray-700');
+        contentModeBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
 
-            // Hide specific content controls, but keep the row and Validate/Preview visible
-            sidebarPanel.classList.add('hidden');
-            toggleEditorViewBtnCode.classList.add('hidden');
-            autoCleanMsoToggleCodeContainer.classList.add('hidden');
-            cleanMsoBtn.classList.add('hidden');
-            
-            // Programmatically click bottom panel's toggle button if it's currently open
-            if (!searchAndValidatePanel.classList.contains('hidden')) {
-                toggleBottomPanel.click();
-            }
-            
-            // Show table-specific UI elements
-            tableControlsRow1.classList.remove('hidden');
-            tableControlsRow2.classList.remove('hidden');
-        }
+        // Hide specific content controls
+        sidebarPanel.classList.add('hidden');
+        toggleEditorViewBtnCode.classList.add('hidden');
+        autoCleanMsoToggleCodeContainer.classList.add('hidden');
+        cleanMsoBtn.classList.add('hidden');
+        
+        
+        // Show table-specific UI elements
+        tableControlsRow1.classList.remove('hidden');
+        tableControlsRow2.classList.remove('hidden');
     }
+}
 
     function handleResultClick(event) {
         const listItem = event.target.closest('li[data-line-number]');
@@ -2558,126 +2555,136 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function toggleEditorView() {
-        const anyTempMessageActive = allInteractiveButtons.some(btn => btn.getAttribute('data-temp-active') === 'true');
-        if (anyTempMessageActive) {
-            console.log("Toggle prevented: another button is active.");
-            return;
-        }
-
-        console.log("Toggle Editor View triggered. Current view:", currentView);
-        if (currentView === 'richtext') {
-            if (default_ifr.contentWindow && default_ifr.contentWindow.getRichEditorContent) {
-                richTextContent = default_ifr.contentWindow.getRichEditorContent();
-            } else {
-                richTextContent = '';
-            }
-
-            richTextContent = restoreGcdsTags(richTextContent);
-
-            richTextContent = stripStylesFromTables(richTextContent);
-
-            try {
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(richTextContent, 'text/html');
-
-                doc.querySelectorAll('details')
-                    .forEach(detail => detail.removeAttribute('open'));
-
-                doc.querySelectorAll('a[href]')
-                    .forEach(a => {
-                        let href = a.getAttribute('href');
-                        const originalHref = href;
-                        if (href.startsWith('https://can01.safelinks.protection.outlook.com')) {
-                            try {
-                                const urlObj = new URL(href);
-                                const actualUrlParam = urlObj.searchParams.get('url');
-                                if (actualUrlParam) href = decodeURIComponent(actualUrlParam);
-                            } catch (e) {
-                                console.error("Error parsing Outlook Safelink URL:", e);
-                            }
-                        }
-                        if (href.includes('/content/canadasite') || href.includes('/content/dam')) {
-                            const contentPath = href.includes('/content/canadasite') ? '/content/canadasite' : '/content/dam';
-                            const contentIndex = href.indexOf(contentPath);
-                            if (contentIndex > 0) href = href.substring(contentIndex);
-                        }
-                        if (href !== originalHref) a.setAttribute('href', href);
-                    });
-                doc.querySelectorAll('img[src]')
-                    .forEach(img => {
-                        let src = img.getAttribute('src');
-                        if (src.includes('/content/dam')) {
-                            const contentIndex = src.indexOf('/content/dam');
-                            if (contentIndex > 0) {
-                                src = src.substring(contentIndex);
-                                img.setAttribute('src', src);
-                            }
-                        }
-                    });
-
-                richTextContent = doc.body.innerHTML;
-
-            } catch (e) {
-                console.error("Failed to parse and clean HTML, proceeding with raw content.", e);
-            }
-
-            let processedContent = restoreDataAttributes(richTextContent);
-
-            if (toggleAutoCleanMsoOnSwitchRichText.checked) {
-                processedContent = applyCleanLists(processedContent);
-                processedContent = applyCleanTablesBasic(processedContent);
-                processedContent = applyCleanMsoCode(processedContent);
-                processedContent = applyAutoSpacing(processedContent);
-            }
-
-            htmlOutputContent = processedContent;
-            if (monacoEditorInstance) {
-                monacoEditorInstance.setValue(htmlOutputContent);
-                monacoEditorInstance.focus();
-                applyEntityHighlighting();
-            }
-            autoFormatBtn.click();
-
-            richtextOutputPanel.classList.remove('panel-visible');
-            richtextOutputPanel.classList.add('panel-hidden');
-            mainEditorArea.classList.remove('panel-hidden');
-            mainEditorArea.classList.add('panel-visible');
-
-            toggleEditorViewBtnRichText.classList.remove('bg-green-600', 'hover:bg-green-700', 'bg-cyan-700', 'hover:bg-cyan-800');
-            toggleEditorViewBtnRichText.classList.add('bg-slate-800', 'hover:bg-slate-700');
-            toggleEditorViewBtnCode.classList.remove('bg-green-600', 'hover:bg-green-700', 'bg-slate-800', 'hover:bg-slate-700');
-            toggleEditorViewBtnCode.classList.add('bg-cyan-700', 'hover:bg-cyan-800');
-
-            currentView = 'code';
-            updateCleanMsoButtonState();
-        } else { 
-            if (monacoEditorInstance) {
-                htmlOutputContent = monacoEditorInstance.getValue();
-            } else {
-                htmlOutputContent = '';
-            }
-
-            let contentToSendToRichText = protectDataAttributes(htmlOutputContent);
-            contentToSendToRichText = protectGcdsTags(contentToSendToRichText);
-
-            richTextContent = contentToSendToRichText;
-            if (default_ifr.contentWindow && default_ifr.contentWindow.setRichEditorContent) {
-                default_ifr.contentWindow.setRichEditorContent(cleanHtmlForRichTextDisplay(richTextContent));
-            }
-
-            mainEditorArea.classList.remove('panel-visible');
-            mainEditorArea.classList.add('panel-hidden');
-            richtextOutputPanel.classList.remove('panel-hidden');
-            richtextOutputPanel.classList.add('panel-visible');
-
-            toggleEditorViewBtnCode.classList.remove('bg-green-600', 'hover:bg-green-700', 'bg-slate-800', 'hover:bg-slate-700');
-            toggleEditorViewBtnCode.classList.add('bg-cyan-700', 'hover:bg-cyan-800');
-            updateGoToHtmlButtonColor();
-
-            currentView = 'richtext';
-            updateCleanMsoButtonState();
-        }
+    const anyTempMessageActive = allInteractiveButtons.some(btn => btn.getAttribute('data-temp-active') === 'true');
+    if (anyTempMessageActive) {
+        console.log("Toggle prevented: another button is active.");
+        return;
     }
+
+    console.log("Toggle Editor View triggered. Current view:", currentView);
+    if (currentView === 'richtext') {
+        if (default_ifr.contentWindow && default_ifr.contentWindow.getRichEditorContent) {
+            richTextContent = default_ifr.contentWindow.getRichEditorContent();
+        } else {
+            richTextContent = '';
+        }
+
+        richTextContent = restoreGcdsTags(richTextContent);
+
+        richTextContent = stripStylesFromTables(richTextContent);
+
+        try {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(richTextContent, 'text/html');
+
+            doc.querySelectorAll('details')
+                .forEach(detail => detail.removeAttribute('open'));
+
+            doc.querySelectorAll('a[href]')
+                .forEach(a => {
+                    let href = a.getAttribute('href');
+                    const originalHref = href;
+                    if (href.startsWith('https://can01.safelinks.protection.outlook.com')) {
+                        try {
+                            const urlObj = new URL(href);
+                            const actualUrlParam = urlObj.searchParams.get('url');
+                            if (actualUrlParam) href = decodeURIComponent(actualUrlParam);
+                        } catch (e) {
+                            console.error("Error parsing Outlook Safelink URL:", e);
+                        }
+                    }
+                    if (href.includes('/content/canadasite') || href.includes('/content/dam')) {
+                        const contentPath = href.includes('/content/canadasite') ? '/content/canadasite' : '/content/dam';
+                        const contentIndex = href.indexOf(contentPath);
+                        if (contentIndex > 0) href = href.substring(contentIndex);
+                    }
+                    if (href !== originalHref) a.setAttribute('href', href);
+                });
+            doc.querySelectorAll('img[src]')
+                .forEach(img => {
+                    let src = img.getAttribute('src');
+                    if (src.includes('/content/dam')) {
+                        const contentIndex = src.indexOf('/content/dam');
+                        if (contentIndex > 0) {
+                            src = src.substring(contentIndex);
+                            img.setAttribute('src', src);
+                        }
+                    }
+                });
+
+            richTextContent = doc.body.innerHTML;
+
+        } catch (e) {
+            console.error("Failed to parse and clean HTML, proceeding with raw content.", e);
+        }
+
+        let processedContent = restoreDataAttributes(richTextContent);
+
+        if (toggleAutoCleanMsoOnSwitchRichText.checked) {
+            processedContent = applyCleanLists(processedContent);
+            processedContent = applyCleanTablesBasic(processedContent);
+            processedContent = applyCleanMsoCode(processedContent);
+            processedContent = applyAutoSpacing(processedContent);
+        }
+
+        htmlOutputContent = processedContent;
+        if (monacoEditorInstance) {
+            monacoEditorInstance.setValue(htmlOutputContent);
+            monacoEditorInstance.focus();
+            applyEntityHighlighting();
+        }
+        autoFormatBtn.click();
+
+        richtextOutputPanel.classList.remove('panel-visible');
+        richtextOutputPanel.classList.add('panel-hidden');
+        mainEditorArea.classList.remove('panel-hidden');
+        mainEditorArea.classList.add('panel-visible');
+
+        toggleEditorViewBtnRichText.classList.remove('bg-green-600', 'hover:bg-green-700', 'bg-cyan-700', 'hover:bg-cyan-800');
+        toggleEditorViewBtnRichText.classList.add('bg-slate-800', 'hover:bg-slate-700');
+        toggleEditorViewBtnCode.classList.remove('bg-green-600', 'hover:bg-green-700', 'bg-slate-800', 'hover:bg-slate-700');
+        toggleEditorViewBtnCode.classList.add('bg-cyan-700', 'hover:bg-cyan-800');
+
+        currentView = 'code';
+        // Enable mode switch buttons
+        [contentModeBtn, tableModeBtn].forEach(btn => {
+            btn.disabled = false;
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        });
+        updateCleanMsoButtonState();
+    } else { 
+        if (monacoEditorInstance) {
+            htmlOutputContent = monacoEditorInstance.getValue();
+        } else {
+            htmlOutputContent = '';
+        }
+
+        let contentToSendToRichText = protectDataAttributes(htmlOutputContent);
+        contentToSendToRichText = protectGcdsTags(contentToSendToRichText);
+
+        richTextContent = contentToSendToRichText;
+        if (default_ifr.contentWindow && default_ifr.contentWindow.setRichEditorContent) {
+            default_ifr.contentWindow.setRichEditorContent(cleanHtmlForRichTextDisplay(richTextContent));
+        }
+
+        mainEditorArea.classList.remove('panel-visible');
+        mainEditorArea.classList.add('panel-hidden');
+        richtextOutputPanel.classList.remove('panel-hidden');
+        richtextOutputPanel.classList.add('panel-visible');
+
+        toggleEditorViewBtnCode.classList.remove('bg-green-600', 'hover:bg-green-700', 'bg-slate-800', 'hover:bg-slate-700');
+        toggleEditorViewBtnCode.classList.add('bg-cyan-700', 'hover:bg-cyan-800');
+        updateGoToHtmlButtonColor();
+
+        currentView = 'richtext';
+        // Disable mode switch buttons
+        [contentModeBtn, tableModeBtn].forEach(btn => {
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+        });
+        updateCleanMsoButtonState();
+    }
+}
 
     let entityDecorations = [];
 
@@ -3503,10 +3510,11 @@ document.addEventListener('DOMContentLoaded', function () {
         
 
         toggleBottomPanel.addEventListener('click', () => {
-            const isPanelHidden = searchAndValidatePanel.classList.toggle('hidden');
-            searchValidateToggle.classList.toggle('hidden', isPanelHidden);
-            toggleBottomPanel.textContent = isPanelHidden ? 'Show Panel' : 'Hide Panel';
-        });
+    const isPanelHidden = searchAndValidatePanel.classList.toggle('hidden');
+    // Use the panel's state to determine if the inner toggle should be visible
+    searchValidateToggle.classList.toggle('hidden', isPanelHidden);
+    toggleBottomPanel.textContent = isPanelHidden ? 'Show Panel' : 'Hide Panel';
+});
 
         openSearchControlsBtn.addEventListener('click', () => {
             searchControlsView.classList.remove('view-hidden');
