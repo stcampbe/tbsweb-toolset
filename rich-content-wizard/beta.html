@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WordToCode™ - Rich Content Wizard</title>
+    <title>TBS Web Content Wizard</title>
+	<meta name="author" content="Stratton Campbell - Communications Officer, Web Publishing @ Strategic Communications and Ministerial Affairs at Treasury Board of Canada Secretariat">
     <script src="js/tailwind.js"></script>
     <script src="js/beautify-html.min.js"></script>
     <script src="js/loader.js"></script>
@@ -14,13 +15,13 @@
 
 <body>
     <header class="content-wizard-header">
-        <h1 class="text-left"><i class="fa-solid fa-pen-to-square"></i> WordToCode™ - Rich Content Wizard</h1>
+        <h1 class="text-left"><i class="fa-solid fa-pen-to-square"></i> TBS Web Content Wizard <button id="infoBtn" class="px-2 py-1 text-lg font-semibold bg-gray-700 text-white rounded-xl hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-600 focus:ring-opacity-50 font-bold"><i class="fa-solid fa-circle-info"></i></button></h1>
         <div id="editorModeToggle" class="inline-flex rounded-md shadow-sm" role="group">
             <label for="table-search-dropdown" class="px-3 py-2 text-sm font-medium">Toolset:</label>
-            <button id="contentModeBtn" class="px-3 py-1 text-lg bg-gray-600 text-white rounded-l-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">Content Mode</button>
-            <button id="tableModeBtn" class="px-3 py-1 text-lg bg-gray-600 text-white rounded-r-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">Table Mode</button>
+            <button id="contentModeBtn" class="px-3 py-1 text-lg bg-gray-600 text-white rounded-l-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold"><i class="fa-solid fa-file-code"></i> Content Mode</button>
+            <button id="tableModeBtn" class="px-3 py-1 text-lg bg-gray-600 text-white rounded-r-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold"><i class="fa-solid fa-table"></i> Table Mode</button>
         </div>
-        <a href="/tbsweb-toolset/qa-wizard/" class="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold">QA Wizard</a>
+        <a href="/tbsweb-toolset/qa-wizard/" class="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold">QA/XML Wizard <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
     </header>
 
     <div class="editor-container">
@@ -28,21 +29,21 @@
         <div id="richtextOutputPanel" class="richtext-output-panel panel-visible">
             <div class="flex items-center mb-4">
                 <button id="toggleEditorViewBtnRichText" class="px-4 py-2 text-base font-semibold bg-cyan-700 text-white rounded-md hover:bg-cyan-800 focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:ring-opacity-50 font-bold">
-                    Go to HTML <i class="fa-solid fa-right-to-bracket"></i>
+                   <i class="fa-solid fa-code"></i> Go to HTML 
                 </button>
                 <div class="ml-4 p-2 bg-slate-700 rounded-lg flex items-center gap-2">
                     <label class="toggle-switch">
                         <input type="checkbox" id="toggleAutoCleanMsoOnSwitchRichText">
                         <span class="toggle-switch-slider"></span>
                     </label>
-                    <span class="toggle-switch-label text-white text-sm">Auto-Clean MSO</span>
+                    <span class="toggle-switch-label text-white text-sm">Auto-Clean MSO <i class="fa-solid fa-eraser"></i></span>
                 </div>
                 <div class="ml-4 p-2 bg-slate-700 rounded-lg flex items-center gap-2">
                     <label class="toggle-switch is-checked">
                         <input type="checkbox" id="toggleRichTextStyles" checked>
                         <span class="toggle-switch-slider"></span>
                     </label>
-                    <span class="toggle-switch-label text-white text-sm">Guide Markings</span>
+                    <span class="toggle-switch-label text-white text-sm">Guide Markings <i class="fa-solid fa-marker"></i></span>
                 </div>
             </div>
             <iframe id="default_ifr"></iframe>
@@ -53,17 +54,17 @@
             <div id="codePanel" class="code-panel">
                 <div class="flex items-center flex-wrap">
                     <button id="toggleEditorViewBtnCode" class="px-4 py-2 text-base font-semibold bg-cyan-700 text-white rounded-md hover:bg-cyan-800 focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:ring-opacity-50 font-bold">
-                        <i class="fa-solid fa-arrow-left"></i> Go to Rich-Text
+                       <i class="fa-solid fa-file-word"></i> Go to Rich-Text 
                     </button>
                     <div class="ml-4 p-2 bg-slate-700 rounded-lg flex items-center gap-2">
                         <label class="toggle-switch">
                             <input type="checkbox" id="toggleAutoCleanMsoOnSwitchCode">
                             <span class="toggle-switch-slider"></span>
                         </label>
-                        <span class="toggle-switch-label text-white text-sm">Auto-Clean MSO</span>
+                        <span class="toggle-switch-label text-white text-sm">Auto-Clean MSO <i class="fa-solid fa-eraser"></i></span>
                     </div>
                     <button id="cleanMsoBtn" class="ml-4 px-4 py-2 text-base bg-blue-700 text-white rounded-md hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold">
-                        Clean MSO
+                        <i class="fa-solid fa-eraser"></i> Clean MSO
                     </button>
                     
                 </div>
@@ -136,8 +137,8 @@
                 <div class="w-full text-left mb-2 mt-2 flex items-center justify-between">
                     <button id="toggleBottomPanel" class="px-3 py-1 text-xs bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">Hide Panel</button>
                     <div id="searchValidateToggle" class="inline-flex rounded-md shadow-sm" role="group">
-                        <button id="openSearchControlsBtn" class="px-3 py-1 text-xs bg-gray-600 text-white rounded-l-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">Search</button>
-                        <button id="openValidationBtn" class="px-3 py-1 text-xs bg-gray-600 text-white rounded-r-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">Validation Results</button>
+                        <button id="openSearchControlsBtn" class="px-3 py-1 text-xs bg-gray-600 text-white rounded-l-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+                        <button id="openValidationBtn" class="px-3 py-1 text-xs bg-gray-600 text-white rounded-r-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold"><i class="fa-solid fa-check-double"></i> Validation Results</button>
                     </div>
                 </div>
                 
@@ -154,7 +155,7 @@
                                 <label for="match-case" class="flex items-center space-x-2"><input type="checkbox" id="match-case" class="form-checkbox h-5 w-5 text-blue-600 rounded"><span>Match case</span></label>
                                 <label for="highlight-all" class="flex items-center space-x-2"><input type="checkbox" id="highlight-all" class="form-checkbox h-5 w-5 text-blue-600 rounded"><span>Highlight all</span></label>
                                 <label for="enable-regex" class="flex items-center space-x-2"><input type="checkbox" id="enable-regex" class="form-checkbox h-5 w-5 text-blue-600 rounded"><span>REGEX</span></label>
-                                <button id="searchReset" class="px-3 py-1 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 font-bold">Reset/Clear</button>
+                                <button id="searchReset" class="px-3 py-1 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 font-bold">Reset/Clear <i class="fa-solid fa-trash"></i></button>
                             </div>
                         </div>
                         <div id="sequence-container" class="flex flex-wrap items-center space-x-4 text-white overflow-hidden max-h-40 opacity-100 transition-all duration-300 ease-in-out mb-1 mt-1">
@@ -193,7 +194,7 @@
             </div>
 
             <div id="sidebarPanel" class="sidebar-panel">
-                <h3 class="text-lg font-semibold text-white mb-4">Quick Formatting</h3>
+                <h3 class="text-lg font-semibold text-white mb-4"><i class="fa-solid fa-wand-magic-sparkles"></i> Quick Formatting</h3>
                 <div class="button-list">
                     <div class="toggle-switch-container">
                         <label class="toggle-switch is-checked" for="toggleCleanSpaces"><input type="checkbox" id="toggleCleanSpaces" checked><span class="toggle-switch-slider"></span></label>
@@ -236,7 +237,7 @@
                 <button id="autoEncodeBtn" class="px-4 py-2 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-bold mb-2">Auto-Encode</button>
                 <button id="autoFormatBtn" class="px-4 py-2 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-bold mb-2">Auto-Indent</button>
 
-                <h3 class="text-lg font-semibold text-white mb-4 mt-4">Quick Insert</h3>
+                <h3 class="text-lg font-semibold text-white mb-4 mt-4"><i class="fa-solid fa-right-to-bracket"></i> Quick Insert</h3>
                 <div class="button-list mb-2">
                     <button id="autoIdBtn" class="px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded-md">Element ID's</button>
                     <button id="figDescBtn" class="px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded-md">Figure (w/ desc)</button>
@@ -245,7 +246,7 @@
                     <button id="colophonBtn" class="px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded-md">Colophon</button>
                 </div>
 
-                <h4 class="text-md text-white mb-2">Page ToC ("On this page")</h4>
+                <h4 class="text-md text-white mb-2"><i class="fa-solid fa-clipboard-list"></i> Page ToC ("On this page")</h4>
                 <div class="button-list">
                     <div class="flex space-x-2">
                         <button id="enPageToCBtn" class="flex-1 px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 rounded-md mb-1">English</button>
@@ -257,7 +258,7 @@
                     </div>
                 </div>
 
-                <h4 class="text-md text-white mb-2">Section ToC ("In this section")</h4>
+                <h4 class="text-md text-white mb-2"><i class="fa-solid fa-bars-staggered"></i> Section ToC ("In this section")</h4>
                 <div class="button-list">
                     <div class="flex space-x-2">
                         <button id="enSecToCBtn" class="flex-1 px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 rounded-md mb-1">ENG</button>
@@ -890,6 +891,20 @@
             </div>
         </div>
     </div>
+	<div id="infoModal" class="fixed inset-0 z-50 overflow-y-auto hidden bg-gray-900 bg-opacity-75 flex items-center justify-center">
+    <div class="bg-gray-800 p-8 rounded-lg shadow-xl max-w-lg w-full text-white relative">
+        <button id="closeInfoModalBtn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-200">
+            <i class="fas fa-times"></i>
+        </button>
+        <h2 class="text-xl font-bold mb-4"><i class="fa-solid fa-circle-info"></i> App Info</h2>
+        <div class="info-modal-content text-sm text-gray-300 space-y-4">
+            <p>This browser-based web application is a tool designed to provide a free development environment for web services needs at <a href="https://www.canada.ca/en/treasury-board-secretariat.html">Treasury Board of Canada Secretariat</a>.</p>
+            <p>It's tailor-made to handle conversion of MS Office documents and offer quick, clean, accessible formatting of HTML for use on AEM (Adobe Experience Manager). It also provides a space to produce, validate and preview in real time before the need to interact with a live staging enivornment first. Compatible with WET4, GCWeb and the new GoC Design System.</p>
+            <p>Developed with help from the following tools and frameworks: <em><a href="https://hugerte.org/">HugeRTE</a>, <a href="https://microsoft.github.io/monaco-editor/">Monaco editor</a>, <a href="https://tailwindcss.com/">Tailwind CSS</a>, <a href="https://fontawesome.com/">Font Awesome</a>, <a href="https://github.com/beautifier/js-beautify">HTML Beautify</a> and Radia AI (primarily Google Gemini 2.5)</em>.</p>
+            <p>Project source code is <a href="https://github.com/stcampbe/tbsweb-toolset/tree/main/rich-content-wizard">available on GitHub</a>. For more detailed information or help, please contact:</p><p><strong>Stratton Campbell</strong><br> Communications Officer, Web Publishing @ Strategic Communications and Ministerial Affairs<br>Treasury Board of Canada Secretariat / Government of Canada<br><a href="mailto:Stratton.Campbell@tbs-sct.gc.ca">Stratton.Campbell@tbs-sct.gc.ca</a></p>
+        </div>
+    </div>
+</div>
     <script src="js/script.js"></script>
     <script src="js/tables.js"></script>
 </body>
