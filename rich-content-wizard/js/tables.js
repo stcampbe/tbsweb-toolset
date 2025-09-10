@@ -813,10 +813,26 @@ function formatTableLogic(table, options) {
     theadRows.forEach(tr => tr.classList.toggle('active', options.applyActiveColHeaders));
 
     const tbodyColspanHeaders = Array.from(table.querySelectorAll('tbody th[colspan]'));
-    tbodyColspanHeaders.forEach(th => th.classList.toggle('active', options.activeColspanHeadersCheckboxValue));
+    if (options.activeColspanHeadersCheckboxValue) {
+        tbodyColspanHeaders.forEach(th => th.classList.add('active'));
+    } else {
+        tbodyColspanHeaders.forEach(th => {
+            if (!th.hasAttribute('data-manually-set-active')) {
+                th.classList.remove('active');
+            }
+        });
+    }
 
     const tbodyRowHeaders = Array.from(table.querySelectorAll('tbody tr > th:first-child:not([colspan])'));
-    tbodyRowHeaders.forEach(th => th.classList.toggle('active', options.activeRowHeadersCheckboxValue));
+    if (options.activeRowHeadersCheckboxValue) {
+        tbodyRowHeaders.forEach(th => th.classList.add('active'));
+    } else {
+        tbodyRowHeaders.forEach(th => {
+            if (!th.hasAttribute('data-manually-set-active')) {
+                th.classList.remove('active');
+            }
+        });
+    }
 
     // --- Final cleanup ---
     cleanupEmptyClassAttributes(table);
@@ -1124,6 +1140,9 @@ function formatHtmlTables() {
                 formatTableLogic(table, options);
             });
 
+            // Clean up any manual active markers before final output.
+            tempDiv.querySelectorAll('[data-manually-set-active]').forEach(el => el.removeAttribute('data-manually-set-active'));
+
             let formattedContent = tempDiv.innerHTML;
             formattedContent = protectDataAttributes(formattedContent);
             formattedContent = html_beautify(formattedContent, {
@@ -1171,7 +1190,14 @@ function formatSpecificTable() {
         return;
     }
 
-    const formattedTableOuterHTML = tableInfo.outerHTML; // Get final HTML from in-memory map.
+    let formattedTableOuterHTML = tableInfo.outerHTML;
+
+    // Clean up the tracking attribute before writing back to the editor.
+    const finalDiv = document.createElement('div');
+    finalDiv.innerHTML = formattedTableOuterHTML;
+    finalDiv.querySelectorAll('[data-manually-set-active]').forEach(el => el.removeAttribute('data-manually-set-active'));
+    formattedTableOuterHTML = finalDiv.innerHTML;
+
 
     window.originalTableState = null; // Commit the change, don't revert on close.
     closeCustomizeModal();
@@ -1250,6 +1276,7 @@ function generatePreviewTableHtml() {
     };
 
     const formattedTableElement = formatTableLogic(clonedTable, customizeOptions);
+
     let formattedHtml = formattedTableElement.outerHTML;
     formattedHtml = protectDataAttributes(formattedHtml);
     formattedHtml = html_beautify(formattedHtml, {
@@ -1469,7 +1496,16 @@ function updateCustomizeModalPreview(htmlContentToPreview) {
                         selectedCells.forEach(cell => {
                             switch(action) {
                                 case 'tbl-toggle-unbold-th': if (cell.tagName === 'TH') cell.classList.toggle('fnt-nrml'); break;
-                                case 'tbl-toggle-active': cell.classList.remove('bg-dark'); cell.classList.toggle('active'); break;
+                                case 'tbl-toggle-active':
+                                    cell.classList.remove('bg-dark');
+                                    if (cell.classList.contains('active')) {
+                                        cell.classList.remove('active');
+                                        cell.removeAttribute('data-manually-set-active');
+                                    } else {
+                                        cell.classList.add('active');
+                                        cell.setAttribute('data-manually-set-active', 'true');
+                                    }
+                                    break;
                                 case 'tbl-toggle-bg-dark': cell.classList.remove('active'); cell.classList.toggle('bg-dark'); break;
                                 case 'tbl-toggle-text-white': cell.classList.toggle('text-white'); break;
                                 case 'tbl-toggle-bold-td':
@@ -1540,7 +1576,6 @@ function updateCustomizeModalPreview(htmlContentToPreview) {
         </html>`;
     customizePreviewIframe.srcdoc = baseHtml;
 }
-
 /**
  * Resets all universal formatting options applied to all tables.
  */
