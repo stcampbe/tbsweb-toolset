@@ -1,4 +1,3 @@
-
 /* ==========================================================================
    1. BASE & GENERAL STYLES
    ========================================================================== */
@@ -98,6 +97,15 @@ body {
     height: 100%;
     box-sizing: border-box;
     overflow: hidden;
+}
+
+.info-modal-content a {
+    color: #4CAF50;
+    text-decoration: underline;
+}
+
+.info-modal-content a:hover {
+    text-decoration: none;
 }
 
 /* --- Panels (Code, Rich-Text, Sidebar) --- */
@@ -1449,12 +1457,6 @@ input[type="number"]::placeholder {
     border-radius: 0.5rem;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     flex-shrink: 0;
-}
-
-.tbl-toggle-switch.is-disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  pointer-events: none; /* Prevents any mouse interaction */
 }
 
 .attached-tbl-button-group {
