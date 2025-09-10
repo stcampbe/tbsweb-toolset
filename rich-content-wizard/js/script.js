@@ -11,6 +11,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const codePanel = document.getElementById('codePanel');
     const richtextOutputPanel = document.getElementById('richtextOutputPanel');
     const mainEditorArea = document.getElementById('mainEditorArea'); 
+	const infoBtn = document.getElementById('infoBtn');
+    const infoModal = document.getElementById('infoModal');
+    const closeInfoModalBtn = document.getElementById('closeInfoModalBtn');
     const toggleEditorViewBtnRichText = document.getElementById('toggleEditorViewBtnRichText');
     const toggleEditorViewBtnCode = document.getElementById('toggleEditorViewBtnCode');
     const copyCodeBtn = document.getElementById('copyCodeBtn');
@@ -4640,45 +4643,41 @@ document.addEventListener('DOMContentLoaded', function () {
         toggleEditorViewBtnCode.addEventListener('click', toggleEditorView);
 
         cleanMsoBtn.addEventListener('click', () => {
-            if (monacoEditorInstance) {
-                let currentContent = monacoEditorInstance.getValue();
-                currentContent = protectDataAttributes(currentContent);
-
-                currentContent = applyCleanLists(currentContent);
-                console.log("Clean MSO Lists applied by Clean MSO button.");
-                currentContent = applyCleanTablesBasic(currentContent);
-                console.log("Clean MSO Tables applied by Clean MSO button.");
-                currentContent = applyCleanMsoCode(currentContent);
-                console.log("Clean MSO Code (including IMGs) applied by Clean MSO button.");
-                currentContent = applyAutoSpacing(currentContent);
-                console.log("Clean Spaces applied by Clean MSO button.");
-
-                currentContent = restoreDataAttributes(currentContent);
-                currentContent = convertAllEntitiesToNumeric(currentContent);
-
-                monacoEditorInstance.setValue(currentContent);
-                htmlOutputContent = currentContent;
-                applyEntityHighlighting();
-                autoEncodeBtn.click();
-
-                const originalText = cleanMsoBtn.textContent;
-                cleanMsoBtn.textContent = 'Cleaned!';
-                cleanMsoBtn.classList.add('bg-green-500', 'hover:bg-green-600');
-                cleanMsoBtn.classList.remove('bg-blue-700', 'hover:bg-blue-800');
-                cleanMsoBtn.disabled = true; 
-                cleanMsoBtn.setAttribute('data-temp-active', 'true');
-                updateAllInteractiveButtonStates();
-                setTimeout(() => {
-                    cleanMsoBtn.textContent = originalText;
-                    cleanMsoBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-                    cleanMsoBtn.classList.add('bg-blue-700', 'hover:bg-blue-800');
-                    cleanMsoBtn.disabled = false;
-                    cleanMsoBtn.removeAttribute('data-temp-active');
-                    updateAllInteractiveButtonStates();
-                    updateCleanMsoButtonState();
-                }, 1500);
-            }
-        });
+    if (monacoEditorInstance) {
+        let currentContent = monacoEditorInstance.getValue();
+        currentContent = protectDataAttributes(currentContent);
+        currentContent = applyCleanLists(currentContent);
+        console.log("Clean MSO Lists applied by Clean MSO button.");
+        currentContent = applyCleanTablesBasic(currentContent);
+        console.log("Clean MSO Tables applied by Clean MSO button.");
+        currentContent = applyCleanMsoCode(currentContent);
+        console.log("Clean MSO Code (including IMGs) applied by Clean MSO button.");
+        currentContent = applyAutoSpacing(currentContent);
+        console.log("Clean Spaces applied by Clean MSO button.");
+        currentContent = restoreDataAttributes(currentContent);
+        currentContent = convertAllEntitiesToNumeric(currentContent);
+        monacoEditorInstance.setValue(currentContent);
+        htmlOutputContent = currentContent;
+        applyEntityHighlighting();
+        autoEncodeBtn.click();
+        const originalHTML = cleanMsoBtn.innerHTML;
+        cleanMsoBtn.innerHTML = '<i class="fa-solid fa-eraser"></i> Cleaned!';
+        cleanMsoBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+        cleanMsoBtn.classList.remove('bg-blue-700', 'hover:bg-blue-800');
+        cleanMsoBtn.disabled = true;
+        cleanMsoBtn.setAttribute('data-temp-active', 'true');
+        updateAllInteractiveButtonStates();
+        setTimeout(() => {
+            cleanMsoBtn.innerHTML = originalHTML;
+            cleanMsoBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+            cleanMsoBtn.classList.add('bg-blue-700', 'hover:bg-blue-800');
+            cleanMsoBtn.disabled = false;
+            cleanMsoBtn.removeAttribute('data-temp-active');
+            updateAllInteractiveButtonStates();
+            updateCleanMsoButtonState();
+        }, 1500);
+    }
+});
 
         clearAllBtn.addEventListener('click', () => {
             if (monacoEditorInstance) {
@@ -5940,7 +5939,30 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 monacoEditorInstance.setValue(formattedCode);
             });
+		
+		// Info Modal Logic
+    infoBtn.addEventListener('click', () => {
+        infoModal.classList.remove('hidden');
+    });
 
+    closeInfoModalBtn.addEventListener('click', () => {
+        infoModal.classList.add('hidden');
+    });
+
+    // Close modal if user clicks outside of it
+    infoModal.addEventListener('click', (event) => {
+        if (event.target === infoModal) {
+            infoModal.classList.add('hidden');
+        }
+    });
+
+    // Close modal on escape key
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !infoModal.classList.contains('hidden')) {
+            infoModal.classList.add('hidden');
+        }
+    });
+		
         enSecToCBtn.addEventListener('click', () => insertSectionToc(3, 'en'));
         frSecToCBtn.addEventListener('click', () => insertSectionToc(3, 'fr'));
         enSecToCH4Btn.addEventListener('click', () => insertSectionToc(4, 'en'));
