@@ -173,8 +173,6 @@ document.addEventListener('DOMContentLoaded', function () {
         , copyCodeBtn
         , undoBtn
         , redoBtn
-        , previewBtn
-        , validateNowBtn
         , enPageToCBtn
         , enPageToCH3Btn
         , frPageToCBtn
@@ -2141,21 +2139,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function applyAutoId(htmlString, options = {}) {
         const defaultOptions = {
-            idSections: true
-            , idHeadings: true
-            , idFigures: true
-            , idTables: true
-            , idFigureTables: true
+            idSections: true,
+            idHeadings: true,
+            idFigures: true,
+            idTables: true,
+            idFigureTables: true,
+            fixFnDuplicates: false
         };
-        const currentOptions = {
-            ...defaultOptions
-            , ...options
-        };
+        const currentOptions = { ...defaultOptions, ...options };
 
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlString, 'text/html');
         const body = doc.body;
-
         const idChangeMap = {};
 
         function toAlpha(num) {
@@ -2174,140 +2169,154 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         const existingIds = new Set();
-        doc.querySelectorAll('[id]')
-            .forEach(el => existingIds.add(el.id));
+        doc.querySelectorAll('[id]').forEach(el => existingIds.add(el.id));
 
         if (currentOptions.idHeadings) {
-            let h2_num_counter = 0;
-            let h2_general_alpha_counter = 0;
-            let h2_appendix_alpha_counter = 0;
-            let sub_num_counters = new Map();
-            let sub_appendix_alpha_counters = new Map();
+            let h2_num_counter = 0, h2_general_alpha_counter = 0, h2_appendix_alpha_counter = 0;
+            let sub_num_counters = new Map(), sub_appendix_alpha_counters = new Map();
+            const lastSeenHeadingIds = { 2: '', 3: '', 4: '', 5: '', 6: '' };
+            let hasAnyNumberedH2 = Array.from(body.querySelectorAll('h2')).some(h => h.textContent.trim().match(/^\s*(\d+)(?:\.|\s|\)|\-)?/));
 
-            const lastSeenHeadingIds = {
-                2: ''
-                , 3: ''
-                , 4: ''
-                , 5: ''
-                , 6: ''
-            };
+            doc.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(heading => {
+                const level = parseInt(heading.tagName.substring(1), 10);
+                const text = heading.textContent.trim();
+                const oldId = heading.id;
+                let newId = oldId;
+                if (level === 2 && (oldId === 'toc' || text.toLowerCase() === 'on this page' || text.toLowerCase() === 'sur cette page')) {
+                    heading.setAttribute('id', 'toc');
+                    return;
+                }
+                if (heading.closest('aside, caption, figure, figcaption, table')) return;
+                if (level === 1) return;
 
-            let hasAnyNumberedH2 = Array.from(body.querySelectorAll('h2'))
-                .some(h => h.textContent.trim()
-                    .match(/^\s*(\d+)(?:\.|\s|\)|\-)?/));
-
-            doc.querySelectorAll('h1, h2, h3, h4, h5, h6')
-                .forEach(heading => {
-                    const level = parseInt(heading.tagName.substring(1), 10);
-                    const text = heading.textContent.trim();
-                    const oldId = heading.id;
-                    let newId = oldId;
-
-                    if (level === 2) {
-                        const lowerCaseText = text.toLowerCase();
-                        if (oldId === 'toc' || lowerCaseText === 'on this page' || lowerCaseText === 'sur cette page') {
-                            heading.setAttribute('id', 'toc');
-                            return; 
-                        }
+                let id_segment = '';
+                const isAppendixHeading = text.match(/^(?:Appendix|Annexe)/i);
+                if (level === 2) {
+                    if (isAppendixHeading) {
+                        const letter = getLetterFromAppendixText(text) || toAlpha(++h2_appendix_alpha_counter);
+                        id_segment = `app${letter}`;
+                    } else if (hasAnyNumberedH2) {
+                        id_segment = text.match(/^\s*(\d+)(?:\.|\s|\)|\-)?/) ? `toc${++h2_num_counter}` : `toc${toAlpha(++h2_general_alpha_counter)}`;
+                    } else {
+                        id_segment = `toc${++h2_num_counter}`;
                     }
-
-                    const ignoredParents = ['aside', 'caption', 'figure', 'figcaption', 'table'];
-                    if (heading.closest(ignoredParents.join(','))) {
-                        return; 
+                    newId = id_segment;
+                } else {
+                    const parent_id = lastSeenHeadingIds[level - 1];
+                    if (!parent_id) return;
+                    if (isAppendixHeading) {
+                        const currentAppCount = (sub_appendix_alpha_counters.get(parent_id) || 0) + 1;
+                        sub_appendix_alpha_counters.set(parent_id, currentAppCount);
+                        id_segment = `app${getLetterFromAppendixText(text) || toAlpha(currentAppCount)}`;
+                    } else {
+                        const currentNumCount = (sub_num_counters.get(parent_id) || 0) + 1;
+                        sub_num_counters.set(parent_id, currentNumCount);
+                        id_segment = String(currentNumCount);
                     }
-
-                    if (level === 1) return; 
-
-                    let id_segment = '';
-                    const isNumericHeading = text.match(/^\s*(\d+)(?:\.|\s|\)|\-)?/);
-                    const isAppendixHeading = text.match(/^(?:Appendix|Annexe)/i);
-
-                    if (level === 2) {
-                        if (isAppendixHeading) {
-                            const letter = getLetterFromAppendixText(text) || toAlpha(++h2_appendix_alpha_counter);
-                            id_segment = `app${letter}`;
-                        } else if (hasAnyNumberedH2) {
-                            id_segment = isNumericHeading ? `toc${++h2_num_counter}` : `toc${toAlpha(++h2_general_alpha_counter)}`;
-                        } else {
-                            id_segment = `toc${++h2_num_counter}`;
-                        }
-                        newId = id_segment;
-                        lastSeenHeadingIds[2] = newId; 
-
-                    } else { 
-                        const parent_id = lastSeenHeadingIds[level - 1];
-                        if (!parent_id) { 
-                            return;
-                        }
-
-                        if (isAppendixHeading) {
-                            const currentAppCount = (sub_appendix_alpha_counters.get(parent_id) || 0) + 1;
-                            sub_appendix_alpha_counters.set(parent_id, currentAppCount);
-                            id_segment = `app${getLetterFromAppendixText(text) || toAlpha(currentAppCount)}`;
-                        } else {
-                            const currentNumCount = (sub_num_counters.get(parent_id) || 0) + 1;
-                            sub_num_counters.set(parent_id, currentNumCount);
-                            id_segment = String(currentNumCount);
-                        }
-                        newId = `${parent_id}-${id_segment}`;
-                    }
-
-                    lastSeenHeadingIds[level] = newId; 
-                    if (oldId && oldId !== newId) {
-                        idChangeMap[oldId] = newId;
-                    }
-                    heading.setAttribute('id', newId);
-                    existingIds.add(newId);
-                });
+                    newId = `${parent_id}-${id_segment}`;
+                }
+                lastSeenHeadingIds[level] = newId;
+                if (oldId && oldId !== newId) idChangeMap[oldId] = newId;
+                heading.setAttribute('id', newId);
+                existingIds.add(newId);
+            });
         }
 
         if (currentOptions.idSections) {
-            let sectionChildCounters = {
-                'root': 0
-            };
-            doc.querySelectorAll('section')
-                .forEach(section => {
-                    if (section.id && (!/^sec\d+(-\d+)*$/.test(section.id) || section.hasAttribute('class'))) return;
-                    let parentSection = section.parentElement.closest('section');
-                    let parentId = parentSection && parentSection.id && /^sec\d+(-\d+)*$/.test(parentSection.id) ? parentSection.id : 'root';
-                    sectionChildCounters[parentId] = (sectionChildCounters[parentId] || 0) + 1;
-                    const newNum = sectionChildCounters[parentId];
-                    const newId = (parentId === 'root') ? `sec${newNum}` : `${parentId}-${newNum}`;
-                    if (section.id && section.id !== newId) idChangeMap[section.id] = newId;
-                    section.id = newId;
-                });
+            let sectionChildCounters = { 'root': 0 };
+            doc.querySelectorAll('section').forEach(section => {
+                if (section.id && (!/^sec\d+(-\d+)*$/.test(section.id) || section.hasAttribute('class'))) return;
+                let parentSection = section.parentElement.closest('section');
+                let parentId = parentSection && parentSection.id && /^sec\d+(-\d+)*$/.test(parentSection.id) ? parentSection.id : 'root';
+                sectionChildCounters[parentId] = (sectionChildCounters[parentId] || 0) + 1;
+                const newNum = sectionChildCounters[parentId];
+                const newId = (parentId === 'root') ? `sec${newNum}` : `${parentId}-${newNum}`;
+                if (section.id && section.id !== newId) idChangeMap[section.id] = newId;
+                section.id = newId;
+            });
         }
 
         if (currentOptions.idFigures) {
             let figureCounter = 0;
-            doc.querySelectorAll('figure:not([id])')
-                .forEach(figure => {
-                    figure.id = `fig${++figureCounter}`;
-                });
+            doc.querySelectorAll('figure:not([id])').forEach(figure => figure.id = `fig${++figureCounter}`);
         }
 
         if (currentOptions.idTables || currentOptions.idFigureTables) {
-            let tableCounter = 0;
-            let figureTableCounter = 0;
-            doc.querySelectorAll('table')
-                .forEach(table => {
-                    if (table.id) return; 
-                    if (table.closest('figure') && currentOptions.idFigureTables) {
-                        table.id = `ftbl${++figureTableCounter}`;
-                    } else if (!table.closest('figure') && currentOptions.idTables) {
-                        table.id = `tbl${++tableCounter}`;
-                    }
-                });
-        }
+            let tableCounter = 0, figureTableCounter = 0;
+            doc.querySelectorAll('table').forEach(table => {
+                const oldTableId = table.id;
+                let newTableId = null;
+                const isFigureTable = !!table.closest('figure');
+                if ((isFigureTable && currentOptions.idFigureTables) || (!isFigureTable && currentOptions.idTables)) {
+                    newTableId = isFigureTable ? `ftbl${++figureTableCounter}` : `tbl${++tableCounter}`;
+                }
+                if (newTableId) {
+                    if (oldTableId && oldTableId !== newTableId) idChangeMap[oldTableId] = newTableId;
+                    table.id = newTableId;
+                    existingIds.add(newTableId);
+                    
+                    const footnoteIdMap = {};
+                    const oldFnHeaderId = oldTableId ? `${oldTableId}fn` : 'fn';
+                    const fnHeader = table.querySelector(`tfoot [id="${oldFnHeaderId}"], tfoot [id="fn"]`);
+                    if (fnHeader) footnoteIdMap[fnHeader.id] = `${newTableId}fn`;
+                    
+                    table.querySelectorAll('[id*="fn"]').forEach(el => {
+                        const oldId = el.id;
+                        const idParts = oldId.match(/(?:(.*?))?fn(\d+)((?:-rf)?(?:-\d+)*)?$/);
+                        if (idParts) {
+                            const originalFootnoteNum = idParts[2], oldSuffix = idParts[3] || '';
+                            const oldPrefix = idParts[1] || '', oldBaseId = `${oldPrefix}fn${originalFootnoteNum}`;
+                            const newBaseId = `${newTableId}fn${originalFootnoteNum}`, newFullId = `${newBaseId}${oldSuffix}`;
+                            footnoteIdMap[oldId] = newFullId;
+                            footnoteIdMap[oldBaseId] = newBaseId;
+                        }
+                    });
 
-        doc.querySelectorAll('a[href^="#"]')
-            .forEach(link => {
-                const currentAnchor = link.getAttribute('href')
-                    .substring(1);
-                if (idChangeMap[currentAnchor]) {
-                    link.setAttribute('href', `#${idChangeMap[currentAnchor]}`);
+                    table.querySelectorAll('[id]').forEach(el => { if (footnoteIdMap[el.id]) el.id = footnoteIdMap[el.id]; });
+                    table.querySelectorAll('a[href^="#"]').forEach(link => {
+                        const oldAnchor = link.getAttribute('href').substring(1);
+                        if (footnoteIdMap[oldAnchor]) link.setAttribute('href', `#${footnoteIdMap[oldAnchor]}`);
+                    });
                 }
             });
+        }
+        
+        doc.querySelectorAll('a[href^="#"]').forEach(link => {
+            const currentAnchor = link.getAttribute('href').substring(1);
+            if (idChangeMap[currentAnchor]) link.setAttribute('href', `#${idChangeMap[currentAnchor]}`);
+        });
+
+        if (currentOptions.fixFnDuplicates) {
+            const baseIdToSupMap = new Map();
+            doc.querySelectorAll('sup[id*="fn"][id*="-rf"]').forEach(sup => {
+                const id = sup.id;
+                const baseMatch = id.match(/(.*fn\d+)/);
+                if (baseMatch) {
+                    const baseId = baseMatch[1];
+                    if (!baseIdToSupMap.has(baseId)) baseIdToSupMap.set(baseId, []);
+                    baseIdToSupMap.get(baseId).push(sup);
+                }
+            });
+
+            const linkUpdateMap = {};
+            for (const [baseId, supList] of baseIdToSupMap.entries()) {
+                if (supList.length > 1) {
+                    const canonicalReturnId = `${baseId}-rf-0`;
+                    supList.forEach((sup, index) => {
+                        const oldSupId = sup.id;
+                        const newSupId = `${baseId}-rf-${index}`;
+                        sup.id = newSupId;
+                        linkUpdateMap[oldSupId] = canonicalReturnId;
+                    });
+                    linkUpdateMap[`${baseId}-rf`] = canonicalReturnId;
+                }
+            }
+
+            doc.querySelectorAll('dd a[href^="#"]').forEach(link => {
+                const oldAnchor = link.getAttribute('href').substring(1);
+                if (linkUpdateMap[oldAnchor]) link.setAttribute('href', `#${linkUpdateMap[oldAnchor]}`);
+            });
+        }
 
         return body.innerHTML;
     }
@@ -3273,7 +3282,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     <div>
                         <span class="text-sm font-medium text-CBD5E1 mr-2">Choose elements to ID:</span> 
                         <div class="space-y-2 mt-2">
-                            
                             <div class="toggle-switch-container">
                                 <label class="toggle-switch is-checked" for="toggleSectionsId">
                                     <input type="checkbox" id="toggleSectionsId" checked>
@@ -3281,7 +3289,6 @@ document.addEventListener('DOMContentLoaded', function () {
                                 </label>
                                 <span class="toggle-switch-label text-white text-sm">Sections (sec#)</span>
                             </div>
-                            
                             <div class="toggle-switch-container">
                                 <label class="toggle-switch is-checked" for="toggleHeadingsId">
                                     <input type="checkbox" id="toggleHeadingsId" checked>
@@ -3289,7 +3296,6 @@ document.addEventListener('DOMContentLoaded', function () {
                                 </label>
                                 <span class="toggle-switch-label text-white text-sm">Headings (toc#)</span>
                             </div>
-                            
                             <div class="toggle-switch-container">
                                 <label class="toggle-switch is-checked" for="toggleFiguresId">
                                     <input type="checkbox" id="toggleFiguresId" checked>
@@ -3297,7 +3303,6 @@ document.addEventListener('DOMContentLoaded', function () {
                                 </label>
                                 <span class="toggle-switch-label text-white text-sm">Figures (fig#)</span>
                             </div>
-                            
                             <div class="toggle-switch-container">
                                 <label class="toggle-switch" for="toggleTablesId">
                                     <input type="checkbox" id="toggleTablesId">
@@ -3305,7 +3310,6 @@ document.addEventListener('DOMContentLoaded', function () {
                                 </label>
                                 <span class="toggle-switch-label text-white text-sm">Tables (tbl#)</span>
                             </div>
-                            
                             <div class="toggle-switch-container">
                                 <label class="toggle-switch" for="toggleFigureTablesId">
                                     <input type="checkbox" id="toggleFigureTablesId">
@@ -3313,6 +3317,14 @@ document.addEventListener('DOMContentLoaded', function () {
                                 </label>
                                 <span class="toggle-switch-label text-white text-sm">Figure Tables (ftbl#)</span>
                             </div>
+                            <!--<hr class="border-gray-600 my-2">
+                            <div class="toggle-switch-container">
+                                <label class="toggle-switch is-checked" for="toggleFixFnDuplicatesId">
+                                    <input type="checkbox" id="toggleFixFnDuplicatesId">
+                                    <span class="toggle-switch-slider"></span>
+                                </label>
+                                <span class="toggle-switch-label text-white text-sm">Fix Duplicate FN Refs ("<code>fn#<strong>-rf</strong></code>")</span>
+                            </div>-->
                         </div>
                     </div>
                 </div>
@@ -3344,31 +3356,27 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('modalCancelAutoIdBtn')
             .addEventListener('click', closeModalAndReEnableButtons);
 
-        const toggleSectionsId = document.getElementById('toggleSectionsId');
-        const toggleHeadingsId = document.getElementById('toggleHeadingsId');
-        const toggleFiguresId = document.getElementById('toggleFiguresId'); 
-        const toggleTablesId = document.getElementById('toggleTablesId');
-        const toggleFigureTablesId = document.getElementById('toggleFigureTablesId');
-        const modalApplyAutoIdBtn = document.getElementById('modalApplyAutoIdBtn');
-
-        [toggleSectionsId, toggleHeadingsId, toggleFiguresId, toggleTablesId, toggleFigureTablesId].forEach(toggle => { 
-            toggle.addEventListener('change', (event) => {
-                const parentLabel = event.target.closest('.toggle-switch');
-                if (event.target.checked) {
-                    parentLabel.classList.add('is-checked');
-                } else {
-                    parentLabel.classList.remove('is-checked');
-                }
-            });
+        const allToggles = [
+            'toggleSectionsId', 'toggleHeadingsId', 'toggleFiguresId', 
+            'toggleTablesId', 'toggleFigureTablesId', 'toggleFixFnDuplicatesId'
+        ];
+        allToggles.forEach(id => {
+            const toggle = document.getElementById(id);
+            if (toggle) {
+                toggle.addEventListener('change', (event) => {
+                    event.target.closest('.toggle-switch').classList.toggle('is-checked', event.target.checked);
+                });
+            }
         });
 
-        modalApplyAutoIdBtn.addEventListener('click', () => {
+        document.getElementById('modalApplyAutoIdBtn').addEventListener('click', () => {
             const options = {
-                idSections: toggleSectionsId.checked
-                , idHeadings: toggleHeadingsId.checked
-                , idFigures: toggleFiguresId.checked, 
-                idTables: toggleTablesId.checked
-                , idFigureTables: toggleFigureTablesId.checked
+                idSections: document.getElementById('toggleSectionsId').checked,
+                idHeadings: document.getElementById('toggleHeadingsId').checked,
+                idFigures: document.getElementById('toggleFiguresId').checked,
+                idTables: document.getElementById('toggleTablesId').checked,
+                idFigureTables: document.getElementById('toggleFigureTablesId').checked,
+                fixFnDuplicates: document.getElementById('toggleFixFnDuplicatesId').checked
             };
 
             if (monacoEditorInstance) {
@@ -3380,11 +3388,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 monacoEditorInstance.setValue(currentContent);
                 htmlOutputContent = currentContent;
                 applyEntityHighlighting();
-
                 closeModalAndReEnableButtons(); 
 
                 const capturedOriginalText = originalButtonText;
-
                 triggeringButton.textContent = 'ID\'d!';
                 triggeringButton.classList.add('bg-green-500', 'hover:bg-green-600');
                 triggeringButton.classList.remove('bg-slate-600', 'hover:bg-slate-500'); 
