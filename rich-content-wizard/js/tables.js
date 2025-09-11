@@ -1142,51 +1142,44 @@ function formatHtmlTables() {
                     specificTableId: false
                 };
                 
-                // This function applies all the formatting, including setting the new table ID.
                 formatTableLogic(table, options);
 
-                // --- NEW: Add robust footnote IDing logic ---
                 if (options.applyId) {
-                    const newTableId = table.id; // Get the new ID that was just set.
+                    const newTableId = table.id;
 
-                    // 1. Update the main footnote header using the proven resilient find method.
-                    const footnoteSectionHeader = table.querySelector(`tfoot [id="${oldTableId ? oldTableId + 'fn' : 'fn'}"]`) || table.querySelector('tfoot [id="fn"]');
-                    if (footnoteSectionHeader) {
-                        footnoteSectionHeader.id = `${newTableId}fn`;
+                    // --- ROBUST FOOTNOTE RE-IDing LOGIC ---
+                    const footnoteIdMap = {};
+        
+                    const oldFnHeaderId = oldTableId ? `${oldTableId}fn` : 'fn';
+                    const fnHeader = table.querySelector(`tfoot [id="${oldFnHeaderId}"], tfoot [id="fn"]`);
+                    if (fnHeader) {
+                        footnoteIdMap[fnHeader.id] = `${newTableId}fn`;
                     }
-
-                    // 2. Update each footnote reference and its corresponding definition.
-                    const footnoteRefs = Array.from(table.querySelectorAll('sup[id$="-rf"]'));
-                    const allDdsInTable = Array.from(table.querySelectorAll('dd[id]')); 
-
-                    footnoteRefs.forEach(sup => {
-                        const oldSupId = sup.id;
-                        const oldBaseId = oldSupId.replace(/-rf$/, '');
-                        
-                        const numberMatch = oldBaseId.match(/\d+$/);
-                        if (!numberMatch) return;
-                        const originalFootnoteNum = numberMatch[0];
-
-                        const newBaseId = `${newTableId}fn${originalFootnoteNum}`;
-                        const newSupId = `${newBaseId}-rf`;
-
-                        // Update the <sup> ID
-                        sup.id = newSupId;
-                        
-                        // Update the link inside the <sup>
-                        const linkInsideSup = sup.querySelector('a');
-                        if (linkInsideSup && linkInsideSup.getAttribute('href') === `#${oldBaseId}`) {
-                            linkInsideSup.setAttribute('href', `#${newBaseId}`);
+                    
+                    table.querySelectorAll('[id*="fn"]').forEach(el => {
+                        const oldId = el.id;
+                        const idParts = oldId.match(/(?:(.*?))?fn(\d+)((?:-rf)?(?:-\d+)*)?$/);
+                        if (idParts) {
+                            const originalFootnoteNum = idParts[2];
+                            const oldSuffix = idParts[3] || '';
+                            const oldPrefix = idParts[1] || '';
+                            const oldBaseId = `${oldPrefix}fn${originalFootnoteNum}`;
+                            const newBaseId = `${newTableId}fn${originalFootnoteNum}`;
+                            const newFullId = `${newBaseId}${oldSuffix}`;
+                            footnoteIdMap[oldId] = newFullId;
+                            footnoteIdMap[oldBaseId] = newBaseId;
                         }
-                        
-                        // Find and update the corresponding <dd>
-                        const correspondingDd = allDdsInTable.find(dd => dd.id === oldBaseId);
-                        if (correspondingDd) {
-                            correspondingDd.id = newBaseId;
-                            const returnLink = correspondingDd.querySelector(`a[href="#${oldSupId}"]`);
-                            if (returnLink) {
-                                returnLink.setAttribute('href', `#${newSupId}`);
-                            }
+                    });
+        
+                    table.querySelectorAll('[id]').forEach(el => {
+                        if (footnoteIdMap[el.id]) {
+                            el.id = footnoteIdMap[el.id];
+                        }
+                    });
+                    table.querySelectorAll('a[href^="#"]').forEach(link => {
+                        const oldAnchor = link.getAttribute('href').substring(1);
+                        if (footnoteIdMap[oldAnchor]) {
+                            link.setAttribute('href', `#${footnoteIdMap[oldAnchor]}`);
                         }
                     });
                 }
@@ -1903,54 +1896,52 @@ function autoTableIDs() {
             ftblCounter = 1;
         
         tables.forEach(table => {
-            const oldTableId = table.id; // Keep track of the table's original ID
+            const oldTableId = table.id;
             const isFigureTable = !!table.closest('figure');
             const newTableId = isFigureTable ? `ftbl${ftblCounter++}` : `tbl${tblCounter++}`;
 
             table.id = newTableId;
 
-            // --- Robust Footnote Update Logic ---
+            // --- ROBUST FOOTNOTE RE-IDing LOGIC ---
+            const footnoteIdMap = {};
 
-            // 1. Update the main footnote header using the proven resilient find method.
-            // This selector first tries to find a header that might already be prefixed
-            // from a previous run, preventing the cross-table ID bug.
-            const footnoteSectionHeader = table.querySelector(`tfoot [id="${oldTableId ? oldTableId + 'fn' : 'fn'}"]`) || table.querySelector('tfoot [id="fn"]');
-                    if (footnoteSectionHeader) {
-                        footnoteSectionHeader.id = `${newTableId}fn`;
-                    }
+            // 1. Handle the main footnote header (e.g., id="fn" or id="tbl1fn").
+            const oldFnHeaderId = oldTableId ? `${oldTableId}fn` : 'fn';
+            const fnHeader = table.querySelector(`tfoot [id="${oldFnHeaderId}"], tfoot [id="fn"]`);
+            if (fnHeader) {
+                footnoteIdMap[fnHeader.id] = `${newTableId}fn`;
+            }
+            
+            // 2. Build a map of all required footnote ID changes.
+            table.querySelectorAll('[id*="fn"]').forEach(el => {
+                const oldId = el.id;
+                // This regex intelligently parses complex IDs like "tbl1fn2-rf-0".
+                const idParts = oldId.match(/(?:(.*?))?fn(\d+)((?:-rf)?(?:-\d+)*)?$/);
+                if (idParts) {
+                    const originalFootnoteNum = idParts[2]; // The core number, e.g., "2".
+                    const oldSuffix = idParts[3] || '';    // The suffix, e.g., "-rf-0".
+                    
+                    const oldPrefix = idParts[1] || '';
+                    const oldBaseId = `${oldPrefix}fn${originalFootnoteNum}`;
+                    
+                    const newBaseId = `${newTableId}fn${originalFootnoteNum}`;
+                    const newFullId = `${newBaseId}${oldSuffix}`;
 
-            // 2. Update each footnote reference and its corresponding definition
-            const footnoteRefs = Array.from(table.querySelectorAll('sup[id$="-rf"]'));
-            const allDdsInTable = Array.from(table.querySelectorAll('dd[id]')); 
-
-            footnoteRefs.forEach(sup => {
-                const oldSupId = sup.id;
-                const oldBaseId = oldSupId.replace(/-rf$/, '');
-                
-                const numberMatch = oldBaseId.match(/\d+$/);
-                if (!numberMatch) return;
-                const originalFootnoteNum = numberMatch[0];
-
-                const newBaseId = `${newTableId}fn${originalFootnoteNum}`;
-                const newSupId = `${newBaseId}-rf`;
-
-                // Update the <sup> ID
-                sup.id = newSupId;
-                
-                // Update the link inside the <sup>
-                const linkInsideSup = sup.querySelector('a');
-                if (linkInsideSup && linkInsideSup.getAttribute('href') === `#${oldBaseId}`) {
-                    linkInsideSup.setAttribute('href', `#${newBaseId}`);
+                    footnoteIdMap[oldId] = newFullId;
+                    footnoteIdMap[oldBaseId] = newBaseId;
                 }
-                
-                // Find and update the corresponding <dd>
-                const correspondingDd = allDdsInTable.find(dd => dd.id === oldBaseId);
-                if (correspondingDd) {
-                    correspondingDd.id = newBaseId;
-                    const returnLink = correspondingDd.querySelector(`a[href="#${oldSupId}"]`);
-                    if (returnLink) {
-                        returnLink.setAttribute('href', `#${newSupId}`);
-                    }
+            });
+
+            // 3. Apply the changes from the map.
+            table.querySelectorAll('[id]').forEach(el => {
+                if (footnoteIdMap[el.id]) {
+                    el.id = footnoteIdMap[el.id];
+                }
+            });
+            table.querySelectorAll('a[href^="#"]').forEach(link => {
+                const oldAnchor = link.getAttribute('href').substring(1);
+                if (footnoteIdMap[oldAnchor]) {
+                    link.setAttribute('href', `#${footnoteIdMap[oldAnchor]}`);
                 }
             });
         });
