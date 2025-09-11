@@ -209,8 +209,8 @@
                         <span class="toggle-switch-label text-white text-sm">Set Time Tags</span>
                     </div>
                     <div class="toggle-switch-container">
-                        <label class="toggle-switch is-checked" for="toggleFixFnIds"><input type="checkbox" id="toggleFixFnIds" checked><span class="toggle-switch-slider"></span></label>
-                        <span class="toggle-switch-label text-white text-sm">Fix FN ID's</span>
+                        <label class="toggle-switch" for="toggleFixFnIds"><input type="checkbox" id="toggleFixFnIds"><span class="toggle-switch-slider"></span></label>
+                        <span class="toggle-switch-label text-white text-sm">Fix Duplicate FN Refs ("<code>fn#<strong>-rf</strong></code>")</span>
                     </div>
                     <div class="toggle-switch-container">
                         <label class="toggle-switch is-checked" for="toggleAutoLevelHeadings"><input type="checkbox" id="toggleAutoLevelHeadings" checked><span class="toggle-switch-slider"></span></label>
@@ -234,12 +234,13 @@
                     </div>
                 </div>
                 <button id="formatSelectedBtn" class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold mb-2 mt-2" disabled>Format</button>
+                <button id="autoIdBtn" class="px-4 py-2 text-sm bg-slate-600 text-white rounded-md hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50 font-bold mb-2">Set Element ID's</button>
                 <button id="autoEncodeBtn" class="px-4 py-2 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-bold mb-2">Auto-Encode</button>
                 <button id="autoFormatBtn" class="px-4 py-2 text-sm bg-red-700 text-white rounded-md hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-bold mb-2">Auto-Indent</button>
 
                 <h3 class="text-lg font-semibold text-white mb-4 mt-4"><i class="fa-solid fa-right-to-bracket"></i> Quick Insert</h3>
                 <div class="button-list mb-2">
-                    <button id="autoIdBtn" class="px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded-md">Element ID's</button>
+                    
                     <button id="figDescBtn" class="px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded-md">Figure (w/ desc)</button>
                     <button id="defListBtn" class="px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded-md">Definition List</button>
                     <button id="footnoteListBtn" class="px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 rounded-md">Footnote List</button>
