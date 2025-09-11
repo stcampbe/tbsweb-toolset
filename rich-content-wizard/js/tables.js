@@ -582,10 +582,13 @@ function formatTableLogic(table, options) {
     });
 
     // --- Apply Table-level ID and Classes ---
-    if (options.specificTableId && !table.id) {
+    if (options.specificTableId) {
         let customId = options.tableIdPrefix;
+        // Apply the custom ID if provided, otherwise remove the ID if the input is empty.
         if (customId && customId.trim() !== '') {
             table.id = customId.trim();
+        } else {
+            table.removeAttribute('id');
         }
     } else if (options.applyId) {
         let prefix = options.tableIdPrefix || 'tbl';
@@ -1104,6 +1107,7 @@ function formatHtmlTables() {
             let tblCounter = 1,
                 ftblCounter = 1;
             tables.forEach(table => {
+                const oldTableId = table.id; // Capture the original ID before it's changed.
                 const isFigureTable = table.closest('figure') !== null;
                 const options = {
                     applyId: document.getElementById('id-checkbox').checked,
@@ -1137,7 +1141,55 @@ function formatHtmlTables() {
                     isFigureTable: isFigureTable,
                     specificTableId: false
                 };
+                
+                // This function applies all the formatting, including setting the new table ID.
                 formatTableLogic(table, options);
+
+                // --- NEW: Add robust footnote IDing logic ---
+                if (options.applyId) {
+                    const newTableId = table.id; // Get the new ID that was just set.
+
+                    // 1. Update the main footnote header using the proven resilient find method.
+                    const footnoteSectionHeader = table.querySelector(`tfoot [id="${oldTableId ? oldTableId + 'fn' : 'fn'}"]`) || table.querySelector('tfoot [id="fn"]');
+                    if (footnoteSectionHeader) {
+                        footnoteSectionHeader.id = `${newTableId}fn`;
+                    }
+
+                    // 2. Update each footnote reference and its corresponding definition.
+                    const footnoteRefs = Array.from(table.querySelectorAll('sup[id$="-rf"]'));
+                    const allDdsInTable = Array.from(table.querySelectorAll('dd[id]')); 
+
+                    footnoteRefs.forEach(sup => {
+                        const oldSupId = sup.id;
+                        const oldBaseId = oldSupId.replace(/-rf$/, '');
+                        
+                        const numberMatch = oldBaseId.match(/\d+$/);
+                        if (!numberMatch) return;
+                        const originalFootnoteNum = numberMatch[0];
+
+                        const newBaseId = `${newTableId}fn${originalFootnoteNum}`;
+                        const newSupId = `${newBaseId}-rf`;
+
+                        // Update the <sup> ID
+                        sup.id = newSupId;
+                        
+                        // Update the link inside the <sup>
+                        const linkInsideSup = sup.querySelector('a');
+                        if (linkInsideSup && linkInsideSup.getAttribute('href') === `#${oldBaseId}`) {
+                            linkInsideSup.setAttribute('href', `#${newBaseId}`);
+                        }
+                        
+                        // Find and update the corresponding <dd>
+                        const correspondingDd = allDdsInTable.find(dd => dd.id === oldBaseId);
+                        if (correspondingDd) {
+                            correspondingDd.id = newBaseId;
+                            const returnLink = correspondingDd.querySelector(`a[href="#${oldSupId}"]`);
+                            if (returnLink) {
+                                returnLink.setAttribute('href', `#${newSupId}`);
+                            }
+                        }
+                    });
+                }
             });
 
             // Clean up any manual active markers before final output.
@@ -1237,6 +1289,10 @@ function generatePreviewTableHtml() {
     const tableInfo = tableDataMap.get(selectedValue);
     if (!tableInfo) return '';
 
+    const tempOriginalDivForId = document.createElement('div');
+    tempOriginalDivForId.innerHTML = tableInfo.outerHTML;
+    const oldTableId = tempOriginalDivForId.querySelector('table')?.id || '';
+
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = tableInfo.outerHTML;
     const clonedTable = tempDiv.querySelector('table');
@@ -1276,6 +1332,56 @@ function generatePreviewTableHtml() {
     };
 
     const formattedTableElement = formatTableLogic(clonedTable, customizeOptions);
+    const newTableId = formattedTableElement.id;
+
+    if (newTableId) {
+        // --- Robust Footnote Re-IDing Logic ---
+        const footnoteIdMap = {};
+
+        // 1. Handle the main footnote header (e.g., id="fn" or id="tbl1fn")
+        const oldFnHeaderId = oldTableId ? `${oldTableId}fn` : 'fn';
+        const fnHeader = formattedTableElement.querySelector(`tfoot [id="${oldFnHeaderId}"], tfoot [id="fn"]`);
+        if (fnHeader) {
+            footnoteIdMap[fnHeader.id] = `${newTableId}fn`;
+        }
+        
+        // 2. Build a map of all required footnote ID changes.
+        const allFnElements = formattedTableElement.querySelectorAll('[id*="fn"]');
+        allFnElements.forEach(el => {
+            const oldId = el.id;
+            // This regex intelligently parses complex IDs like "tbl1fn2-rf-0"
+            const idParts = oldId.match(/(?:(.*?))?fn(\d+)((?:-rf)?(?:-\d+)*)?$/);
+            if (idParts) {
+                const originalFootnoteNum = idParts[2]; // The core number, e.g., "2"
+                const oldSuffix = idParts[3] || '';    // The suffix, e.g., "-rf-0"
+                
+                // Reconstruct the old base ID to ensure we map all variations
+                const oldPrefix = idParts[1] || '';
+                const oldBaseId = `${oldPrefix}fn${originalFootnoteNum}`;
+                
+                const newBaseId = `${newTableId}fn${originalFootnoteNum}`;
+                const newFullId = `${newBaseId}${oldSuffix}`;
+
+                footnoteIdMap[oldId] = newFullId;
+                footnoteIdMap[oldBaseId] = newBaseId;
+            }
+        });
+
+        // 3. Apply the changes from the map.
+        // Update all element IDs
+        formattedTableElement.querySelectorAll('[id]').forEach(el => {
+            if (footnoteIdMap[el.id]) {
+                el.id = footnoteIdMap[el.id];
+            }
+        });
+        // Update all anchor hrefs
+        formattedTableElement.querySelectorAll('a[href^="#"]').forEach(link => {
+            const oldAnchor = link.getAttribute('href').substring(1);
+            if (footnoteIdMap[oldAnchor]) {
+                link.setAttribute('href', `#${footnoteIdMap[oldAnchor]}`);
+            }
+        });
+    }
 
     let formattedHtml = formattedTableElement.outerHTML;
     formattedHtml = protectDataAttributes(formattedHtml);
@@ -1795,8 +1901,58 @@ function autoTableIDs() {
 
         let tblCounter = 1,
             ftblCounter = 1;
+        
         tables.forEach(table => {
-            table.id = table.closest('figure') ? `ftbl${ftblCounter++}` : `tbl${tblCounter++}`;
+            const oldTableId = table.id; // Keep track of the table's original ID
+            const isFigureTable = !!table.closest('figure');
+            const newTableId = isFigureTable ? `ftbl${ftblCounter++}` : `tbl${tblCounter++}`;
+
+            table.id = newTableId;
+
+            // --- Robust Footnote Update Logic ---
+
+            // 1. Update the main footnote header using the proven resilient find method.
+            // This selector first tries to find a header that might already be prefixed
+            // from a previous run, preventing the cross-table ID bug.
+            const footnoteSectionHeader = table.querySelector(`tfoot [id="${oldTableId ? oldTableId + 'fn' : 'fn'}"]`) || table.querySelector('tfoot [id="fn"]');
+                    if (footnoteSectionHeader) {
+                        footnoteSectionHeader.id = `${newTableId}fn`;
+                    }
+
+            // 2. Update each footnote reference and its corresponding definition
+            const footnoteRefs = Array.from(table.querySelectorAll('sup[id$="-rf"]'));
+            const allDdsInTable = Array.from(table.querySelectorAll('dd[id]')); 
+
+            footnoteRefs.forEach(sup => {
+                const oldSupId = sup.id;
+                const oldBaseId = oldSupId.replace(/-rf$/, '');
+                
+                const numberMatch = oldBaseId.match(/\d+$/);
+                if (!numberMatch) return;
+                const originalFootnoteNum = numberMatch[0];
+
+                const newBaseId = `${newTableId}fn${originalFootnoteNum}`;
+                const newSupId = `${newBaseId}-rf`;
+
+                // Update the <sup> ID
+                sup.id = newSupId;
+                
+                // Update the link inside the <sup>
+                const linkInsideSup = sup.querySelector('a');
+                if (linkInsideSup && linkInsideSup.getAttribute('href') === `#${oldBaseId}`) {
+                    linkInsideSup.setAttribute('href', `#${newBaseId}`);
+                }
+                
+                // Find and update the corresponding <dd>
+                const correspondingDd = allDdsInTable.find(dd => dd.id === oldBaseId);
+                if (correspondingDd) {
+                    correspondingDd.id = newBaseId;
+                    const returnLink = correspondingDd.querySelector(`a[href="#${oldSupId}"]`);
+                    if (returnLink) {
+                        returnLink.setAttribute('href', `#${newSupId}`);
+                    }
+                }
+            });
         });
 
         let finalHtml = html_beautify(tempDiv.innerHTML, {
