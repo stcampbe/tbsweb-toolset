@@ -73,7 +73,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const toggleCleanSpaces = document.getElementById('toggleCleanSpaces');
     const toggleCleanUrls = document.getElementById('toggleCleanUrls');
     const toggleTimeTags = document.getElementById('toggleTimeTags');
-    const toggleFixFnIds = document.getElementById('toggleFixFnIds');
     const toggleCleanSingleBreaks = document.getElementById('toggleCleanSingleBreaks');
     const toggleCleanFormattingTags = document.getElementById('toggleCleanFormattingTags');
     const toggleAutoLevelHeadings = document.getElementById('toggleAutoLevelHeadings');
@@ -86,6 +85,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const colophonBtn = document.getElementById('colophonBtn'); 
     const figDescBtn = document.getElementById('figDescBtn');
     const defListBtn = document.getElementById('defListBtn'); 
+	// const footnoteAncBtn = document.getElementById('footnoteAncBtn'); 
     const footnoteListBtn = document.getElementById('footnoteListBtn'); 
 
     const undoBtn = document.getElementById('undoBtn');
@@ -846,6 +846,58 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         return tempDiv.innerHTML;
+    }
+	
+	function applyFixFnIdsLogic(htmlString) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlString, 'text/html');
+
+        // 1. Group all referrer `<sup>` tags by their base ID.
+        const baseIdToSupElements = new Map();
+        const supElements = doc.querySelectorAll('sup[id*="-rf"]');
+
+        supElements.forEach(sup => {
+            const originalId = sup.id;
+            // Robustly get the base ID (e.g., "tbl1fn2" from "tbl1fn2-rf-1")
+            const baseId = originalId.replace(/-rf(-\d+)?$/, '');
+
+            if (!baseIdToSupElements.has(baseId)) {
+                baseIdToSupElements.set(baseId, []);
+            }
+            baseIdToSupElements.get(baseId).push(sup);
+        });
+
+        // 2. Process each group of referrers.
+        for (const [baseId, supList] of baseIdToSupElements.entries()) {
+            let canonicalTargetId;
+
+            // 2a. ONLY re-number the `<sup>` tags if there is more than one.
+            if (supList.length > 1) {
+                canonicalTargetId = `${baseId}-rf-0`;
+                supList.forEach((sup, index) => {
+                    const newSupId = `${baseId}-rf-${index}`;
+                    sup.id = newSupId;
+                });
+            } else if (supList.length === 1) {
+                // 2b. If there is only one, ensure its ID is the simple version and set that as the target.
+                canonicalTargetId = `${baseId}-rf`;
+                supList[0].id = canonicalTargetId;
+            } else {
+                continue; // Should not happen, but good practice.
+            }
+
+            // 3. Find the corresponding definition list item (`<dd>`) and fix its return link.
+            const ddElement = doc.getElementById(baseId); // e.g., get element with id="tbl1fn1"
+            if (ddElement) {
+                const returnLink = ddElement.querySelector('a[href*="-rf"]');
+                if (returnLink) {
+                    // Update the link to point to the correct canonical target ID.
+                    returnLink.setAttribute('href', `#${canonicalTargetId}`);
+                }
+            }
+        }
+
+        return doc.body.innerHTML;
     }
 
     function applyAutoSpacing(htmlString) {
@@ -2144,6 +2196,7 @@ document.addEventListener('DOMContentLoaded', function () {
             , idFigures: true
             , idTables: true
             , idFigureTables: true
+            , fixFnIds: false
         };
         const currentOptions = {
             ...defaultOptions
@@ -2265,6 +2318,10 @@ document.addEventListener('DOMContentLoaded', function () {
             };
             doc.querySelectorAll('section')
                 .forEach(section => {
+                    // Do not ID sections that are inside a table
+                    if (section.closest('table')) {
+                        return;
+                    }
                     if (section.id && (!/^sec\d+(-\d+)*$/.test(section.id) || section.hasAttribute('class'))) return;
                     let parentSection = section.parentElement.closest('section');
                     let parentId = parentSection && parentSection.id && /^sec\d+(-\d+)*$/.test(parentSection.id) ? parentSection.id : 'root';
@@ -2351,6 +2408,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             });
         }
+
+        let finalHtml = doc.body.innerHTML;
+        if (currentOptions.fixFnIds) {
+            finalHtml = applyFixFnIdsLogic(finalHtml);
+            doc.body.innerHTML = finalHtml; // Update doc for the next step
+        }
+
         doc.querySelectorAll('a[href^="#"]')
             .forEach(link => {
                 const currentAnchor = link.getAttribute('href')
@@ -2360,7 +2424,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             });
 
-        return body.innerHTML;
+        return doc.body.innerHTML;
     }
 
     window.updateEditorStyles = function (enableCustomStyles) {
@@ -3364,6 +3428,14 @@ document.addEventListener('DOMContentLoaded', function () {
                                 </label>
                                 <span class="toggle-switch-label text-white text-sm">Figure Tables (ftbl#)</span>
                             </div>
+
+                            <div class="toggle-switch-container">
+                                <label class="toggle-switch is-checked" for="toggleFixFnIdsModal">
+                                    <input type="checkbox" id="toggleFixFnIdsModal" checked>
+                                    <span class="toggle-switch-slider"></span>
+                                </label>
+                                <span class="toggle-switch-label text-white text-sm">Fix Duplicate FN Refs (fn#-rf)</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -3400,9 +3472,10 @@ document.addEventListener('DOMContentLoaded', function () {
         const toggleFiguresId = document.getElementById('toggleFiguresId'); 
         const toggleTablesId = document.getElementById('toggleTablesId');
         const toggleFigureTablesId = document.getElementById('toggleFigureTablesId');
+        const toggleFixFnIdsModal = document.getElementById('toggleFixFnIdsModal');
         const modalApplyAutoIdBtn = document.getElementById('modalApplyAutoIdBtn');
 
-        [toggleSectionsId, toggleHeadingsId, toggleFiguresId, toggleTablesId, toggleFigureTablesId].forEach(toggle => { 
+        [toggleSectionsId, toggleHeadingsId, toggleFiguresId, toggleTablesId, toggleFigureTablesId, toggleFixFnIdsModal].forEach(toggle => { 
             toggle.addEventListener('change', (event) => {
                 const parentLabel = event.target.closest('.toggle-switch');
                 if (event.target.checked) {
@@ -3420,6 +3493,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 , idFigures: toggleFiguresId.checked, 
                 idTables: toggleTablesId.checked
                 , idFigureTables: toggleFigureTablesId.checked
+                , fixFnIds: toggleFixFnIdsModal.checked
             };
 
             if (monacoEditorInstance) {
@@ -3449,8 +3523,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     const quickFormattingToggles = [
-        toggleCleanSpaces, toggleCleanUrls, toggleTimeTags, toggleFixFnIds
-        , toggleCleanSingleBreaks, toggleCleanPTables, toggleCleanFormattingTags, 
+        toggleCleanSpaces, toggleCleanUrls, toggleTimeTags, toggleCleanSingleBreaks, toggleCleanPTables, toggleCleanFormattingTags, 
         toggleAutoLevelHeadings, toggleAutoSection
     ];
 
@@ -5278,55 +5351,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
 
-                if (toggleFixFnIds.checked) {
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(currentContent, 'text/html');
-
-                    const baseIdToSupElements = new Map();
-                    const supElements = doc.querySelectorAll('sup[id$="-rf"]');
-                    supElements.forEach(sup => {
-                        const originalId = sup.id;
-                        const baseId = originalId.replace(/-rf$/, '');
-
-                        if (!baseIdToSupElements.has(baseId)) {
-                            baseIdToSupElements.set(baseId, []);
-                        }
-                        baseIdToSupElements.get(baseId)
-                            .push(sup);
-                    });
-
-                    const idMapping = {};
-
-                    for (const [baseId, supList] of baseIdToSupElements.entries()) {
-                        let canonicalTargetId = supList[0].id;
-
-                        if (supList.length > 1) {
-                            canonicalTargetId = `${baseId}-rf-0`;
-                            supList.forEach((sup, index) => {
-                                const newSupId = `${baseId}-rf-${index}`;
-                                sup.id = newSupId;
-                            });
-                        }
-                        supList.forEach(sup => {
-                            idMapping[sup.id] = canonicalTargetId;
-                        });
-                        if (supList.length > 1) {
-                            idMapping[`${baseId}-rf`] = canonicalTargetId;
-                        }
-                    }
-
-                    const links = doc.querySelectorAll('a[href^="#"]');
-                    links.forEach(link => {
-                        let href = link.getAttribute('href');
-                        const anchor = href.substring(1);
-
-                        if (idMapping.hasOwnProperty(anchor)) {
-                            link.setAttribute('href', `#${idMapping[anchor]}`);
-                        }
-                    });
-                    currentContent = doc.body.innerHTML; 
-                    console.log("Fix FN ID's applied. Content length:", currentContent.length);
-                }
 
 
                 currentContent = revertNBSPPlaceholders(currentContent); 
@@ -5412,7 +5436,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 `;
             showModal('Insert Colophon', colophonHtmlContent, colophonBtn, originalText); 
         });
-
 
 
         defListBtn.addEventListener('click', () => {
@@ -6187,6 +6210,9 @@ document.addEventListener('DOMContentLoaded', function () {
             a.click();
             URL.revokeObjectURL(a.href);
         });
+		
+				
+
 
         contentModeBtn.addEventListener('click', () => setEditorMode('content'));
     tableModeBtn.addEventListener('click', () => setEditorMode('table'));
