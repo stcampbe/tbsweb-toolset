@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const colophonBtn = document.getElementById('colophonBtn'); 
     const figDescBtn = document.getElementById('figDescBtn');
     const defListBtn = document.getElementById('defListBtn'); 
-	// const footnoteAncBtn = document.getElementById('footnoteAncBtn'); 
+	const footnoteAncBtn = document.getElementById('footnoteAncBtn'); 
     const footnoteListBtn = document.getElementById('footnoteListBtn'); 
 
     const undoBtn = document.getElementById('undoBtn');
@@ -165,6 +165,7 @@ document.addEventListener('DOMContentLoaded', function () {
         , autoIdBtn
         , figDescBtn
         , defListBtn
+        , footnoteAncBtn
         , footnoteListBtn
         , colophonBtn
         , clearAllBtn
@@ -3159,12 +3160,125 @@ document.addEventListener('DOMContentLoaded', function () {
         showFigureModal(figDescBtn, originalText);
     });
 
+    function showFootnoteAnchorModal(triggeringButton, originalButtonText) {
+        const modalContentHtml = `
+            <div class="flex flex-col space-y-4">
+                <div>
+                    <span class="text-sm font-medium text-gray-200 mr-2">Language:</span>
+                    <div class="button-group inline-flex">
+                        <button id="fnAncLangEnglishBtn" class="px-3 py-1 text-sm bg-indigo-600 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50 font-bold">English</button>
+                        <button id="fnAncLangFrenchBtn" class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50 font-bold">French</button>
+                    </div>
+                </div>
+                 <p class="text-xs text-gray-400">NOTE: This only effects <strong>page footnotes</strong>, not <strong>table footnotes</strong>. Switch to TABLE MODE for tools to use within table tags.</p>
+            </div>
+        `;
+
+        const modalOverlay = document.createElement('div');
+        modalOverlay.className = 'modal-overlay';
+        modalOverlay.innerHTML = `
+            <div class="modal-content">
+                <h3>Format Footnote Anchors</h3>
+                <div id="modalBody">${modalContentHtml}</div>
+                <div class="flex justify-end mt-4 space-x-2">
+                    <button id="modalCancelFnAncBtn" class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600">Cancel</button>
+                    <button id="modalInsertFnAncBtn" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">Format Anchors</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modalOverlay);
+
+        function closeModalAndReEnableButtons() {
+            modalOverlay.remove();
+            triggeringButton.removeAttribute('data-temp-active');
+            triggeringButton.textContent = originalButtonText;
+            triggeringButton.classList.remove('bg-green-500', 'hover:bg-green-600');
+            triggeringButton.classList.add('bg-slate-600', 'hover:bg-slate-500');
+            updateAllInteractiveButtonStates();
+        }
+
+        document.getElementById('modalCancelFnAncBtn').addEventListener('click', closeModalAndReEnableButtons);
+
+        const langEnglishBtn = document.getElementById('fnAncLangEnglishBtn');
+        const langFrenchBtn = document.getElementById('fnAncLangFrenchBtn');
+        const modalInsertBtn = document.getElementById('modalInsertFnAncBtn');
+
+        let selectedLanguage = 'English';
+
+        function updateButtonActiveState(buttons, activeBtn) {
+            buttons.forEach(btn => {
+                btn.classList.remove('active', 'bg-indigo-600');
+                btn.classList.add('bg-gray-600', 'hover:bg-gray-500');
+            });
+            activeBtn.classList.add('active', 'bg-indigo-600');
+            activeBtn.classList.remove('bg-gray-600', 'hover:bg-gray-500');
+        }
+
+        updateButtonActiveState([langEnglishBtn, langFrenchBtn], langEnglishBtn);
+
+        langEnglishBtn.addEventListener('click', () => {
+            selectedLanguage = 'English';
+            updateButtonActiveState([langEnglishBtn, langFrenchBtn], langEnglishBtn);
+        });
+
+        langFrenchBtn.addEventListener('click', () => {
+            selectedLanguage = 'French';
+            updateButtonActiveState([langEnglishBtn, langFrenchBtn], langFrenchBtn);
+        });
+        
+        // ### CORE LOGIC REBUILT ###
+        modalInsertBtn.addEventListener('click', () => {
+            if (!monacoEditorInstance) return;
+
+            let editorContent = monacoEditorInstance.getValue();
+            const wbInvText = selectedLanguage === 'English' ? 'Footnote ' : 'Note de bas de page ';
+
+            // This single, improved Regex handles both "[1]" and "*" style anchors.
+            const searchPattern = /<sup\s*>\s*<a\s+href\s*=\s*(['"])#_ftn(\d+)\1[^>]*>\s*(?:(\[\2\])|([^<].*?))\s*<\/a\s*>\s*<\/sup>/gi;
+
+            const updatedContent = editorContent.replace(searchPattern, (match, quote, number, numericContent, symbolContent) => {
+                let linkText;
+                if (numericContent !== undefined) {
+                    // This case handles "[1]", "[2]", etc. It uses the number itself for the visible text.
+                    linkText = number;
+                } else {
+                    // This case handles "*", "†", etc. It uses the symbol found inside the link.
+                    linkText = symbolContent.trim();
+                }
+                return `<sup id="fn${number}-rf"><a class="fn-lnk" href="#fn${number}"><span class="wb-inv">${wbInvText}</span>${linkText}</a></sup>`;
+            });
+
+            monacoEditorInstance.setValue(updatedContent);
+
+            closeModalAndReEnableButtons();
+
+            triggeringButton.textContent = 'Formatted!';
+            triggeringButton.classList.add('bg-green-500', 'hover:bg-green-600');
+            triggeringButton.classList.remove('bg-slate-600', 'hover:bg-slate-500');
+            setTimeout(() => {
+                triggeringButton.textContent = originalButtonText;
+                triggeringButton.classList.remove('bg-green-500', 'hover:bg-green-600');
+                triggeringButton.classList.add('bg-slate-600', 'hover:bg-slate-500');
+            }, 1500);
+        });
+    }
+	
+    footnoteAncBtn.addEventListener('click', () => {
+        const originalText = footnoteAncBtn.textContent;
+        footnoteAncBtn.textContent = 'Opening...';
+        footnoteAncBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+        footnoteAncBtn.classList.remove('bg-slate-600', 'hover:bg-slate-500');
+        footnoteAncBtn.setAttribute('data-temp-active', 'true');
+        updateAllInteractiveButtonStates();
+        showFootnoteAnchorModal(footnoteAncBtn, originalText);
+    });
+
     function showFootnoteModal(triggeringButton, originalButtonText) {
         const footnoteContentHtml = `
                 <div class="flex flex-col space-y-4">
-				<div>
-				<p>NOTE: This only creates an empty list of footnotes, you must populate it on your own. It also does not add/change anchors. 
-				</div>
+				
+				
+				
                     <div>
                         <span class="text-sm font-medium text-gray-200 mr-2">Language:</span>
                         <div class="button-group inline-flex">
@@ -3181,6 +3295,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         <label for="fnIdPrefix" class="block text-sm font-medium text-gray-200">ID Prefix (optional):</label>
                         <input type="text" id="fnIdPrefix" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., mydoc-">
 					</div>
+                    <p class="text-xs text-gray-400">NOTE: This only creates an empty list of footnotes, you must populate it on your own. It also does not add/change anchors.</p>
                 </div>
             `;
 
