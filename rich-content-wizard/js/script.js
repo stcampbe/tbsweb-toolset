@@ -1805,38 +1805,69 @@ document.addEventListener('DOMContentLoaded', function () {
                 link.parentNode.removeChild(link);
             }
         });
+		
+		 // ### START REVISED FOOTNOTE ANCHOR LOGIC (WITH DUPLICATE HANDLING) ###
 
-        const footnoteLinks = Array.from(doc.querySelectorAll('a[href*="#_ftn"]')); 
-        footnoteLinks.forEach(link => {
-            const originalHref = link.getAttribute('href');
-            const textContent = link.textContent;
+    // This map will store the base ID for each unique footnote number found.
+    const footnoteIdMap = new Map(); 
+    // This map will track how many times each base ID has been used, to create unique IDs for duplicates.
+    const supCounters = new Map(); 
 
-            const newCleanLink = doc.createElement('a');
-            newCleanLink.setAttribute('href', originalHref);
-            newCleanLink.textContent = textContent;
+    // Find all potential footnote references. This targets both simple spans and linked anchors from Word.
+    const allPotentialRefs = Array.from(doc.querySelectorAll('a[href*="#_ftn"], span.MsoFootnoteReference'));
 
-            const idealSupElement = doc.createElement('sup');
-            idealSupElement.appendChild(newCleanLink);
+    allPotentialRefs.forEach(refElement => {
+        let originalNum;
+        let elementToReplace = refElement.closest('sup') || refElement;
+        
+        // Determine the footnote number (e.g., "1" from "#_ftn1").
+        const linkRef = refElement.closest('a');
+        if (linkRef && linkRef.href.includes('#_ftn')) {
+            const match = linkRef.getAttribute('href').match(/#_ftn(\d+)/);
+            if (match) originalNum = match[1];
+        } else {
+             // Fallback for spans that aren't linked: try to find their definition in the list.
+             const refText = refElement.textContent.trim().replace(/\[|\]/g, '');
+             const footnoteListItems = doc.querySelectorAll('p[style*="mso-element: footnote"], div[style*="mso-element: footnote"]');
+             for (const item of footnoteListItems) {
+                 const itemRefSpan = item.querySelector('span.MsoFootnoteReference');
+                 if (itemRefSpan && itemRefSpan.textContent.trim().replace(/\[|\]/g, '') === refText) {
+                     const anchor = item.querySelector('a[name^="_ftn"]');
+                     if (anchor) {
+                        const match = anchor.getAttribute('name').match(/_ftn(\d+)/);
+                        if (match) originalNum = match[1];
+                        break;
+                     }
+                 }
+             }
+        }
+        
+        if (!originalNum) return; // Skip if we couldn't determine the footnote number.
 
-            let elementToReplace = link; 
-            let currentParent = link.parentNode; 
+        // Determine if the footnote is inside a table to create a table-specific ID.
+        const containingTable = refElement.closest('table');
+        const baseId = containingTable ? `${containingTable.id || 'tbl'}_ftn${originalNum}` : `_ftn${originalNum}`;
+        const linkText = refElement.textContent.trim().replace(/\[|\]/g, '');
 
-            while (currentParent && currentParent !== doc.body && currentParent.tagName.toLowerCase() === 'sup') {
-                const children = Array.from(currentParent.childNodes)
-                    .filter(n => n.nodeType === Node.ELEMENT_NODE || (n.nodeType === Node.TEXT_NODE && n.nodeValue.trim() !== ''));
+        // --- Duplicate Handling Logic ---
+        // Get the current count for this base ID, or start at 0.
+        const count = supCounters.get(baseId) || 0;
+        // Increment the counter for the next time this ID is seen.
+        supCounters.set(baseId, count + 1);
 
-                if (children.length === 1 && children[0] === elementToReplace) {
-                    elementToReplace = currentParent; 
-                    currentParent = currentParent.parentNode; 
-                } else {
-                    break; 
-                }
-            }
+        // Build the new, correct WET-compliant structure.
+        const newSup = doc.createElement('sup');
+        
+        const newLink = doc.createElement('a');
+        newLink.href = `#${baseId}`; // Link always points to the base definition ID
+        newLink.textContent = linkText;
+        newSup.appendChild(newLink);
 
-            if (elementToReplace.parentNode) {
-                elementToReplace.parentNode.replaceChild(idealSupElement, elementToReplace);
-            }
-        });
+        // Replace the old Word-generated element with our new one.
+        if (elementToReplace.parentNode) {
+            elementToReplace.parentNode.replaceChild(newSup, elementToReplace);
+        }
+    });
 
         const footnoteListElements = doc.querySelectorAll('[style*="mso-element: footnote-list"]');
         footnoteListElements.forEach(element => {
@@ -1851,6 +1882,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
         });
+
 
         const elementsWithHeadingClass = doc.querySelectorAll('[class*="Heading"]'); 
 
@@ -3233,20 +3265,53 @@ document.addEventListener('DOMContentLoaded', function () {
             let editorContent = monacoEditorInstance.getValue();
             const wbInvText = selectedLanguage === 'English' ? 'Footnote ' : 'Note de bas de page ';
 
-            // This single, improved Regex handles both "[1]" and "*" style anchors.
-            const searchPattern = /<sup\s*>\s*<a\s+href\s*=\s*(['"])#_ftn(\d+)\1[^>]*>\s*(?:(\[\2\])|([^<].*?))\s*<\/a\s*>\s*<\/sup>/gi;
+            // Use DOMParser to safely manipulate HTML and respect structure
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(editorContent, 'text/html');
 
-            const updatedContent = editorContent.replace(searchPattern, (match, quote, number, numericContent, symbolContent) => {
-                let linkText;
-                if (numericContent !== undefined) {
-                    // This case handles "[1]", "[2]", etc. It uses the number itself for the visible text.
-                    linkText = number;
-                } else {
-                    // This case handles "*", "†", etc. It uses the symbol found inside the link.
-                    linkText = symbolContent.trim();
+            // Find all potential footnote anchors within a <sup> tag
+            const anchors = doc.querySelectorAll('sup a[href*="#_ftn"]');
+
+            anchors.forEach(a => {
+                const sup = a.closest('sup');
+
+                // *** CORE FIX: Check if the anchor is inside a table. If so, skip it. ***
+                if (!sup || sup.closest('table') || sup.closest('aside')) {
+                    return; // Ignore this anchor as it's inside a table
                 }
-                return `<sup id="fn${number}-rf"><a class="fn-lnk" href="#fn${number}"><span class="wb-inv">${wbInvText}</span>${linkText}</a></sup>`;
+
+                const href = a.getAttribute('href');
+                const numberMatch = href.match(/#_ftn(\d+)/);
+                if (!numberMatch) return; // Malformed href, skip it
+
+                const number = numberMatch[1];
+                // Use the existing link text (e.g., "1" or "*") and remove brackets if they exist
+                const linkText = a.textContent.trim().replace(/\[|\]/g, '');
+
+                // Create the new, correctly formatted WET structure
+                const newSup = doc.createElement('sup');
+                newSup.id = `fn${number}-rf`;
+
+                const newLink = doc.createElement('a');
+                newLink.className = 'fn-lnk';
+                newLink.href = `#fn${number}`;
+
+                const wbInvSpan = doc.createElement('span');
+                wbInvSpan.className = 'wb-inv';
+                wbInvSpan.textContent = wbInvText;
+
+                newLink.appendChild(wbInvSpan);
+                newLink.appendChild(doc.createTextNode(linkText));
+                newSup.appendChild(newLink);
+
+                // Replace the old sup element with the new one
+                if (sup.parentNode) {
+                    sup.parentNode.replaceChild(newSup, sup);
+                }
             });
+
+            // Serialize the document body back to a string
+            const updatedContent = doc.body.innerHTML;
 
             monacoEditorInstance.setValue(updatedContent);
 
