@@ -1,97 +1,84 @@
-# WordToCode™ - Rich Content Wizard 🧙‍♂️
+# TBS Web Content Wizard 🧙‍♂️
 
-Welcome to WordToCode™, your all-in-one toolkit for transforming messy documents into clean, accessible, and standards-compliant web content. This wizard is packed with powerful automation, generation, and validation tools to dramatically speed up your workflow.
+## Overview
 
----
+The TBS Web Content Wizard is a comprehensive, browser-based toolkit designed to streamline the creation, formatting, and validation of web content for the Treasury Board of Canada Secretariat (TBS) and its Adobe Experience Manager (AEM) platform.
 
-## 🖥️ Core Interface: Dual-View Editor
+It excels at converting messy documents, particularly from Microsoft Office, into clean, accessible, and standards-compliant HTML. The wizard features a powerful dual-editor system, extensive automation tools, and a real-time prototyping environment that supports WET4, GCDS (GC Design System), and hybrid frameworks.
 
-The wizard is built around a powerful, synchronized dual-editor system, giving you the flexibility to work visually or dive into the code.
-
-* **Rich-Text Editor**: A "what you see is what you get" (WYSIWYG) interface perfect for quick edits, pasting content, and visual arrangement. It includes guide markings to help visualize structural elements like sections and headings.
-* **HTML Code Editor**: A professional-grade **Monaco Editor** (the engine behind VS Code) for full control over the markup. It features syntax highlighting, undo/redo history, and advanced tools.
-* **Live Synchronization**: Seamlessly toggle between views with the "Go to HTML" and "Go to Rich-Text" buttons. Your content is automatically synced.
+The application is divided into two primary toolsets for a focused workflow: **Content Mode** for general document authoring and **Table Mode** for advanced table manipulation.
 
 ---
 
-## 🧹 Automated Content Cleaning & Formatting
+## Key Features
 
-This is the heart of the wizard. These features are designed to instantly clean up messy source code, especially from Microsoft Word, and apply consistent formatting.
+### General Interface & Utilities
 
-### One-Click MSO Cleanup
-* **Manual & Automatic Cleaning**: The **"Clean MSO"** button instantly removes Microsoft Office-specific junk code, empty tags, and messy inline styles.
-* **Auto-Clean on Toggle**: For an even faster workflow, enable the **"Auto-Clean MSO"** switch to have the cleanup process run automatically every time you switch from the Rich-Text to the HTML view.
-
-### Quick Formatting Panel
-The sidebar contains a suite of powerful, toggleable actions that can be applied all at once with the **"Format"** button. Mix and match these tools to suit your needs:
-* **Structural Formatting**:
-    * **Auto-Level Headings**: Intelligently restructures heading levels (e.g., `<h1>`, `<h2>`) to be logical and sequential.
-    * **Auto-Section**: Automatically wraps heading blocks in the proper `<section>` tags.
-    * **Clean Single Breaks**: Converts single `<br>` tags into proper paragraph structures.
-* **Code Hygiene**:
-    * **Clean Spaces**: Removes extra whitespace and redundant non-breaking spaces.
-    * **Clean `<p>` in Tables**: Removes paragraph tags from within table cells, a common issue from Word exports.
-    * **Clean Formatting Tags**: Converts non-semantic `<u>`, `<b>`, and `<i>` tags to their correct semantic equivalents (`<strong>` and `<em>`).
-* **Link & ID Management**:
-    * **Clean URLs**: Converts absolute Canada.ca URLs to the correct relative paths.
-    * **Fix FN IDs**: Corrects footnote ID numbering and references for accessibility.
-    * **Set Time Tags**: Automatically finds dates (e.g., "September 8, 2025") and wraps them in the correct `<time>` tag.
-* **Global Actions**:
-    * **Auto-Indent**: Beautifies your HTML with clean, consistent indentation.
-    * **Auto-Encode**: Converts special characters to their proper HTML entities.
+*   **Dual-View Editor**: A core feature is the synchronized dual-editor system.
+    *   **Rich-Text Editor**: A "what you see is what you get" (WYSIWYG) interface for visual editing, pasting content, and arranging elements. It includes guide markings to help visualize document structure.
+    *   **HTML Code Editor**: A professional-grade Monaco Editor (the engine behind VS Code) for full control over the markup, featuring syntax highlighting and advanced tools.
+*   **Live Preview & Prototyping**: A powerful real-time preview of your content in a modal window.
+    *   **Framework Switching**: Instantly toggle the preview between WET4, GCDS, and a hybrid WET+GCDS environment.
+    *   **Language & Customization**: Switch between English and French page templates, set custom page titles, add standard bylines, and simulate different image/URL paths (Local, Preview, Live).
+    *   **Responsive Testing**: Resize the preview to XS, SM, MD, or Full width to test responsiveness.
+*   **Built-in HTML Validator**: Click the "Validate" button to check your code for errors. The validator identifies issues like duplicate IDs, mismatched tags, improper nesting, deprecated elements, and common accessibility problems (e.g., missing `alt` text, missing `scope` on table headers). Results are clickable and jump you to the error line in the code editor.
+*   **Advanced Find & Replace**: A robust search panel in the HTML view with support for regular expressions, case sensitivity, and scoping searches to specific tags or ID'd elements. It also includes a sequencing feature for complex replacement tasks.
+*   **File Management**: Easily import an HTML file into the editor or save your current work.
 
 ---
 
-## ➕ Intelligent Content Generation
+### Content Mode Features
 
-Generate complex, accessible HTML blocks in seconds using the "Quick Insert" tools.
+This is the primary toolset for authoring and cleaning document content.
 
-* **Table of Contents (ToC)**:
-    * **Page ToC**: Creates an "On this page" list from the H2s (and optionally H3s) in your document.
-    * **Section ToC**: Creates "In this section" lists under each H2, built from the subsequent H3s, H4s, etc.
-    * *Both ToC types are available in English and French.*
-* **Element IDs**: Opens a modal to automatically add structured, sequential IDs to your choice of elements: **sections**, **headings**, **figures**, and **tables**.
-* **Figure (w/ desc)**: Inserts a complete, accessible `<figure>` block, including a `<figcaption>` and a `<details>` element for long descriptions.
-* **Footnote List**: Generates a complete WET-compliant footnote `<aside>` block with the number of footnotes you specify.
-* **Definition List**: Automatically formats a simple list of bolded terms and descriptions into a proper `<dl>`, `<dt>`, and `<dd>` structure.
-* **Colophon**: Inserts the standard copyright and ISBN/ISSN block, with options for language and the reigning monarch.
+#### Automated Cleaning
 
----
+*   **One-Click MSO Cleanup**: The "Clean MSO" button instantly removes Microsoft Office-specific code, empty tags, and messy inline styles. It intelligently processes Word-generated lists and tables into clean HTML structures.
+*   **Auto-Clean on Toggle**: An optional "Auto-Clean MSO" switch can be enabled to run the cleanup process automatically every time you switch from the Rich-Text to the HTML view.
 
-## 🛠️ Code Editor Power Tools
+#### Quick Formatting Panel
 
-For users who need maximum control, the HTML view includes a set of advanced tools.
+A sidebar with one-click toggles and a "Format" button to apply various transformations:
+*   **Clean Spaces & URLs**: Fixes whitespace issues and resolves Outlook SafeLinks.
+*   **Set Time Tags**: Automatically finds dates and wraps them in accessible `<time>` tags.
+*   **Auto-Level Headings & Auto-Section**: Ensures a logical heading structure (H2, H3, etc.) and wraps content in `<section>` tags.
+*   **Semantic Formatting**: Converts `<b>` to `<strong>`, `<i>` to `<em>`, and removes `<u>` tags.
 
-### Advanced Find & Replace
-A robust search panel with powerful capabilities:
-* **Regex Support**: Use regular expressions for complex pattern matching. A handy **Regex Guide** is included.
-* **Search Scoping**: Limit your search to the content within a specific **HTML tag** (e.g., only in `<p>` tags) or an element with a specific **ID** (e.g., only in `#my-section`).
-* **Sequencing**: Perform replacements with an incrementing or decrementing number. For example, you can rename multiple items to `image-1`, `image-2`, `image-3`, etc., in a single operation.
+#### Intelligent Content Generation
 
-### Built-in HTML Validator
-* Click the **"Validate"** button to check your code for errors.
-* The validator identifies issues like **duplicate IDs**, **mismatched tags**, improper element **nesting**, **deprecated tags/attributes**, and common **accessibility problems** (missing `alt` text, missing `scope` on table headers).
-* Results are displayed in a list, and clicking an error will instantly jump you to the corresponding line in the code editor.
-
-### Utility and File Management
-* **Undo/Redo**: Full history for all changes made in the code editor.
-* **Import/Export**: Easily load an HTML file into the editor or save your current work as an `index.html` file.
-* **Unsaved Changes Warning**: The tool will warn you before you close the tab if you have unsaved work.
-* **Entity Highlighting**: All HTML entities (like `&#160;`) are highlighted in gold for easy identification.
+*   **Table of Contents (ToC)**:
+    *   **Page ToC**: Creates an "On this page" list from the H2s (and optionally H3s).
+    *   **Section ToC**: Creates "In this section" lists under each H2, built from subsequent H3s, H4s, etc.
+*   **Element IDs**: A modal to automatically add structured, sequential IDs to sections, headings, figures, and tables.
+*   **WET-Compliant Components**:
+    *   **Figure (w/ desc)**: Inserts a complete, accessible `<figure>` block, including a `<figcaption>` and a `<details>` element for long descriptions.
+    *   **Footnote List**: Generates a complete footnote `<aside>` block.
+    *   **Definition List**: Formats a simple list into a proper `<dl>`, `<dt>`, and `<dd>` structure.
+    *   **Colophon**: Inserts the standard copyright and ISBN/ISSN block.
 
 ---
 
-## 🚀 Live Preview & Prototyping
+### Table Mode Features
 
-Click the **"View Preview"** button to open a powerful, real-time preview of your content in a modal window.
+This dedicated toolset provides advanced functionality for creating and managing complex HTML tables.
 
-* **Framework Switching**: Instantly toggle the preview between **WET4**, **GCDS**, and a hybrid **WET+GCDS** environment.
-* **Language Toggling**: Switch between **English** and **French** page templates.
-* **Full Customization**:
-    * Set a custom page title (`<h1>`).
-    * Add a standard English or French **byline**.
-    * Simulate different environments by changing image and URL paths between **Local**, **Preview**, and **Live** sources.
-    * Toggle CSS on or off to check raw content structure.
-* **Responsive Breakpoint Testing**: Resize the preview to **XS, SM, MD,** or **Full** width to test responsiveness.
-* **Visual Helpers**: Overlay outlines on **sections** and **headings** to easily debug your document structure.
-* **Export Prototype**: Download a fully self-contained HTML file of the current preview, perfect for sharing and testing.
+*   **Table Inspector**: A dropdown menu automatically detects and lists all tables in the document, allowing you to select and focus on a specific one for editing.
+*   **Universal Formatting**: Apply formatting options to **all** tables simultaneously. Options include adding base WET classes, borders, striping, headers, and setting universal alignment for captions and headers.
+*   **Custom Formatting with Live Preview**: A powerful interface for fine-tuning a single selected table.
+    *   **Live Interactive Preview**: The selected table is rendered in a live iframe. You can click, drag, or use modifier keys (Ctrl, Shift) to select individual or multiple cells.
+    *   **Cell-Level Styling**: Apply styles like bolding, alignment, background colors, or custom CSS classes directly to your selected cells and see the changes immediately.
+*   **Accessibility Engine**:
+    *   **Auto-Scope/ID**: Automatically applies correct accessibility attributes. It uses `scope` for simple tables and generates a full `id/headers` system for complex tables.
+    *   **Force ID/Headers**: Manually force the complex `id/headers` system on any table.
+*   **Utility Tools**:
+    *   **Auto-Responsive**: Wraps all tables in `<div class="table-responsive">`.
+    *   **Number Formatting**: Formats numbers within tables to English (`1,234.56`) or French (`1 234,56`) standards.
+    *   **Reset Functions**: Granular controls to remove formatting, responsive wrappers, or accessibility attributes from all tables or just the selected one.
+
+## Technologies Used
+
+*   **HugeRTE**: Core Rich-Text Editor
+*   **Monaco Editor**: Core HTML Code Editor
+*   **Tailwind CSS**: User Interface Styling
+*   **Font Awesome**: Icons
+*   **HTML Beautify**: Code Indentation and Formatting
