@@ -246,7 +246,7 @@ document.addEventListener('DOMContentLoaded', function () {
         toggleEditorViewBtnCode.classList.remove('hidden');
         autoCleanMsoToggleCodeContainer.classList.remove('hidden');
         cleanMsoBtn.classList.remove('hidden');
-        
+        removeTblModalBtn.classList.remove('hidden');
 
         // Hide table-specific UI elements
         tableControlsRow1.classList.add('hidden');
@@ -264,6 +264,7 @@ document.addEventListener('DOMContentLoaded', function () {
         toggleEditorViewBtnCode.classList.add('hidden');
         autoCleanMsoToggleCodeContainer.classList.add('hidden');
         cleanMsoBtn.classList.add('hidden');
+        removeTblModalBtn.classList.add('hidden');
         
         
         // Show table-specific UI elements
@@ -329,6 +330,15 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         return false;
     }
+    const removeTblModalBtn = document.getElementById('removeTblModalBtn');
+
+    removeTblModalBtn.addEventListener('click', () => {
+        const originalText = removeTblModalBtn.textContent;
+        removeTblModalBtn.textContent = 'Opening...';
+        removeTblModalBtn.setAttribute('data-temp-active', 'true');
+        updateAllInteractiveButtonStates();
+        showRemoveTablesModal(removeTblModalBtn, originalText);
+    });
 
     async function validateHtmlContent(fullHtmlCode) {
         const errors = [];
@@ -1078,7 +1088,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlString, 'text/html');
 
-        const pElementsInCells = doc.querySelectorAll('td p, th p');
+        const pElementsInCells = doc.querySelectorAll('thead td p, thead th p, tbody td p, tbody th p');
 
         for (let i = pElementsInCells.length - 1; i >= 0; i--) {
             const pTag = pElementsInCells[i];
@@ -1726,6 +1736,34 @@ document.addEventListener('DOMContentLoaded', function () {
         return body.innerHTML;
     }
 
+    function unwrapSingleCellTables(htmlString) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlString, 'text/html');
+        const tables = doc.querySelectorAll('table');
+
+        tables.forEach(table => {
+            // Condition: Table must contain exactly one cell (<td> or <th>).
+            const cells = table.querySelectorAll('td, th');
+            const isSingleCell = cells.length === 1;
+
+            if (isSingleCell) {
+                const cell = cells[0];
+                const parent = table.parentNode;
+
+                if (parent) {
+                    // Move all content from the cell to just before the table.
+                    while (cell.firstChild) {
+                        parent.insertBefore(cell.firstChild, table);
+                    }
+                    // Remove the now-empty table structure.
+                    parent.removeChild(table);
+                }
+            }
+        });
+
+        return doc.body.innerHTML;
+    }
+
     function applyCleanMsoCode(htmlString) {
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlString, 'text/html');
@@ -1806,27 +1844,30 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 		
-		 // ### START REVISED FOOTNOTE ANCHOR LOGIC (WITH DUPLICATE HANDLING) ###
+		// ### START REVISED FOOTNOTE ANCHOR LOGIC ###
 
-    // This map will store the base ID for each unique footnote number found.
-    const footnoteIdMap = new Map(); 
-    // This map will track how many times each base ID has been used, to create unique IDs for duplicates.
-    const supCounters = new Map(); 
+    // --- PASS 1: GATHER INFORMATION AND COUNT OCCURRENCES ---
+    const occurrenceMap = new Map(); // Stores count of each footnote base ID
+    const refInfoMap = new Map();    // Stores elements and info for each base ID
+    let tableCounter = 0;
+    const tableElementToIdMap = new Map(); // Maps a table DOM element to its ID prefix (e.g., "tbl1")
 
-    // Find all potential footnote references. This targets both simple spans and linked anchors from Word.
     const allPotentialRefs = Array.from(doc.querySelectorAll('a[href*="#_ftn"], span.MsoFootnoteReference'));
 
     allPotentialRefs.forEach(refElement => {
-        let originalNum;
-        let elementToReplace = refElement.closest('sup') || refElement;
+        // Prevent double-counting when a MsoFootnoteReference span is inside an already-selected anchor tag.
+        if (refElement.tagName === 'SPAN' && refElement.classList.contains('MsoFootnoteReference')) {
+            if (refElement.closest('a[href*="#_ftn"]')) {
+                return; // Skip this span, as its parent anchor will be processed.
+            }
+        }
         
-        // Determine the footnote number (e.g., "1" from "#_ftn1").
+        let originalNum;
         const linkRef = refElement.closest('a');
         if (linkRef && linkRef.href.includes('#_ftn')) {
             const match = linkRef.getAttribute('href').match(/#_ftn(\d+)/);
             if (match) originalNum = match[1];
         } else {
-             // Fallback for spans that aren't linked: try to find their definition in the list.
              const refText = refElement.textContent.trim().replace(/\[|\]/g, '');
              const footnoteListItems = doc.querySelectorAll('p[style*="mso-element: footnote"], div[style*="mso-element: footnote"]');
              for (const item of footnoteListItems) {
@@ -1841,33 +1882,105 @@ document.addEventListener('DOMContentLoaded', function () {
                  }
              }
         }
-        
-        if (!originalNum) return; // Skip if we couldn't determine the footnote number.
+        if (!originalNum) return;
 
-        // Determine if the footnote is inside a table to create a table-specific ID.
+        // Determine baseId for counting
         const containingTable = refElement.closest('table');
-        const baseId = containingTable ? `${containingTable.id || 'tbl'}_ftn${originalNum}` : `_ftn${originalNum}`;
-        const linkText = refElement.textContent.trim().replace(/\[|\]/g, '');
-
-        // --- Duplicate Handling Logic ---
-        // Get the current count for this base ID, or start at 0.
-        const count = supCounters.get(baseId) || 0;
-        // Increment the counter for the next time this ID is seen.
-        supCounters.set(baseId, count + 1);
-
-        // Build the new, correct WET-compliant structure.
-        const newSup = doc.createElement('sup');
-        
-        const newLink = doc.createElement('a');
-        newLink.href = `#${baseId}`; // Link always points to the base definition ID
-        newLink.textContent = linkText;
-        newSup.appendChild(newLink);
-
-        // Replace the old Word-generated element with our new one.
-        if (elementToReplace.parentNode) {
-            elementToReplace.parentNode.replaceChild(newSup, elementToReplace);
+        let baseId;
+        if (containingTable) {
+            if (!tableElementToIdMap.has(containingTable)) {
+                tableCounter++;
+                tableElementToIdMap.set(containingTable, `tbl${tableCounter}`);
+            }
+            const tableId = tableElementToIdMap.get(containingTable);
+            baseId = `${tableId}_fn${originalNum}`;
+        } else {
+            baseId = `fn${originalNum}`;
         }
+
+        // Update maps for Pass 2
+        occurrenceMap.set(baseId, (occurrenceMap.get(baseId) || 0) + 1);
+        if (!refInfoMap.has(baseId)) {
+    refInfoMap.set(baseId, { elements: [], originalNum: originalNum, isTable: !!containingTable, tableElement: containingTable });
+}
+        refInfoMap.get(baseId).elements.push(refElement);
     });
+
+    // --- PASS 2: PROCESS AND REPLACE ELEMENTS BASED ON COUNTS ---
+    for (const [baseId, refInfo] of refInfoMap.entries()) {
+        const { elements, originalNum, isTable, tableElement } = refInfo;
+        const totalOccurrences = occurrenceMap.get(baseId);
+        const isMultiInstance = totalOccurrences > 1;
+
+        // A. Process the REFERENCE <sup> tags in the main document body
+        elements.forEach((refElement, index) => {
+            let elementToReplace = refElement.closest('sup') || refElement;
+            const linkText = refElement.textContent.trim().replace(/\[|\]/g, '');
+
+            const newSup = doc.createElement('sup');
+            if (isMultiInstance) {
+                newSup.id = `${baseId}-rf-${index}`; // Suffix with -0, -1, etc. for duplicates
+            } else {
+                newSup.id = `${baseId}-rf`; // No numeric suffix for unique references
+            }
+
+            const newLink = doc.createElement('a');
+            newLink.href = `#${baseId}`;
+            newLink.textContent = linkText;
+            newSup.appendChild(newLink);
+
+            if (elementToReplace.parentNode) {
+                elementToReplace.parentNode.replaceChild(newSup, elementToReplace);
+            }
+        });
+
+        // B. Process the DEFINITION <div> and its return link <a> in the footnote list
+        const definitionAnchor = doc.querySelector(`a[name="_ftn${originalNum}"]`);
+        if (definitionAnchor) {
+            const definitionContainer = definitionAnchor.closest('div[style*="mso-element: footnote"], p[style*="mso-element: footnote"]');
+            if (definitionContainer) {
+                // First, update the ID and link attributes on the footnote elements themselves
+                definitionContainer.id = baseId;
+                const firstRefSupId = isMultiInstance ? `${baseId}-rf-0` : `${baseId}-rf`;
+                definitionAnchor.setAttribute('href', `#${firstRefSupId}`);
+                definitionAnchor.removeAttribute('name');
+
+                // Check if this is a table footnote and a valid table element was found
+                if (isTable && tableElement) {
+                    // --- LOGIC TO MOVE FOOTNOTE INTO ITS TABLE ---
+
+                    // 1. Get the number of columns in the table to create a full-width cell
+                    const firstRow = tableElement.querySelector('thead tr, tbody tr, tr');
+                    const colCount = firstRow ? firstRow.cells.length : 1;
+
+                    // 2. Create the new row and cell with the correct colspan
+                    const newRow = doc.createElement('tr');
+                    const newCell = doc.createElement('td');
+                    newCell.setAttribute('colspan', colCount);
+
+                    // 3. Move the entire footnote container into the new cell
+                    newCell.appendChild(definitionContainer);
+                    newRow.appendChild(newCell);
+
+                    // 4. Find or create a <tfoot> and append the new row
+                    let tfoot = tableElement.querySelector('tfoot');
+                    if (!tfoot) {
+                        tfoot = doc.createElement('tfoot');
+                        tableElement.appendChild(tfoot);
+                    }
+                    tfoot.appendChild(newRow);
+
+                }
+                // If it's not a table footnote, it will just be left in the main footnote list
+                // (its attributes were already updated above).
+            }
+        }
+    }
+
+    // Finally, assign the generated IDs to the table elements themselves
+    for (const [tableElement, tableId] of tableElementToIdMap.entries()) {
+        tableElement.id = tableId;
+    }
 
         const footnoteListElements = doc.querySelectorAll('[style*="mso-element: footnote-list"]');
         footnoteListElements.forEach(element => {
@@ -2072,6 +2185,91 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         return doc.body.innerHTML;
+    }
+
+    function removeLayoutTables(htmlString) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlString, 'text/html');
+        
+        // Find all tables that do NOT have a class or an ID.
+        const layoutTables = Array.from(doc.querySelectorAll('table:not([class]):not([id])'));
+
+        layoutTables.forEach(table => {
+            const parent = table.parentNode;
+            if (!parent) return;
+
+            // Create a fragment to hold the unwrapped content.
+            const fragment = doc.createDocumentFragment();
+            const cells = table.querySelectorAll('td, th');
+            
+            cells.forEach((cell, index) => {
+                // Move all content from the cell.
+                while (cell.firstChild) {
+                    fragment.appendChild(cell.firstChild);
+                }
+                
+                // Add a space between the content of different cells, but not after the last one.
+                if (index < cells.length - 1) {
+                    fragment.appendChild(doc.createTextNode(' '));
+                }
+            });
+
+            // Replace the table with its unwrapped content.
+            parent.replaceChild(fragment, table);
+        });
+
+        return doc.body.innerHTML;
+    }
+
+    function showRemoveTablesModal(triggeringButton, originalButtonText) {
+        const modalContentHtml = `
+            <p class="text-white">This tool is meant for imported tables used for layout purposes.</p><p class="text-white">However, this will unwrap <strong>ALL</strong> table tags (table, thead, tbody, tr, td, etc.) that <strong>do not</strong> contain an already existing <strong>class</strong> or <strong>ID</strong> attribute. All content will be preserved. To preserve any legitimate tables, add an ID or class to &lt;table&gt; before use.</p>
+            <p class="mt-4 text-red-400 font-bold">Are you sure?</p>
+        `;
+
+        const modalOverlay = document.createElement('div');
+        modalOverlay.className = 'modal-overlay';
+        modalOverlay.innerHTML = `
+            <div class="modal-content">
+                <h3><i class="fa-solid fa-triangle-exclamation text-red-500"></i> Confirm Removal</h3>
+                <div id="modalBody">${modalContentHtml}</div>
+                <div class="flex justify-end mt-4 space-x-2">
+                    <button id="modalCancelBtn" class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600">Cancel</button>
+                    <button id="modalConfirmBtn" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">Confirm & Remove</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modalOverlay);
+
+        function closeModalAndReEnableButtons() {
+            modalOverlay.remove();
+            triggeringButton.removeAttribute('data-temp-active');
+            triggeringButton.textContent = originalButtonText;
+            updateAllInteractiveButtonStates();
+        }
+
+        document.getElementById('modalCancelBtn').addEventListener('click', closeModalAndReEnableButtons);
+
+        document.getElementById('modalConfirmBtn').addEventListener('click', () => {
+            if (!monacoEditorInstance) return;
+
+            let currentContent = monacoEditorInstance.getValue();
+            let cleanedContent = removeLayoutTables(currentContent);
+            
+            monacoEditorInstance.setValue(cleanedContent);
+            
+            closeModalAndReEnableButtons();
+
+            // UI Feedback
+            triggeringButton.textContent = 'Removed!';
+            triggeringButton.classList.add('bg-green-500', 'hover:bg-green-600');
+            triggeringButton.classList.remove('bg-slate-600', 'hover:bg-slate-700');
+            setTimeout(() => {
+                triggeringButton.textContent = originalButtonText;
+                triggeringButton.classList.remove('bg-green-500', 'hover:bg-green-600');
+                triggeringButton.classList.add('bg-slate-600', 'hover:bg-slate-700');
+            }, 1500);
+        });
     }
 
     function applyAutoLevelHeadings(htmlString) {
@@ -2720,16 +2918,26 @@ document.addEventListener('DOMContentLoaded', function () {
             richTextContent = '';
         }
 
+        // *** FIX: Restore data attributes EARLIER, before they are needed. ***
+        richTextContent = restoreDataAttributes(richTextContent);
         richTextContent = restoreGcdsTags(richTextContent);
-
         richTextContent = stripStylesFromTables(richTextContent);
 
         try {
             const parser = new DOMParser();
             const doc = parser.parseFromString(richTextContent, 'text/html');
 
-            doc.querySelectorAll('details')
-                .forEach(detail => detail.removeAttribute('open'));
+            doc.querySelectorAll('details').forEach(detail => {
+                const wasOriginallyOpen = detail.hasAttribute('data-was-open');
+                detail.removeAttribute('data-was-open'); // Always remove the temporary attribute first.
+
+                // Now, explicitly set the final state based on our marker.
+                if (wasOriginallyOpen) {
+                    detail.setAttribute('open', 'open');
+                } else {
+                    detail.removeAttribute('open');
+                }
+            });
 
             doc.querySelectorAll('a[href]')
                 .forEach(a => {
@@ -2769,11 +2977,13 @@ document.addEventListener('DOMContentLoaded', function () {
             console.error("Failed to parse and clean HTML, proceeding with raw content.", e);
         }
 
-        let processedContent = restoreDataAttributes(richTextContent);
+        // *** FIX: The 'restoreDataAttributes' call was removed from here. ***
+        let processedContent = richTextContent;
 
         if (toggleAutoCleanMsoOnSwitchRichText.checked) {
             processedContent = applyCleanLists(processedContent);
             processedContent = applyCleanTablesBasic(processedContent);
+            processedContent = unwrapSingleCellTables(processedContent);
             processedContent = applyCleanMsoCode(processedContent);
             processedContent = applyAutoSpacing(processedContent);
         }
@@ -2797,18 +3007,26 @@ document.addEventListener('DOMContentLoaded', function () {
         toggleEditorViewBtnCode.classList.add('bg-cyan-700', 'hover:bg-cyan-800');
 
         currentView = 'code';
-        // Enable mode switch buttons
         [contentModeBtn, tableModeBtn].forEach(btn => {
             btn.disabled = false;
             btn.classList.remove('opacity-50', 'cursor-not-allowed');
         });
         updateCleanMsoButtonState();
-    } else { 
+    } else {
         if (monacoEditorInstance) {
             htmlOutputContent = monacoEditorInstance.getValue();
         } else {
             htmlOutputContent = '';
         }
+
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlOutputContent, 'text/html');
+        doc.querySelectorAll('details').forEach(detail => {
+            if (detail.hasAttribute('open')) {
+                detail.setAttribute('data-was-open', 'true');
+            }
+        });
+        htmlOutputContent = doc.body.innerHTML;
 
         let contentToSendToRichText = protectDataAttributes(htmlOutputContent);
         contentToSendToRichText = protectGcdsTags(contentToSendToRichText);
@@ -2828,7 +3046,6 @@ document.addEventListener('DOMContentLoaded', function () {
         updateGoToHtmlButtonColor();
 
         currentView = 'richtext';
-        // Disable mode switch buttons
         [contentModeBtn, tableModeBtn].forEach(btn => {
             btn.disabled = true;
             btn.classList.add('opacity-50', 'cursor-not-allowed');
@@ -3192,142 +3409,7 @@ document.addEventListener('DOMContentLoaded', function () {
         showFigureModal(figDescBtn, originalText);
     });
 
-    function showFootnoteAnchorModal(triggeringButton, originalButtonText) {
-        const modalContentHtml = `
-            <div class="flex flex-col space-y-4">
-                <div>
-                    <span class="text-sm font-medium text-gray-200 mr-2">Language:</span>
-                    <div class="button-group inline-flex">
-                        <button id="fnAncLangEnglishBtn" class="px-3 py-1 text-sm bg-indigo-600 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50 font-bold">English</button>
-                        <button id="fnAncLangFrenchBtn" class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50 font-bold">French</button>
-                    </div>
-                </div>
-                 <p class="text-xs text-gray-400">NOTE: This only effects <strong>page footnotes</strong>, not <strong>table footnotes</strong>. Switch to TABLE MODE for tools to use within table tags.</p>
-            </div>
-        `;
-
-        const modalOverlay = document.createElement('div');
-        modalOverlay.className = 'modal-overlay';
-        modalOverlay.innerHTML = `
-            <div class="modal-content">
-                <h3>Format Footnote Anchors</h3>
-                <div id="modalBody">${modalContentHtml}</div>
-                <div class="flex justify-end mt-4 space-x-2">
-                    <button id="modalCancelFnAncBtn" class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600">Cancel</button>
-                    <button id="modalInsertFnAncBtn" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">Format Anchors</button>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modalOverlay);
-
-        function closeModalAndReEnableButtons() {
-            modalOverlay.remove();
-            triggeringButton.removeAttribute('data-temp-active');
-            triggeringButton.textContent = originalButtonText;
-            triggeringButton.classList.remove('bg-green-500', 'hover:bg-green-600');
-            triggeringButton.classList.add('bg-slate-600', 'hover:bg-slate-500');
-            updateAllInteractiveButtonStates();
-        }
-
-        document.getElementById('modalCancelFnAncBtn').addEventListener('click', closeModalAndReEnableButtons);
-
-        const langEnglishBtn = document.getElementById('fnAncLangEnglishBtn');
-        const langFrenchBtn = document.getElementById('fnAncLangFrenchBtn');
-        const modalInsertBtn = document.getElementById('modalInsertFnAncBtn');
-
-        let selectedLanguage = 'English';
-
-        function updateButtonActiveState(buttons, activeBtn) {
-            buttons.forEach(btn => {
-                btn.classList.remove('active', 'bg-indigo-600');
-                btn.classList.add('bg-gray-600', 'hover:bg-gray-500');
-            });
-            activeBtn.classList.add('active', 'bg-indigo-600');
-            activeBtn.classList.remove('bg-gray-600', 'hover:bg-gray-500');
-        }
-
-        updateButtonActiveState([langEnglishBtn, langFrenchBtn], langEnglishBtn);
-
-        langEnglishBtn.addEventListener('click', () => {
-            selectedLanguage = 'English';
-            updateButtonActiveState([langEnglishBtn, langFrenchBtn], langEnglishBtn);
-        });
-
-        langFrenchBtn.addEventListener('click', () => {
-            selectedLanguage = 'French';
-            updateButtonActiveState([langEnglishBtn, langFrenchBtn], langFrenchBtn);
-        });
-        
-        // ### CORE LOGIC REBUILT ###
-        modalInsertBtn.addEventListener('click', () => {
-            if (!monacoEditorInstance) return;
-
-            let editorContent = monacoEditorInstance.getValue();
-            const wbInvText = selectedLanguage === 'English' ? 'Footnote ' : 'Note de bas de page ';
-
-            // Use DOMParser to safely manipulate HTML and respect structure
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(editorContent, 'text/html');
-
-            // Find all potential footnote anchors within a <sup> tag
-            const anchors = doc.querySelectorAll('sup a[href*="#_ftn"]');
-
-            anchors.forEach(a => {
-                const sup = a.closest('sup');
-
-                // *** CORE FIX: Check if the anchor is inside a table. If so, skip it. ***
-                if (!sup || sup.closest('table') || sup.closest('aside')) {
-                    return; // Ignore this anchor as it's inside a table
-                }
-
-                const href = a.getAttribute('href');
-                const numberMatch = href.match(/#_ftn(\d+)/);
-                if (!numberMatch) return; // Malformed href, skip it
-
-                const number = numberMatch[1];
-                // Use the existing link text (e.g., "1" or "*") and remove brackets if they exist
-                const linkText = a.textContent.trim().replace(/\[|\]/g, '');
-
-                // Create the new, correctly formatted WET structure
-                const newSup = doc.createElement('sup');
-                newSup.id = `fn${number}-rf`;
-
-                const newLink = doc.createElement('a');
-                newLink.className = 'fn-lnk';
-                newLink.href = `#fn${number}`;
-
-                const wbInvSpan = doc.createElement('span');
-                wbInvSpan.className = 'wb-inv';
-                wbInvSpan.textContent = wbInvText;
-
-                newLink.appendChild(wbInvSpan);
-                newLink.appendChild(doc.createTextNode(linkText));
-                newSup.appendChild(newLink);
-
-                // Replace the old sup element with the new one
-                if (sup.parentNode) {
-                    sup.parentNode.replaceChild(newSup, sup);
-                }
-            });
-
-            // Serialize the document body back to a string
-            const updatedContent = doc.body.innerHTML;
-
-            monacoEditorInstance.setValue(updatedContent);
-
-            closeModalAndReEnableButtons();
-
-            triggeringButton.textContent = 'Formatted!';
-            triggeringButton.classList.add('bg-green-500', 'hover:bg-green-600');
-            triggeringButton.classList.remove('bg-slate-600', 'hover:bg-slate-500');
-            setTimeout(() => {
-                triggeringButton.textContent = originalButtonText;
-                triggeringButton.classList.remove('bg-green-500', 'hover:bg-green-600');
-                triggeringButton.classList.add('bg-slate-600', 'hover:bg-slate-500');
-            }, 1500);
-        });
-    }
-	
+    	
     footnoteAncBtn.addEventListener('click', () => {
         const originalText = footnoteAncBtn.textContent;
         footnoteAncBtn.textContent = 'Opening...';
@@ -3337,6 +3419,397 @@ document.addEventListener('DOMContentLoaded', function () {
         updateAllInteractiveButtonStates();
         showFootnoteAnchorModal(footnoteAncBtn, originalText);
     });
+function showFootnoteAnchorModal(triggeringButton, originalButtonText) {
+    const modalContentHtml = `
+        <div class="flex flex-col space-y-4">
+            <div>
+                <span class="text-sm font-medium text-gray-200 mr-2">Language:</span>
+                <div class="button-group inline-flex">
+                    <button id="fnAncLangEnglishBtn" class="px-3 py-1 text-sm bg-indigo-600 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50 font-bold">English</button>
+                    <button id="fnAncLangFrenchBtn" class="px-3 py-1 text-sm bg-gray-600 text-white rounded-md hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50 font-bold">French</button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    const modalOverlay = document.createElement('div');
+    modalOverlay.className = 'modal-overlay';
+    modalOverlay.innerHTML = `
+        <div class="modal-content">
+            <h3>Process All Footnotes</h3>
+            <div id="modalBody">${modalContentHtml}</div>
+            <div class="flex justify-end mt-4 space-x-2">
+                <button id="modalCancelFnAncBtn" class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600">Cancel</button>
+                <button id="modalInsertFnAncBtn" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">Format Footnotes</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modalOverlay);
+
+    function closeModalAndReEnableButtons() {
+        modalOverlay.remove();
+        triggeringButton.removeAttribute('data-temp-active');
+        triggeringButton.textContent = originalButtonText;
+        triggeringButton.classList.remove('bg-green-500', 'hover:bg-green-600');
+        triggeringButton.classList.add('bg-slate-600', 'hover:bg-slate-500');
+        updateAllInteractiveButtonStates();
+    }
+
+    document.getElementById('modalCancelFnAncBtn').addEventListener('click', closeModalAndReEnableButtons);
+
+    const langEnglishBtn = document.getElementById('fnAncLangEnglishBtn');
+    const langFrenchBtn = document.getElementById('fnAncLangFrenchBtn');
+    const modalInsertBtn = document.getElementById('modalInsertFnAncBtn');
+
+    let selectedLanguage = 'English';
+
+    function updateButtonActiveState(buttons, activeBtn) {
+        buttons.forEach(btn => {
+            btn.classList.remove('active', 'bg-indigo-600');
+            btn.classList.add('bg-gray-600', 'hover:bg-gray-500');
+        });
+        activeBtn.classList.add('active', 'bg-indigo-600');
+        activeBtn.classList.remove('bg-gray-600', 'hover:bg-gray-500');
+    }
+
+    updateButtonActiveState([langEnglishBtn, langFrenchBtn], langEnglishBtn);
+
+    langEnglishBtn.addEventListener('click', () => {
+        selectedLanguage = 'English';
+        updateButtonActiveState([langEnglishBtn, langFrenchBtn], langEnglishBtn);
+    });
+
+    langFrenchBtn.addEventListener('click', () => {
+        selectedLanguage = 'French';
+        updateButtonActiveState([langEnglishBtn, langFrenchBtn], langFrenchBtn);
+    });
+    
+    modalInsertBtn.addEventListener('click', () => {
+    if (!monacoEditorInstance) return;
+
+    let editorContent = monacoEditorInstance.getValue();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(editorContent, 'text/html');
+    const selectedLanguage = document.getElementById('fnAncLangEnglishBtn').classList.contains('active') ? 'English' : 'French';
+
+    const tableFootnoteSymbolMap = new Map();
+    const pageFootnoteSymbolMap = new Map();
+    const pageIdChangeMap = new Map();
+
+    // --- PART 1: PROCESS AND RE-SEQUENCE PAGE-LEVEL FOOTNOTES ---
+    const pageFootnoteSources = Array.from(doc.querySelectorAll('aside.wb-fnote dd[id*="fn"], aside:not(.wb-fnote) div[id*="fn"]'));
+
+    if (pageFootnoteSources.length > 0) {
+        let fnCounter = 0;
+        const uniqueFootnotes = new Map();
+
+        // Pass 1: Gather unique footnotes and create renumbering maps.
+        pageFootnoteSources.forEach(sourceEl => {
+            const oldId = sourceEl.id;
+            let contentHtml = '', symbol = '';
+
+            if (sourceEl.tagName.toLowerCase() === 'dd') { // Formatted
+                const p = sourceEl.querySelector('p:not(.fn-rtn)');
+                contentHtml = p ? p.innerHTML.trim() : '';
+                const dt = sourceEl.previousElementSibling;
+                if (dt && dt.tagName.toLowerCase() === 'dt') {
+                    symbol = dt.textContent.replace(/^(Footnote|Note de bas de page)\s*/, '').trim();
+                }
+            } else { // Unformatted
+                const p = sourceEl.querySelector('p');
+                if (p) {
+                    const returnLink = p.querySelector('a[href*="-rf"]');
+                    if (returnLink) {
+                        symbol = returnLink.textContent.trim().replace(/\[|\]/g, '');
+                        const tempP = p.cloneNode(true);
+                        tempP.querySelector('a[href*="-rf"]').remove();
+                        contentHtml = tempP.innerHTML.trim();
+                    }
+                }
+            }
+
+            if (!uniqueFootnotes.has(contentHtml)) {
+                fnCounter++;
+                const isNumericSymbol = /^\d+$/.test(symbol);
+                uniqueFootnotes.set(contentHtml, {
+                    newFnNum: fnCounter,
+                    displaySymbol: isNumericSymbol ? fnCounter.toString() : symbol,
+                    content: contentHtml
+                });
+            }
+            const newFnInfo = uniqueFootnotes.get(contentHtml);
+            pageIdChangeMap.set(oldId, `fn${newFnInfo.newFnNum}`);
+        });
+
+        // Pass 2: Rebuild the entire <aside> footnote section.
+        const existingAside = doc.querySelector('aside.wb-fnote, aside:not(.wb-fnote)');
+        const newAside = doc.createElement('aside');
+        newAside.className = 'wb-fnote';
+        newAside.setAttribute('role', 'note');
+
+        const h2 = doc.createElement('h2');
+        h2.id = 'fn';
+        h2.textContent = selectedLanguage === 'English' ? 'Footnotes' : 'Notes de bas de page';
+        newAside.appendChild(h2);
+
+        const dl = doc.createElement('dl');
+        const sortedUniqueFootnotes = Array.from(uniqueFootnotes.values()).sort((a, b) => a.newFnNum - b.newFnNum);
+
+        sortedUniqueFootnotes.forEach(fnInfo => {
+            const { newFnNum, displaySymbol, content } = fnInfo;
+            const newBaseId = `fn${newFnNum}`;
+            pageFootnoteSymbolMap.set(newBaseId, displaySymbol);
+
+            const dt = doc.createElement('dt');
+            dt.textContent = (selectedLanguage === 'English' ? 'Footnote ' : 'Note de bas de page ') + displaySymbol;
+            const dd = doc.createElement('dd');
+            dd.id = newBaseId;
+            dd.innerHTML = `<p>${content}</p>`;
+            const returnP = doc.createElement('p');
+            returnP.className = 'fn-rtn';
+            const newReturnLink = doc.createElement('a');
+            
+            newReturnLink.href = `#${newBaseId}-rf`; 
+            
+            newReturnLink.innerHTML = selectedLanguage === 'English' ?
+                `<span class="wb-inv">Return to footnote </span>${displaySymbol}<span class="wb-inv"> referrer</span>` :
+                `<span class="wb-inv">Retour à la note de bas de page </span>${displaySymbol}`;
+            returnP.appendChild(newReturnLink);
+            dd.appendChild(returnP);
+            dl.appendChild(dt);
+            dl.appendChild(dd);
+        });
+
+        newAside.appendChild(dl);
+
+        if (existingAside && existingAside.parentNode) {
+            existingAside.parentNode.replaceChild(newAside, existingAside);
+        } else {
+            doc.body.appendChild(newAside);
+        }
+    }
+
+
+    // --- PART 2: PROCESS AND RE-SEQUENCE TABLE-LEVEL FOOTNOTES ---
+    doc.querySelectorAll('table[id]').forEach(table => {
+        const tableId = table.id;
+        const tableNum = tableId.replace(/\D/g, '') || '1';
+        const isFigureTable = !!table.closest('figure');
+        const labelWordEn = isFigureTable ? 'Figure' : 'Table';
+        const labelWordFr = isFigureTable ? 'Figure' : 'Tableau';
+        const prepositionFr = isFigureTable ? 'de la' : 'du';
+
+        const footnoteSources = Array.from(table.querySelectorAll('tfoot div[id*="fn"], tfoot dd[id*="fn"]'));
+        if (footnoteSources.length === 0) return;
+
+        let fnCounter = 0;
+        const uniqueFootnotes = new Map();
+        const idChangeMap = new Map();
+
+        footnoteSources.forEach(sourceEl => {
+            const oldId = sourceEl.id;
+            let contentHtml = '', symbol = '';
+
+            if (sourceEl.tagName.toLowerCase() === 'dd') {
+                const p = sourceEl.querySelector('p:not(.fn-rtn)');
+                contentHtml = p ? p.innerHTML.trim() : '';
+                const dt = sourceEl.previousElementSibling;
+                if (dt && dt.tagName.toLowerCase() === 'dt') {
+                    const dtText = dt.textContent.trim();
+                    const symbolMatch = dtText.match(/(?:Note|Note)\s*(.*)/);
+                    symbol = symbolMatch ? symbolMatch[1].replace(/du tableau.*|de la figure.*/, '').trim() : '';
+                }
+            } else {
+                const p = sourceEl.querySelector('p');
+                if (p) {
+                    const returnLink = p.querySelector('a[href*="-rf"]');
+                    if (returnLink) {
+                        symbol = returnLink.textContent.trim().replace(/\[|\]/g, '');
+                        const tempP = p.cloneNode(true);
+                        tempP.querySelector('a[href*="-rf"]').remove();
+                        contentHtml = tempP.innerHTML.trim();
+                    }
+                }
+            }
+
+            if (!uniqueFootnotes.has(contentHtml)) {
+                fnCounter++;
+                const isNumericSymbol = /^\d+$/.test(symbol);
+                uniqueFootnotes.set(contentHtml, {
+                    newFnNum: fnCounter,
+                    displaySymbol: isNumericSymbol ? fnCounter.toString() : symbol,
+                    content: contentHtml
+                });
+            }
+            const newFnInfo = uniqueFootnotes.get(contentHtml);
+            idChangeMap.set(oldId, `${tableId}_fn${newFnInfo.newFnNum}`);
+        });
+
+        table.querySelectorAll('thead sup[id*="fn"], tbody sup[id*="fn"]').forEach(sup => {
+            const oldSupId = sup.id;
+            const oldBaseId = oldSupId.replace(/-rf(-\d+)?$/, '');
+            const newBaseId = idChangeMap.get(oldBaseId);
+            if (newBaseId) {
+                const newSupId = oldSupId.replace(oldBaseId, newBaseId);
+                sup.id = newSupId;
+                const anchor = sup.querySelector('a');
+                if (anchor) {
+                    anchor.setAttribute('href', `#${newBaseId}`);
+                }
+            }
+        });
+
+        let tfoot = table.querySelector('tfoot');
+        if (tfoot) tfoot.innerHTML = '';
+        else {
+            tfoot = doc.createElement('tfoot');
+            table.appendChild(tfoot);
+        }
+
+        const firstRow = table.querySelector('thead tr, tbody tr, tr');
+        const colCount = firstRow ? firstRow.cells.length : 1;
+
+        const newSection = doc.createElement('section');
+        newSection.className = 'wb-fnote';
+        const h2 = doc.createElement('h2');
+        h2.id = `${tableId}fn`;
+        h2.className = 'wb-inv';
+        h2.textContent = selectedLanguage === 'English' ? `${labelWordEn} ${tableNum} Notes` : `Notes ${prepositionFr} ${labelWordFr.toLowerCase()} ${tableNum}`;
+        newSection.appendChild(h2);
+
+        const dl = doc.createElement('dl');
+        const sortedUniqueFootnotes = Array.from(uniqueFootnotes.values()).sort((a, b) => a.newFnNum - b.newFnNum);
+
+        sortedUniqueFootnotes.forEach(fnInfo => {
+            const { newFnNum, displaySymbol, content } = fnInfo;
+            const newBaseId = `${tableId}_fn${newFnNum}`;
+            
+            tableFootnoteSymbolMap.set(newBaseId, displaySymbol);
+
+            const dt = doc.createElement('dt');
+            dt.textContent = selectedLanguage === 'English' ? `${labelWordEn} ${tableNum} Note ${displaySymbol}` : `Note ${displaySymbol} ${prepositionFr} ${labelWordFr.toLowerCase()} ${tableNum}`;
+
+            const dd = doc.createElement('dd');
+            dd.id = newBaseId;
+            dd.innerHTML = `<p>${content}</p>`;
+
+            const supsForThisNote = Array.from(table.querySelectorAll(`sup[id^="${newBaseId}-rf"]`));
+            const firstSupId = supsForThisNote.length > 0 ? supsForThisNote[0].id : `${newBaseId}-rf`;
+
+            const returnP = doc.createElement('p');
+            returnP.className = 'fn-rtn';
+            const newReturnLink = doc.createElement('a');
+            newReturnLink.href = `#${firstSupId}`;
+
+            if (selectedLanguage === 'English') {
+                newReturnLink.innerHTML = `<span class="wb-inv">Return to ${labelWordEn.toLowerCase()} ${tableNum} note </span>${displaySymbol}<span class="wb-inv"> referrer</span>`;
+            } else {
+                newReturnLink.innerHTML = `<span class="wb-inv">Retour à la note </span>${displaySymbol}<span class="wb-inv"> ${prepositionFr} ${labelWordFr.toLowerCase()} ${tableNum}</span>`;
+            }
+            returnP.appendChild(newReturnLink);
+            dd.appendChild(returnP);
+
+            dl.appendChild(dt);
+            dl.appendChild(dd);
+        });
+
+        newSection.appendChild(dl);
+        const newTd = doc.createElement('td');
+        newTd.setAttribute('colspan', colCount);
+        newTd.appendChild(newSection);
+        const newTr = doc.createElement('tr');
+        newTr.appendChild(newTd);
+        tfoot.appendChild(newTr);
+    });
+
+    // --- PART 3: FORMAT ALL ANCHORS AND FINALIZE RETURN LINKS ---
+    doc.querySelectorAll('sup a[href*="fn"]').forEach(anchor => {
+        anchor.querySelectorAll('span.wb-inv').forEach(span => span.remove());
+        let visibleText = anchor.innerHTML.trim(); 
+        
+        const href = anchor.getAttribute('href');
+        let wbInvText = '';
+
+        const sup = anchor.closest('sup');
+        if (!sup) return;
+
+        if (href.includes('tbl')) {
+            const newBaseId = href.substring(1); 
+            if (tableFootnoteSymbolMap.has(newBaseId)) {
+                visibleText = tableFootnoteSymbolMap.get(newBaseId);
+            }
+
+            const containingTable = anchor.closest('table');
+            const isFigureTable = containingTable ? !!containingTable.closest('figure') : false;
+            const labelWordEn = isFigureTable ? 'Figure' : 'Table';
+            const labelWordFr = isFigureTable ? 'Figure' : 'Tableau';
+            const prepositionFr = isFigureTable ? 'de la' : 'du';
+            
+            const tableNumMatch = href.match(/tbl(\d+)/);
+            const tableNum = tableNumMatch ? tableNumMatch[1] : '';
+
+            wbInvText = selectedLanguage === 'English' ? `${labelWordEn} ${tableNum} note ` : `Note ${prepositionFr} ${labelWordFr.toLowerCase()} ${tableNum} `;
+        } else { // Page Footnote
+            const oldSupId = sup.id;
+            const oldBaseId = oldSupId.replace(/-rf(-\d+)?$/, '');
+
+            if (pageIdChangeMap.has(oldBaseId)) {
+                const newBaseId = pageIdChangeMap.get(oldBaseId);
+                const suffixMatch = oldSupId.match(/-rf(-\d+)?$/);
+                const suffix = suffixMatch ? suffixMatch[0] : '-rf';
+                sup.id = newBaseId + suffix;
+                anchor.href = `#${newBaseId}`;
+                if (pageFootnoteSymbolMap.has(newBaseId)) {
+                    visibleText = pageFootnoteSymbolMap.get(newBaseId);
+                }
+            } else {
+                const currentBaseId = href.substring(1);
+                if (pageFootnoteSymbolMap.has(currentBaseId)) {
+                    visibleText = pageFootnoteSymbolMap.get(currentBaseId);
+                }
+            }
+            wbInvText = selectedLanguage === 'English' ? 'Footnote ' : 'Note de bas de page ';
+        }
+
+        if (visibleText) {
+            anchor.classList.add('fn-lnk');
+            anchor.innerHTML = `<span class="wb-inv">${wbInvText}</span>${visibleText}`;
+        }
+    });
+    
+    doc.querySelectorAll('dd[id*="fn"]').forEach(dd => {
+        const baseId = dd.id;
+        const firstSup = doc.querySelector(`sup[id^="${baseId}-rf"]`);
+        if(firstSup) {
+            const returnLink = dd.querySelector('p.fn-rtn a');
+            if (returnLink) {
+                returnLink.href = `#${firstSup.id}`;
+            }
+        }
+    });
+
+    const updatedContent = doc.body.innerHTML;
+
+    let finalContent = html_beautify(updatedContent, {
+        indent_size: 4,
+        space_in_paren: true
+    });
+    
+    finalContent = doAutoEncode(finalContent);
+
+    monacoEditorInstance.setValue(finalContent);
+    closeModalAndReEnableButtons();
+
+    triggeringButton.textContent = 'Formatted!';
+    triggeringButton.classList.add('bg-green-500', 'hover:bg-green-600');
+    triggeringButton.classList.remove('bg-slate-600', 'hover:bg-slate-500');
+    setTimeout(() => {
+        triggeringButton.textContent = originalButtonText;
+        triggeringButton.classList.remove('bg-green-500', 'hover:bg-green-600');
+        triggeringButton.classList.add('bg-slate-600', 'hover:bg-slate-500');
+    }, 1500);
+});
+}
 
     function showFootnoteModal(triggeringButton, originalButtonText) {
         const footnoteContentHtml = `
@@ -4950,10 +5423,12 @@ document.addEventListener('DOMContentLoaded', function () {
     if (monacoEditorInstance) {
         let currentContent = monacoEditorInstance.getValue();
         currentContent = protectDataAttributes(currentContent);
+        currentContent = unwrapSingleCellTables(currentContent);
         currentContent = applyCleanLists(currentContent);
         console.log("Clean MSO Lists applied by Clean MSO button.");
         currentContent = applyCleanTablesBasic(currentContent);
         console.log("Clean MSO Tables applied by Clean MSO button.");
+        
         currentContent = applyCleanMsoCode(currentContent);
         console.log("Clean MSO Code (including IMGs) applied by Clean MSO button.");
         currentContent = applyAutoSpacing(currentContent);
@@ -5131,7 +5606,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             if (editorDoc) {
                                 const detailsElements = editorDoc.querySelectorAll('details');
                                 detailsElements.forEach(el => {
-                                    el.setAttribute('open', '');
+                                    el.setAttribute('open', 'open');
                                 });
                             }
                         }
