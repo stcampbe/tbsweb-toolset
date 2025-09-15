@@ -1996,6 +1996,15 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
+        // ### NEW SNIPPET START ###
+    // After processing footnotes, find and remove any aside elements that became empty.
+    doc.querySelectorAll('aside').forEach(aside => {
+        // Check if the aside is effectively empty (contains only whitespace).
+        if (aside.textContent.trim() === '') {
+            aside.remove();
+        }
+    });
+    // ### NEW SNIPPET END ###
 
         const elementsWithHeadingClass = doc.querySelectorAll('[class*="Heading"]'); 
 
