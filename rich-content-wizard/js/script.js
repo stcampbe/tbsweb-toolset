@@ -4747,7 +4747,7 @@ function showFootnoteAnchorModal(triggeringButton, originalButtonText) {
                     }
 
                 } else {
-                    const textToSearch = isRegex ? findText : escapeRegExp(findText);
+                    const textToSearch = findText; 
                     matches = model.findMatches(textToSearch, searchScopeRange, isRegex, isCaseSensitive, null, true);
                 }
 
