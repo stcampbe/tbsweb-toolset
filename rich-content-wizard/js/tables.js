@@ -966,7 +966,6 @@ function autoScopeTableIDs(tableElement, tableIndex, forceComplexity = undefined
     if (!isComplexTable) {
         // Simple table: use 'scope' attribute.
         Array.from(tableElement.querySelectorAll('thead th, tbody th')).forEach(th => {
-            if (th === a1Cell) return;
             const parentSection = th.closest('thead, tbody');
             if (parentSection && parentSection.tagName === 'THEAD') {
                 th.setAttribute('scope', th.hasAttribute('colspan') ? 'colgroup' : 'col');
@@ -991,7 +990,6 @@ function autoScopeTableIDs(tableElement, tableIndex, forceComplexity = undefined
             th: 0
         };
         Array.from(tableElement.querySelectorAll('thead th, tbody th')).forEach(cell => {
-            if (cell === a1Cell) return;
             const parentSection = cell.closest('thead, tbody');
             let prefixKey = '';
             if (parentSection && parentSection.tagName === 'THEAD') {
@@ -2692,5 +2690,3 @@ function openOptionsModalCustomize() {
     updateCustomizeModalPreview(tableInfo ? tableInfo.outerHTML : '');
 }
 });
-
-
