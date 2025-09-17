@@ -5499,8 +5499,8 @@ function showFootnoteAnchorModal(triggeringButton, originalButtonText) {
                     <meta charset="UTF-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
                     <title>Rich Editor</title>
-                    <script src="https://cdn.jsdelivr.net/npm/hugerte@1/hugerte.min.js"><\/script>
-                    <script src="https://cdn.tailwindcss.com"><\/script>
+                    <script src="js/hugerte/hugerte.min.js"><\/script>
+                    <script src="js/tailwind.js"><\/script>
                     <style>
                         html, body {
                             height: 100%; 
