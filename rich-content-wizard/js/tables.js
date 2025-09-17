@@ -928,21 +928,19 @@ function autoScopeTableIDs(tableElement, tableIndex, forceComplexity = undefined
     if (a1Cell) {
         const isA1EffectivelyEmpty = (a1Cell.textContent.trim() === '' || a1Cell.innerHTML.trim() === '&nbsp;' || a1Cell.innerHTML.trim() === '&#160;');
         if (isA1EffectivelyEmpty) {
-            // If empty, ensure it is a TD and has no content.
             if (a1Cell.tagName === 'TH') {
                 const newTd = document.createElement('td');
                 Array.from(a1Cell.attributes).forEach(attr => newTd.setAttribute(attr.name, attr.value));
                 a1Cell.parentNode.replaceChild(newTd, a1Cell);
-                a1Cell = newTd; // Update reference
+                a1Cell = newTd;
             }
-            a1Cell.innerHTML = ''; // User wants no nbsp
+            a1Cell.innerHTML = '';
         } else if (a1Cell.tagName === 'TD') {
-            // If it has content but is a TD, make it a TH.
             const newTh = document.createElement('th');
             Array.from(a1Cell.attributes).forEach(attr => newTh.setAttribute(attr.name, attr.value));
             newTh.innerHTML = a1Cell.innerHTML;
             a1Cell.parentNode.replaceChild(newTh, a1Cell);
-            a1Cell = newTh; // Update reference
+            a1Cell = newTh;
         }
     }
 
@@ -981,14 +979,7 @@ function autoScopeTableIDs(tableElement, tableIndex, forceComplexity = undefined
         });
     } else {
         // Complex table: use 'id' and 'headers' attributes.
-        let counters = {
-            ch: 0,
-            csh: 0,
-            rh: 0,
-            rsh: 0,
-            rcsh: 0,
-            th: 0
-        };
+        let counters = { ch: 0, csh: 0, rh: 0, rsh: 0, rcsh: 0, th: 0 };
         Array.from(tableElement.querySelectorAll('thead th, tbody th')).forEach(cell => {
             const parentSection = cell.closest('thead, tbody');
             let prefixKey = '';
@@ -1009,19 +1000,15 @@ function autoScopeTableIDs(tableElement, tableIndex, forceComplexity = undefined
 
         const rows = Array.from(tableElement.rows);
         const grid = [];
-        const theadHeaders = Array(totalColumns).fill(null);
 
+        // 1. Build a grid representation of the table.
         rows.forEach((row, rowIndex) => {
             let currentCol = 0;
             Array.from(row.cells).forEach(cell => {
-                if (cell.closest('tfoot')) return;
                 while (grid[rowIndex] && grid[rowIndex][currentCol]) currentCol++;
                 if (!grid[rowIndex]) grid[rowIndex] = [];
                 const colspan = parseInt(cell.getAttribute('colspan') || '1', 10);
                 const rowspan = parseInt(cell.getAttribute('rowspan') || '1', 10);
-                if (cell.closest('thead') && cell.tagName === 'TH') {
-                    for (let c = 0; c < colspan; c++) theadHeaders[currentCol + c] = cell;
-                }
                 for (let r = 0; r < rowspan; r++) {
                     if (!grid[rowIndex + r]) grid[rowIndex + r] = [];
                     for (let c = 0; c < colspan; c++) grid[rowIndex + r][currentCol + c] = cell;
@@ -1030,45 +1017,57 @@ function autoScopeTableIDs(tableElement, tableIndex, forceComplexity = undefined
             });
         });
 
-        rows.forEach((row, rowIndex) => {
-            if (row.closest('tbody')) {
-                let rowHeadersInThisRow = [];
-                let latestFullColspan = null;
-                for (let r = rowIndex - 1; r >= 0; r--) {
-                    const cellInColumnZero = grid[r] && grid[r][0];
-                    if (cellInColumnZero && cellInColumnZero.tagName === 'TH' && parseInt(cellInColumnZero.getAttribute('colspan') || '1', 10) >= totalColumns) {
-                        latestFullColspan = cellInColumnZero;
-                        break;
+        // 2. Iterate through the grid to apply `headers` attributes.
+        grid.forEach((gridRow, r) => {
+            if (!gridRow) return;
+            gridRow.forEach((cell, c) => {
+                const isCellOrigin = (r === 0 || grid[r - 1][c] !== cell) && (c === 0 || grid[r][c - 1] !== cell);
+                if (!cell || !isCellOrigin || cell.closest('tfoot')) return;
+
+                const isFullWidthHeader = cell.tagName === 'TH' && parseInt(cell.getAttribute('colspan') || '1', 10) >= totalColumns;
+                if (isFullWidthHeader) {
+                    cell.removeAttribute('headers');
+                    return;
+                }
+
+                const headers = new Set();
+
+                // A. Find all column headers from the THEAD vertically above the current cell.
+                // This is now restricted to the thead to prevent incorrect associations in the tbody.
+                for (let i = r - 1; i >= 0; i--) {
+                    const headerAbove = grid[i][c];
+                    if (headerAbove && headerAbove.tagName === 'TH' && headerAbove.id && headerAbove.closest('thead')) {
+                        headers.add(headerAbove.id);
                     }
                 }
-                Array.from(row.cells).forEach(cell => {
-                    if (cell.tagName === 'TH') rowHeadersInThisRow.push(cell);
-                });
-                Array.from(row.cells).forEach((cell) => {
-                    const isFullWidthColspanTH = cell.tagName === 'TH' && parseInt(cell.getAttribute('colspan') || '1', 10) >= totalColumns;
-                    if (isFullWidthColspanTH) {
-                        cell.removeAttribute('headers');
-                        return;
-                    }
-                    const headersToApply = new Set();
-                    if (latestFullColspan) headersToApply.add(latestFullColspan.id);
 
-                    const indexInRow = grid[rowIndex] ? grid[rowIndex].indexOf(cell) : -1;
-                    const cellColIndex = indexInRow > -1 ? indexInRow : -1;
+                // B. For data cells or tbody row headers, find row headers to the left.
+                if (cell.tagName === 'TD' || cell.closest('tbody')) {
+                    for (let j = c - 1; j >= 0; j--) {
+                        const headerLeft = grid[r][j];
+                        if (headerLeft && headerLeft.tagName === 'TH' && headerLeft.id && parseInt(headerLeft.getAttribute('colspan') || '1', 10) < totalColumns) {
+                            headers.add(headerLeft.id);
+                        }
+                    }
+                }
 
-                    if (cellColIndex !== -1 && theadHeaders[cellColIndex] && theadHeaders[cellColIndex].id) {
-                        headersToApply.add(theadHeaders[cellColIndex].id);
+                // C. For cells within the tbody, find the MOST RECENT full-width section header from any row above.
+                if (cell.closest('tbody')) {
+                    for (let i = r - 1; i >= 0; i--) {
+                        const potentialSectionHeader = grid[i][0];
+                        if (potentialSectionHeader && potentialSectionHeader.tagName === 'TH' && potentialSectionHeader.id && parseInt(potentialSectionHeader.getAttribute('colspan') || '1', 10) >= totalColumns) {
+                            headers.add(potentialSectionHeader.id);
+                            break; // Found the nearest one, so stop.
+                        }
                     }
-                    rowHeadersInThisRow.forEach(rh => {
-                        if (rh !== cell) headersToApply.add(rh.id);
-                    });
-                    if (headersToApply.size > 0) {
-                        cell.setAttribute('headers', Array.from(headersToApply).join(' '));
-                    } else {
-                        cell.removeAttribute('headers');
-                    }
-                });
-            }
+                }
+
+                if (headers.size > 0) {
+                    cell.setAttribute('headers', Array.from(headers).join(' '));
+                } else {
+                    cell.removeAttribute('headers');
+                }
+            });
         });
     }
     cleanupEmptyClassAttributes(tableElement);
@@ -2690,3 +2689,6 @@ function openOptionsModalCustomize() {
     updateCustomizeModalPreview(tableInfo ? tableInfo.outerHTML : '');
 }
 });
+
+
+
