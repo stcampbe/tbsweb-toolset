@@ -567,7 +567,7 @@ function applyAlignment(element, alignment, alignmentClasses) {
  */
 function formatTableLogic(table, options) {
     const globallyManagedClasses = ['table', 'table-condensed', 'table-bordered', 'table-striped', 'table-hover', 'small'];
-    const financeRegex = /^\s*[-+]?(?:\d{1,3}(?:[,\s]\d{3})*|\d+)(?:[.,]\d+)?\s*$/;
+    const financeRegex = /^\s*([-+]?(?:\d{1,3}(?:[,\s]\d{3})*|\d+)(?:[.,]\d+)?|\((?:\d{1,3}(?:[,\s]\d{3})*|\d+)(?:[.,]\d+)?\))\s*$/;
     const smallClass = 'small';
     const alignmentClasses = ['text-left', 'text-center', 'text-right'];
 
@@ -613,6 +613,13 @@ function formatTableLogic(table, options) {
         if (!existingCaptionElement) {
             existingCaptionElement = document.createElement('caption');
             table.insertBefore(existingCaptionElement, table.firstChild);
+        }
+
+        if (options.applyRemovePTags) {
+            Array.from(existingCaptionElement.querySelectorAll('p')).forEach(p => {
+                while (p.firstChild) existingCaptionElement.insertBefore(p.firstChild, p);
+                p.remove();
+            });
         }
 
         existingCaptionElement.classList.remove('wb-inv');
@@ -685,32 +692,50 @@ function formatTableLogic(table, options) {
         }
     });
 
-    let headerRowCount = 0;
-    if (options.applyHeader && rowsForThead.length === 0) {
-        const potentialHeaderRows = [...rowsForTbody];
-        let maxRowSpanEnd = -1;
-        for (let i = 0; i < potentialHeaderRows.length; i++) {
-            headerRowCount = i + 1;
-            potentialHeaderRows[i].querySelectorAll('th, td').forEach(cell => {
-                const rowspan = parseInt(cell.getAttribute('rowspan') || '1', 10);
-                maxRowSpanEnd = Math.max(maxRowSpanEnd, i + rowspan - 1);
-            });
-            if (i >= maxRowSpanEnd) break;
+    if (options.applyHeader) { // Toggled ON
+        let headerRowCount = 0;
+        if (rowsForThead.length === 0) {
+            const potentialHeaderRows = [...rowsForTbody];
+            let maxRowSpanEnd = -1;
+            for (let i = 0; i < potentialHeaderRows.length; i++) {
+                headerRowCount = i + 1;
+                potentialHeaderRows[i].querySelectorAll('th, td').forEach(cell => {
+                    const rowspan = parseInt(cell.getAttribute('rowspan') || '1', 10);
+                    maxRowSpanEnd = Math.max(maxRowSpanEnd, i + rowspan - 1);
+                });
+                if (i >= maxRowSpanEnd) break;
+            }
         }
-    }
 
-    if (headerRowCount > 0) {
-        const headerRowsToMove = rowsForTbody.splice(0, headerRowCount);
-        headerRowsToMove.forEach(row => {
-            const clonedRow = row.cloneNode(true);
-            Array.from(clonedRow.querySelectorAll('td')).forEach(td => {
-                const newTh = document.createElement('th');
-                Array.from(td.attributes).forEach(attr => newTh.setAttribute(attr.name, attr.value));
-                newTh.innerHTML = td.innerHTML;
-                td.parentNode.replaceChild(newTh, td);
+        if (headerRowCount > 0) {
+            const headerRowsToMove = rowsForTbody.splice(0, headerRowCount);
+            headerRowsToMove.forEach(row => {
+                const clonedRow = row.cloneNode(true);
+                Array.from(clonedRow.querySelectorAll('td')).forEach(td => {
+                    const newTh = document.createElement('th');
+                    Array.from(td.attributes).forEach(attr => newTh.setAttribute(attr.name, attr.value));
+                    newTh.innerHTML = td.innerHTML;
+                    td.parentNode.replaceChild(newTh, td);
+                });
+                rowsForThead.push(clonedRow);
             });
-            rowsForThead.push(clonedRow);
-        });
+        }
+    } else { // Toggled OFF
+        if (rowsForThead.length > 0) {
+            const rowsToMove = [...rowsForThead];
+            rowsForThead.length = 0; // Clear rowsForThead so no thead is created
+
+            rowsToMove.forEach(row => {
+                Array.from(row.querySelectorAll('th')).forEach(th => {
+                    const newTd = document.createElement('td');
+                    Array.from(th.attributes).forEach(attr => newTd.setAttribute(attr.name, attr.value));
+                    newTd.innerHTML = th.innerHTML;
+                    th.parentNode.replaceChild(newTd, th);
+                });
+            });
+
+            rowsForTbody.unshift(...rowsToMove); // Prepend rows to tbody
+        }
     }
 
     if (options.applyMakeTfootFromColspan && rowsForTfoot.length === 0 && rowsForTbody.length > 0) {
@@ -756,10 +781,14 @@ function formatTableLogic(table, options) {
 
 
     // --- Apply Alignment, Fix Empty Cells, Remove P Tags ---
+    const a1CellRef = newTheadElement.querySelector('tr:first-child > *:first-child');
     const allCells = [...newTheadElement.querySelectorAll('th, td'), ...newTbodyElement.querySelectorAll('th, td'), ...newTfootElement.querySelectorAll('th, td')];
     allCells.forEach(cell => {
         if (options.applyFixEmptyCells && cell.textContent.trim() === '' && !cell.innerHTML.includes('&nbsp;') && !cell.innerHTML.includes('&#160;')) {
-            cell.innerHTML = '&#160;';
+            // Ignore the A1 cell, which has its own special handling later.
+            if (cell !== a1CellRef) {
+                cell.innerHTML = '&#160;';
+            }
         }
 
         if (options.applyRemovePTags && !cell.closest('tfoot')) {
@@ -837,6 +866,42 @@ function formatTableLogic(table, options) {
         });
     }
 
+    // --- Final A1 cell override ---
+    const finalThead = table.querySelector('thead');
+    if (finalThead) {
+        const firstRow = finalThead.querySelector('tr');
+        if (firstRow) {
+            let a1Cell = firstRow.firstElementChild;
+            if (a1Cell) {
+                // Condition: cell is empty or just contains a non-breaking space
+                const isEmpty = a1Cell.textContent.trim() === '' || a1Cell.innerHTML.trim() === '&nbsp;' || a1Cell.innerHTML.trim() === '&#160;';
+
+                if (isEmpty) {
+                    if (a1Cell.tagName === 'TH') {
+                        const newTd = document.createElement('td');
+                        Array.from(a1Cell.attributes).forEach(attr => {
+                            // Don't copy scope if it exists, as it will be a td
+                            if (attr.name.toLowerCase() !== 'scope') {
+                                newTd.setAttribute(attr.name, attr.value);
+                            }
+                        });
+                        newTd.innerHTML = ''; // Ensure it's truly empty
+                        firstRow.replaceChild(newTd, a1Cell);
+                    } else if (a1Cell.tagName === 'TD') {
+                        // It's already a TD, just make sure it's empty.
+                        a1Cell.innerHTML = '';
+                    }
+                } else if (a1Cell.tagName === 'TD') {
+                    // It has content but is a TD, should be a TH
+                     const newTh = document.createElement('th');
+                     Array.from(a1Cell.attributes).forEach(attr => newTh.setAttribute(attr.name, attr.value));
+                     newTh.innerHTML = a1Cell.innerHTML;
+                     firstRow.replaceChild(newTh, a1Cell);
+                }
+            }
+        }
+    }
+
     // --- Final cleanup ---
     cleanupEmptyClassAttributes(table);
     return table;
@@ -858,16 +923,34 @@ function autoScopeTableIDs(tableElement, tableIndex, forceComplexity = undefined
     let tableBaseId = tableElement.id || `t${tableIndex + 1}`;
     tableElement.id = tableBaseId;
 
-    let a1Cell = tableElement.rows[0] && tableElement.rows[0].cells[0];
-    const isA1Empty = a1Cell && a1Cell.textContent.trim() === '';
+    // --- A1 Cell Handling ---
+    let a1Cell = tableElement.rows[0] ? tableElement.rows[0].cells[0] : null;
+    if (a1Cell) {
+        const isA1EffectivelyEmpty = (a1Cell.textContent.trim() === '' || a1Cell.innerHTML.trim() === '&nbsp;' || a1Cell.innerHTML.trim() === '&#160;');
+        if (isA1EffectivelyEmpty) {
+            // If empty, ensure it is a TD and has no content.
+            if (a1Cell.tagName === 'TH') {
+                const newTd = document.createElement('td');
+                Array.from(a1Cell.attributes).forEach(attr => newTd.setAttribute(attr.name, attr.value));
+                a1Cell.parentNode.replaceChild(newTd, a1Cell);
+                a1Cell = newTd; // Update reference
+            }
+            a1Cell.innerHTML = ''; // User wants no nbsp
+        } else if (a1Cell.tagName === 'TD') {
+            // If it has content but is a TD, make it a TH.
+            const newTh = document.createElement('th');
+            Array.from(a1Cell.attributes).forEach(attr => newTh.setAttribute(attr.name, attr.value));
+            newTh.innerHTML = a1Cell.innerHTML;
+            a1Cell.parentNode.replaceChild(newTh, a1Cell);
+            a1Cell = newTh; // Update reference
+        }
+    }
 
+    // Now, clean attributes from all cells.
     Array.from(tableElement.querySelectorAll('thead th, thead td, tbody th, tbody td')).forEach(cell => {
         cell.removeAttribute('id');
         cell.removeAttribute('headers');
         cell.removeAttribute('scope');
-        if (cell === a1Cell && isA1Empty) {
-            cell.innerHTML = '&#160;';
-        }
     });
 
     const firstRowForColCount = tableElement.querySelector('tr');
@@ -883,7 +966,7 @@ function autoScopeTableIDs(tableElement, tableIndex, forceComplexity = undefined
     if (!isComplexTable) {
         // Simple table: use 'scope' attribute.
         Array.from(tableElement.querySelectorAll('thead th, tbody th')).forEach(th => {
-            if (th === a1Cell && isA1Empty) return;
+            if (th === a1Cell) return;
             const parentSection = th.closest('thead, tbody');
             if (parentSection && parentSection.tagName === 'THEAD') {
                 th.setAttribute('scope', th.hasAttribute('colspan') ? 'colgroup' : 'col');
@@ -908,7 +991,7 @@ function autoScopeTableIDs(tableElement, tableIndex, forceComplexity = undefined
             th: 0
         };
         Array.from(tableElement.querySelectorAll('thead th, tbody th')).forEach(cell => {
-            if (cell === a1Cell && isA1Empty) return;
+            if (cell === a1Cell) return;
             const parentSection = cell.closest('thead, tbody');
             let prefixKey = '';
             if (parentSection && parentSection.tagName === 'THEAD') {
@@ -2609,3 +2692,5 @@ function openOptionsModalCustomize() {
     updateCustomizeModalPreview(tableInfo ? tableInfo.outerHTML : '');
 }
 });
+
+
