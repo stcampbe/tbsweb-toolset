@@ -117,6 +117,9 @@
                 </div>
                 
                 <div class="flex items-center mb-4 mt-4 flex-wrap">
+				<button id="toggleThemeBtn" class="mr-4 px-3 py-2 text-base bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-50 font-bold" title="Switch to Light Theme">
+                        <i class="fa-solid fa-sun"></i>
+                    </button>
                     <div class="inline-flex rounded-md shadow-sm" role="group">
                         <button id="copyCodeBtn" class="px-4 py-1 text-sm bg-zinc-700 text-white rounded-l-md hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-opacity-50 font-semibold">Copy Code <i class="fa-solid fa-copy"></i></button>
                         <button id="clearAllBtn" class="px-4 py-1 text-sm bg-zinc-700 text-white rounded-r-md hover:bg-zinc-600 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-opacity-50 font-semibold">Clear All <i class="fa-solid fa-trash"></i></button>
@@ -136,6 +139,7 @@
                     <button id="previewBtn" class="ml-4 px-4 py-2 text-base bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 font-bold">
                         <i class="fa-solid fa-eye"></i> View Preview
                     </button>
+					
                 </div>
 
                 <div id="monacoEditorContainer" class="flex-grow border border-slate-700 rounded-lg overflow-hidden"></div>
@@ -367,7 +371,8 @@
     <div id="tbl-options-tbl-modal-overlay" class="tbl-modal-overlay hidden">
         <div class="tbl-modal-content">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-bold text-white mt-4">Formatting Options</h3>
+                <h3 class="text-xl font-bold text-white mt-4">Formatting Options<br><span class="text-sm">Apply formatting to ALL tables present in this document. <strong>This will overwrite any pre-existing settings!</strong></span></h3>
+				
                 <button id="close-tbl-options-tbl-modal-btn" class="text-gray-400 hover:text-gray-200">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
@@ -392,33 +397,27 @@
                             <input type="text" id="figure-data-id-prefix-input" class="w-auto" style="width: 60px;" placeholder="ftbl">
                             <label for="figure-data-id-prefix-input" class="text-gray-200">Figure Table ID Prefix</label>
                         </div>
-                        <div class="tbl-toggle-switch-container">
-                            <label class="tbl-toggle-switch is-checked" for="fix-empty-cells-checkbox">
-                                <input type="checkbox" id="fix-empty-cells-checkbox" class="hidden" checked>
-                                <span class="tbl-toggle-switch-slider"></span>
-                            </label>
-                            <span class="tbl-toggle-switch-label text-gray-200">Fix Empty Cells</span>
-                        </div>
+                        
                         <div class="tbl-toggle-switch-container">
                             <label class="tbl-toggle-switch is-checked" for="make-tfoot-from-colspan-checkbox">
                                 <input type="checkbox" id="make-tfoot-from-colspan-checkbox" class="hidden" checked>
                                 <span class="tbl-toggle-switch-slider"></span>
                             </label>
-                            <span class="tbl-toggle-switch-label text-gray-200">TFOOT from LAST COLSPAN</span>
+                            <span class="tbl-toggle-switch-label text-gray-200"><code>&lt;tfoot&gt;</code> from LAST <code>&lt;td&gt;</code> COLSPAN</span>
                         </div>
 						<div class="tbl-toggle-switch-container">
                             <label class="tbl-toggle-switch is-checked" for="make-tfoot-before-tbody-checkbox">
                                 <input type="checkbox" id="make-tfoot-before-tbody-checkbox" class="hidden" checked>
                                 <span class="tbl-toggle-switch-slider"></span>
                             </label>
-                            <span class="tbl-toggle-switch-label text-gray-200">TFOOT before TBODY</span>
+                            <span class="tbl-toggle-switch-label text-gray-200"><code>&lt;tfoot&gt;</code> before <code>&lt;tbody&gt;</code> </span>
                         </div>
                         <div class="tbl-toggle-switch-container">
                             <label class="tbl-toggle-switch is-checked" for="caption-checkbox">
                                 <input type="checkbox" id="caption-checkbox" class="hidden" checked>
                                 <span class="tbl-toggle-switch-slider"></span>
                             </label>
-                            <span class="tbl-toggle-switch-label text-gray-200">Caption (set manually)</span>
+                            <span class="tbl-toggle-switch-label text-gray-200">Caption/title (set manually)</span>
                         </div>
                         <div class="tbl-toggle-switch-container">
                             <label class="tbl-toggle-switch" for="auto-caption-checkbox">
@@ -432,7 +431,7 @@
                                 <input type="checkbox" id="inv-caption-checkbox" class="hidden">
                                 <span class="tbl-toggle-switch-slider"></span>
                             </label>
-                            <span class="tbl-toggle-switch-label text-gray-200">Invisible Captions</span>
+                            <span class="tbl-toggle-switch-label text-gray-200">Invisible Captions (<code>wb-inv</code>)</span>
                         </div>
                         
                         <div class="tbl-toggle-switch-container">
@@ -440,23 +439,16 @@
                                 <input type="checkbox" id="remove-p-tags-checkbox" class="hidden">
                                 <span class="tbl-toggle-switch-slider"></span>
                             </label>
-                            <span class="tbl-toggle-switch-label text-gray-200">Remove &lt;p&gt; Tags</span>
+                            <span class="tbl-toggle-switch-label text-gray-200">Remove <code>&lt;p&gt;</code> Tags</span>
+                        </div>
+                        <div class="tbl-toggle-switch-container">
+                            <label class="tbl-toggle-switch is-checked" for="fix-empty-cells-checkbox">
+                                <input type="checkbox" id="fix-empty-cells-checkbox" class="hidden" checked>
+                                <span class="tbl-toggle-switch-slider"></span>
+                            </label>
+                            <span class="tbl-toggle-switch-label text-gray-200">Fix Empty Cells</span>
                         </div>
                         
-                        <div class="tbl-toggle-switch-container">
-                            <label class="tbl-toggle-switch" for="class-small-checkbox">
-                                <input type="checkbox" id="class-small-checkbox" class="hidden">
-                                <span class="tbl-toggle-switch-slider"></span>
-                            </label>
-                            <span class="tbl-toggle-switch-label text-gray-200">Add <strong>small</strong> to TABLE</span>
-                        </div>
-                        <div class="tbl-toggle-switch-container">
-                            <label class="tbl-toggle-switch" for="add-small-to-tr-checkbox">
-                                <input type="checkbox" id="add-small-to-tr-checkbox" class="hidden">
-                                <span class="tbl-toggle-switch-slider"></span>
-                            </label>
-                            <span class="tbl-toggle-switch-label text-gray-200">Add <strong>small</strong> to ALL TR</span>
-                        </div>
                     </div>
                 </div>
 
@@ -468,70 +460,77 @@
                                 <input type="checkbox" id="class-tables-checkbox" class="hidden" checked>
                                 <span class="tbl-toggle-switch-slider"></span>
                             </label>
-                            <span class="tbl-toggle-switch-label text-gray-200">Basic Classes</span>
+                            <span class="tbl-toggle-switch-label text-gray-200">Basic Classes (<code>table + table-condensed</code>)</span>
                         </div>
                         <div class="tbl-toggle-switch-container">
                             <label class="tbl-toggle-switch is-checked" for="header-checkbox">
                                 <input type="checkbox" id="header-checkbox" class="hidden" checked>
                                 <span class="tbl-toggle-switch-slider"></span>
                             </label>
-                            <span class="tbl-toggle-switch-label text-gray-200">TH COL Headers (1st row)</span>
+                            <span class="tbl-toggle-switch-label text-gray-200"><code>&lt;th&gt;</code> COL Headers (1st row)</span>
                         </div>
                         <div class="tbl-toggle-switch-container">
                             <label class="tbl-toggle-switch is-checked" for="row-header-checkbox">
                                 <input type="checkbox" id="row-header-checkbox" class="hidden" checked>
                                 <span class="tbl-toggle-switch-slider"></span>
                             </label>
-                            <span class="tbl-toggle-switch-label text-gray-200">TH ROW Headers (1st col)</span>
+                            <span class="tbl-toggle-switch-label text-gray-200"><code>&lt;th&gt;</code> ROW Headers (1st col)</span>
                         </div>
                         <div class="tbl-toggle-switch-container">
                             <label class="tbl-toggle-switch is-checked" for="active-col-headers-checkbox">
                                 <input type="checkbox" id="active-col-headers-checkbox" class="hidden" checked>
                                 <span class="tbl-toggle-switch-slider"></span>
                             </label>
-                            <span class="tbl-toggle-switch-label text-gray-200"><strong>active</strong> COL Headers</span>
+                            <span class="tbl-toggle-switch-label text-gray-200"><strong>active</strong> <code>&lt;th&gt;</code> COL Headers</span>
                         </div>
                         <div class="tbl-toggle-switch-container">
                             <label class="tbl-toggle-switch is-checked" for="active-colspan-headers-checkbox">
                                 <input type="checkbox" id="active-colspan-headers-checkbox" class="hidden" checked>
                                 <span class="tbl-toggle-switch-slider"></span>
                             </label>
-                            <span class="tbl-toggle-switch-label text-gray-200"><strong>active</strong> COLSPAN Headers</span>
+                            <span class="tbl-toggle-switch-label text-gray-200"><strong>active</strong> <code>&lt;th&gt;</code> COLSPAN Headers</span>
                         </div>
                         <div class="tbl-toggle-switch-container">
                             <label class="tbl-toggle-switch" for="active-row-headers-checkbox">
                                 <input type="checkbox" id="active-row-headers-checkbox" class="hidden">
                                 <span class="tbl-toggle-switch-slider"></span>
                             </label>
-                            <span class="tbl-toggle-switch-label text-gray-200"><strong>active</strong> ROW Headers</span>
+                            <span class="tbl-toggle-switch-label text-gray-200"><strong>active</strong> <code>&lt;th&gt;</code> ROW Headers</span>
                         </div>
                         <div class="tbl-toggle-switch-container">
                             <label class="tbl-toggle-switch is-checked" for="bordered-checkbox">
                                 <input type="checkbox" id="bordered-checkbox" class="hidden" checked>
                                 <span class="tbl-toggle-switch-slider"></span>
                             </label>
-                            <span class="tbl-toggle-switch-label text-gray-200">Add <strong>bordered</strong></span>
+                            <span class="tbl-toggle-switch-label text-gray-200">Add <strong>bordered</strong> on <code>&lt;table&gt;</code></span>
                         </div>
                         <div class="tbl-toggle-switch-container">
                             <label class="tbl-toggle-switch" for="striped-checkbox">
                                 <input type="checkbox" id="striped-checkbox" class="hidden">
                                 <span class="tbl-toggle-switch-slider"></span>
                             </label>
-                            <span class="tbl-toggle-switch-label text-gray-200">Add <strong>striped</strong></span>
+                            <span class="tbl-toggle-switch-label text-gray-200">Add <strong>striped</strong> on <code>&lt;table&gt;</code></span>
                         </div>
                         <div class="tbl-toggle-switch-container">
                             <label class="tbl-toggle-switch" for="hover-checkbox">
                                 <input type="checkbox" id="hover-checkbox" class="hidden">
                                 <span class="tbl-toggle-switch-slider"></span>
                             </label>
-                            <span class="tbl-toggle-switch-label text-gray-200">Add <strong>hover</strong></span>
+                            <span class="tbl-toggle-switch-label text-gray-200">Add <strong>hover</strong> on <code>&lt;table&gt;</code></span>
                         </div>
                         <div class="tbl-toggle-switch-container">
-                            <label class="tbl-toggle-switch" for="finance-table-checkbox">
-                                <input type="checkbox" id="finance-table-checkbox" class="hidden">
+                            <label class="tbl-toggle-switch" for="class-small-checkbox">
+                                <input type="checkbox" id="class-small-checkbox" class="hidden">
                                 <span class="tbl-toggle-switch-slider"></span>
                             </label>
-                            <span class="tbl-toggle-switch-label text-gray-200">Finance Tables</span>
+                            <span class="tbl-toggle-switch-label text-gray-200">Add <strong>small</strong> on <code>&lt;table&gt;</code></span>
+                        </div>
+                        <div class="tbl-toggle-switch-container">
+                            <label class="tbl-toggle-switch" for="add-small-to-tr-checkbox">
+                                <input type="checkbox" id="add-small-to-tr-checkbox" class="hidden">
+                                <span class="tbl-toggle-switch-slider"></span>
+                            </label>
+                            <span class="tbl-toggle-switch-label text-gray-200">Add <strong>small</strong> on all <code>&lt;tr&gt;</code></span>
                         </div>
                         
                     </div>
@@ -543,7 +542,14 @@
                         
 
                         <div class="tbl-alignment-group-container">
-                            <label for="caption-alignment">Caption</label>
+						<div class="tbl-toggle-switch-container">
+                            <label class="tbl-toggle-switch" for="finance-table-checkbox">
+                                <input type="checkbox" id="finance-table-checkbox" class="hidden">
+                                <span class="tbl-toggle-switch-slider"></span>
+                            </label>
+                            <span class="tbl-toggle-switch-label text-gray-200">Finance Tables <span class="text-xs text-gray-400">(<code>text-right</code> + <code>nowrap</code> on numbers only)</span></span>
+                        </div>
+                            <label for="caption-alignment">Caption (title)</label>
                             <div id="caption-tbl-alignment-group" class="tbl-button-group">
                                 <button id="reset-capAlign-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset/delete caption alignment">
                                     <i class="fas fa-trash-alt"></i>
@@ -555,7 +561,7 @@
                         </div>
 
                         <div class="tbl-alignment-group-container">
-                            <label for="col-headers-alignment">TH Col Headers (thead)</label>
+                            <label for="col-headers-alignment">Column Headers (<code>&lt;th&gt;</code> in <code>&lt;thead&gt;</code>)</label>
                             <div id="col-headers-tbl-alignment-group" class="tbl-button-group">
                                 <button id="reset-colHAlign-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset/delete col header alignment">
                                     <i class="fas fa-trash-alt"></i>
@@ -567,7 +573,7 @@
                         </div>
 
                         <div class="tbl-alignment-group-container">
-                            <label for="row-headers-alignment">TH Row Headers (tbody)</label>
+                            <label for="row-headers-alignment">Row Headers (<code>&lt;th&gt;</code> in <code>&lt;tbody&gt;</code>)</label>
                             <div id="row-headers-tbl-alignment-group" class="tbl-button-group">
                                 <button id="reset-rowHAlign-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset/delete row header alignment">
                                     <i class="fas fa-trash-alt"></i>
@@ -579,7 +585,7 @@
                         </div>
 
                         <div class="tbl-alignment-group-container">
-                            <label for="colspan-headers-alignment">TH Colspan Headers (tbody)</label>
+                            <label for="colspan-headers-alignment">Colspan Headers (<code>&lt;th&gt;</code> in <code>&lt;tbody&gt;</code>)</label>
                             <div id="colspan-headers-tbl-alignment-group" class="tbl-button-group">
                                 <button id="reset-csHAlign-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset/delete colspan header alignment">
                                     <i class="fas fa-trash-alt"></i>
@@ -591,7 +597,7 @@
                         </div>
 
                         <div class="tbl-alignment-group-container">
-                            <label for="data-cells-alignment">TD Cells (tbody)</label>
+                            <label for="data-cells-alignment">Data Cells (<code>&lt;td&gt;</code> in <code>&lt;tbody&gt;</code>)</label>
                             <div id="data-cells-tbl-alignment-group" class="tbl-button-group">
                                 <button id="reset-dataAlign-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset/delete data cell alignment">
                                     <i class="fas fa-trash-alt"></i>
