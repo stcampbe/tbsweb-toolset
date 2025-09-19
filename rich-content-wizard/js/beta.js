@@ -108,84 +108,7 @@ document.addEventListener('DOMContentLoaded', function () {
         btn.classList.add('opacity-50', 'cursor-not-allowed');
     });
 
-    const urlMappings = [{
-            old: 'https://canada-preview.adobecqms.net/en/treasury-board-secretariat'
-            , new: '/content/canadasite/en/treasury-board-secretariat'
-        }
-        , {
-            old: 'https://canada-preview.adobecqms.net/fr/secretariat-conseil-tresor'
-            , new: '/content/canadasite/fr/secretariat-conseil-tresor'
-        }
-        , {
-            old: 'https://canada-preview.adobecqms.net/en/government'
-            , new: '/content/canadasite/en/government'
-        }
-        , {
-            old: 'https://canada-preview.adobecqms.net/fr/gouvernement'
-            , new: '/content/canadasite/fr/gouvernement'
-        }
-        , {
-            old: 'https://www.canada.ca/en/treasury-board-secretariat'
-            , new: '/content/canadasite/en/treasury-board-secretariat'
-        }
-        , {
-            old: 'https://www.canada.ca/fr/secretariat-conseil-tresor'
-            , new: '/content/canadasite/fr/secretariat-conseil-tresor'
-        }
-        , {
-            old: 'https://www.canada.ca/en/government'
-            , new: '/content/canadasite/en/government'
-        }
-        , {
-            old: 'https://www.canada.ca/fr/gouvernement'
-            , new: '/content/canadasite/fr/gouvernement'
-        }
-    ];
-
-    const prependPatterns = [
-        '/en/treasury-board-secretariat', 'en/treasury-board-secretariat'
-        , '/fr/secretariat-conseil-tresor', 'fr/secretariat-conseil-tresor'
-        , '/en/government', 'en/government'
-        , '/fr/gouvernement', 'fr/gouvernement'
-    ];
-	
-	const wet4AllowedClasses = new Set([
-		// Headings & Display
-		'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'page-header',
-		// Paragraphs & Text
-		'lead', 'small', 'text-left', 'text-center', 'text-right', 'text-justify',
-		'text-uppercase', 'text-lowercase', 'text-capitalize',
-		// Contextual Colors & Backgrounds
-		'text-muted', 'text-primary', 'text-success', 'text-warning', 'text-danger', 'text-info',
-		'bg-primary', 'bg-success', 'bg-warning', 'bg-danger', 'bg-info',
-		// Alerts, Wells & Special Formatting
-		'alert', 'alert-success', 'alert-info', 'alert-warning', 'alert-danger',
-		'well', 'well-sm', 'well-lg', 'clearfix',
-		// Font Styling
-		'fnt-nrml', 'fnt-bld', 'fnt-ital', 'fnt-sz-sm', 'fnt-sz-md', 'fnt-sz-lg', 'fnt-sz-xl',
-		// Tables
-		'table', 'table-striped', 'table-bordered', 'table-hover', 'table-condensed', 'table-responsive',
-		'active', 'success', 'info', 'warning', 'danger',
-		// Spacing (Margin)
-		'mrgn-tp-sm', 'mrgn-tp-md', 'mrgn-tp-lg', 'mrgn-tp-xl',
-		'mrgn-bttm-sm', 'mrgn-bttm-md', 'mrgn-bttm-lg', 'mrgn-bttm-xl',
-		'mrgn-lft-sm', 'mrgn-lft-md', 'mrgn-lft-lg', 'mrgn-lft-xl',
-		'mrgn-rght-sm', 'mrgn-rght-md', 'mrgn-rght-lg', 'mrgn-rght-xl',
-		'mrgn-tp-0', 'mrgn-bttm-0', 'mrgn-lft-0', 'mrgn-rght-0',
-		// Spacing (Padding)
-		'pddng-tp-sm', 'pddng-tp-md', 'pddng-tp-lg', 'pddng-tp-xl',
-		'pddng-bttm-sm', 'pddng-bttm-md', 'pddng-bttm-lg', 'pddng-bttm-xl',
-		'pddng-lft-sm', 'pddng-lft-md', 'pddng-lft-lg', 'pddng-lft-xl',
-		'pddng-rght-sm', 'pddng-rght-md', 'pddng-rght-lg', 'pddng-rght-xl',
-		// Responsive Visibility
-		'visible-xs-block', 'visible-xs-inline', 'visible-xs-inline-block',
-		'visible-sm-block', 'visible-sm-inline', 'visible-sm-inline-block',
-		'visible-md-block', 'visible-md-inline', 'visible-md-inline-block',
-		'visible-lg-block', 'visible-lg-inline', 'visible-lg-inline-block',
-		'hidden-xs', 'hidden-sm', 'hidden-md', 'hidden-lg',
-		// Accessibility & WET Components
-		'wb-inv', 'hidden', 'show', 'fn-rtn', 'fn-lnk', 'wb-fnote', 'wb-toggle'
-	]);
+    
 
     const monacoEditorContainer = document.getElementById('monacoEditorContainer');
     const sidebarPanel = document.getElementById('sidebarPanel'); 
@@ -259,14 +182,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const NBSP_PLACEHOLDER = '&#160;'; 
 
     let currentLineDecorations = []; 
-
-    const selfClosingTags = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
-    const deprecatedTags = new Set(['acronym', 'applet', 'basefont', 'big', 'center', 'dir', 'font', 'frame', 'frameset', 'noframes', 'strike', 'tt', 'u']);
-    const blockElements = new Set(['address', 'article', 'aside', 'blockquote', 'canvas', 'dd', 'div', 'dl', 'dt', 'fieldset', 'figcaption', 'figure', 'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'hr', 'li', 'main', 'nav', 'noscript', 'ol', 'p', 'pre', 'section', 'table', 'tfoot', 'ul', 'video']);
-    const inlineElements = new Set(['a', 'abbr', 'b', 'bdo', 'br', 'button', 'cite', 'code', 'dfn', 'em', 'i', 'img', 'input', 'kbd', 'label', 'map', 'object', 'q', 'samp', 'script', 'select', 'small', 'span', 'strong', 'sub', 'sup', 'textarea', 'time', 'var']);
-    const mediaSizingElements = new Set(['img', 'iframe', 'video', 'canvas', 'object', 'embed']);
-    const targetValidElements = new Set(['a', 'form']);
-    const ignoredTags = new Set(['doc']);
 
     const validationResultsDiv = document.getElementById('validationResults');
     validationResultsDiv.addEventListener('click', handleResultClick);
@@ -393,181 +308,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const parser = new DOMParser();
             const tempDoc = parser.parseFromString(fullHtmlCode, 'text/html');
 
-            const validAnchors = new Set();
-            tempDoc.querySelectorAll('[id]')
-                .forEach(el => {
-                    if (el.id) validAnchors.add(el.id);
-                });
-
-            const idRegex = /id\s*=\s*(["'])(.*?)\1/g;
-            const foundIds = new Map();
-            let idMatch;
-            while ((idMatch = idRegex.exec(fullHtmlCode)) !== null) {
-                const idValue = idMatch[2];
-                const lineNumber = monacoEditorInstance.getModel()
-                    .getPositionAt(idMatch.index)
-                    .lineNumber;
-                if (foundIds.has(idValue)) {
-                    errors.push({
-                        message: `<strong>Duplicate ID:</strong> The ID "${idValue}" is used more than once.`
-                        , lineNumber: lineNumber
-                    });
-                } else {
-                    foundIds.set(idValue, lineNumber);
-                }
-            }
-
-            const tagRegexForValidation = /<\/?([a-zA-Z0-9]+)(\s+[^>]*?)?(\/?)>/g;
-            const tagStack = [];
-            let match;
-            while ((match = tagRegexForValidation.exec(fullHtmlCode)) !== null) {
-                const fullTag = match[0];
-                const tagName = match[1].toLowerCase();
-                const attributesString = (match[2] || '')
-                    .trim();
-                const isClosingTag = fullTag.startsWith('</');
-                const isSelfClosingSyntax = match[3] === '/';
-                const lineNumber = monacoEditorInstance.getModel()
-                    .getPositionAt(match.index)
-                    .lineNumber;
-                const parentTag = tagStack.length > 0 ? tagStack[tagStack.length - 1] : null;
-
-                if (ignoredTags.has(tagName)) {
-                    if (!isClosingTag && !isSelfClosingSyntax) {
-                        tagStack.push({
-                            tagName: tagName
-                            , lineNumber: lineNumber
-                            , ignored: true
-                        });
-                    } else if (isClosingTag) {
-                        let found = false;
-                        for (let i = tagStack.length - 1; i >= 0; i--) {
-                            if (tagStack[i].tagName === tagName && tagStack[i].ignored) {
-                                tagStack.splice(i, 1);
-                                found = true;
-                                break;
-                            }
-                        }
-                    }
-                    continue; 
-                }
-
-                if (isClosingTag) {
-                    if (tagStack.length === 0 || parentTag.ignored) {
-                        errors.push({
-                            message: `<strong>Unmatched Tag:</strong> Found a closing &lt;/${tagName}&gt; tag without a matching opening tag.`
-                            , lineNumber: lineNumber
-                        });
-                    } else {
-                        const lastOpenTag = tagStack.pop();
-                        if (lastOpenTag.tagName !== tagName) {
-                            errors.push({
-                                message: `<strong>Mismatched Tag:</strong> Expected &lt;/${lastOpenTag.tagName}&gt; (from line ${lastOpenTag.lineNumber}) but found &lt;/${tagName}&gt;.`
-                                , lineNumber: lineNumber
-                            });
-                            tagStack.push(lastOpenTag); 
-                        }
-                    }
-                }
-                else {
-                    if (!selfClosingTags.has(tagName) && !isSelfClosingSyntax) {
-                        tagStack.push({
-                            tagName
-                            , lineNumber
-                            , ignored: false
-                        });
-                    }
-
-                    if (tagName === 'chapter' && (!parentTag || parentTag.tagName !== 'chapters')) errors.push({
-                        message: `<strong>Invalid Nesting:</strong> &lt;chapter&gt; must be a direct child of &lt;chapters&gt;.`
-                        , lineNumber: lineNumber
-                    });
-                    if (tagName === 'clause' && (!parentTag || parentTag.tagName !== 'clauses')) errors.push({
-                        message: `<strong>Invalid Nesting:</strong> &lt;clause&gt; must be a direct child of &lt;clauses&gt;.`
-                        , lineNumber: lineNumber
-                    });
-                    if (tagName === 'appendix' && (!parentTag || (parentTag.tagName !== 'appendices' && parentTag.tagName !== 'appendix'))) errors.push({
-                        message: `<strong>Invalid Nesting:</strong> &lt;appendix&gt; must be within &lt;appendices&gt; or another &lt;appendix&gt;.`
-                        , lineNumber: lineNumber
-                    });
-                    if (parentTag && !parentTag.ignored && inlineElements.has(parentTag.tagName) && blockElements.has(tagName)) {
-                        errors.push({
-                            message: `<strong>Invalid Nesting:</strong> Block element &lt;${tagName}&gt; cannot be inside inline element &lt;${parentTag.tagName}&gt; (from line ${parentTag.lineNumber}).`
-                            , lineNumber: lineNumber
-                        });
-                    }
-
-                    if (deprecatedTags.has(tagName)) errors.push({
-                        message: `<strong>Deprecated Tag:</strong> The &lt;${tagName}&gt; tag is deprecated.`
-                        , lineNumber: lineNumber
-                    });
-                    if (isSelfClosingSyntax && !selfClosingTags.has(tagName)) errors.push({
-                        message: `<strong>Invalid Syntax:</strong> The &lt;${tagName}&gt; tag should not be self-closing.`
-                        , lineNumber: lineNumber
-                    });
-
-                    if (tagName === 'img') {
-                        if (!/\balt\s*=/.test(attributesString)) errors.push({
-                            message: `<strong>Missing Attribute:</strong> &lt;img&gt; tag requires an 'alt' attribute.`
-                            , lineNumber: lineNumber
-                        });
-                        if (!/\bsrc\s*=/.test(attributesString)) errors.push({
-                            message: `<strong>Missing Attribute:</strong> &lt;img&gt; tag requires a 'src' attribute.`
-                            , lineNumber: lineNumber
-                        });
-                    } else if (tagName === 'th') {
-                        if (!/\bscope\s*=/.test(attributesString) && !/\bid\s*=/.test(attributesString)) errors.push({
-                            message: `<strong>Accessibility Error:</strong> &lt;th&gt; should have a 'scope' or 'id' attribute.`
-                            , lineNumber: lineNumber
-                        });
-                    } else if (tagName === 'tr') {
-                        if (/\b(colspan|rowspan)\s*=/.test(attributesString)) errors.push({
-                            message: `<strong>Invalid Attribute:</strong> 'colspan' or 'rowspan' cannot be on a &lt;tr&gt; tag.`
-                            , lineNumber: lineNumber
-                        });
-                    }
-
-                    if (/\balign\s*=/.test(attributesString)) errors.push({
-                        message: `<strong>Deprecated Attribute:</strong> 'align' on &lt;${tagName}&gt;. Use CSS instead.`
-                        , lineNumber: lineNumber
-                    });
-                    if ((/\bwidth\s*=/.test(attributesString) || /\bheight\s*=/.test(attributesString)) && !mediaSizingElements.has(tagName)) errors.push({
-                        message: `<strong>Improper Attribute:</strong> 'width' or 'height' on &lt;${tagName}&gt;. Use CSS for sizing.`
-                        , lineNumber: lineNumber
-                    });
-                    if (/\btarget\s*=/.test(attributesString) && !targetValidElements.has(tagName)) errors.push({
-                        message: `<strong>Improper Attribute:</strong> 'target' on &lt;${tagName}&gt;.`
-                        , lineNumber: lineNumber
-                    });
-
-                    if (tagName === 'a') {
-                        const hrefMatch = attributesString.match(/\bhref\s*=\s*(["'])(.*?)\1/i);
-                        if (hrefMatch) {
-                            const href = hrefMatch[2];
-                            if (href.includes(' ') && !href.includes('%20')) errors.push({
-                                message: `<strong>Invalid URL:</strong> Space found in href. URL-encode spaces to '%20'.`
-                                , lineNumber: lineNumber
-                            });
-                            if (href.startsWith('#') && href.length > 1) {
-                                const anchorId = href.substring(1);
-                                if (!validAnchors.has(anchorId)) errors.push({
-                                    message: `<strong>Broken Anchor:</strong> &lt;a href="#${anchorId}"&gt; points to a non-existent ID.`
-                                    , lineNumber: lineNumber
-                                });
-                            }
-                        }
-                    }
-                }
-            }
-
-            tagStack.forEach(unclosedTag => {
-                if (!unclosedTag.ignored) {
-                    errors.push({
-                        message: `<strong>Unclosed Tag:</strong> The &lt;${unclosedTag.tagName}&gt; tag (from line ${unclosedTag.lineNumber}) was never closed.`
-                        , lineNumber: unclosedTag.lineNumber
-                    });
-                }
-            });
+            APP_CONFIG.performValidationChecks(fullHtmlCode, tempDoc, monacoEditorInstance, errors);
 
         } catch (e) {
             console.error("Error during HTML validation:", e);
@@ -823,7 +564,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 let prepended = false;
-                for (const pattern of prependPatterns) {
+                for (const pattern of APP_CONFIG.prependPatterns) {
                     if (href.startsWith(pattern)) {
                         if (href.startsWith('/')) {
                             href = '/content/canadasite' + href;
@@ -855,7 +596,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                     a.setAttribute('href', href);
                 } else {
-                    for (const mapping of urlMappings) {
+                    for (const mapping of APP_CONFIG.urlMappings) {
                         if (href.startsWith(mapping.old)) {
                             href = href.replace(mapping.old, mapping.new);
                             a.setAttribute('href', href);
@@ -1284,77 +1025,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return processedHtml;
     }
 
-    function cleanAndPreserveAllowedContent(sourceNode, doc) {
-        let tempContainer = doc.createElement('div');
-
-        Array.from(sourceNode.childNodes)
-            .forEach(child => {
-                if (child.nodeType === Node.TEXT_NODE) {
-                    tempContainer.appendChild(child.cloneNode(true));
-                } else if (child.nodeType === Node.ELEMENT_NODE) {
-                    const tagName = child.tagName.toLowerCase();
-
-                    const containsDisallowedPattern = (element) => {
-                        const elemClassAttr = element.getAttribute('class');
-                        if (elemClassAttr) {
-                            const classes = elemClassAttr.split(/\s+/);
-                            for (const cls of classes) {
-                                if (cls.includes('Mso') || cls.includes('Word') || cls.includes('Style') || cls.includes('DocumentTitle') || cls.includes('Heading') || cls.includes('BCX0') || cls.includes('Header') || cls.includes('paragraph')) {
-                                    return true;
-                                }
-                            }
-                        }
-                        const elemIdAttr = element.getAttribute('id');
-                        if (elemIdAttr) {
-                            if (elemIdAttr.includes('Mso') || elemIdAttr.includes('Word') || elemIdAttr.includes('BCX0')) {
-                                return true;
-                            }
-                        }
-                        return false;
-                    };
-
-                    const alwaysPreservedTags = [
-                        'p', 'section', 'blockquote', 'article', 'ol', 'ul', 'li'
-                        , 'figure', 'caption', 'details', 'summary'
-                        , 'strong', 'u', 'em', 'i', 'b', 'br', 'mark', 'sup', 'sub', 'img'
-                        , 'h1', 'h2', 'h3', 'h4', 'h5', 'h6' 
-                    ];
-
-                    const tableTags = ['table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td'];
-
-                    if (alwaysPreservedTags.includes(tagName) || tableTags.includes(tagName)) {
-                        const clonedChild = child.cloneNode(false);
-                        clonedChild.innerHTML = cleanAndPreserveAllowedContent(child, doc);
-                        tempContainer.appendChild(clonedChild);
-                    } else if (tagName === 'a' && child.hasAttribute('href')) {
-                        const clonedChild = child.cloneNode(false);
-                        clonedChild.innerHTML = cleanAndPreserveAllowedContent(child, doc); 
-                        tempContainer.appendChild(clonedChild);
-                    } else if (tagName === 'div' || tagName === 'span') {
-                        if ((child.hasAttribute('class') || child.hasAttribute('id')) && !containsDisallowedPattern(child)) {
-                            const clonedChild = child.cloneNode(false);
-                            clonedChild.innerHTML = cleanAndPreserveAllowedContent(child, doc);
-                            tempContainer.appendChild(clonedChild);
-                        } else {
-                            const unwrappedContentHtml = cleanAndPreserveAllowedContent(child, doc);
-                            const tempUnwrapDiv = doc.createElement('div'); 
-                            tempUnwrapDiv.innerHTML = unwrappedContentHtml;
-                            while (tempUnwrapDiv.firstChild) {
-                                tempContainer.appendChild(tempUnwrapDiv.firstChild);
-                            }
-                        }
-                    } else {
-                        const unwrappedContentHtml = cleanAndPreserveAllowedContent(child, doc);
-                        const tempUnwrapDiv = doc.createElement('div'); 
-                        tempUnwrapDiv.innerHTML = unwrappedContentHtml;
-                        while (tempUnwrapDiv.firstChild) {
-                            tempContainer.appendChild(tempUnwrapDiv.firstChild);
-                        }
-                    }
-                }
-            });
-        return tempContainer.innerHTML;
-    }
+    
 
     function applyCleanLists(htmlString) {
         const parser = new DOMParser();
@@ -1830,6 +1501,21 @@ document.addEventListener('DOMContentLoaded', function () {
         '[style*="mso-element: comment-list"], [style*="mso-element: endnote-list"], a[href*="#_msocom"], a[href*="#_edn"]'
     ).forEach(el => el.remove());
 
+    // Convert local/embedded images to a placeholder
+    body.querySelectorAll('img').forEach(img => {
+        const src = img.getAttribute('src');
+        if (src && (src.startsWith('file://') || src.startsWith('data:'))) {
+            const replacementDiv = doc.createElement('div');
+            replacementDiv.classList.add('clearfix');
+            const replacementMark = doc.createElement('mark');
+            replacementMark.textContent = 'IMAGE NOT IMPORTED';
+            replacementDiv.appendChild(replacementMark);
+            if (img.parentNode) {
+                img.parentNode.replaceChild(replacementDiv, img);
+            }
+        }
+    });
+
     // Clean invalid <hr> tags
     body.querySelectorAll('hr').forEach(hr => {
         const allowedAttrs = new Set(['class', 'id']);
@@ -1959,9 +1645,17 @@ document.addEventListener('DOMContentLoaded', function () {
                 returnLink.href = `#${firstRefSupId}`;
                 returnLink.textContent = originalRefNumber.trim();
                 
-                // Build the paragraph content as a string to ensure it's one unit
-                let finalContent = returnLink.outerHTML + '&#160;' + definitionContainer.innerHTML;
-                finalP.innerHTML = finalContent;
+                // Get the actual content, stripping the container <p> if necessary.
+                let footnoteContentHtml;
+                const innerP = definitionContainer.querySelector('p');
+                if (definitionContainer.tagName.toLowerCase() !== 'p' && innerP) {
+                    footnoteContentHtml = innerP.innerHTML;
+                } else {
+                    footnoteContentHtml = definitionContainer.innerHTML;
+                }
+
+                // Build the paragraph content as a single unit.
+                finalP.innerHTML = returnLink.outerHTML + footnoteContentHtml.trim();
                 finalDiv.appendChild(finalP);
                 
                 definitionContainer.remove();
@@ -2004,7 +1698,7 @@ document.addEventListener('DOMContentLoaded', function () {
     for (const element of allElements) {
         element.removeAttribute('style');
         if (element.hasAttribute('class')) {
-            const allowedClasses = element.getAttribute('class').split(/\s+/).filter(cls => wet4AllowedClasses.has(cls));
+            const allowedClasses = element.getAttribute('class').split(/\s+/).filter(cls => APP_CONFIG.wet4AllowedClasses.has(cls));
             if (allowedClasses.length > 0) {
                 element.setAttribute('class', allowedClasses.join(' '));
             } else {
@@ -2590,20 +2284,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        let bylineHtml = '';
-        if (options.bylineMode === 'english') {
-            if (options.currentFramework === 'wet' || options.currentFramework === 'wet+') {
-                bylineHtml = '<p class="gc-byline"><strong>From: <a href="/en/treasury-board-secretariat.html">Treasury Board of Canada of Canada Secretariat</a></strong></p>';
-            } else if (options.currentFramework === 'gcds') {
-                bylineHtml = `<gcds-text><strong>From: <gcds-link href="/en/treasury-board-secretariat.html">Treasury Board of Canada of Canada Secretariat</gcds-link></strong></gcds-text>`;
-            }
-        } else if (options.bylineMode === 'french') {
-            if (options.currentFramework === 'wet' || options.currentFramework === 'wet+') {
-                bylineHtml = '<p class="gc-byline"><strong>De : <a href="/fr/secretariat-conseil-tresor.html">Secrétariat du Conseil du Trésor du Canada</a></strong></p>';
-            } else if (options.currentFramework === 'gcds') {
-                bylineHtml = `<gcds-text><strong>De : <gcds-link href="/fr/secretariat-conseil-tresor.html">Secrétariat du Conseil du Conseil du Trésor du Canada</gcds-link></strong></gcds-text>`;
-            }
-        }
+        const bylineHtml = APP_CONFIG.getBylineHtml(options);
 
         let h1AndBylineSection = `${dynamicTitleHtml}${bylineHtml}`;
         if ((options.currentFramework === 'gcds') && (dynamicTitleHtml || bylineHtml)) {
@@ -2614,10 +2295,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const parser = new DOMParser();
         const tempDoc = parser.parseFromString(contentToInject, 'text/html');
-
-        const localPrefixes = ['/content/canadasite/en/treasury-board-secretariat', '/content/canadasite/fr/secretariat-conseil-tresor', '/content/canadasite/en/government', '/content/canadasite/fr/gouvernement'];
-        const previewPrefixes = ['https://canada-preview.adobecqms.net/en/treasury-board-secretariat', 'https://canada-preview.adobecqms.net/fr/secretariat-conseil-tresor', 'https://canada-preview.adobecqms.net/en/government', 'https://canada-preview.adobecqms.net/fr/gouvernement'];
-        const livePrefixes = ['https://www.canada.ca/en/treasury-board-secretariat', 'https://www.canada.ca/fr/secretariat-conseil-tresor', 'https://www.canada.ca/en/government', 'https://www.canada.ca/fr/gouvernement'];
 
         function replaceUrlPrefix(url, currentPrefixes, targetPrefixes) {
             for (let i = 0; i < currentPrefixes.length; i++) {
@@ -2639,23 +2316,28 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             });
 
-        tempDoc.querySelectorAll('a')
-            .forEach(link => {
-                let href = link.getAttribute('href');
-                if (href && (href.startsWith('/') || href.startsWith('http://') || href.startsWith('https://'))) {
+        tempDoc.querySelectorAll('a').forEach(link => {
+            let href = link.getAttribute('href');
+            if (href) {
+                if (!forExport && !href.startsWith('#')) {
+                    link.setAttribute('target', '_blank');
+                }
+
+                if (href.startsWith('/') || href.startsWith('http://') || href.startsWith('https://')) {
                     if (options.urlSourceMode === 'local') {
-                        href = replaceUrlPrefix(href, previewPrefixes, localPrefixes);
-                        href = replaceUrlPrefix(href, livePrefixes, localPrefixes);
+                        href = replaceUrlPrefix(href, APP_CONFIG.previewPrefixes, APP_CONFIG.localPrefixes);
+                        href = replaceUrlPrefix(href, APP_CONFIG.livePrefixes, APP_CONFIG.localPrefixes);
                     } else if (options.urlSourceMode === 'preview') {
-                        href = replaceUrlPrefix(href, localPrefixes, previewPrefixes);
-                        href = replaceUrlPrefix(href, livePrefixes, previewPrefixes);
+                        href = replaceUrlPrefix(href, APP_CONFIG.localPrefixes, APP_CONFIG.previewPrefixes);
+                        href = replaceUrlPrefix(href, APP_CONFIG.livePrefixes, APP_CONFIG.previewPrefixes);
                     } else if (options.urlSourceMode === 'live') {
-                        href = replaceUrlPrefix(href, localPrefixes, livePrefixes);
-                        href = replaceUrlPrefix(href, previewPrefixes, livePrefixes);
+                        href = replaceUrlPrefix(href, APP_CONFIG.localPrefixes, APP_CONFIG.livePrefixes);
+                        href = replaceUrlPrefix(href, APP_CONFIG.previewPrefixes, APP_CONFIG.livePrefixes);
                     }
                     link.setAttribute('href', href);
                 }
-            });
+            }
+        });
 
         contentToInject = tempDoc.body.innerHTML;
 
@@ -3117,21 +2799,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 .getFullYear();
             const year = colophonYearInput.value || currentYear;
             const number = colophonNumberInput.value || '###';
-            let colophonHtmlContent = `<section id="colophon">\n<p class="mrgn-tp-lg text-center small">© `;
-
-            if (selectedLanguage === 'English') {
-                if (selectedMonarch === 'King') {
-                    colophonHtmlContent += `His Majesty the King in Right of Canada, represented by the President of the Treasury Board, ${year},<br>${selectedIdentifier}:&#160;${number}</p>\n</section>`;
-                } else { 
-                    colophonHtmlContent += `Her Majesty the Queen in Right of Canada, represented by the President of the Treasury Board, ${year},<br>${selectedIdentifier}:&#160;${number}</p>\n</section>`;
-                }
-            } else { 
-                if (selectedMonarch === 'King') {
-                    colophonHtmlContent += `Sa Majesté le Roi du chef du Canada, représenté par le président du Conseil du Trésor, ${year},<br>${selectedIdentifier}&#160;:&#160;${number}</p>\n</section>`;
-                } else { 
-                    colophonHtmlContent += `Sa Majesté la Reine du chef du Canada, représentée par le président du Conseil du Conseil du Trésor, ${year},<br>${selectedIdentifier}&#160;:&#160;${number}</p>\n</section>`;
-                }
-            }
+            const colophonHtmlContent = APP_CONFIG.getColophonHtml({
+                language: selectedLanguage,
+                monarch: selectedMonarch,
+                year: year,
+                identifier: selectedIdentifier,
+                number: number
+            });
 
             if (monacoEditorInstance) {
                 let currentContent = monacoEditorInstance.getValue();
@@ -4261,30 +3935,15 @@ function showFootnoteAnchorModal(triggeringButton, originalButtonText) {
         toggleEditorViewBtnCode.classList.remove('bg-cyan-700', 'hover:bg-cyan-800', 'bg-slate-800', 'hover:bg-slate-700'); 
         updateGoToHtmlButtonColor(); 
 
-        require.config({
-            paths: {
-                'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs'
-            }
-        });
+        require.config({ paths: APP_CONFIG.monacoLoaderPaths });
         require(['vs/editor/editor.main'], function () {
             monaco.languages.html.htmlDefaults.setOptions({
                 wrapLineLength: 500
             , });
-            monacoEditorInstance = monaco.editor.create(monacoEditorContainer, { 
-                value: htmlOutputContent, 
-                language: 'html'
-                , theme: 'vs-dark', 
-                automaticLayout: true, 
-                minimap: {
-                    enabled: true
-                }
-                , fontSize: 14
-                , tabSize: 4
-                , insertSpaces: true,
-                scrollBeyondLastLine: false
-                , wordWrap: 'on'
-                , wrappingIndent: 'same'
-            , });
+            monacoEditorInstance = monaco.editor.create(
+                monacoEditorContainer, 
+                APP_CONFIG.getMonacoEditorOptions(htmlOutputContent)
+            );
             window.monacoEditorInstance = monacoEditorInstance;
             console.log("Monaco editor initialized.");
 
@@ -5369,182 +5028,7 @@ function showFootnoteAnchorModal(triggeringButton, originalButtonText) {
 
         const iframeDocument = default_ifr.contentDocument || default_ifr.contentWindow.document;
         iframeDocument.open();
-        iframeDocument.write(`
-                <!DOCTYPE html>
-                <html lang="en">
-                <head>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Rich Editor</title>
-                    <script src="js/hugerte/hugerte.min.js"><\/script>
-                    <script src="js/tailwind.js"><\/script>
-                    <style>
-                        html, body {
-                            height: 100%; 
-                            margin: 0;
-                            box-sizing: border-box; 
-                        }
-                        body {
-                            font-family: sans-serif;
-                            background-color: #ffffff; 
-                            color: #333;
-                            display: flex; 
-                            flex-direction: column;
-                            padding: 1rem; 
-                        }
-                        form {
-                            height: 100%;
-                            display: flex;
-                            flex-direction: column;
-                        }
-                        textarea {
-                            width: 100%;
-                            flex-grow: 1;
-                            border: 1px solid #ccc;
-                            border-radius: 0.5rem;
-                            padding: 0.75rem;
-                            font-size: 1rem;
-                            resize: none; 
-                            box-sizing: border-box; 
-                        }
-                        .tox.tox-tinymce { 
-                            height: 100% !important; 
-                            display: flex; 
-                            flex-direction: column; 
-                        }
-                        .tox-editor-container {
-                            flex-grow: 1; 
-                            display: flex;
-                            flex-direction: column;
-                        }
-                        .tox-edit-area {
-                            flex-grow: 1; 
-                            display: flex;
-                            flex-direction: column;
-                        }
-                        .tox-edit-area__iframe {
-                            flex-grow: 1; 
-                        }
-                        .nowrap {
-                            white-space: nowrap;
-                        }
-						
-                    </style>
-                </head>
-                <body>
-                    <form method="post">
-                        <textarea id="richEditor"></textarea>
-                    </form>
-                    <script type="text/javascript">
-                        console.log("Iframe script started executing.");
-                        
-                        let richTextEditorInstance;
-                        let isUpdatingFromCodeMirror = false;
-
-                  
-                        const defaultContentStyle = 'body { max-width: 1170px; margin-left: auto; margin-right: auto; padding: 15px; box-sizing: border-box; } h1, .h1 { background-color: #FF6347; padding: 2px 5px; border-radius: 3px;} h2, .h2 { background-color: #FE9900; padding: 2px 5px; border-radius: 3px;} h3, .h3 { background-color: #FFDE59; padding: 2px 5px; border-radius: 3px;} h4, .h4 { background-color: #7DDA58; padding: 2px 5px; border-radius: 3px;} h5, .h5 { background-color: #5DE2E7; padding: 2px 5px; border-radius: 3px;} h6, .h6 { background-color: #E7DDFF; padding: 2px 5px; border-radius: 3px;} section { border: #060270 2px dashed; margin: 5px; padding: 5px;} figure { display: block !important; border: #1e81b0 2px solid; margin: 5px; padding: 5px;} div { border: #e28743 2px solid; margin: 5px; padding: 5px;} aside { border: #8D6F64 2px solid; margin: 5px; padding: 5px;} details > *:not(summary) { display: block !important; } dl { border: #A270C5 2px solid; margin: 5px; padding: 5px; } details { border: #42902C 2px solid; margin: 5px; padding: 5px; } details summary { cursor: default !important; font-weight: bold; margin-bottom: 5px; color: #333; } time { background-color: #ffd6f9; padding: 2px 5px; border-radius: 3px;} div.well { background-color: #dadada; } .text-center { text-align: center !important; } .text-right { text-align: right !important; } .text-left { text-align: left !important; } div[data-is-gcds-wrapper="true"] { border: 2px dotted #4f46e5; padding: 8px; margin: 8px 0; }';
-
-                        window.setRichEditorContent = function(content) {
-                            if (richTextEditorInstance && !isUpdatingFromCodeMirror) {
-                                isUpdatingFromCodeMirror = true;
-                                richTextEditorInstance.setContent(content);
-                                richTextEditorInstance.focus();
-                                isUpdatingFromCodeMirror = false;
-                            } else {
-                                console.warn('Iframe: HugeRTE editor not yet initialized or isUpdatingFromCodeMirror is true.');
-                            }
-                        };
-
-                        window.getRichEditorContent = function() {
-                            if (richTextEditorInstance) {
-                                return richTextEditorInstance.getContent();
-                            }
-                            console.warn('Iframe: HugeRTE editor not yet initialized. Cannot get content.');
-                            return '';
-                        };
-
-                        window.updateEditorStyles = function(enableCustomStyles) {
-                            if (richTextEditorInstance) {
-                                const editorDoc = richTextEditorInstance.getDoc();
-                                if (!editorDoc) return;
-
-                                let customStyleSheet = editorDoc.getElementById('tinymce-custom-content-css');
-
-                                if (!customStyleSheet) {
-                                    const styleSheets = editorDoc.head.querySelectorAll('style');
-                                    for (let i = 0; i < styleSheets.length; i++) {
-                                        if (styleSheets[i].innerHTML.includes('FF6347')) { 
-                                            customStyleSheet = styleSheets[i];
-                                            customStyleSheet.id = 'tinymce-custom-content-css';
-                                            break;
-                                        }
-                                    }
-                                }
-
-                                if (customStyleSheet) {
-                                    customStyleSheet.disabled = !enableCustomStyles;
-                                }
-                            }
-                        };
-
-                        function openAllDetailsInEditor(editor) {
-                            const editorDoc = editor.getDoc();
-                            if (editorDoc) {
-                                const detailsElements = editorDoc.querySelectorAll('details');
-                                detailsElements.forEach(el => {
-                                    el.setAttribute('open', 'open');
-                                });
-                            }
-                        }
-
-                        window.initializeEditor = function() {
-                            if (typeof hugerte !== 'undefined') {
-                                console.log("Iframe: Parent commanded initialization. Initializing editor.");
-                                hugerte.init({
-                                    selector: '#richEditor',
-                                    toolbar: 'undo redo styles bold italic alignleft aligncenter alignright numlist bullist link table',
-                                    plugins: ['table', 'lists', 'link'],
-									table_resize_bars: false,
-									object_resizing: false,
-                                    height: '100%',
-                                    tab_focus: false,
-                                    formats: {
-                                        alignleft: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img', classes: 'text-left', exact: true },
-                                        aligncenter: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img', classes: 'text-center', exact: true },
-                                        alignright: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img', classes: 'text-right', exact: true },
-                                    },
-                                    content_style: defaultContentStyle,
-                                    extended_valid_elements: 'dl[class|id],dt[class|id],dd[class|id],details[open|class|id|data-*],summary[class|id|data-*],div[data-*|class|id|style|contenteditable],option[*],optgroup[*]',
-                                    valid_children: '+body[dl],+dl[dt|dd],+dt[a|abbr|acronym|b|bdo|big|br|button|cite|code|del|dfn|em|i|img|input|ins|kbd|label|map|q|samp|select|small|span|strike|strong|sub|sup|textarea|tt|var|p],+dd[a|abbr|acronym|b|bdo|big|br|button|cite|code|del|dfn|em|i|img|input|ins|kbd|label|map|q|samp|select|small|span|strike|strong|sub|sup|textarea|tt|var|p|ul|ol|dl],+details[summary|p|div|section|code|a|img|em|strong|ul|ol|table|h1|h2|h3|h4|h5|h6]',
-                                    custom_elements: 'dl,dt,dd,details,summary,option,optgroup',
-                                    setup: function(editor) {
-                                        editor.on('SetContent', function(e) {
-                                            openAllDetailsInEditor(editor);
-                                        });
-                                    },
-                                    init_instance_callback: function(editorInstance) {
-                                        console.log('Iframe: HugeRTE editor initialized inside iframe.');
-                                        richTextEditorInstance = editorInstance;
-                                        openAllDetailsInEditor(editorInstance);
-                                        if (window.parent && typeof window.parent.handleRichTextEditorReady === 'function') {
-                                            window.parent.handleRichTextEditorReady(editorInstance);
-                                        }
-                                        editorInstance.on('keydown', (event) => {
-                                            if (event.key === 'Tab') {
-                                                event.preventDefault();
-                                                editorInstance.focus();
-                                            }
-                                        });
-                                    }
-                                });
-                            } else {
-                                console.error("Iframe: Parent commanded initialization, but HugeRTE library not loaded!");
-                            }
-                        };
-                    <\/script>
-                </body>
-                </html>
-            `);
+        iframeDocument.write(APP_CONFIG.richTextEditorTemplate);
         iframeDocument.close();
 
         toggleAutoCleanMsoOnSwitchRichText.addEventListener('change', (event) => {
@@ -6767,4 +6251,5 @@ function showFootnoteAnchorModal(triggeringButton, originalButtonText) {
                 return "You have unsaved changes. Are you sure you want to leave?";
             }
         };
+        
 });
