@@ -2802,7 +2802,4 @@ function openOptionsModalCustomize() {
         defaultOpenHeader.classList.add('expanded');
         defaultOpenContent.classList.add('expanded');
     }
-});
-
-
-
+}); 
