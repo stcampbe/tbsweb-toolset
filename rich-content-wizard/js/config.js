@@ -679,6 +679,14 @@ valid_children: '+body[dl],+dl[dt|dd],+dt[a|abbr|acronym|b|bdo|big|br|button|cit
     monacoLoaderPaths: {
         'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs'
     },
+	
+	/**
+     * @description Defines the theme names for Monaco Editor's light and dark modes.
+     */
+    monacoThemes: {
+        light: 'vs',
+        dark: 'vs-dark'
+    },
 
     /**
      * @description A function that returns a default configuration object for initializing
@@ -701,4 +709,5 @@ valid_children: '+body[dl],+dl[dt|dd],+dt[a|abbr|acronym|b|bdo|big|br|button|cit
             wrappingIndent: 'same',
         };
     }
+	
 };
