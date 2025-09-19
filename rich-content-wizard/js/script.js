@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const debouncedModalUpdate = debounce(updateModalPreview, 500);
     const validateNowBtn = document.getElementById('validateNowBtn');
     const previewBtn = document.getElementById('previewBtn');
+	const toggleThemeBtn = document.getElementById('toggleThemeBtn');
     const previewModal = document.getElementById('previewModal');
     const modalPreviewFrame = document.getElementById('modalPreviewFrame');
     const closePreviewModalBtn = document.getElementById('closePreviewModalBtn');
@@ -108,46 +109,7 @@ document.addEventListener('DOMContentLoaded', function () {
         btn.classList.add('opacity-50', 'cursor-not-allowed');
     });
 
-    const urlMappings = [{
-            old: 'https://canada-preview.adobecqms.net/en/treasury-board-secretariat'
-            , new: '/content/canadasite/en/treasury-board-secretariat'
-        }
-        , {
-            old: 'https://canada-preview.adobecqms.net/fr/secretariat-conseil-tresor'
-            , new: '/content/canadasite/fr/secretariat-conseil-tresor'
-        }
-        , {
-            old: 'https://canada-preview.adobecqms.net/en/government'
-            , new: '/content/canadasite/en/government'
-        }
-        , {
-            old: 'https://canada-preview.adobecqms.net/fr/gouvernement'
-            , new: '/content/canadasite/fr/gouvernement'
-        }
-        , {
-            old: 'https://www.canada.ca/en/treasury-board-secretariat'
-            , new: '/content/canadasite/en/treasury-board-secretariat'
-        }
-        , {
-            old: 'https://www.canada.ca/fr/secretariat-conseil-tresor'
-            , new: '/content/canadasite/fr/secretariat-conseil-tresor'
-        }
-        , {
-            old: 'https://www.canada.ca/en/government'
-            , new: '/content/canadasite/en/government'
-        }
-        , {
-            old: 'https://www.canada.ca/fr/gouvernement'
-            , new: '/content/canadasite/fr/gouvernement'
-        }
-    ];
-
-    const prependPatterns = [
-        '/en/treasury-board-secretariat', 'en/treasury-board-secretariat'
-        , '/fr/secretariat-conseil-tresor', 'fr/secretariat-conseil-tresor'
-        , '/en/government', 'en/government'
-        , '/fr/gouvernement', 'fr/gouvernement'
-    ];
+    
 
     const monacoEditorContainer = document.getElementById('monacoEditorContainer');
     const sidebarPanel = document.getElementById('sidebarPanel'); 
@@ -221,14 +183,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const NBSP_PLACEHOLDER = '&#160;'; 
 
     let currentLineDecorations = []; 
-
-    const selfClosingTags = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
-    const deprecatedTags = new Set(['acronym', 'applet', 'basefont', 'big', 'center', 'dir', 'font', 'frame', 'frameset', 'noframes', 'strike', 'tt', 'u']);
-    const blockElements = new Set(['address', 'article', 'aside', 'blockquote', 'canvas', 'dd', 'div', 'dl', 'dt', 'fieldset', 'figcaption', 'figure', 'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'hr', 'li', 'main', 'nav', 'noscript', 'ol', 'p', 'pre', 'section', 'table', 'tfoot', 'ul', 'video']);
-    const inlineElements = new Set(['a', 'abbr', 'b', 'bdo', 'br', 'button', 'cite', 'code', 'dfn', 'em', 'i', 'img', 'input', 'kbd', 'label', 'map', 'object', 'q', 'samp', 'script', 'select', 'small', 'span', 'strong', 'sub', 'sup', 'textarea', 'time', 'var']);
-    const mediaSizingElements = new Set(['img', 'iframe', 'video', 'canvas', 'object', 'embed']);
-    const targetValidElements = new Set(['a', 'form']);
-    const ignoredTags = new Set(['doc']);
 
     const validationResultsDiv = document.getElementById('validationResults');
     validationResultsDiv.addEventListener('click', handleResultClick);
@@ -355,181 +309,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const parser = new DOMParser();
             const tempDoc = parser.parseFromString(fullHtmlCode, 'text/html');
 
-            const validAnchors = new Set();
-            tempDoc.querySelectorAll('[id]')
-                .forEach(el => {
-                    if (el.id) validAnchors.add(el.id);
-                });
-
-            const idRegex = /id\s*=\s*(["'])(.*?)\1/g;
-            const foundIds = new Map();
-            let idMatch;
-            while ((idMatch = idRegex.exec(fullHtmlCode)) !== null) {
-                const idValue = idMatch[2];
-                const lineNumber = monacoEditorInstance.getModel()
-                    .getPositionAt(idMatch.index)
-                    .lineNumber;
-                if (foundIds.has(idValue)) {
-                    errors.push({
-                        message: `<strong>Duplicate ID:</strong> The ID "${idValue}" is used more than once.`
-                        , lineNumber: lineNumber
-                    });
-                } else {
-                    foundIds.set(idValue, lineNumber);
-                }
-            }
-
-            const tagRegexForValidation = /<\/?([a-zA-Z0-9]+)(\s+[^>]*?)?(\/?)>/g;
-            const tagStack = [];
-            let match;
-            while ((match = tagRegexForValidation.exec(fullHtmlCode)) !== null) {
-                const fullTag = match[0];
-                const tagName = match[1].toLowerCase();
-                const attributesString = (match[2] || '')
-                    .trim();
-                const isClosingTag = fullTag.startsWith('</');
-                const isSelfClosingSyntax = match[3] === '/';
-                const lineNumber = monacoEditorInstance.getModel()
-                    .getPositionAt(match.index)
-                    .lineNumber;
-                const parentTag = tagStack.length > 0 ? tagStack[tagStack.length - 1] : null;
-
-                if (ignoredTags.has(tagName)) {
-                    if (!isClosingTag && !isSelfClosingSyntax) {
-                        tagStack.push({
-                            tagName: tagName
-                            , lineNumber: lineNumber
-                            , ignored: true
-                        });
-                    } else if (isClosingTag) {
-                        let found = false;
-                        for (let i = tagStack.length - 1; i >= 0; i--) {
-                            if (tagStack[i].tagName === tagName && tagStack[i].ignored) {
-                                tagStack.splice(i, 1);
-                                found = true;
-                                break;
-                            }
-                        }
-                    }
-                    continue; 
-                }
-
-                if (isClosingTag) {
-                    if (tagStack.length === 0 || parentTag.ignored) {
-                        errors.push({
-                            message: `<strong>Unmatched Tag:</strong> Found a closing &lt;/${tagName}&gt; tag without a matching opening tag.`
-                            , lineNumber: lineNumber
-                        });
-                    } else {
-                        const lastOpenTag = tagStack.pop();
-                        if (lastOpenTag.tagName !== tagName) {
-                            errors.push({
-                                message: `<strong>Mismatched Tag:</strong> Expected &lt;/${lastOpenTag.tagName}&gt; (from line ${lastOpenTag.lineNumber}) but found &lt;/${tagName}&gt;.`
-                                , lineNumber: lineNumber
-                            });
-                            tagStack.push(lastOpenTag); 
-                        }
-                    }
-                }
-                else {
-                    if (!selfClosingTags.has(tagName) && !isSelfClosingSyntax) {
-                        tagStack.push({
-                            tagName
-                            , lineNumber
-                            , ignored: false
-                        });
-                    }
-
-                    if (tagName === 'chapter' && (!parentTag || parentTag.tagName !== 'chapters')) errors.push({
-                        message: `<strong>Invalid Nesting:</strong> &lt;chapter&gt; must be a direct child of &lt;chapters&gt;.`
-                        , lineNumber: lineNumber
-                    });
-                    if (tagName === 'clause' && (!parentTag || parentTag.tagName !== 'clauses')) errors.push({
-                        message: `<strong>Invalid Nesting:</strong> &lt;clause&gt; must be a direct child of &lt;clauses&gt;.`
-                        , lineNumber: lineNumber
-                    });
-                    if (tagName === 'appendix' && (!parentTag || (parentTag.tagName !== 'appendices' && parentTag.tagName !== 'appendix'))) errors.push({
-                        message: `<strong>Invalid Nesting:</strong> &lt;appendix&gt; must be within &lt;appendices&gt; or another &lt;appendix&gt;.`
-                        , lineNumber: lineNumber
-                    });
-                    if (parentTag && !parentTag.ignored && inlineElements.has(parentTag.tagName) && blockElements.has(tagName)) {
-                        errors.push({
-                            message: `<strong>Invalid Nesting:</strong> Block element &lt;${tagName}&gt; cannot be inside inline element &lt;${parentTag.tagName}&gt; (from line ${parentTag.lineNumber}).`
-                            , lineNumber: lineNumber
-                        });
-                    }
-
-                    if (deprecatedTags.has(tagName)) errors.push({
-                        message: `<strong>Deprecated Tag:</strong> The &lt;${tagName}&gt; tag is deprecated.`
-                        , lineNumber: lineNumber
-                    });
-                    if (isSelfClosingSyntax && !selfClosingTags.has(tagName)) errors.push({
-                        message: `<strong>Invalid Syntax:</strong> The &lt;${tagName}&gt; tag should not be self-closing.`
-                        , lineNumber: lineNumber
-                    });
-
-                    if (tagName === 'img') {
-                        if (!/\balt\s*=/.test(attributesString)) errors.push({
-                            message: `<strong>Missing Attribute:</strong> &lt;img&gt; tag requires an 'alt' attribute.`
-                            , lineNumber: lineNumber
-                        });
-                        if (!/\bsrc\s*=/.test(attributesString)) errors.push({
-                            message: `<strong>Missing Attribute:</strong> &lt;img&gt; tag requires a 'src' attribute.`
-                            , lineNumber: lineNumber
-                        });
-                    } else if (tagName === 'th') {
-                        if (!/\bscope\s*=/.test(attributesString) && !/\bid\s*=/.test(attributesString)) errors.push({
-                            message: `<strong>Accessibility Error:</strong> &lt;th&gt; should have a 'scope' or 'id' attribute.`
-                            , lineNumber: lineNumber
-                        });
-                    } else if (tagName === 'tr') {
-                        if (/\b(colspan|rowspan)\s*=/.test(attributesString)) errors.push({
-                            message: `<strong>Invalid Attribute:</strong> 'colspan' or 'rowspan' cannot be on a &lt;tr&gt; tag.`
-                            , lineNumber: lineNumber
-                        });
-                    }
-
-                    if (/\balign\s*=/.test(attributesString)) errors.push({
-                        message: `<strong>Deprecated Attribute:</strong> 'align' on &lt;${tagName}&gt;. Use CSS instead.`
-                        , lineNumber: lineNumber
-                    });
-                    if ((/\bwidth\s*=/.test(attributesString) || /\bheight\s*=/.test(attributesString)) && !mediaSizingElements.has(tagName)) errors.push({
-                        message: `<strong>Improper Attribute:</strong> 'width' or 'height' on &lt;${tagName}&gt;. Use CSS for sizing.`
-                        , lineNumber: lineNumber
-                    });
-                    if (/\btarget\s*=/.test(attributesString) && !targetValidElements.has(tagName)) errors.push({
-                        message: `<strong>Improper Attribute:</strong> 'target' on &lt;${tagName}&gt;.`
-                        , lineNumber: lineNumber
-                    });
-
-                    if (tagName === 'a') {
-                        const hrefMatch = attributesString.match(/\bhref\s*=\s*(["'])(.*?)\1/i);
-                        if (hrefMatch) {
-                            const href = hrefMatch[2];
-                            if (href.includes(' ') && !href.includes('%20')) errors.push({
-                                message: `<strong>Invalid URL:</strong> Space found in href. URL-encode spaces to '%20'.`
-                                , lineNumber: lineNumber
-                            });
-                            if (href.startsWith('#') && href.length > 1) {
-                                const anchorId = href.substring(1);
-                                if (!validAnchors.has(anchorId)) errors.push({
-                                    message: `<strong>Broken Anchor:</strong> &lt;a href="#${anchorId}"&gt; points to a non-existent ID.`
-                                    , lineNumber: lineNumber
-                                });
-                            }
-                        }
-                    }
-                }
-            }
-
-            tagStack.forEach(unclosedTag => {
-                if (!unclosedTag.ignored) {
-                    errors.push({
-                        message: `<strong>Unclosed Tag:</strong> The &lt;${unclosedTag.tagName}&gt; tag (from line ${unclosedTag.lineNumber}) was never closed.`
-                        , lineNumber: unclosedTag.lineNumber
-                    });
-                }
-            });
+            APP_CONFIG.performValidationChecks(fullHtmlCode, tempDoc, monacoEditorInstance, errors);
 
         } catch (e) {
             console.error("Error during HTML validation:", e);
@@ -785,7 +565,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 let prepended = false;
-                for (const pattern of prependPatterns) {
+                for (const pattern of APP_CONFIG.prependPatterns) {
                     if (href.startsWith(pattern)) {
                         if (href.startsWith('/')) {
                             href = '/content/canadasite' + href;
@@ -817,7 +597,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                     a.setAttribute('href', href);
                 } else {
-                    for (const mapping of urlMappings) {
+                    for (const mapping of APP_CONFIG.urlMappings) {
                         if (href.startsWith(mapping.old)) {
                             href = href.replace(mapping.old, mapping.new);
                             a.setAttribute('href', href);
@@ -1246,77 +1026,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return processedHtml;
     }
 
-    function cleanAndPreserveAllowedContent(sourceNode, doc) {
-        let tempContainer = doc.createElement('div');
-
-        Array.from(sourceNode.childNodes)
-            .forEach(child => {
-                if (child.nodeType === Node.TEXT_NODE) {
-                    tempContainer.appendChild(child.cloneNode(true));
-                } else if (child.nodeType === Node.ELEMENT_NODE) {
-                    const tagName = child.tagName.toLowerCase();
-
-                    const containsDisallowedPattern = (element) => {
-                        const elemClassAttr = element.getAttribute('class');
-                        if (elemClassAttr) {
-                            const classes = elemClassAttr.split(/\s+/);
-                            for (const cls of classes) {
-                                if (cls.includes('Mso') || cls.includes('Word') || cls.includes('Style') || cls.includes('DocumentTitle') || cls.includes('Heading') || cls.includes('BCX0') || cls.includes('Header') || cls.includes('paragraph')) {
-                                    return true;
-                                }
-                            }
-                        }
-                        const elemIdAttr = element.getAttribute('id');
-                        if (elemIdAttr) {
-                            if (elemIdAttr.includes('Mso') || elemIdAttr.includes('Word') || elemIdAttr.includes('BCX0')) {
-                                return true;
-                            }
-                        }
-                        return false;
-                    };
-
-                    const alwaysPreservedTags = [
-                        'p', 'section', 'blockquote', 'article', 'ol', 'ul', 'li'
-                        , 'figure', 'caption', 'details', 'summary'
-                        , 'strong', 'u', 'em', 'i', 'b', 'br', 'mark', 'sup', 'sub', 'img'
-                        , 'h1', 'h2', 'h3', 'h4', 'h5', 'h6' 
-                    ];
-
-                    const tableTags = ['table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td'];
-
-                    if (alwaysPreservedTags.includes(tagName) || tableTags.includes(tagName)) {
-                        const clonedChild = child.cloneNode(false);
-                        clonedChild.innerHTML = cleanAndPreserveAllowedContent(child, doc);
-                        tempContainer.appendChild(clonedChild);
-                    } else if (tagName === 'a' && child.hasAttribute('href')) {
-                        const clonedChild = child.cloneNode(false);
-                        clonedChild.innerHTML = cleanAndPreserveAllowedContent(child, doc); 
-                        tempContainer.appendChild(clonedChild);
-                    } else if (tagName === 'div' || tagName === 'span') {
-                        if ((child.hasAttribute('class') || child.hasAttribute('id')) && !containsDisallowedPattern(child)) {
-                            const clonedChild = child.cloneNode(false);
-                            clonedChild.innerHTML = cleanAndPreserveAllowedContent(child, doc);
-                            tempContainer.appendChild(clonedChild);
-                        } else {
-                            const unwrappedContentHtml = cleanAndPreserveAllowedContent(child, doc);
-                            const tempUnwrapDiv = doc.createElement('div'); 
-                            tempUnwrapDiv.innerHTML = unwrappedContentHtml;
-                            while (tempUnwrapDiv.firstChild) {
-                                tempContainer.appendChild(tempUnwrapDiv.firstChild);
-                            }
-                        }
-                    } else {
-                        const unwrappedContentHtml = cleanAndPreserveAllowedContent(child, doc);
-                        const tempUnwrapDiv = doc.createElement('div'); 
-                        tempUnwrapDiv.innerHTML = unwrappedContentHtml;
-                        while (tempUnwrapDiv.firstChild) {
-                            tempContainer.appendChild(tempUnwrapDiv.firstChild);
-                        }
-                    }
-                }
-            });
-        return tempContainer.innerHTML;
-    }
+    
 
     function applyCleanLists(htmlString) {
         const parser = new DOMParser();
@@ -1765,126 +1475,125 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function applyCleanMsoCode(htmlString) {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(htmlString, 'text/html');
-        doc.querySelectorAll('span[style*="mso-special-character: comment"]')
-            .forEach(span => {
-                if (span.parentNode) {
-                    span.parentNode.removeChild(span);
-                }
-            });
-        doc.querySelectorAll('a[href]')
-            .forEach(aTag => {
-                const trimmedTextContent = aTag.textContent.trim()
-                    .replace(/\s/g, '');
-                const innerHTMLTrimmed = aTag.innerHTML.replace(/&nbsp;|\s/g, '')
-                    .trim();
+    if (!htmlString) return '';
 
-                if (trimmedTextContent === '' || innerHTMLTrimmed === '') {
-                    const parent = aTag.parentNode;
-                    if (parent) {
-                        while (aTag.firstChild) {
-                            parent.insertBefore(aTag.firstChild, aTag);
-                        }
-                        parent.removeChild(aTag);
-                    }
-                }
-            });
+    // Phase 1: Aggressive Regex Pre-processing
+    let cleanHtml = htmlString
+        .replace(/<!--[\s\S]*?-->/gi, '') 
+        .replace(/<xml>[\s\S]*?<\/xml>/gi, '') 
+        .replace(/<\/?o:p[^>]*>/gi, ''); 
 
-        doc.querySelectorAll('span[style*="mso-"]')
-            .forEach(span => {
-                const p = span.parentNode;
-                while (span.firstChild) p.insertBefore(span.firstChild, span);
-                p.removeChild(span);
+    // Phase 2: DOM-based Targeted Cleaning
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(cleanHtml, 'text/html');
+    const body = doc.body;
 
-            });
-        doc.querySelectorAll('del, span.msoDel')
-            .forEach(node => {
-                node.remove();
-            });
-        doc.querySelectorAll('span.msoIns')
-            .forEach(ins => {
-                const parent = ins.parentNode;
-                while (ins.firstChild) parent.insertBefore(ins.firstChild, ins);
-                parent.removeChild(ins);
-            });
-        doc.querySelectorAll('ins')
-            .forEach(ins => {
-                const parent = ins.parentNode;
-                while (ins.firstChild) parent.insertBefore(ins.firstChild, ins);
-                parent.removeChild(ins);
-            });
+    // Handle Deletions and Insertions
+    body.querySelectorAll('del, span.msoDel').forEach(el => el.remove());
+    body.querySelectorAll('ins, span.msoIns').forEach(el => {
+        if (el.parentNode) {
+            while (el.firstChild) { el.parentNode.insertBefore(el.firstChild, el); }
+            el.remove();
+        }
+    });
 
-        doc.querySelectorAll('img')
-            .forEach(img => {
-                const src = img.getAttribute('src');
-                if (src && (src.startsWith('file://') || src.startsWith('data:'))) {
-                    const replacementDiv = doc.createElement('div');
-                    replacementDiv.classList.add('clearfix');
-                    const replacementMark = doc.createElement('mark');
-                    replacementMark.textContent = 'IMAGE NOT IMPORTED';
-                    replacementDiv.appendChild(replacementMark);
-                    if (img.parentNode) {
-                        img.parentNode.replaceChild(replacementDiv, img);
-                    }
-                }
-            });
+    // Remove MSO Endnote/Comment lists and links
+    body.querySelectorAll(
+        '[style*="mso-element: comment-list"], [style*="mso-element: endnote-list"], a[href*="#_msocom"], a[href*="#_edn"]'
+    ).forEach(el => el.remove());
 
-        const elementsToRemoveByStyle = doc.querySelectorAll('[style*="mso-element: comment-list"], [style*="mso-element: endnote-list"]');
-        elementsToRemoveByStyle.forEach(element => {
-            if (element.parentNode) {
-                element.parentNode.removeChild(element);
+    // Convert local/embedded images to a placeholder
+    body.querySelectorAll('img').forEach(img => {
+        const src = img.getAttribute('src');
+        if (src && (src.startsWith('file://') || src.startsWith('data:'))) {
+            const replacementDiv = doc.createElement('div');
+            replacementDiv.classList.add('clearfix');
+            const replacementMark = doc.createElement('mark');
+            replacementMark.textContent = 'IMAGE NOT IMPORTED';
+            replacementDiv.appendChild(replacementMark);
+            if (img.parentNode) {
+                img.parentNode.replaceChild(replacementDiv, img);
             }
-        });
+        }
+    });
 
-        const commentEndnoteLinks = doc.querySelectorAll('a[href*="#_msocom"], a[href*="#_edn"]');
-        commentEndnoteLinks.forEach(link => {
-            if (link.parentNode) {
-                link.parentNode.removeChild(link);
-            }
-        });
-		
-		// ### START REVISED FOOTNOTE ANCHOR LOGIC ###
+    // Clean invalid <hr> tags
+    body.querySelectorAll('hr').forEach(hr => {
+        const allowedAttrs = new Set(['class', 'id']);
+        if (Array.from(hr.attributes).some(attr => !allowedAttrs.has(attr.name.toLowerCase()))) {
+            hr.remove();
+        }
+    });
 
-    // --- PASS 1: GATHER INFORMATION AND COUNT OCCURRENCES ---
-    const occurrenceMap = new Map(); // Stores count of each footnote base ID
-    const refInfoMap = new Map();    // Stores elements and info for each base ID
+    // Fix for spacer spans
+    body.querySelectorAll('span[style*="mso-tab-count"], span[style*="mso-spacerun"]').forEach(span => {
+        if (span.parentNode) {
+            span.parentNode.replaceChild(doc.createTextNode(' '), span);
+        }
+    });
+
+    // Unwrap other MSO-specific field code spans
+    body.querySelectorAll('span[style*="mso-element"]').forEach(span => {
+        if (span.parentNode) {
+            while (span.firstChild) { span.parentNode.insertBefore(span.firstChild, span); }
+            span.remove();
+        }
+    });
+
+    // Simplify Table of Contents links
+    body.querySelectorAll('a[href*="_Toc"]').forEach(a => {
+        let cleanText = a.textContent.replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+        cleanText = cleanText.replace(/\.\s+\d+$/, '.');
+        a.textContent = cleanText;
+    });
+    
+    // Remove empty legacy anchor tags
+    body.querySelectorAll('a[name]').forEach(anchor => {
+        if (!anchor.hasAttribute('href') && anchor.textContent.trim() === '' && anchor.children.length === 0) {
+            anchor.remove();
+        }
+    });
+
+    // Unwrap unnecessary container divs
+    body.querySelectorAll('div[class*="WordSection"], div[class*="DocumentTitle"]').forEach(div => {
+         if (div.parentNode) {
+            while (div.firstChild) { div.parentNode.insertBefore(div.firstChild, div); }
+            div.remove();
+        }
+    });
+    
+    // --- Full, robust footnote processing ---
+    const occurrenceMap = new Map();
+    const refInfoMap = new Map();
     let tableCounter = 0;
-    const tableElementToIdMap = new Map(); // Maps a table DOM element to its ID prefix (e.g., "tbl1")
+    const tableElementToIdMap = new Map();
+    const processedFootnoteDefinitions = []; 
 
     const allPotentialRefs = Array.from(doc.querySelectorAll('a[href*="#_ftn"], span.MsoFootnoteReference'));
 
     allPotentialRefs.forEach(refElement => {
-        // Prevent double-counting when a MsoFootnoteReference span is inside an already-selected anchor tag.
-        if (refElement.tagName === 'SPAN' && refElement.classList.contains('MsoFootnoteReference')) {
-            if (refElement.closest('a[href*="#_ftn"]')) {
-                return; // Skip this span, as its parent anchor will be processed.
-            }
-        }
-        
+        if (refElement.tagName === 'SPAN' && refElement.classList.contains('MsoFootnoteReference') && refElement.closest('a[href*="#_ftn"]')) { return; }
         let originalNum;
         const linkRef = refElement.closest('a');
         if (linkRef && linkRef.href.includes('#_ftn')) {
             const match = linkRef.getAttribute('href').match(/#_ftn(\d+)/);
             if (match) originalNum = match[1];
         } else {
-             const refText = refElement.textContent.trim().replace(/\[|\]/g, '');
-             const footnoteListItems = doc.querySelectorAll('p[style*="mso-element: footnote"], div[style*="mso-element: footnote"]');
-             for (const item of footnoteListItems) {
-                 const itemRefSpan = item.querySelector('span.MsoFootnoteReference');
-                 if (itemRefSpan && itemRefSpan.textContent.trim().replace(/\[|\]/g, '') === refText) {
-                     const anchor = item.querySelector('a[name^="_ftn"]');
-                     if (anchor) {
+            const refText = refElement.textContent.trim().replace(/\[|\]/g, '');
+            const footnoteListItems = doc.querySelectorAll('p[style*="mso-element: footnote"], div[style*="mso-element: footnote"]');
+            for (const item of footnoteListItems) {
+                const itemRefSpan = item.querySelector('span.MsoFootnoteReference');
+                if (itemRefSpan && itemRefSpan.textContent.trim().replace(/\[|\]/g, '') === refText) {
+                    const anchor = item.querySelector('a[name^="_ftn"]');
+                    if (anchor) {
                         const match = anchor.getAttribute('name').match(/_ftn(\d+)/);
                         if (match) originalNum = match[1];
                         break;
-                     }
-                 }
-             }
+                    }
+                }
+            }
         }
         if (!originalNum) return;
-
-        // Determine baseId for counting
         const containingTable = refElement.closest('table');
         let baseId;
         if (containingTable) {
@@ -1893,266 +1602,129 @@ document.addEventListener('DOMContentLoaded', function () {
                 tableElementToIdMap.set(containingTable, `tbl${tableCounter}`);
             }
             const tableId = tableElementToIdMap.get(containingTable);
-            baseId = `${tableId}_fn${originalNum}`;
+            baseId = `${tableId}fn${originalNum}`;
         } else {
             baseId = `fn${originalNum}`;
         }
-
-        // Update maps for Pass 2
         occurrenceMap.set(baseId, (occurrenceMap.get(baseId) || 0) + 1);
         if (!refInfoMap.has(baseId)) {
-    refInfoMap.set(baseId, { elements: [], originalNum: originalNum, isTable: !!containingTable, tableElement: containingTable });
-}
+            refInfoMap.set(baseId, { elements: [], originalNum: originalNum, isTable: !!containingTable, tableElement: containingTable });
+        }
         refInfoMap.get(baseId).elements.push(refElement);
     });
-
-    // --- PASS 2: PROCESS AND REPLACE ELEMENTS BASED ON COUNTS ---
+    
     for (const [baseId, refInfo] of refInfoMap.entries()) {
         const { elements, originalNum, isTable, tableElement } = refInfo;
         const totalOccurrences = occurrenceMap.get(baseId);
-        const isMultiInstance = totalOccurrences > 1;
-
-        // A. Process the REFERENCE <sup> tags in the main document body
         elements.forEach((refElement, index) => {
             let elementToReplace = refElement.closest('sup') || refElement;
-            const linkText = refElement.textContent.trim().replace(/\[|\]/g, '');
-
+            const linkText = `[${refElement.textContent.trim().replace(/\[|\]/g, '')}]`;
             const newSup = doc.createElement('sup');
-            if (isMultiInstance) {
-                newSup.id = `${baseId}-rf-${index}`; // Suffix with -0, -1, etc. for duplicates
-            } else {
-                newSup.id = `${baseId}-rf`; // No numeric suffix for unique references
-            }
-
+            newSup.id = totalOccurrences > 1 ? `${baseId}-rf${index + 1}` : `${baseId}-rf`;
             const newLink = doc.createElement('a');
             newLink.href = `#${baseId}`;
             newLink.textContent = linkText;
             newSup.appendChild(newLink);
-
             if (elementToReplace.parentNode) {
                 elementToReplace.parentNode.replaceChild(newSup, elementToReplace);
             }
         });
-
-        // B. Process the DEFINITION <div> and its return link <a> in the footnote list
         const definitionAnchor = doc.querySelector(`a[name="_ftn${originalNum}"]`);
         if (definitionAnchor) {
             const definitionContainer = definitionAnchor.closest('div[style*="mso-element: footnote"], p[style*="mso-element: footnote"]');
             if (definitionContainer) {
-                // First, update the ID and link attributes on the footnote elements themselves
-                definitionContainer.id = baseId;
-                const firstRefSupId = isMultiInstance ? `${baseId}-rf-0` : `${baseId}-rf`;
-                definitionAnchor.setAttribute('href', `#${firstRefSupId}`);
-                definitionAnchor.removeAttribute('name');
+                const firstRefSupId = totalOccurrences > 1 ? `${baseId}-rf1` : `${baseId}-rf`;
+                const originalRefNumber = (definitionContainer.querySelector('span.MsoFootnoteReference, a[href*="_ftnref"]') || { textContent: `[${originalNum}]` }).textContent;
+                const oldRef = definitionContainer.querySelector('span.MsoFootnoteReference, a[href*="_ftnref"]');
+                if (oldRef) oldRef.remove();
+                
+                // *** CRITICAL FIX: Rebuild the entire structure correctly ***
+                const finalDiv = doc.createElement('div');
+                finalDiv.id = baseId;
+                const finalP = doc.createElement('p');
+                const returnLink = doc.createElement('a');
+                returnLink.href = `#${firstRefSupId}`;
+                returnLink.textContent = originalRefNumber.trim();
+                
+                // Get the actual content, stripping the container <p> if necessary.
+                let footnoteContentHtml;
+                const innerP = definitionContainer.querySelector('p');
+                if (definitionContainer.tagName.toLowerCase() !== 'p' && innerP) {
+                    footnoteContentHtml = innerP.innerHTML;
+                } else {
+                    footnoteContentHtml = definitionContainer.innerHTML;
+                }
 
-                // Check if this is a table footnote and a valid table element was found
+                // Build the paragraph content as a single unit.
+                finalP.innerHTML = returnLink.outerHTML + footnoteContentHtml.trim();
+                finalDiv.appendChild(finalP);
+                
+                definitionContainer.remove();
+                definitionAnchor.remove();
+
                 if (isTable && tableElement) {
-                    // --- LOGIC TO MOVE FOOTNOTE INTO ITS TABLE ---
-
-                    // 1. Get the number of columns in the table to create a full-width cell
-                    const firstRow = tableElement.querySelector('thead tr, tbody tr, tr');
+                    const firstRow = tableElement.querySelector('tr');
                     const colCount = firstRow ? firstRow.cells.length : 1;
-
-                    // 2. Create the new row and cell with the correct colspan
                     const newRow = doc.createElement('tr');
                     const newCell = doc.createElement('td');
                     newCell.setAttribute('colspan', colCount);
-
-                    // 3. Move the entire footnote container into the new cell
-                    newCell.appendChild(definitionContainer);
+                    newCell.appendChild(finalDiv);
                     newRow.appendChild(newCell);
-
-                    // 4. Find or create a <tfoot> and append the new row
                     let tfoot = tableElement.querySelector('tfoot');
                     if (!tfoot) {
                         tfoot = doc.createElement('tfoot');
                         tableElement.appendChild(tfoot);
                     }
                     tfoot.appendChild(newRow);
-
+                } else {
+                    processedFootnoteDefinitions.push(finalDiv);
                 }
-                // If it's not a table footnote, it will just be left in the main footnote list
-                // (its attributes were already updated above).
+            }
+        }
+    }
+    
+    // Structure the final footnote list correctly
+    const footnoteListContainer = body.querySelector('div[style*="mso-element: footnote-list"]');
+    if (footnoteListContainer) {
+        // *** CRITICAL FIX: Create aside with NO class ***
+        const aside = doc.createElement('aside');
+        processedFootnoteDefinitions.forEach(note => {
+            aside.appendChild(note);
+        });
+        footnoteListContainer.parentNode.replaceChild(aside, footnoteListContainer);
+    }
+
+    // --- Phase 3: Final Attribute Cleaning ---
+    const allElements = Array.from(body.querySelectorAll('*'));
+    for (const element of allElements) {
+        element.removeAttribute('style');
+        if (element.hasAttribute('class')) {
+            const allowedClasses = element.getAttribute('class').split(/\s+/).filter(cls => APP_CONFIG.wet4AllowedClasses.has(cls));
+            if (allowedClasses.length > 0) {
+                element.setAttribute('class', allowedClasses.join(' '));
+            } else {
+                element.removeAttribute('class');
+            }
+        }
+        for (const attr of [...element.attributes]) {
+            if (attr.name.startsWith('mso-') || attr.name.startsWith('xmlns') || attr.name === 'align' || attr.name === 'lang') {
+                element.removeAttribute(attr.name);
             }
         }
     }
 
-    // Finally, assign the generated IDs to the table elements themselves
-    for (const [tableElement, tableId] of tableElementToIdMap.entries()) {
-        tableElement.id = tableId;
-    }
-
-        const footnoteListElements = doc.querySelectorAll('[style*="mso-element: footnote-list"]');
-        footnoteListElements.forEach(element => {
-            if (element.parentNode) {
-                const cleanedInnerHtml = cleanAndPreserveAllowedContent(element, doc);
-
-                const asideElement = doc.createElement('aside');
-                asideElement.innerHTML = cleanedInnerHtml;
-
-                if (element.parentNode) {
-                    element.parentNode.replaceChild(asideElement, element);
-                }
-            }
-        });
-
-        // ### NEW SNIPPET START ###
-    // After processing footnotes, find and remove any aside elements that became empty.
-    doc.querySelectorAll('aside').forEach(aside => {
-        // Check if the aside is effectively empty (contains only whitespace).
-        if (aside.textContent.trim() === '') {
-            aside.remove();
+    body.querySelectorAll('p').forEach(p => {
+        if (p.textContent.trim().replace(/\s|&nbsp;/g, '') === '' && !p.querySelector('img, br')) {
+             p.remove();
         }
     });
-    // ### NEW SNIPPET END ###
+    
+    body.normalize();
 
-        const elementsWithHeadingClass = doc.querySelectorAll('[class*="Heading"]'); 
-
-        Array.from(elementsWithHeadingClass)
-            .forEach(element => {
-                const classAttr = element.getAttribute('class');
-                if (!classAttr) return;
-
-                const classes = classAttr.split(/\s+/);
-                const headingCharClass = classes.find(cls => /^Heading[1-6]Char$/.test(cls));
-
-                if (headingCharClass) {
-                    const headingLevel = parseInt(headingCharClass.match(/\d/)[0], 10);
-                    const parent = element.parentNode;
-
-                    if (!parent) return;
-
-                    while (element.firstChild) {
-                        parent.insertBefore(element.firstChild, element);
-                    }
-                    parent.removeChild(element); 
-
-                    const currentParent = parent; 
-
-                    if (!/^H[1-6]$/i.test(currentParent.tagName)) {
-                        const newHeadingTag = doc.createElement(`h${headingLevel}`);
-
-                        while (currentParent.firstChild) {
-                            newHeadingTag.appendChild(currentParent.firstChild);
-                        }
-
-                        if (currentParent.parentNode) {
-                            currentParent.parentNode.replaceChild(newHeadingTag, currentParent);
-                        }
-                    }
-                }
-            });
-
-        doc.querySelectorAll('[align]')
-            .forEach(element => {
-                if (!element.closest('table')) { 
-                    element.removeAttribute('align');
-                }
-            });
-
-        doc.querySelectorAll('ul, ol')
-            .forEach(list => {
-                list.removeAttribute('type');
-                list.removeAttribute('role');
-            });
-
-        doc.querySelectorAll('li')
-            .forEach(li => {
-                if (li.hasAttribute('role')) {
-                    const attributesToRemove = Array.from(li.attributes)
-                        .map(attr => attr.name);
-                    attributesToRemove.forEach(attrName => {
-                        li.removeAttribute(attrName);
-                    });
-                }
-            });
-
-        doc.querySelectorAll('span[lang]')
-            .forEach(span => {
-                const langAttr = span.getAttribute('lang');
-                if (langAttr && langAttr.toLowerCase() !== 'en' && langAttr.toLowerCase() !== 'fr') {
-                    const parent = span.parentNode;
-                    if (parent) {
-                        while (span.firstChild) {
-                            parent.insertBefore(span.firstChild, span);
-                        }
-                        parent.removeChild(span); 
-                    }
-                }
-            });
+    return body.innerHTML;
+}
 
 
-        const allElements = Array.from(doc.querySelectorAll('*'));
-        for (let i = allElements.length - 1; i >= 0; i--) {
-            const element = allElements[i];
-
-            const tagName = element.tagName.toLowerCase();
-            if (['html', 'head', 'body', 'script', 'style', 'aside'].includes(tagName)) {
-                continue;
-            }
-
-            const hasStyle = element.hasAttribute('style');
-            const classAttr = element.getAttribute('class') || '';
-            const idAttr = element.getAttribute('id') || '';
-
-            const hasMsoWordBcx0Class = classAttr.split(/\s+/)
-                .some(cls =>
-                    cls.includes('Mso') || cls.includes('Style') || cls.includes('DocumentTitle') || cls.includes('Heading') || cls.includes('Word') || cls.includes('BCX0') || cls.includes('Header') || cls.includes('paragraph')
-                );
-
-            const hasMsoWordBcx0Id = idAttr.includes('Mso') || idAttr.includes('Word') || idAttr.includes('BCX0');
-
-            const shouldUnwrapCompletely = classAttr.split(/\s+/)
-                .some(cls =>
-                    cls.includes('eop') ||
-                    cls.includes('eoc') ||
-                    cls.includes('eocx') ||
-                    cls.includes('textrun')
-                );
-
-            if (shouldUnwrapCompletely) {
-                const parent = element.parentNode;
-                if (parent) {
-                    while (element.firstChild) {
-                        parent.insertBefore(element.firstChild, element);
-                    }
-                    parent.removeChild(element); 
-                }
-                continue; 
-            }
-
-            if (hasStyle || hasMsoWordBcx0Class || hasMsoWordBcx0Id) {
-                const cleanedInnerHtml = cleanAndPreserveAllowedContent(element, doc);
-
-                element.innerHTML = cleanedInnerHtml;
-
-                if (hasStyle) {
-                    element.removeAttribute('style');
-                }
-
-                if (classAttr) {
-                    const hasDisallowedClass = classAttr.split(/\s+/)
-                        .some(cls =>
-                            cls.includes('Mso') || cls.includes('Style') || cls.includes('DocumentTitle') || cls.includes('Heading') || cls.includes('Word') || cls.includes('BCX0') || cls.includes('Header') || cls.includes('paragraph')
-                        );
-                    if (hasDisallowedClass) {
-                        element.removeAttribute('class');
-                    }
-                }
-
-                if (idAttr && (idAttr.includes('Mso') || idAttr.includes('Word') || idAttr.includes('BCX0'))) {
-                    element.removeAttribute('id');
-                }
-            }
-        }
-
-        doc.querySelectorAll('a[title]')
-            .forEach(aTag => {
-                aTag.removeAttribute('title');
-            });
-
-        return doc.body.innerHTML;
-    }
 
     function applyCleanFormattingTags(htmlString) {
         const parser = new DOMParser();
@@ -2469,116 +2041,76 @@ document.addEventListener('DOMContentLoaded', function () {
             .forEach(el => existingIds.add(el.id));
 
         if (currentOptions.idHeadings) {
-            let h2_num_counter = 0;
-            let h2_general_alpha_counter = 0;
-            let h2_appendix_alpha_counter = 0;
-            let sub_num_counters = new Map();
-            let sub_appendix_alpha_counters = new Map();
+            let headingCounter = 0;
+            doc.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(heading => {
+                const level = parseInt(heading.tagName.substring(1), 10);
+                const text = heading.textContent.trim().toLowerCase();
+                const oldId = heading.id;
 
-            const lastSeenHeadingIds = {
-                2: ''
-                , 3: ''
-                , 4: ''
-                , 5: ''
-                , 6: ''
-            };
+                // Skip main page title (h1) and headings inside certain containers
+                if (level === 1 || heading.closest('aside, caption, figure, figcaption, table')) {
+                    return;
+                }
 
-            let hasAnyNumberedH2 = Array.from(body.querySelectorAll('h2'))
-                .some(h => h.textContent.trim()
-                    .match(/^\s*(\d+)(?:\.|\s|\)|\-)?/));
+                headingCounter++;
 
-            doc.querySelectorAll('h1, h2, h3, h4, h5, h6')
-                .forEach(heading => {
-                    const level = parseInt(heading.tagName.substring(1), 10);
-                    const text = heading.textContent.trim();
-                    const oldId = heading.id;
-                    let newId = oldId;
+                // Preserve the special 'toc' id for "On this page" and skip other custom IDs
+                if (oldId && oldId === 'toc' || text === 'on this page' || text === 'sur cette page') {
+                    heading.setAttribute('id', 'toc');
+                    return;
+                }
+                
+                const isSchemaId = /^toc\d+/.test(oldId) || /^app[A-Z]/.test(oldId);
+                if (oldId && !isSchemaId) {
+                    return; 
+                }
 
-                    if (level === 2) {
-                        const lowerCaseText = text.toLowerCase();
-                        if (oldId === 'toc' || lowerCaseText === 'on this page' || lowerCaseText === 'sur cette page') {
-                            heading.setAttribute('id', 'toc');
-                            return; 
-                        }
-                    }
-
-                    const ignoredParents = ['aside', 'caption', 'figure', 'figcaption', 'table'];
-                    if (heading.closest(ignoredParents.join(','))) {
-                        return; 
-                    }
-
-                    if (level === 1) return; 
-
-                    let id_segment = '';
-                    const isNumericHeading = text.match(/^\s*(\d+)(?:\.|\s|\)|\-)?/);
-                    const isAppendixHeading = text.match(/^(?:Appendix|Annexe)/i);
-
-                    if (level === 2) {
-                        if (isAppendixHeading) {
-                            const letter = getLetterFromAppendixText(text) || toAlpha(++h2_appendix_alpha_counter);
-                            id_segment = `app${letter}`;
-                        } else if (hasAnyNumberedH2) {
-                            id_segment = isNumericHeading ? `toc${++h2_num_counter}` : `toc${toAlpha(++h2_general_alpha_counter)}`;
-                        } else {
-                            id_segment = `toc${++h2_num_counter}`;
-                        }
-                        newId = id_segment;
-                        lastSeenHeadingIds[2] = newId; 
-
-                    } else { 
-                        const parent_id = lastSeenHeadingIds[level - 1];
-                        if (!parent_id) { 
-                            return;
-                        }
-
-                        if (isAppendixHeading) {
-                            const currentAppCount = (sub_appendix_alpha_counters.get(parent_id) || 0) + 1;
-                            sub_appendix_alpha_counters.set(parent_id, currentAppCount);
-                            id_segment = `app${getLetterFromAppendixText(text) || toAlpha(currentAppCount)}`;
-                        } else {
-                            const currentNumCount = (sub_num_counters.get(parent_id) || 0) + 1;
-                            sub_num_counters.set(parent_id, currentNumCount);
-                            id_segment = String(currentNumCount);
-                        }
-                        newId = `${parent_id}-${id_segment}`;
-                    }
-
-                    lastSeenHeadingIds[level] = newId; 
-                    if (oldId && oldId !== newId) {
-                        idChangeMap[oldId] = newId;
-                    }
-                    heading.setAttribute('id', newId);
-                    existingIds.add(newId);
-                });
+                const newId = `toc${headingCounter}`;
+                if (oldId && oldId !== newId) {
+                    idChangeMap[oldId] = newId;
+                }
+                heading.setAttribute('id', newId);
+                existingIds.add(newId);
+            });
         }
 
         if (currentOptions.idSections) {
-            let sectionChildCounters = {
-                'root': 0
-            };
-            doc.querySelectorAll('section')
-                .forEach(section => {
-                    // Do not ID sections that are inside a table
-                    if (section.closest('table')) {
-                        return;
-                    }
-                    if (section.id && (!/^sec\d+(-\d+)*$/.test(section.id) || section.hasAttribute('class'))) return;
-                    let parentSection = section.parentElement.closest('section');
-                    let parentId = parentSection && parentSection.id && /^sec\d+(-\d+)*$/.test(parentSection.id) ? parentSection.id : 'root';
-                    sectionChildCounters[parentId] = (sectionChildCounters[parentId] || 0) + 1;
-                    const newNum = sectionChildCounters[parentId];
-                    const newId = (parentId === 'root') ? `sec${newNum}` : `${parentId}-${newNum}`;
-                    if (section.id && section.id !== newId) idChangeMap[section.id] = newId;
-                    section.id = newId;
-                });
+            let sectionCounter = 0;
+            doc.querySelectorAll('section').forEach(section => {
+                // Do not ID sections inside tables or special sections like colophon
+                if (section.closest('table') || (section.id && section.id.includes('colophon'))) {
+                    return;
+                }
+
+                sectionCounter++;
+
+                // Skip elements that already have a custom ID or a class attribute.
+                if (section.id && (!/^sec\d+(-\d+)*$/.test(section.id) || section.hasAttribute('class'))) {
+                    return;
+                }
+
+                const newId = `sec${sectionCounter}`;
+                if (section.id && section.id !== newId) {
+                    idChangeMap[section.id] = newId;
+                }
+                section.id = newId;
+            });
         }
 
         if (currentOptions.idFigures) {
             let figureCounter = 0;
-            doc.querySelectorAll('figure:not([id])')
-                .forEach(figure => {
-                    figure.id = `fig${++figureCounter}`;
-                });
+            doc.querySelectorAll('figure').forEach(figure => {
+                figureCounter++;
+
+                // Skip if it already has a custom ID (one that is not like fig#)
+                if (figure.id && !/^fig\d+$/.test(figure.id)) {
+                    return;
+                }
+                
+                const newId = `fig${figureCounter}`;
+                if (figure.id && figure.id !== newId) idChangeMap[figure.id] = newId;
+                figure.id = newId;
+            });
         }
 
         if (currentOptions.idTables || currentOptions.idFigureTables) {
@@ -2587,14 +2119,27 @@ document.addEventListener('DOMContentLoaded', function () {
 
             doc.querySelectorAll('table').forEach(table => {
                 const oldTableId = table.id;
-                let newTableId = null;
                 const isFigureTable = !!table.closest('figure');
+                let newTableId = null;
+                let shouldProcess = false;
 
-                if ((isFigureTable && currentOptions.idFigureTables) || (!isFigureTable && currentOptions.idTables)) {
-                    newTableId = isFigureTable ? `ftbl${++figureTableCounter}` : `tbl${++tableCounter}`;
+                if (isFigureTable && currentOptions.idFigureTables) {
+                    figureTableCounter++;
+                    // Process if it has no ID or an old schema ID
+                    if (!oldTableId || /^ftbl\d+$/.test(oldTableId)) {
+                        shouldProcess = true;
+                        newTableId = `ftbl${figureTableCounter}`;
+                    }
+                } else if (!isFigureTable && currentOptions.idTables) {
+                    tableCounter++;
+                    // Process if it has no ID or an old schema ID
+                    if (!oldTableId || /^tbl\d+$/.test(oldTableId)) {
+                        shouldProcess = true;
+                        newTableId = `tbl${tableCounter}`;
+                    }
                 }
 
-                if (newTableId) {
+                if (shouldProcess && newTableId) {
                     if (oldTableId && oldTableId !== newTableId) {
                         idChangeMap[oldTableId] = newTableId;
                     }
@@ -2604,25 +2149,20 @@ document.addEventListener('DOMContentLoaded', function () {
                     // --- ROBUST FOOTNOTE RE-IDing LOGIC ---
                     const footnoteIdMap = {};
 
-                    // 1. Handle the main footnote header (e.g., id="fn" or id="tbl1fn").
                     const oldFnHeaderId = oldTableId ? `${oldTableId}fn` : 'fn';
                     const fnHeader = table.querySelector(`tfoot [id="${oldFnHeaderId}"], tfoot [id="fn"]`);
                     if (fnHeader) {
                         footnoteIdMap[fnHeader.id] = `${newTableId}fn`;
                     }
                     
-                    // 2. Build a map of all required footnote ID changes.
                     table.querySelectorAll('[id*="fn"]').forEach(el => {
                         const oldId = el.id;
-                        // This regex intelligently parses complex IDs like "tbl1fn2-rf-0".
                         const idParts = oldId.match(/(?:(.*?))?fn(\d+)((?:-rf)?(?:-\d+)*)?$/);
                         if (idParts) {
-                            const originalFootnoteNum = idParts[2]; // The core number, e.g., "2".
-                            const oldSuffix = idParts[3] || '';    // The suffix, e.g., "-rf-0".
-                            
+                            const originalFootnoteNum = idParts[2];
+                            const oldSuffix = idParts[3] || '';
                             const oldPrefix = idParts[1] || '';
                             const oldBaseId = `${oldPrefix}fn${originalFootnoteNum}`;
-                            
                             const newBaseId = `${newTableId}fn${originalFootnoteNum}`;
                             const newFullId = `${newBaseId}${oldSuffix}`;
 
@@ -2631,14 +2171,11 @@ document.addEventListener('DOMContentLoaded', function () {
                         }
                     });
 
-                    // 3. Apply the changes from the map in passes.
-                    // First, update all element IDs within the current table.
                     table.querySelectorAll('[id]').forEach(el => {
                         if (footnoteIdMap[el.id]) {
                             el.id = footnoteIdMap[el.id];
                         }
                     });
-                    // Second, update all anchor hrefs within the current table.
                     table.querySelectorAll('a[href^="#"]').forEach(link => {
                         const oldAnchor = link.getAttribute('href').substring(1);
                         if (footnoteIdMap[oldAnchor]) {
@@ -2713,20 +2250,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        let bylineHtml = '';
-        if (options.bylineMode === 'english') {
-            if (options.currentFramework === 'wet' || options.currentFramework === 'wet+') {
-                bylineHtml = '<p class="gc-byline"><strong>From: <a href="/en/treasury-board-secretariat.html">Treasury Board of Canada of Canada Secretariat</a></strong></p>';
-            } else if (options.currentFramework === 'gcds') {
-                bylineHtml = `<gcds-text><strong>From: <gcds-link href="/en/treasury-board-secretariat.html">Treasury Board of Canada of Canada Secretariat</gcds-link></strong></gcds-text>`;
-            }
-        } else if (options.bylineMode === 'french') {
-            if (options.currentFramework === 'wet' || options.currentFramework === 'wet+') {
-                bylineHtml = '<p class="gc-byline"><strong>De : <a href="/fr/secretariat-conseil-tresor.html">Secrétariat du Conseil du Trésor du Canada</a></strong></p>';
-            } else if (options.currentFramework === 'gcds') {
-                bylineHtml = `<gcds-text><strong>De : <gcds-link href="/fr/secretariat-conseil-tresor.html">Secrétariat du Conseil du Conseil du Trésor du Canada</gcds-link></strong></gcds-text>`;
-            }
-        }
+        const bylineHtml = APP_CONFIG.getBylineHtml(options);
 
         let h1AndBylineSection = `${dynamicTitleHtml}${bylineHtml}`;
         if ((options.currentFramework === 'gcds') && (dynamicTitleHtml || bylineHtml)) {
@@ -2737,10 +2261,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const parser = new DOMParser();
         const tempDoc = parser.parseFromString(contentToInject, 'text/html');
-
-        const localPrefixes = ['/content/canadasite/en/treasury-board-secretariat', '/content/canadasite/fr/secretariat-conseil-tresor', '/content/canadasite/en/government', '/content/canadasite/fr/gouvernement'];
-        const previewPrefixes = ['https://canada-preview.adobecqms.net/en/treasury-board-secretariat', 'https://canada-preview.adobecqms.net/fr/secretariat-conseil-tresor', 'https://canada-preview.adobecqms.net/en/government', 'https://canada-preview.adobecqms.net/fr/gouvernement'];
-        const livePrefixes = ['https://www.canada.ca/en/treasury-board-secretariat', 'https://www.canada.ca/fr/secretariat-conseil-tresor', 'https://www.canada.ca/en/government', 'https://www.canada.ca/fr/gouvernement'];
 
         function replaceUrlPrefix(url, currentPrefixes, targetPrefixes) {
             for (let i = 0; i < currentPrefixes.length; i++) {
@@ -2762,23 +2282,28 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             });
 
-        tempDoc.querySelectorAll('a')
-            .forEach(link => {
-                let href = link.getAttribute('href');
-                if (href && (href.startsWith('/') || href.startsWith('http://') || href.startsWith('https://'))) {
+        tempDoc.querySelectorAll('a').forEach(link => {
+            let href = link.getAttribute('href');
+            if (href) {
+                if (!forExport && !href.startsWith('#')) {
+                    link.setAttribute('target', '_blank');
+                }
+
+                if (href.startsWith('/') || href.startsWith('http://') || href.startsWith('https://')) {
                     if (options.urlSourceMode === 'local') {
-                        href = replaceUrlPrefix(href, previewPrefixes, localPrefixes);
-                        href = replaceUrlPrefix(href, livePrefixes, localPrefixes);
+                        href = replaceUrlPrefix(href, APP_CONFIG.previewPrefixes, APP_CONFIG.localPrefixes);
+                        href = replaceUrlPrefix(href, APP_CONFIG.livePrefixes, APP_CONFIG.localPrefixes);
                     } else if (options.urlSourceMode === 'preview') {
-                        href = replaceUrlPrefix(href, localPrefixes, previewPrefixes);
-                        href = replaceUrlPrefix(href, livePrefixes, previewPrefixes);
+                        href = replaceUrlPrefix(href, APP_CONFIG.localPrefixes, APP_CONFIG.previewPrefixes);
+                        href = replaceUrlPrefix(href, APP_CONFIG.livePrefixes, APP_CONFIG.previewPrefixes);
                     } else if (options.urlSourceMode === 'live') {
-                        href = replaceUrlPrefix(href, localPrefixes, livePrefixes);
-                        href = replaceUrlPrefix(href, previewPrefixes, livePrefixes);
+                        href = replaceUrlPrefix(href, APP_CONFIG.localPrefixes, APP_CONFIG.livePrefixes);
+                        href = replaceUrlPrefix(href, APP_CONFIG.previewPrefixes, APP_CONFIG.livePrefixes);
                     }
                     link.setAttribute('href', href);
                 }
-            });
+            }
+        });
 
         contentToInject = tempDoc.body.innerHTML;
 
@@ -3116,6 +2641,21 @@ document.addEventListener('DOMContentLoaded', function () {
             cleanMsoBtn.classList.add('bg-blue-700', 'hover:bg-blue-800');
         }
     }
+	
+	function syncMsoTogglesOnLoad() {
+		const isChecked = toggleAutoCleanMsoOnSwitchRichText.checked;
+		
+		// Sync the code view toggle's checked state
+		toggleAutoCleanMsoOnSwitchCode.checked = isChecked;
+
+		// Sync the visual class for both toggles
+		toggleAutoCleanMsoOnSwitchRichText.closest('.toggle-switch').classList.toggle('is-checked', isChecked);
+		toggleAutoCleanMsoOnSwitchCode.closest('.toggle-switch').classList.toggle('is-checked', isChecked);
+		
+		// Update any UI elements that depend on this state
+		updateGoToHtmlButtonColor();
+		updateCleanMsoButtonState();
+	}
 
     function debounce(func, delay) {
         let timeout;
@@ -3240,21 +2780,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 .getFullYear();
             const year = colophonYearInput.value || currentYear;
             const number = colophonNumberInput.value || '###';
-            let colophonHtmlContent = `<section id="colophon">\n<p class="mrgn-tp-lg text-center small">© `;
-
-            if (selectedLanguage === 'English') {
-                if (selectedMonarch === 'King') {
-                    colophonHtmlContent += `His Majesty the King in Right of Canada, represented by the President of the Treasury Board, ${year},<br>${selectedIdentifier}:&#160;${number}</p>\n</section>`;
-                } else { 
-                    colophonHtmlContent += `Her Majesty the Queen in Right of Canada, represented by the President of the Treasury Board, ${year},<br>${selectedIdentifier}:&#160;${number}</p>\n</section>`;
-                }
-            } else { 
-                if (selectedMonarch === 'King') {
-                    colophonHtmlContent += `Sa Majesté le Roi du chef du Canada, représenté par le président du Conseil du Trésor, ${year},<br>${selectedIdentifier}&#160;:&#160;${number}</p>\n</section>`;
-                } else { 
-                    colophonHtmlContent += `Sa Majesté la Reine du chef du Canada, représentée par le président du Conseil du Conseil du Trésor, ${year},<br>${selectedIdentifier}&#160;:&#160;${number}</p>\n</section>`;
-                }
-            }
+            const colophonHtmlContent = APP_CONFIG.getColophonHtml({
+                language: selectedLanguage,
+                monarch: selectedMonarch,
+                year: year,
+                identifier: selectedIdentifier,
+                number: number
+            });
 
             if (monacoEditorInstance) {
                 let currentContent = monacoEditorInstance.getValue();
@@ -4384,32 +3916,33 @@ function showFootnoteAnchorModal(triggeringButton, originalButtonText) {
         toggleEditorViewBtnCode.classList.remove('bg-cyan-700', 'hover:bg-cyan-800', 'bg-slate-800', 'hover:bg-slate-700'); 
         updateGoToHtmlButtonColor(); 
 
-        require.config({
-            paths: {
-                'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs'
-            }
-        });
+        require.config({ paths: APP_CONFIG.monacoLoaderPaths });
         require(['vs/editor/editor.main'], function () {
             monaco.languages.html.htmlDefaults.setOptions({
                 wrapLineLength: 500
             , });
-            monacoEditorInstance = monaco.editor.create(monacoEditorContainer, { 
-                value: htmlOutputContent, 
-                language: 'html'
-                , theme: 'vs-dark', 
-                automaticLayout: true, 
-                minimap: {
-                    enabled: true
-                }
-                , fontSize: 14
-                , tabSize: 4
-                , insertSpaces: true,
-                scrollBeyondLastLine: false
-                , wordWrap: 'on'
-                , wrappingIndent: 'same'
-            , });
+            monacoEditorInstance = monaco.editor.create(
+                monacoEditorContainer, 
+                APP_CONFIG.getMonacoEditorOptions(htmlOutputContent)
+            );
             window.monacoEditorInstance = monacoEditorInstance;
             console.log("Monaco editor initialized.");
+			
+			let currentMonacoTheme = 'dark'; // Initial theme
+
+        toggleThemeBtn.addEventListener('click', () => {
+            if (currentMonacoTheme === 'dark') {
+                currentMonacoTheme = 'light';
+                monaco.editor.setTheme(APP_CONFIG.monacoThemes.light);
+                toggleThemeBtn.innerHTML = '<i class="fa-solid fa-moon"></i>';
+                toggleThemeBtn.title = "Switch to Dark Theme";
+            } else {
+                currentMonacoTheme = 'dark';
+                monaco.editor.setTheme(APP_CONFIG.monacoThemes.dark);
+                toggleThemeBtn.innerHTML = '<i class="fa-solid fa-sun"></i>';
+                toggleThemeBtn.title = "Switch to Light Theme";
+            }
+        });
 
             monacoEditorInstance.addCommand(monaco.KeyCode.KeyZ | monaco.KeyMod.CtrlCmd, () => {
                 undoBtn.click();
@@ -5492,182 +5025,7 @@ function showFootnoteAnchorModal(triggeringButton, originalButtonText) {
 
         const iframeDocument = default_ifr.contentDocument || default_ifr.contentWindow.document;
         iframeDocument.open();
-        iframeDocument.write(`
-                <!DOCTYPE html>
-                <html lang="en">
-                <head>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Rich Editor</title>
-                    <script src="js/hugerte/hugerte.min.js"><\/script>
-                    <script src="js/tailwind.js"><\/script>
-                    <style>
-                        html, body {
-                            height: 100%; 
-                            margin: 0;
-                            box-sizing: border-box; 
-                        }
-                        body {
-                            font-family: sans-serif;
-                            background-color: #ffffff; 
-                            color: #333;
-                            display: flex; 
-                            flex-direction: column;
-                            padding: 1rem; 
-                        }
-                        form {
-                            height: 100%;
-                            display: flex;
-                            flex-direction: column;
-                        }
-                        textarea {
-                            width: 100%;
-                            flex-grow: 1;
-                            border: 1px solid #ccc;
-                            border-radius: 0.5rem;
-                            padding: 0.75rem;
-                            font-size: 1rem;
-                            resize: none; 
-                            box-sizing: border-box; 
-                        }
-                        .tox.tox-tinymce { 
-                            height: 100% !important; 
-                            display: flex; 
-                            flex-direction: column; 
-                        }
-                        .tox-editor-container {
-                            flex-grow: 1; 
-                            display: flex;
-                            flex-direction: column;
-                        }
-                        .tox-edit-area {
-                            flex-grow: 1; 
-                            display: flex;
-                            flex-direction: column;
-                        }
-                        .tox-edit-area__iframe {
-                            flex-grow: 1; 
-                        }
-                        .nowrap {
-                            white-space: nowrap;
-                        }
-						
-                    </style>
-                </head>
-                <body>
-                    <form method="post">
-                        <textarea id="richEditor"></textarea>
-                    </form>
-                    <script type="text/javascript">
-                        console.log("Iframe script started executing.");
-                        
-                        let richTextEditorInstance;
-                        let isUpdatingFromCodeMirror = false;
-
-                  
-                        const defaultContentStyle = 'body { max-width: 1170px; margin-left: auto; margin-right: auto; padding: 15px; box-sizing: border-box; } h1, .h1 { background-color: #FF6347; padding: 2px 5px; border-radius: 3px;} h2, .h2 { background-color: #FE9900; padding: 2px 5px; border-radius: 3px;} h3, .h3 { background-color: #FFDE59; padding: 2px 5px; border-radius: 3px;} h4, .h4 { background-color: #7DDA58; padding: 2px 5px; border-radius: 3px;} h5, .h5 { background-color: #5DE2E7; padding: 2px 5px; border-radius: 3px;} h6, .h6 { background-color: #E7DDFF; padding: 2px 5px; border-radius: 3px;} section { border: #060270 2px dashed; margin: 5px; padding: 5px;} figure { display: block !important; border: #1e81b0 2px solid; margin: 5px; padding: 5px;} div { border: #e28743 2px solid; margin: 5px; padding: 5px;} aside { border: #8D6F64 2px solid; margin: 5px; padding: 5px;} details > *:not(summary) { display: block !important; } dl { border: #A270C5 2px solid; margin: 5px; padding: 5px; } details { border: #42902C 2px solid; margin: 5px; padding: 5px; } details summary { cursor: default !important; font-weight: bold; margin-bottom: 5px; color: #333; } time { background-color: #ffd6f9; padding: 2px 5px; border-radius: 3px;} div.well { background-color: #dadada; } .text-center { text-align: center !important; } .text-right { text-align: right !important; } .text-left { text-align: left !important; } div[data-is-gcds-wrapper="true"] { border: 2px dotted #4f46e5; padding: 8px; margin: 8px 0; }';
-
-                        window.setRichEditorContent = function(content) {
-                            if (richTextEditorInstance && !isUpdatingFromCodeMirror) {
-                                isUpdatingFromCodeMirror = true;
-                                richTextEditorInstance.setContent(content);
-                                richTextEditorInstance.focus();
-                                isUpdatingFromCodeMirror = false;
-                            } else {
-                                console.warn('Iframe: HugeRTE editor not yet initialized or isUpdatingFromCodeMirror is true.');
-                            }
-                        };
-
-                        window.getRichEditorContent = function() {
-                            if (richTextEditorInstance) {
-                                return richTextEditorInstance.getContent();
-                            }
-                            console.warn('Iframe: HugeRTE editor not yet initialized. Cannot get content.');
-                            return '';
-                        };
-
-                        window.updateEditorStyles = function(enableCustomStyles) {
-                            if (richTextEditorInstance) {
-                                const editorDoc = richTextEditorInstance.getDoc();
-                                if (!editorDoc) return;
-
-                                let customStyleSheet = editorDoc.getElementById('tinymce-custom-content-css');
-
-                                if (!customStyleSheet) {
-                                    const styleSheets = editorDoc.head.querySelectorAll('style');
-                                    for (let i = 0; i < styleSheets.length; i++) {
-                                        if (styleSheets[i].innerHTML.includes('FF6347')) { 
-                                            customStyleSheet = styleSheets[i];
-                                            customStyleSheet.id = 'tinymce-custom-content-css';
-                                            break;
-                                        }
-                                    }
-                                }
-
-                                if (customStyleSheet) {
-                                    customStyleSheet.disabled = !enableCustomStyles;
-                                }
-                            }
-                        };
-
-                        function openAllDetailsInEditor(editor) {
-                            const editorDoc = editor.getDoc();
-                            if (editorDoc) {
-                                const detailsElements = editorDoc.querySelectorAll('details');
-                                detailsElements.forEach(el => {
-                                    el.setAttribute('open', 'open');
-                                });
-                            }
-                        }
-
-                        window.initializeEditor = function() {
-                            if (typeof hugerte !== 'undefined') {
-                                console.log("Iframe: Parent commanded initialization. Initializing editor.");
-                                hugerte.init({
-                                    selector: '#richEditor',
-                                    toolbar: 'undo redo styles bold italic alignleft aligncenter alignright numlist bullist link table',
-                                    plugins: ['table', 'lists', 'link'],
-									table_resize_bars: false,
-									object_resizing: false,
-                                    height: '100%',
-                                    tab_focus: false,
-                                    formats: {
-                                        alignleft: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img', classes: 'text-left', exact: true },
-                                        aligncenter: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img', classes: 'text-center', exact: true },
-                                        alignright: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img', classes: 'text-right', exact: true },
-                                    },
-                                    content_style: defaultContentStyle,
-                                    extended_valid_elements: 'dl[class|id],dt[class|id],dd[class|id],details[open|class|id|data-*],summary[class|id|data-*],div[data-*|class|id|style|contenteditable],option[*],optgroup[*]',
-                                    valid_children: '+body[dl],+dl[dt|dd],+dt[a|abbr|acronym|b|bdo|big|br|button|cite|code|del|dfn|em|i|img|input|ins|kbd|label|map|q|samp|select|small|span|strike|strong|sub|sup|textarea|tt|var|p],+dd[a|abbr|acronym|b|bdo|big|br|button|cite|code|del|dfn|em|i|img|input|ins|kbd|label|map|q|samp|select|small|span|strike|strong|sub|sup|textarea|tt|var|p|ul|ol|dl],+details[summary|p|div|section|code|a|img|em|strong|ul|ol|table|h1|h2|h3|h4|h5|h6]',
-                                    custom_elements: 'dl,dt,dd,details,summary,option,optgroup',
-                                    setup: function(editor) {
-                                        editor.on('SetContent', function(e) {
-                                            openAllDetailsInEditor(editor);
-                                        });
-                                    },
-                                    init_instance_callback: function(editorInstance) {
-                                        console.log('Iframe: HugeRTE editor initialized inside iframe.');
-                                        richTextEditorInstance = editorInstance;
-                                        openAllDetailsInEditor(editorInstance);
-                                        if (window.parent && typeof window.parent.handleRichTextEditorReady === 'function') {
-                                            window.parent.handleRichTextEditorReady(editorInstance);
-                                        }
-                                        editorInstance.on('keydown', (event) => {
-                                            if (event.key === 'Tab') {
-                                                event.preventDefault();
-                                                editorInstance.focus();
-                                            }
-                                        });
-                                    }
-                                });
-                            } else {
-                                console.error("Iframe: Parent commanded initialization, but HugeRTE library not loaded!");
-                            }
-                        };
-                    <\/script>
-                </body>
-                </html>
-            `);
+        iframeDocument.write(APP_CONFIG.richTextEditorTemplate);
         iframeDocument.close();
 
         toggleAutoCleanMsoOnSwitchRichText.addEventListener('change', (event) => {
@@ -5727,8 +5085,10 @@ function showFootnoteAnchorModal(triggeringButton, originalButtonText) {
 
         updateFormatButtonState();
 
+		// Add this line to synchronize the MSO toggles on page load
+		syncMsoTogglesOnLoad();
 
-        formatSelectedBtn.addEventListener('click', async () => {
+		formatSelectedBtn.addEventListener('click', async () => {
             console.log("Format button clicked.");
             if (monacoEditorInstance) {
                 console.log("Monaco instance is valid.");
@@ -6890,4 +6250,5 @@ function showFootnoteAnchorModal(triggeringButton, originalButtonText) {
                 return "You have unsaved changes. Are you sure you want to leave?";
             }
         };
+        
 });
