@@ -307,6 +307,42 @@ function findTableEndIndex(html, startIndex) {
     }
     return currentIndex;
 }
+/**
+ * Updates the enabled/disabled state of table control buttons based on dropdown selection.
+ * @param {boolean} isTableSelected - True if a specific table is selected, false otherwise.
+ */
+function updateTableButtonStates(isTableSelected) {
+    const universalButtons = [
+        document.getElementById('open-tbl-options-tbl-modal-btn'),
+        document.getElementById('reset-universal-btn')
+    ];
+    const specificButtons = [
+        document.getElementById('tbl-customize-button'),
+        document.getElementById('reset-tableformat-btn'),
+        document.getElementById('force-scope-button'),
+        document.getElementById('force-id-button'),
+        document.getElementById('reset-tablescopeid-btn'),
+        document.getElementById('tbl-toggle-interactive')
+    ];
+
+    // These buttons are ENABLED when NO table is selected.
+    universalButtons.forEach(btn => {
+        if (btn) {
+            btn.disabled = isTableSelected;
+            btn.classList.toggle('opacity-50', isTableSelected);
+            btn.classList.toggle('cursor-not-allowed', isTableSelected);
+        }
+    });
+
+    // These buttons are ENABLED when A table IS selected.
+    specificButtons.forEach(btn => {
+        if (btn) {
+            btn.disabled = !isTableSelected;
+            btn.classList.toggle('opacity-50', !isTableSelected);
+            btn.classList.toggle('cursor-not-allowed', !isTableSelected);
+        }
+    });
+}
 
 // ===================================================================================
 // III. UI & MODAL MANAGEMENT
@@ -445,7 +481,7 @@ function populateTableSearchDropdown(keepSelectionValue) {
         const tableCaption = captionElement ? captionElement.textContent.trim() : '';
 
         const optionValue = tableId ? `id:${tableId}` : `unid:${unidCounter++}`;
-        const optionText = `${tableCaption ? tableCaption + ' ' : ''}${tableId ? '(ID: ' + tableId + ')' : '(Table ' + (tableDataMap.size + 1) + ')'}`;
+        const optionText = `${tableCaption ? tableCaption + ' ' : ''}${tableId ? '(' + tableId + ')' : '(Table ' + (tableDataMap.size + 1) + ')'}`;
 
         const option = document.createElement('option');
         option.value = optionValue;
@@ -901,7 +937,25 @@ function formatTableLogic(table, options) {
             }
         }
     }
+    // --- Unwrap <strong> tags inside <th> elements ---
+    table.querySelectorAll('th').forEach(th => {
+        // If the <th> has the 'fnt-nrml' class, do not unwrap its <strong> tags.
+        if (th.classList.contains('fnt-nrml')) {
+            return; // Skip this th and move to the next one.
+        }
 
+        th.querySelectorAll('strong').forEach(strongTag => {
+            const parent = strongTag.parentNode;
+            if (parent) {
+                // Move all content out of the <strong> tag
+                while (strongTag.firstChild) {
+                    parent.insertBefore(strongTag.firstChild, strongTag);
+                }
+                // Remove the now-empty <strong> tag
+                parent.removeChild(strongTag);
+            }
+        });
+    });
     // --- Final cleanup ---
     cleanupEmptyClassAttributes(table);
     return table;
@@ -2188,6 +2242,7 @@ window.onload = function() {
             console.log("Table Wizard: Main editor instance found. Initializing table features.");
 
             populateTableSearchDropdown();
+            updateTableButtonStates(false); // Set the initial state (no table selected)
             applyEntityHighlighting();
 
             // --- Editor Content Change Listener ---
@@ -2230,12 +2285,13 @@ window.onload = function() {
                         }]);
                         openOptionsModalCustomize();
                     } else {
-                        openOptionsModalCustomize(); // Call to reset UI when "-- Select --" is chosen
+                        openOptionsModalCustomize();
                     }
                 } else {
-                    openOptionsModalCustomize(); // Call to reset UI when "-- Select --" is chosen
+                    openOptionsModalCustomize();
                 }
                 updateInteractiveButtonState();
+                updateTableButtonStates(!!selectedValue); // This line is new
             });
 
             autoResponsiveBtn.addEventListener('click', () => {
@@ -2570,6 +2626,30 @@ function updateHeaderAlignmentUI(tableElement) {
 }
 
 /**
+ * Reads the alignment of a table caption and updates the UI controls in the "Custom Format" modal.
+ * @param {HTMLElement} tableElement - The table element to inspect.
+ */
+function updateCaptionAlignmentUI(tableElement) {
+    const captionAlignmentGroup = document.getElementById('tbl-customize-caption-tbl-alignment-group');
+    if (!captionAlignmentGroup) return;
+
+    const caption = tableElement ? tableElement.querySelector('caption') : null;
+
+    let currentAlignment = 'none';
+    if (caption) {
+        if (caption.classList.contains('text-left')) currentAlignment = 'left';
+        else if (caption.classList.contains('text-center')) currentAlignment = 'center';
+        else if (caption.classList.contains('text-right')) currentAlignment = 'right';
+    }
+
+    // Update the global state variable and the UI buttons
+    window.customizeCaptionAlignment = currentAlignment;
+    captionAlignmentGroup.querySelectorAll('button').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.align === currentAlignment);
+    });
+}
+
+/**
  * Reads the alignment of data cells in a table and updates the UI controls in the "Custom Format" modal.
  * @param {HTMLElement} tableElement - The table element to inspect.
  */
@@ -2684,10 +2764,44 @@ function openOptionsModalCustomize() {
 
     // 3. Update all UI elements based on the new state.
     initializeToggleSwitchesVisuals(customizeModal);
+    updateCaptionAlignmentUI(selectedTableElement);
     updateDataCellAlignmentUI(selectedTableElement);
     updateHeaderAlignmentUI(selectedTableElement);
     updateCustomizeModalPreview(tableInfo ? tableInfo.outerHTML : '');
 }
+// --- Accordion Logic for Customize Modal ---
+    const accordionHeaders = document.querySelectorAll('.tbl-accordion-header');
+    accordionHeaders.forEach(clickedHeader => {
+        clickedHeader.addEventListener('click', () => {
+            const wasExpanded = clickedHeader.classList.contains('expanded');
+
+            // First, close all accordion panels
+            accordionHeaders.forEach(header => {
+                header.classList.remove('expanded');
+                const content = document.querySelector(`.tbl-accordion-content[data-accordion-content="${header.dataset.accordionHeader}"]`);
+                if (content) {
+                    content.classList.remove('expanded');
+                }
+            });
+
+            // If the clicked panel was not already open, open it
+            if (!wasExpanded) {
+                clickedHeader.classList.add('expanded');
+                const clickedContent = document.querySelector(`.tbl-accordion-content[data-accordion-content="${clickedHeader.dataset.accordionHeader}"]`);
+                if (clickedContent) {
+                    clickedContent.classList.add('expanded');
+                }
+            }
+        });
+    });
+
+    // Set the "Alignment" panel to be open by default
+    const defaultOpenHeader = document.querySelector('[data-accordion-header="alignment"]');
+    const defaultOpenContent = document.querySelector('[data-accordion-content="alignment"]');
+    if (defaultOpenHeader && defaultOpenContent) {
+        defaultOpenHeader.classList.add('expanded');
+        defaultOpenContent.classList.add('expanded');
+    }
 });
 
 
