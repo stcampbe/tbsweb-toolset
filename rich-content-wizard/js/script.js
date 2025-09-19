@@ -6252,3 +6252,4 @@ function showFootnoteAnchorModal(triggeringButton, originalButtonText) {
         };
         
 });
+ 
