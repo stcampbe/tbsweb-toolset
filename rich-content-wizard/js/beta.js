@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const debouncedModalUpdate = debounce(updateModalPreview, 500);
     const validateNowBtn = document.getElementById('validateNowBtn');
     const previewBtn = document.getElementById('previewBtn');
+	const toggleThemeBtn = document.getElementById('toggleThemeBtn');
     const previewModal = document.getElementById('previewModal');
     const modalPreviewFrame = document.getElementById('modalPreviewFrame');
     const closePreviewModalBtn = document.getElementById('closePreviewModalBtn');
@@ -2040,116 +2041,76 @@ document.addEventListener('DOMContentLoaded', function () {
             .forEach(el => existingIds.add(el.id));
 
         if (currentOptions.idHeadings) {
-            let h2_num_counter = 0;
-            let h2_general_alpha_counter = 0;
-            let h2_appendix_alpha_counter = 0;
-            let sub_num_counters = new Map();
-            let sub_appendix_alpha_counters = new Map();
+            let headingCounter = 0;
+            doc.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(heading => {
+                const level = parseInt(heading.tagName.substring(1), 10);
+                const text = heading.textContent.trim().toLowerCase();
+                const oldId = heading.id;
 
-            const lastSeenHeadingIds = {
-                2: ''
-                , 3: ''
-                , 4: ''
-                , 5: ''
-                , 6: ''
-            };
+                // Skip main page title (h1) and headings inside certain containers
+                if (level === 1 || heading.closest('aside, caption, figure, figcaption, table')) {
+                    return;
+                }
 
-            let hasAnyNumberedH2 = Array.from(body.querySelectorAll('h2'))
-                .some(h => h.textContent.trim()
-                    .match(/^\s*(\d+)(?:\.|\s|\)|\-)?/));
+                headingCounter++;
 
-            doc.querySelectorAll('h1, h2, h3, h4, h5, h6')
-                .forEach(heading => {
-                    const level = parseInt(heading.tagName.substring(1), 10);
-                    const text = heading.textContent.trim();
-                    const oldId = heading.id;
-                    let newId = oldId;
+                // Preserve the special 'toc' id for "On this page" and skip other custom IDs
+                if (oldId && oldId === 'toc' || text === 'on this page' || text === 'sur cette page') {
+                    heading.setAttribute('id', 'toc');
+                    return;
+                }
+                
+                const isSchemaId = /^toc\d+/.test(oldId) || /^app[A-Z]/.test(oldId);
+                if (oldId && !isSchemaId) {
+                    return; 
+                }
 
-                    if (level === 2) {
-                        const lowerCaseText = text.toLowerCase();
-                        if (oldId === 'toc' || lowerCaseText === 'on this page' || lowerCaseText === 'sur cette page') {
-                            heading.setAttribute('id', 'toc');
-                            return; 
-                        }
-                    }
-
-                    const ignoredParents = ['aside', 'caption', 'figure', 'figcaption', 'table'];
-                    if (heading.closest(ignoredParents.join(','))) {
-                        return; 
-                    }
-
-                    if (level === 1) return; 
-
-                    let id_segment = '';
-                    const isNumericHeading = text.match(/^\s*(\d+)(?:\.|\s|\)|\-)?/);
-                    const isAppendixHeading = text.match(/^(?:Appendix|Annexe)/i);
-
-                    if (level === 2) {
-                        if (isAppendixHeading) {
-                            const letter = getLetterFromAppendixText(text) || toAlpha(++h2_appendix_alpha_counter);
-                            id_segment = `app${letter}`;
-                        } else if (hasAnyNumberedH2) {
-                            id_segment = isNumericHeading ? `toc${++h2_num_counter}` : `toc${toAlpha(++h2_general_alpha_counter)}`;
-                        } else {
-                            id_segment = `toc${++h2_num_counter}`;
-                        }
-                        newId = id_segment;
-                        lastSeenHeadingIds[2] = newId; 
-
-                    } else { 
-                        const parent_id = lastSeenHeadingIds[level - 1];
-                        if (!parent_id) { 
-                            return;
-                        }
-
-                        if (isAppendixHeading) {
-                            const currentAppCount = (sub_appendix_alpha_counters.get(parent_id) || 0) + 1;
-                            sub_appendix_alpha_counters.set(parent_id, currentAppCount);
-                            id_segment = `app${getLetterFromAppendixText(text) || toAlpha(currentAppCount)}`;
-                        } else {
-                            const currentNumCount = (sub_num_counters.get(parent_id) || 0) + 1;
-                            sub_num_counters.set(parent_id, currentNumCount);
-                            id_segment = String(currentNumCount);
-                        }
-                        newId = `${parent_id}-${id_segment}`;
-                    }
-
-                    lastSeenHeadingIds[level] = newId; 
-                    if (oldId && oldId !== newId) {
-                        idChangeMap[oldId] = newId;
-                    }
-                    heading.setAttribute('id', newId);
-                    existingIds.add(newId);
-                });
+                const newId = `toc${headingCounter}`;
+                if (oldId && oldId !== newId) {
+                    idChangeMap[oldId] = newId;
+                }
+                heading.setAttribute('id', newId);
+                existingIds.add(newId);
+            });
         }
 
         if (currentOptions.idSections) {
-            let sectionChildCounters = {
-                'root': 0
-            };
-            doc.querySelectorAll('section')
-                .forEach(section => {
-                    // Do not ID sections that are inside a table
-                    if (section.closest('table')) {
-                        return;
-                    }
-                    if (section.id && (!/^sec\d+(-\d+)*$/.test(section.id) || section.hasAttribute('class'))) return;
-                    let parentSection = section.parentElement.closest('section');
-                    let parentId = parentSection && parentSection.id && /^sec\d+(-\d+)*$/.test(parentSection.id) ? parentSection.id : 'root';
-                    sectionChildCounters[parentId] = (sectionChildCounters[parentId] || 0) + 1;
-                    const newNum = sectionChildCounters[parentId];
-                    const newId = (parentId === 'root') ? `sec${newNum}` : `${parentId}-${newNum}`;
-                    if (section.id && section.id !== newId) idChangeMap[section.id] = newId;
-                    section.id = newId;
-                });
+            let sectionCounter = 0;
+            doc.querySelectorAll('section').forEach(section => {
+                // Do not ID sections inside tables or special sections like colophon
+                if (section.closest('table') || (section.id && section.id.includes('colophon'))) {
+                    return;
+                }
+
+                sectionCounter++;
+
+                // Skip elements that already have a custom ID or a class attribute.
+                if (section.id && (!/^sec\d+(-\d+)*$/.test(section.id) || section.hasAttribute('class'))) {
+                    return;
+                }
+
+                const newId = `sec${sectionCounter}`;
+                if (section.id && section.id !== newId) {
+                    idChangeMap[section.id] = newId;
+                }
+                section.id = newId;
+            });
         }
 
         if (currentOptions.idFigures) {
             let figureCounter = 0;
-            doc.querySelectorAll('figure:not([id])')
-                .forEach(figure => {
-                    figure.id = `fig${++figureCounter}`;
-                });
+            doc.querySelectorAll('figure').forEach(figure => {
+                figureCounter++;
+
+                // Skip if it already has a custom ID (one that is not like fig#)
+                if (figure.id && !/^fig\d+$/.test(figure.id)) {
+                    return;
+                }
+                
+                const newId = `fig${figureCounter}`;
+                if (figure.id && figure.id !== newId) idChangeMap[figure.id] = newId;
+                figure.id = newId;
+            });
         }
 
         if (currentOptions.idTables || currentOptions.idFigureTables) {
@@ -2158,14 +2119,27 @@ document.addEventListener('DOMContentLoaded', function () {
 
             doc.querySelectorAll('table').forEach(table => {
                 const oldTableId = table.id;
-                let newTableId = null;
                 const isFigureTable = !!table.closest('figure');
+                let newTableId = null;
+                let shouldProcess = false;
 
-                if ((isFigureTable && currentOptions.idFigureTables) || (!isFigureTable && currentOptions.idTables)) {
-                    newTableId = isFigureTable ? `ftbl${++figureTableCounter}` : `tbl${++tableCounter}`;
+                if (isFigureTable && currentOptions.idFigureTables) {
+                    figureTableCounter++;
+                    // Process if it has no ID or an old schema ID
+                    if (!oldTableId || /^ftbl\d+$/.test(oldTableId)) {
+                        shouldProcess = true;
+                        newTableId = `ftbl${figureTableCounter}`;
+                    }
+                } else if (!isFigureTable && currentOptions.idTables) {
+                    tableCounter++;
+                    // Process if it has no ID or an old schema ID
+                    if (!oldTableId || /^tbl\d+$/.test(oldTableId)) {
+                        shouldProcess = true;
+                        newTableId = `tbl${tableCounter}`;
+                    }
                 }
 
-                if (newTableId) {
+                if (shouldProcess && newTableId) {
                     if (oldTableId && oldTableId !== newTableId) {
                         idChangeMap[oldTableId] = newTableId;
                     }
@@ -2175,25 +2149,20 @@ document.addEventListener('DOMContentLoaded', function () {
                     // --- ROBUST FOOTNOTE RE-IDing LOGIC ---
                     const footnoteIdMap = {};
 
-                    // 1. Handle the main footnote header (e.g., id="fn" or id="tbl1fn").
                     const oldFnHeaderId = oldTableId ? `${oldTableId}fn` : 'fn';
                     const fnHeader = table.querySelector(`tfoot [id="${oldFnHeaderId}"], tfoot [id="fn"]`);
                     if (fnHeader) {
                         footnoteIdMap[fnHeader.id] = `${newTableId}fn`;
                     }
                     
-                    // 2. Build a map of all required footnote ID changes.
                     table.querySelectorAll('[id*="fn"]').forEach(el => {
                         const oldId = el.id;
-                        // This regex intelligently parses complex IDs like "tbl1fn2-rf-0".
                         const idParts = oldId.match(/(?:(.*?))?fn(\d+)((?:-rf)?(?:-\d+)*)?$/);
                         if (idParts) {
-                            const originalFootnoteNum = idParts[2]; // The core number, e.g., "2".
-                            const oldSuffix = idParts[3] || '';    // The suffix, e.g., "-rf-0".
-                            
+                            const originalFootnoteNum = idParts[2];
+                            const oldSuffix = idParts[3] || '';
                             const oldPrefix = idParts[1] || '';
                             const oldBaseId = `${oldPrefix}fn${originalFootnoteNum}`;
-                            
                             const newBaseId = `${newTableId}fn${originalFootnoteNum}`;
                             const newFullId = `${newBaseId}${oldSuffix}`;
 
@@ -2202,14 +2171,11 @@ document.addEventListener('DOMContentLoaded', function () {
                         }
                     });
 
-                    // 3. Apply the changes from the map in passes.
-                    // First, update all element IDs within the current table.
                     table.querySelectorAll('[id]').forEach(el => {
                         if (footnoteIdMap[el.id]) {
                             el.id = footnoteIdMap[el.id];
                         }
                     });
-                    // Second, update all anchor hrefs within the current table.
                     table.querySelectorAll('a[href^="#"]').forEach(link => {
                         const oldAnchor = link.getAttribute('href').substring(1);
                         if (footnoteIdMap[oldAnchor]) {
@@ -2675,6 +2641,21 @@ document.addEventListener('DOMContentLoaded', function () {
             cleanMsoBtn.classList.add('bg-blue-700', 'hover:bg-blue-800');
         }
     }
+	
+	function syncMsoTogglesOnLoad() {
+		const isChecked = toggleAutoCleanMsoOnSwitchRichText.checked;
+		
+		// Sync the code view toggle's checked state
+		toggleAutoCleanMsoOnSwitchCode.checked = isChecked;
+
+		// Sync the visual class for both toggles
+		toggleAutoCleanMsoOnSwitchRichText.closest('.toggle-switch').classList.toggle('is-checked', isChecked);
+		toggleAutoCleanMsoOnSwitchCode.closest('.toggle-switch').classList.toggle('is-checked', isChecked);
+		
+		// Update any UI elements that depend on this state
+		updateGoToHtmlButtonColor();
+		updateCleanMsoButtonState();
+	}
 
     function debounce(func, delay) {
         let timeout;
@@ -3946,6 +3927,22 @@ function showFootnoteAnchorModal(triggeringButton, originalButtonText) {
             );
             window.monacoEditorInstance = monacoEditorInstance;
             console.log("Monaco editor initialized.");
+			
+			let currentMonacoTheme = 'dark'; // Initial theme
+
+        toggleThemeBtn.addEventListener('click', () => {
+            if (currentMonacoTheme === 'dark') {
+                currentMonacoTheme = 'light';
+                monaco.editor.setTheme(APP_CONFIG.monacoThemes.light);
+                toggleThemeBtn.innerHTML = '<i class="fa-solid fa-moon"></i>';
+                toggleThemeBtn.title = "Switch to Dark Theme";
+            } else {
+                currentMonacoTheme = 'dark';
+                monaco.editor.setTheme(APP_CONFIG.monacoThemes.dark);
+                toggleThemeBtn.innerHTML = '<i class="fa-solid fa-sun"></i>';
+                toggleThemeBtn.title = "Switch to Light Theme";
+            }
+        });
 
             monacoEditorInstance.addCommand(monaco.KeyCode.KeyZ | monaco.KeyMod.CtrlCmd, () => {
                 undoBtn.click();
@@ -5088,8 +5085,10 @@ function showFootnoteAnchorModal(triggeringButton, originalButtonText) {
 
         updateFormatButtonState();
 
+		// Add this line to synchronize the MSO toggles on page load
+		syncMsoTogglesOnLoad();
 
-        formatSelectedBtn.addEventListener('click', async () => {
+		formatSelectedBtn.addEventListener('click', async () => {
             console.log("Format button clicked.");
             if (monacoEditorInstance) {
                 console.log("Monaco instance is valid.");
