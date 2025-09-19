@@ -937,7 +937,25 @@ function formatTableLogic(table, options) {
             }
         }
     }
+    // --- Unwrap <strong> tags inside <th> elements ---
+    table.querySelectorAll('th').forEach(th => {
+        // If the <th> has the 'fnt-nrml' class, do not unwrap its <strong> tags.
+        if (th.classList.contains('fnt-nrml')) {
+            return; // Skip this th and move to the next one.
+        }
 
+        th.querySelectorAll('strong').forEach(strongTag => {
+            const parent = strongTag.parentNode;
+            if (parent) {
+                // Move all content out of the <strong> tag
+                while (strongTag.firstChild) {
+                    parent.insertBefore(strongTag.firstChild, strongTag);
+                }
+                // Remove the now-empty <strong> tag
+                parent.removeChild(strongTag);
+            }
+        });
+    });
     // --- Final cleanup ---
     cleanupEmptyClassAttributes(table);
     return table;
