@@ -100,7 +100,7 @@
                         <option value="">-- Select a table --</option>
                     </select>
                     <div class="attached-tbl-button-group">
-                        <button id="tbl-customize-button" class="px-3 py-1 text-sm bg-blue-700 text-white rounded-l-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-opacity-50 font-bold">Custom Format</button>
+                        <button id="tbl-customize-button" class="px-3 py-1 text-sm bg-blue-700 text-white rounded-l-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-opacity-50 font-bold">Customize</button>
                         <button id="reset-tableformat-btn" class="trash-button bg-blue-800 text-white rounded-r-md hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-opacity-50 font-semibold" title="Reset Table Formatting"><i class="fas fa-trash-alt"></i></button>
                     </div>
                     <div class="attached-tbl-button-group" role="group">
@@ -627,161 +627,19 @@
                 <div class="tbl-customize-preview-wrapper flex flex-col">
                     <iframe id="tbl-customize-preview-iframe" class="flex-grow"></iframe>
                 </div>
-
                 <div class="tbl-customize-options-panel">
-                    <div class="tbl-options-section">
-                        <h4>Base Properties</h4>
-                        <div class="tbl-options-grid">
-                            <div class="tbl-option-text-input">
-                                <label for="tbl-customize-page-id-prefix-input" class="text-gray-200">Custom ID</label>
-                                <input type="text" id="tbl-customize-page-id-prefix-input" class="flex-grow bg-zinc-700 text-white border border-zinc-500 rounded-md p-1" placeholder="my-custom-id">
-                            </div>
-							<div class="tbl-toggle-switch-container">
-                                <label class="tbl-toggle-switch" for="tbl-customize-fix-empty-cells-checkbox">
-                                    <input type="checkbox" id="tbl-customize-fix-empty-cells-checkbox" class="hidden" checked>
-                                    <span class="tbl-toggle-switch-slider"></span>
-                                </label>
-                                <span class="tbl-toggle-switch-label text-gray-200">Fix Empty Cells</span>
-                            </div>
-
-                            <div class="tbl-toggle-switch-container">
-                                <label class="tbl-toggle-switch" for="tbl-customize-make-tfoot-from-colspan-checkbox">
-                                    <input type="checkbox" id="tbl-customize-make-tfoot-from-colspan-checkbox" class="hidden">
-                                    <span class="tbl-toggle-switch-slider"></span>
-                                </label>
-                                <span class="tbl-toggle-switch-label text-gray-200">TFOOT from LAST COLSPAN</span>
-                            </div>
-							<div class="tbl-toggle-switch-container">
-                            <label class="tbl-toggle-switch is-checked" for="tbl-customize-make-tfoot-before-tbody-checkbox">
-                                <input type="checkbox" id="tbl-customize-make-tfoot-before-tbody-checkbox" class="hidden">
-                                <span class="tbl-toggle-switch-slider"></span>
-                            </label>
-                            <span class="tbl-toggle-switch-label text-gray-200">TFOOT before TBODY</span>
-                        </div>
-							<div class="tbl-toggle-switch-container">
-                            <label class="tbl-toggle-switch" for="tbl-customize-caption-checkbox">
-                                <input type="checkbox" id="tbl-customize-caption-checkbox" class="hidden">
-                                <span class="tbl-toggle-switch-slider"></span>
-                            </label>
-                            <span class="tbl-toggle-switch-label text-gray-200">Caption</span>
-                        </div>
-                            <div class="tbl-toggle-switch-container">
-                            <label class="tbl-toggle-switch" for="tbl-customize-inv-caption-checkbox">
-                                <input type="checkbox" id="tbl-customize-inv-caption-checkbox" class="hidden">
-                                <span class="tbl-toggle-switch-slider"></span>
-                            </label>
-                            <span class="tbl-toggle-switch-label text-gray-200">Invisible Caption</span>
-                        </div>
-                            <div class="tbl-toggle-switch-container">
-                                <label class="tbl-toggle-switch" for="tbl-customize-remove-p-tags-checkbox">
-                                    <input type="checkbox" id="tbl-customize-remove-p-tags-checkbox" class="hidden">
-                                    <span class="tbl-toggle-switch-slider"></span>
-                                </label>
-                                <span class="tbl-toggle-switch-label text-gray-200">Remove &lt;p&gt; Tags</span>
-                            </div>
-                            
-                            <div class="tbl-toggle-switch-container">
-                                <label class="tbl-toggle-switch" for="tbl-customize-class-small-checkbox">
-                                    <input type="checkbox" id="tbl-customize-class-small-checkbox" class="hidden">
-                                    <span class="tbl-toggle-switch-slider"></span>
-                                </label>
-                                <span class="tbl-toggle-switch-label text-gray-200">Add <strong>small</strong> to TABLE</span>
-                            </div>
-                            <div class="tbl-toggle-switch-container">
-                                <label class="tbl-toggle-switch" for="tbl-customize-add-small-to-tr-checkbox">
-                                    <input type="checkbox" id="tbl-customize-add-small-to-tr-checkbox" class="hidden">
-                                    <span class="tbl-toggle-switch-slider"></span>
-                                </label>
-                                <span class="tbl-toggle-switch-label text-gray-200">Add <strong>small</strong> to ALL TR</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="tbl-options-section">
-                        <h4>Structure and Styling</h4>
-                        <div class="tbl-options-grid">
-						<div class="tbl-toggle-switch-container">
-                                <label class="tbl-toggle-switch" for="tbl-customize-class-tables-checkbox">
-                                    <input type="checkbox" id="tbl-customize-class-tables-checkbox" class="hidden" checked>
-                                    <span class="tbl-toggle-switch-slider"></span>
-                                </label>
-                                <span class="tbl-toggle-switch-label text-gray-200">Basic Classes</span>
-                            </div>
-                            <div class="tbl-toggle-switch-container">
-                                <label class="tbl-toggle-switch" for="tbl-customize-header-checkbox">
-                                    <input type="checkbox" id="tbl-customize-header-checkbox" class="hidden" checked>
-                                    <span class="tbl-toggle-switch-slider"></span>
-                                </label>
-                                <span class="tbl-toggle-switch-label text-gray-200">TH COL Headers (1st row)</span>
-                            </div>
-                            <div class="tbl-toggle-switch-container">
-                                <label class="tbl-toggle-switch" for="tbl-customize-row-header-checkbox">
-                                    <input type="checkbox" id="tbl-customize-row-header-checkbox" class="hidden" checked>
-                                    <span class="tbl-toggle-switch-slider"></span>
-                                </label>
-                                <span class="tbl-toggle-switch-label text-gray-200">TH ROW Headers (1st col)</span>
-                            </div>
-                            <div class="tbl-toggle-switch-container">
-                                <label class="tbl-toggle-switch" for="tbl-customize-active-col-headers-checkbox">
-                                    <input type="checkbox" id="tbl-customize-active-col-headers-checkbox" class="hidden" checked>
-                                    <span class="tbl-toggle-switch-slider"></span>
-                                </label>
-                                <span class="tbl-toggle-switch-label text-gray-200"><strong>active</strong> COL Headers</span>
-                            </div>
-                            <div class="tbl-toggle-switch-container">
-                                <label class="tbl-toggle-switch" for="tbl-customize-active-colspan-headers-checkbox">
-                                    <input type="checkbox" id="tbl-customize-active-colspan-headers-checkbox" class="hidden" checked>
-                                    <span class="tbl-toggle-switch-slider"></span>
-                                </label>
-                                <span class="tbl-toggle-switch-label text-gray-200"><strong>active</strong> COLSPAN Headers</span>
-                            </div>
-                            <div class="tbl-toggle-switch-container">
-                                <label class="tbl-toggle-switch" for="tbl-customize-active-row-headers-checkbox">
-                                    <input type="checkbox" id="tbl-customize-active-row-headers-checkbox" class="hidden">
-                                    <span class="tbl-toggle-switch-slider"></span>
-                                </label>
-                                <span class="tbl-toggle-switch-label text-gray-200"><strong>active</strong> ROW Headers</span>
-                            </div>
-                            <div class="tbl-toggle-switch-container">
-                                <label class="tbl-toggle-switch" for="tbl-customize-bordered-checkbox">
-                                    <input type="checkbox" id="tbl-customize-bordered-checkbox" class="hidden" checked>
-                                    <span class="tbl-toggle-switch-slider"></span>
-                                </label>
-                                <span class="tbl-toggle-switch-label text-gray-200">Add <strong>bordered</strong></span>
-                            </div>
-                            <div class="tbl-toggle-switch-container">
-                                <label class="tbl-toggle-switch" for="tbl-customize-striped-checkbox">
-                                    <input type="checkbox" id="tbl-customize-striped-checkbox" class="hidden">
-                                    <span class="tbl-toggle-switch-slider"></span>
-                                </label>
-                                <span class="tbl-toggle-switch-label text-gray-200">Add <strong>striped</strong></span>
-                            </div>
-                            <div class="tbl-toggle-switch-container">
-                                <label class="tbl-toggle-switch" for="tbl-customize-hover-checkbox">
-                                    <input type="checkbox" id="tbl-customize-hover-checkbox" class="hidden">
-                                    <span class="tbl-toggle-switch-slider"></span>
-                                </label>
-                                <span class="tbl-toggle-switch-label text-gray-200">Add <strong>hover</strong></span>
-                            </div>
+                <div class="tbl-options-section">
+                        <h4 data-accordion-header="alignment" class="tbl-accordion-header">Alignment<span class="accordion-icon">&gt;</span></h4>
+                        <div data-accordion-content="alignment" class="tbl-options-grid tbl-accordion-content">
                             <div class="tbl-toggle-switch-container">
                                 <label class="tbl-toggle-switch" for="tbl-customize-finance-table-checkbox">
                                     <input type="checkbox" id="tbl-customize-finance-table-checkbox" class="hidden">
                                     <span class="tbl-toggle-switch-slider"></span>
                                 </label>
-                                <span class="tbl-toggle-switch-label text-gray-200">Finance Tables</span>
+                                <span class="tbl-toggle-switch-label text-gray-200">Finance Table <span class="text-xs text-gray-400">(<code>text-right</code> + <code>nowrap</code> on numbers only)</span></span>
                             </div>
-                            
-                        </div>
-                    </div>
-
-                    <div class="tbl-options-section">
-                        <h4>Alignment</h4>
-                        <div class="tbl-options-grid">
-                            
-                            
-
                             <div class="tbl-alignment-group-container">
-                                <label for="tbl-customize-caption-alignment">Caption</label>
+                                <label for="tbl-customize-caption-alignment">Caption (title)</label>
                                 <div id="tbl-customize-caption-tbl-alignment-group" class="tbl-button-group">
                                     <button id="resetCust-capAlign-btn" class="trash-button bg-red-800 text-white rounded-r-md hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-opacity-50 font-semibold" title="Reset/delete caption alignment">
                                     <i class="fas fa-trash-alt"></i>
@@ -794,7 +652,7 @@
 
                             <div class="tbl-alignment-group-container">
                                 <div class="flex items-center justify-between mb-1">
-                                <label for="tbl-customize-col-headers-alignment">TH Col Headers (thead)</label>
+                                <label for="tbl-customize-col-headers-alignment">Column Headers (<code>&lt;th&gt;</code> in <code>&lt;thead&gt;</code>)</label>
                                 <span id="manual-chalign-tag" class="hidden text-xs font-semibold px-2 py-0.5 rounded-full bg-red-600 text-white">(Manual)</span>
                                 </div>
                                 <div id="tbl-customize-col-headers-tbl-alignment-group" class="tbl-button-group">
@@ -809,7 +667,7 @@
 
                             <div class="tbl-alignment-group-container">
                                 <div class="flex items-center justify-between mb-1">
-                                <label for="tbl-customize-row-headers-alignment">TH Row Headers (tbody)</label>
+                                <label for="tbl-customize-row-headers-alignment">Row Headers (<code>&lt;th&gt;</code> in <code>&lt;tbody&gt;</code>)</label>
                                 <span id="manual-rhalign-tag" class="hidden text-xs font-semibold px-2 py-0.5 rounded-full bg-red-600 text-white">(Manual)</span>
                                 </div>
                                 <div id="tbl-customize-row-headers-tbl-alignment-group" class="tbl-button-group">
@@ -824,7 +682,7 @@
 
                             <div class="tbl-alignment-group-container">
                                 <div class="flex items-center justify-between mb-1">
-                                <label for="tbl-customize-colspan-headers-alignment">TH Colspan Headers (tbody)</label>
+                                <label for="tbl-customize-colspan-headers-alignment">Colspan Headers (<code>&lt;th&gt;</code> in <code>&lt;tbody&gt;</code>)</label>
                                 <span id="manual-csalign-tag" class="hidden text-xs font-semibold px-2 py-0.5 rounded-full bg-red-600 text-white">(Manual)</span>
                                 </div>
                                 <div id="tbl-customize-colspan-headers-tbl-alignment-group" class="tbl-button-group">
@@ -839,7 +697,7 @@
 
                             <div class="tbl-alignment-group-container">
                                 <div class="flex items-center justify-between mb-1">
-                                    <label for="tbl-customize-data-cells-tbl-alignment-group">TD Cells (tbody)</label>
+                                    <label for="tbl-customize-data-cells-tbl-alignment-group">Data Cells (<code>&lt;td&gt;</code> in <code>&lt;tbody&gt;</code>)</label>
                                     <span id="financial-align-tag" class="hidden text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-600 text-white">(Finance option set)</span>
                                     <span id="manual-align-tag" class="hidden text-xs font-semibold px-2 py-0.5 rounded-full bg-red-600 text-white">(Manual)</span>
                                 </div>
@@ -855,6 +713,148 @@
                             
                         </div>
                     </div>
+                    <div class="tbl-options-section">
+                        <h4 data-accordion-header="styling" class="tbl-accordion-header">Structure and Styling<span class="accordion-icon">&gt;</span></h4>
+                        <div data-accordion-content="styling" class="tbl-options-grid tbl-accordion-content">
+                            <div class="tbl-toggle-switch-container">
+                                <label class="tbl-toggle-switch" for="tbl-customize-class-tables-checkbox">
+                                    <input type="checkbox" id="tbl-customize-class-tables-checkbox" class="hidden" checked>
+                                    <span class="tbl-toggle-switch-slider"></span>
+                                </label>
+                                <span class="tbl-toggle-switch-label text-gray-200">Basic Classes (<code>table + table-condensed</code>)</span>
+                            </div>
+                            <div class="tbl-toggle-switch-container">
+                                <label class="tbl-toggle-switch" for="tbl-customize-header-checkbox">
+                                    <input type="checkbox" id="tbl-customize-header-checkbox" class="hidden" checked>
+                                    <span class="tbl-toggle-switch-slider"></span>
+                                </label>
+                                <span class="tbl-toggle-switch-label text-gray-200"><code>&lt;th&gt;</code> COL Headers (1st row)</span>
+                            </div>
+                            <div class="tbl-toggle-switch-container">
+                                <label class="tbl-toggle-switch" for="tbl-customize-row-header-checkbox">
+                                    <input type="checkbox" id="tbl-customize-row-header-checkbox" class="hidden" checked>
+                                    <span class="tbl-toggle-switch-slider"></span>
+                                </label>
+                                <span class="tbl-toggle-switch-label text-gray-200"><code>&lt;th&gt;</code> ROW Headers (1st col)</span>
+                            </div>
+                            <div class="tbl-toggle-switch-container">
+                                <label class="tbl-toggle-switch" for="tbl-customize-active-col-headers-checkbox">
+                                    <input type="checkbox" id="tbl-customize-active-col-headers-checkbox" class="hidden" checked>
+                                    <span class="tbl-toggle-switch-slider"></span>
+                                </label>
+                                <span class="tbl-toggle-switch-label text-gray-200"><strong>active</strong> <code>&lt;th&gt;</code> COL Headers</span>
+                            </div>
+                            <div class="tbl-toggle-switch-container">
+                                <label class="tbl-toggle-switch" for="tbl-customize-active-colspan-headers-checkbox">
+                                    <input type="checkbox" id="tbl-customize-active-colspan-headers-checkbox" class="hidden" checked>
+                                    <span class="tbl-toggle-switch-slider"></span>
+                                </label>
+                                <span class="tbl-toggle-switch-label text-gray-200"><strong>active</strong> <code>&lt;th&gt;</code> COLSPAN Headers</span>
+                            </div>
+                            <div class="tbl-toggle-switch-container">
+                                <label class="tbl-toggle-switch" for="tbl-customize-active-row-headers-checkbox">
+                                    <input type="checkbox" id="tbl-customize-active-row-headers-checkbox" class="hidden">
+                                    <span class="tbl-toggle-switch-slider"></span>
+                                </label>
+                                <span class="tbl-toggle-switch-label text-gray-200"><strong>active</strong> <code>&lt;th&gt;</code> ROW Headers</span>
+                            </div>
+                            <div class="tbl-toggle-switch-container">
+                                <label class="tbl-toggle-switch" for="tbl-customize-bordered-checkbox">
+                                    <input type="checkbox" id="tbl-customize-bordered-checkbox" class="hidden" checked>
+                                    <span class="tbl-toggle-switch-slider"></span>
+                                </label>
+                                <span class="tbl-toggle-switch-label text-gray-200">Add <strong>bordered</strong> on <code>&lt;table&gt;</code></span>
+                            </div>
+                            <div class="tbl-toggle-switch-container">
+                                <label class="tbl-toggle-switch" for="tbl-customize-striped-checkbox">
+                                    <input type="checkbox" id="tbl-customize-striped-checkbox" class="hidden">
+                                    <span class="tbl-toggle-switch-slider"></span>
+                                </label>
+                                <span class="tbl-toggle-switch-label text-gray-200">Add <strong>striped</strong> on <code>&lt;table&gt;</code></span>
+                            </div>
+                            <div class="tbl-toggle-switch-container">
+                                <label class="tbl-toggle-switch" for="tbl-customize-hover-checkbox">
+                                    <input type="checkbox" id="tbl-customize-hover-checkbox" class="hidden">
+                                    <span class="tbl-toggle-switch-slider"></span>
+                                </label>
+                                <span class="tbl-toggle-switch-label text-gray-200">Add <strong>hover</strong> on <code>&lt;table&gt;</code></span>
+                            </div>
+                            <div class="tbl-toggle-switch-container">
+                                <label class="tbl-toggle-switch" for="tbl-customize-class-small-checkbox">
+                                    <input type="checkbox" id="tbl-customize-class-small-checkbox" class="hidden">
+                                    <span class="tbl-toggle-switch-slider"></span>
+                                </label>
+                                <span class="tbl-toggle-switch-label text-gray-200">Add <strong>small</strong>  on <code>&lt;table&gt;</code></span>
+                            </div>
+                            <div class="tbl-toggle-switch-container">
+                                <label class="tbl-toggle-switch" for="tbl-customize-add-small-to-tr-checkbox">
+                                    <input type="checkbox" id="tbl-customize-add-small-to-tr-checkbox" class="hidden">
+                                    <span class="tbl-toggle-switch-slider"></span>
+                                </label>
+                                <span class="tbl-toggle-switch-label text-gray-200">Add <strong>small</strong>  on all <code>&lt;tr&gt;</code></span>
+                            </div>
+                            
+                        </div>
+                    </div>
+                    <div class="tbl-options-section">
+                        <h4 data-accordion-header="base" class="tbl-accordion-header">Base Properties<span class="accordion-icon">&gt;</span></h4>
+                        <div data-accordion-content="base" class="tbl-options-grid tbl-accordion-content">
+                            <div class="tbl-option-text-input">
+                                <label for="tbl-customize-page-id-prefix-input" class="text-gray-200">Custom ID</label>
+                                <input type="text" id="tbl-customize-page-id-prefix-input" class="flex-grow bg-zinc-700 text-white border border-zinc-500 rounded-md p-1" placeholder="my-custom-id">
+                            </div>
+							
+
+                            <div class="tbl-toggle-switch-container">
+                                <label class="tbl-toggle-switch" for="tbl-customize-make-tfoot-from-colspan-checkbox">
+                                    <input type="checkbox" id="tbl-customize-make-tfoot-from-colspan-checkbox" class="hidden">
+                                    <span class="tbl-toggle-switch-slider"></span>
+                                </label>
+                                <span class="tbl-toggle-switch-label text-gray-200"><code>&lt;tfoot&gt;</code> from LAST <code>&lt;td&gt;</code> COLSPAN</span>
+                            </div>
+							<div class="tbl-toggle-switch-container">
+                            <label class="tbl-toggle-switch is-checked" for="tbl-customize-make-tfoot-before-tbody-checkbox">
+                                <input type="checkbox" id="tbl-customize-make-tfoot-before-tbody-checkbox" class="hidden">
+                                <span class="tbl-toggle-switch-slider"></span>
+                            </label>
+                            <span class="tbl-toggle-switch-label text-gray-200"><code>&lt;tfoot&gt;</code> before <code>&lt;tbody&gt;</code> </span>
+                        </div>
+							<div class="tbl-toggle-switch-container">
+                            <label class="tbl-toggle-switch" for="tbl-customize-caption-checkbox">
+                                <input type="checkbox" id="tbl-customize-caption-checkbox" class="hidden">
+                                <span class="tbl-toggle-switch-slider"></span>
+                            </label>
+                            <span class="tbl-toggle-switch-label text-gray-200">Caption (title)</span>
+                        </div>
+                            <div class="tbl-toggle-switch-container">
+                            <label class="tbl-toggle-switch" for="tbl-customize-inv-caption-checkbox">
+                                <input type="checkbox" id="tbl-customize-inv-caption-checkbox" class="hidden">
+                                <span class="tbl-toggle-switch-slider"></span>
+                            </label>
+                            <span class="tbl-toggle-switch-label text-gray-200">Invisible Caption (<code>wb-inv</code>)</span>
+                        </div>
+                            <div class="tbl-toggle-switch-container">
+                                <label class="tbl-toggle-switch" for="tbl-customize-remove-p-tags-checkbox">
+                                    <input type="checkbox" id="tbl-customize-remove-p-tags-checkbox" class="hidden">
+                                    <span class="tbl-toggle-switch-slider"></span>
+                                </label>
+                                <span class="tbl-toggle-switch-label text-gray-200">Remove <code>&lt;p&gt;</code>  Tags</span>
+                            </div>
+                            <div class="tbl-toggle-switch-container">
+                                <label class="tbl-toggle-switch" for="tbl-customize-fix-empty-cells-checkbox">
+                                    <input type="checkbox" id="tbl-customize-fix-empty-cells-checkbox" class="hidden" checked>
+                                    <span class="tbl-toggle-switch-slider"></span>
+                                </label>
+                                <span class="tbl-toggle-switch-label text-gray-200">Fix Empty Cells</span>
+                            </div>
+                            
+                            
+                        </div>
+                    </div>
+
+                    
+
+                    
                 </div>
             </div>
 
@@ -910,6 +910,7 @@
         </div>
     </div>
 </div>
+    <script src="js/config.js"></script>
     <script src="js/beta.js"></script>
     <script src="js/beta-tables.js"></script>
 </body>
