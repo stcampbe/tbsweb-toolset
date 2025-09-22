@@ -313,6 +313,18 @@ input[type="number"]::placeholder {
     z-index: 1;
 }
 
+#toggleThemeBtn:has(.fa-sun) {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border: 1px solid #000000; /* Optional: adds a border */
+}
+
+#toggleThemeBtn:has(.fa-moon) {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+    border: 1px solid #ffffff; /* Optional: adds a border */
+}
+
 /* --- Visibility Classes --- */
 
 .panel-hidden {
@@ -909,6 +921,8 @@ input[type="number"]::placeholder {
 
 .entity-highlight {
     color: gold !important;
+    font-weight: bold;
+    background-color: rgb(36, 36, 36);
 }
 
 .button-list button:disabled,
