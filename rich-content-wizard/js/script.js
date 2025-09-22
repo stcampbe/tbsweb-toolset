@@ -169,18 +169,18 @@ document.addEventListener('DOMContentLoaded', function () {
     let modalShowHeadings = false;
     let modalUseContainerDiv = true;
     let modalShowTitle = true;
-    let modalImageSourceMode = 'local';
+    let modalImageSourceMode = 'preview';
     let modalBylineMode = 'none';
     let modalIsCustomizeExpanded = false;
     let modalEnableCss = true;
-    let modalUrlSourceMode = 'local';
+    let modalUrlSourceMode = 'preview';
     let modalCurrentLanguage = 'en';
-    let modalCurrentFramework = 'wet';
+    let modalCurrentFramework = 'wet+';
     let modalH1TitleEn = '';
     let modalH1TitleFr = '';
     let modalLastSearchTerm = '';
     let modalCurrentBreakpoint = 'full';
-    const NBSP_PLACEHOLDER = '&#160;'; 
+    const NBSP_PLACEHOLDER = '&#160;';
 
     let currentLineDecorations = []; 
 
@@ -6038,26 +6038,64 @@ function showFootnoteAnchorModal(triggeringButton, originalButtonText) {
                 monacoEditorInstance.setValue(formattedCode);
             });
 		
-		// Info Modal Logic
-    infoBtn.addEventListener('click', () => {
-        infoModal.classList.remove('hidden');
-    });
+		 // Info Modal Logic
+    if (infoBtn) {
+        infoBtn.addEventListener('click', () => {
+            if (infoModal) infoModal.classList.remove('hidden');
+        });
+    }
 
-    closeInfoModalBtn.addEventListener('click', () => {
-        infoModal.classList.add('hidden');
-    });
+    if (closeInfoModalBtn) {
+        closeInfoModalBtn.addEventListener('click', () => {
+            if (infoModal) infoModal.classList.add('hidden');
+        });
+    }
 
-    // Close modal if user clicks outside of it
-    infoModal.addEventListener('click', (event) => {
-        if (event.target === infoModal) {
-            infoModal.classList.add('hidden');
-        }
-    });
+    if (infoModal) {
+        infoModal.addEventListener('click', (event) => {
+            if (event.target === infoModal) {
+                infoModal.classList.add('hidden');
+            }
+        });
+    }
 
-    // Close modal on escape key
+    // How to Use Modal Logic
+    if (howToUseBtn) {
+        howToUseBtn.addEventListener('click', () => {
+            if (howToUseModal) {
+                howToUseModal.classList.remove('hidden');
+            }
+        });
+    }
+
+    if (closeHowToUseModalBtn) {
+        closeHowToUseModalBtn.addEventListener('click', () => {
+            if (howToUseModal) {
+                howToUseModal.classList.add('hidden');
+            }
+        });
+    }
+
+    if (howToUseModal) {
+        howToUseModal.addEventListener('click', (event) => {
+            if (event.target === howToUseModal) {
+                howToUseModal.classList.add('hidden');
+            }
+        });
+    }
+    
+    // Combined Escape key listener for all modals
     document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' && !infoModal.classList.contains('hidden')) {
-            infoModal.classList.add('hidden');
+        if (event.key === 'Escape') {
+            if (previewModal && !previewModal.classList.contains('hidden')) {
+                closePreviewModalBtn.click();
+            }
+            if (infoModal && !infoModal.classList.contains('hidden')) {
+                infoModal.classList.add('hidden');
+            }
+            if (howToUseModal && !howToUseModal.classList.contains('hidden')) {
+                howToUseModal.classList.add('hidden');
+            }
         }
     });
 		
