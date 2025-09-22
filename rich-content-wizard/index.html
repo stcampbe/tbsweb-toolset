@@ -15,7 +15,7 @@
 
 <body>
     <header class="content-wizard-header">
-        <h1 class="text-left"><i class="fa-solid fa-pen-to-square"></i> TBS Web Content Wizard <button id="infoBtn" class="px-2 py-1 text-lg font-semibold bg-gray-700 text-white rounded-xl hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-600 focus:ring-opacity-50 font-bold"><i class="fa-solid fa-circle-info"></i></button></h1>
+        <h1 class="text-left"><i class="fa-solid fa-pen-to-square"></i> TBS Web Content Wizard <button id="infoBtn" class="px-2 py-1 text-lg font-semibold bg-gray-700 text-white rounded-xl hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-600 focus:ring-opacity-50 font-bold"><i class="fa-solid fa-circle-info"></i></button><button id="howToUseBtn"  class="ml-2 px-2 py-2 text-sm font-semibold bg-gray-700 text-white rounded-xl hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-600 focus:ring-opacity-50 font-bold">How to Use <i class="fa-solid fa-book-open"></i></button></h1>
         <div id="editorModeToggle" class="inline-flex rounded-md shadow-sm" role="group">
             <label for="table-search-dropdown" class="px-3 py-2 text-sm font-medium">Toolset:</label>
             <button id="contentModeBtn" class="px-3 py-1 text-lg bg-gray-600 text-white rounded-l-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold"><i class="fa-solid fa-file-code"></i> Content Mode</button>
@@ -23,6 +23,8 @@
         </div>
         <a href="/tbsweb-toolset/qa-wizard/" class="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold">QA/XML Wizard <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
     </header>
+
+
 
     <div class="editor-container">
 
@@ -371,7 +373,7 @@
     <div id="tbl-options-tbl-modal-overlay" class="tbl-modal-overlay hidden">
         <div class="tbl-modal-content">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-bold text-white mt-4">Formatting Options<br><span class="text-sm">Apply formatting to ALL tables present in this document. <strong>This will overwrite any pre-existing settings!</strong></span></h3>
+                <h3 class="text-xl font-bold text-white mt-1">Formatting Options<br><span class="text-sm">Apply formatting to ALL tables present in this document. <strong>This will overwrite any pre-existing settings!</strong></span></h3>
 				
                 <button id="close-tbl-options-tbl-modal-btn" class="text-gray-400 hover:text-gray-200">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -914,6 +916,69 @@
             <p>Developed with help from the following tools and frameworks: <em><a href="https://hugerte.org/">HugeRTE</a>, <a href="https://microsoft.github.io/monaco-editor/">Monaco editor</a>, <a href="https://tailwindcss.com/">Tailwind CSS</a>, <a href="https://fontawesome.com/">Font Awesome</a>, <a href="https://github.com/beautifier/js-beautify">HTML Beautify</a> and Radia AI (primarily Google Gemini 2.5)</em>.</p>
             <p>Project source code is <a href="https://github.com/stcampbe/tbsweb-toolset/tree/main/rich-content-wizard">available on GitHub</a>. For more detailed information or help, please contact:</p><p><strong>Stratton Campbell</strong><br> Communications Officer, Web Publishing @ Strategic Communications and Ministerial Affairs<br>Treasury Board of Canada Secretariat / Government of Canada<br><a href="mailto:Stratton.Campbell@tbs-sct.gc.ca">Stratton.Campbell@tbs-sct.gc.ca</a></p>
         </div>
+    </div>
+</div>
+    <div id="howToUseModal" class="fixed inset-0 z-50 overflow-y-auto hidden bg-gray-900 bg-opacity-75 flex items-center justify-center">
+    <div class="bg-gray-800 p-8 rounded-lg shadow-xl max-w-6xl w-full text-white relative">
+        <button id="closeHowToUseModalBtn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-200">
+            <i class="fas fa-times"></i>
+        </button>
+        <h2 class="text-xl font-bold mb-4"><i class="fa-solid fa-book-open"></i> How to Use - Quick Guide</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm text-gray-300 mb-4">
+            <div>
+                <h3 class="text-base font-semibold text-white mb-3">Best results for <strong><u>new documents</u></strong></h3>
+                <ol class="list-decimal ml-4 space-y-2">
+                    <li>Paste the entire document contents into the <strong>rich-text editor</strong> from MS Word (desktop client). Go directly to step #2, <strong>DO NOT EDIT ANYTHING YET!</strong></li>
+                    <li>Toggle <strong>Auto-Clean MSO</strong>* <span class="px-1 rounded-md bg-green-700">ON</span> to clean MS office junk automatically on editor switch OR <strong><span class="px-1 rounded-md bg-cyan-700">Go to HTML</span></strong> and use <strong><span class="px-1 rounded-md bg-blue-700">Clean MSO</span></strong>* (same result either way). 
+                    <ul class="list-bullet space-y-2 ml-5">
+                        <li><em>*MSO = "Microsoft Office"</em></li>
+                    </ul>
+                    </li>
+                    <li>Under <em>Quick Formatting</em>, check and toggle all the tools you want to utilize then hit <strong><span class="px-1 rounded-md bg-blue-700">Format</span></strong>.</li>
+                    <li>Re-visit your document in the rich-text editor (<strong><span class="px-1 rounded-md bg-cyan-700">Go to Rich-Text</span></strong>) and QA with the original document. Fix any errors like headings, lists, etc.
+                    <ul class="list-bullet space-y-2 ml-5">
+                        <li>&gt; Re-run any <em>Quick Formatting</em> options (especially <strong>Auto-Section</strong> and <strong>Auto-Level Headings</strong>)</li>
+                    </ul>
+                    </li>
+                    <li>(if footnotes are present) Use <strong><span class="px-1 rounded-md bg-slate-600">Process Footnotes</span></strong> to format any Word footnote references (it will not work on "fake" footnotes).</li>
+                    <li>(if tables are present) Switch to <strong><span class="px-1 rounded-md bg-gray-600">Table Mode</strong></strong>, assign base options to all tables via <strong><span class="px-1 rounded-md bg-blue-700">Format ALL Tables</span></strong>. Run <strong><span class="px-1 rounded-md bg-orange-700">Auto-Responsive</span></strong> and <strong><span class="px-1 rounded-md bg-green-700">Auto Scope/ID</span></strong>. Select each table and hit <strong><span class="px-1 rounded-md bg-blue-700">Customize</span></strong> for finer control.</li>
+                    <li>Continue any development needed.</li>
+                    <li>Set <strong><span class="px-1 rounded-md bg-slate-600">Element ID's</span></strong> to assign ID's to various tags selected in the pop-up.</li>
+                    <li>If required, under <em>Quick Insert</em>, add <strong>Page ToC</strong> and <strong>Section ToC</strong> (table of contents). Select the <strong><span class="px-1 rounded-md bg-slate-600">language</span></strong> and <strong><span class="px-1 rounded-md bg-slate-600">level-depth</span></strong> needed. (This action can be repeated if headings with id's are changed, added or removed)</li>
+                    <li>Check your work! Use the <strong><span class="px-1 rounded-md bg-blue-700">Validate</span></strong> and <strong><span class="px-1 rounded-md bg-green-700">Preview</span></strong> features as needed.</li>
+                </ol>
+            </div>
+            <div>
+                <h3 class="text-base font-semibold text-white mb-3">Best results for <strong><u>existing code</u></strong> (HTML using WET4 + GCDS)</h3>
+                <ol class="list-decimal ml-4 space-y-2">
+                    <li><strong><span class="px-1 rounded-md bg-cyan-700">Go to HTML</span></strong> and paste the entire HTML content into the <strong>HTML editor</strong> from AEM or local files.</li>
+                    <li>Depending on the required changes, use either editor to get the job done. Tracked changes can be pasted into the <strong>rich-text editor</strong> (<strong>Auto-Clean MSO</strong> <span class="px-1 rounded-md bg-green-700">ON</span> works best for these to clean them as you switch back and forth).
+                        <ul class="list-bullet ml-5">
+                        <li>&gt; Updates to any hyperlinks can be done easily in the <strong>rich-text editor</strong> (right click or choose the link icon)</li>
+                        <li>&gt; <strong>Note: Pasting over anything with an ID (like a heading) may remove the ID. Be sure to check and add back in if needed</strong>.</li>
+                    </ul>
+                    </li>
+                    <li>Under <em>Quick Formatting</em>, check and toggle all the tools you want to utilize then hit <strong><span class="px-1 rounded-md bg-blue-700">Format</span></strong>.</li>
+                    <li>(if footnotes are present) Use <strong><span class="px-1 rounded-md bg-slate-600">Process Footnotes</span></strong> ONLY IF: <u>New footnotes are brought in and no other footnotes were there previously</u>. If new footnotes need to be added into existing ones, this feature will not work as intended.</li>
+                    <li>(if tables are present) Switch to <strong><span class="px-1 rounded-md bg-gray-600">Table Mode</strong></strong>. Select each table in the dropdown menu and hit <strong><span class="px-1 rounded-md bg-blue-700">Customize</span></strong> for finer control.
+                    <ul class="list-bullet ml-5">
+                        <li>&gt; Use <strong><span class="px-1 rounded-md bg-blue-700">Format ALL Tables</span></strong> first if new tables are added in a page where no other tables existed OR you're ok with overwriting existing settings for all old and new tables.</li>
+                        <li>&gt; REMINDER: <strong><span class="px-1 rounded-md bg-orange-700">Auto-Responsive</span></strong> and <strong><span class="px-1 rounded-md bg-green-700">Auto Scope/ID</span></strong> effect all tables.</li>
+                    </ul>
+                    </li>
+                    <li>Continue any development needed.</li>
+                    <li>(Optional) Set <strong><span class="px-1 rounded-md bg-slate-600">Element ID's</span></strong> to assign ID's to various tags selected in the pop-up.</li>
+                    <li>(Optional) Set <strong>Page ToC</strong> and <strong>Section ToC</strong> (table of contents) if needed.
+                        <ul class="list-bullet ml-5">
+                        <li>&gt; <strong>IMPORTANT NOTE: Using this on a page that already has them will result with the <u>link titles being overwritten</u> with the headings. This may be OK for some projects, but some page may have custom link titles that may differ from the actual heading!</strong>.</li>
+                        </ul>
+                    </li>
+                    
+                    <li>Check your work! Use the <strong><span class="px-1 rounded-md bg-blue-700">Validate</span></strong> and <strong><span class="px-1 rounded-md bg-green-700">Preview</span></strong> features as needed.</li>
+                </ol>
+            </div>
+        </div>
+        <p class="p-4 mt-2 text-sm text-red-800 rounded-lg bg-red-50 text-center" role="alert"><strong>This tool is in-browser only and does not manage or store any files</strong>. Keep local files and save your work often!</p>
     </div>
 </div>
     <script src="js/config.js"></script>
