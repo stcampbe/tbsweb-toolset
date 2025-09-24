@@ -1248,8 +1248,11 @@ document.addEventListener('DOMContentLoaded', function () {
                         (nextStyleAttr.includes('mso-list'));
 
                     if (isNextMsoListParagraphClass || nextMatchesNewRule) {
-                        const nextLevel = getLevel(nextStyleAttr);
-
+                        let nextLevel = getLevel(nextStyleAttr);
+						if (nextLevel === null && isNextMsoListParagraphClass) {
+        const currentDepth = currentListStack[currentListStack.length - 1].level;
+        nextLevel = currentDepth;
+    }
                         if (nextLevel === null) {
                             nextElement.removeAttribute('class');
                             nextElement.removeAttribute('style');
@@ -1548,11 +1551,18 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     
     // Remove empty legacy anchor tags
-    body.querySelectorAll('a[name]').forEach(anchor => {
-        if (!anchor.hasAttribute('href') && anchor.textContent.trim() === '' && anchor.children.length === 0) {
-            anchor.remove();
+    body.querySelectorAll('a:not([href])').forEach(anchor => {
+    const parent = anchor.parentNode;
+    if (parent) {
+        // Move all of the anchor's children to become direct children of the parent,
+        // effectively placing them where the anchor tag used to be.
+        while (anchor.firstChild) {
+            parent.insertBefore(anchor.firstChild, anchor);
         }
-    });
+        // Now that the anchor tag is empty, remove it.
+        parent.removeChild(anchor);
+    }
+});
 
     // Unwrap unnecessary container divs
     body.querySelectorAll('div[class*="WordSection"], div[class*="DocumentTitle"]').forEach(div => {
@@ -2002,249 +2012,236 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function applyAutoId(htmlString, options = {}) {
-        const defaultOptions = {
-            idSections: true
-            , idHeadings: true
-            , idFigures: true
-            , idTables: true
-            , idFigureTables: true
-            , fixFnIds: false
-        };
-        const currentOptions = {
-            ...defaultOptions
-            , ...options
-        };
+    const defaultOptions = {
+        idSections: true,
+        idHeadings: true,
+        idFigures: true,
+        idTables: true,
+        idFigureTables: true,
+        fixFnIds: false,
+        idGenerationMode: 'preserve' // 'preserve' or 'regenerate'
+    };
+    const currentOptions = {
+        ...defaultOptions,
+        ...options
+    };
 
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(htmlString, 'text/html');
-        const body = doc.body;
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlString, 'text/html');
+    const body = doc.body;
 
-        const idChangeMap = {};
+    const idChangeMap = {};
 
-        function toAlpha(num) {
-            let s = '';
-            while (num > 0) {
-                let t = (num - 1) % 26;
-                s = String.fromCharCode(65 + t) + s;
-                num = Math.floor((num - t) / 26);
-            }
-            return s || 'A';
+    function toAlpha(num) {
+        let s = '';
+        while (num > 0) {
+            let t = (num - 1) % 26;
+            s = String.fromCharCode(65 + t) + s;
+            num = Math.floor((num - t) / 26);
         }
-
-        function getLetterFromAppendixText(text) {
-            const match = text.match(/^(?:Appendix|Annexe)\s*([A-Z])?/i);
-            return (match && match[1]) ? match[1].toUpperCase() : null;
-        }
-
-        const existingIds = new Set();
-        doc.querySelectorAll('[id]')
-            .forEach(el => existingIds.add(el.id));
-
-        if (currentOptions.idHeadings) {
-            let h2_num_counter = 0;
-            let h2_general_alpha_counter = 0;
-            let h2_appendix_alpha_counter = 0;
-            let sub_num_counters = new Map();
-            let sub_appendix_alpha_counters = new Map();
-
-            const lastSeenHeadingIds = {
-                2: ''
-                , 3: ''
-                , 4: ''
-                , 5: ''
-                , 6: ''
-            };
-
-            let hasAnyNumberedH2 = Array.from(body.querySelectorAll('h2'))
-                .some(h => h.textContent.trim()
-                    .match(/^\s*(\d+)(?:\.|\s|\)|\-)?/));
-
-            doc.querySelectorAll('h1, h2, h3, h4, h5, h6')
-                .forEach(heading => {
-                    const level = parseInt(heading.tagName.substring(1), 10);
-                    const text = heading.textContent.trim();
-                    const oldId = heading.id;
-                    let newId = oldId;
-
-                    if (level === 2) {
-                        const lowerCaseText = text.toLowerCase();
-                        if (oldId === 'toc' || lowerCaseText === 'on this page' || lowerCaseText === 'sur cette page') {
-                            heading.setAttribute('id', 'toc');
-                            return; 
-                        }
-                    }
-
-                    const ignoredParents = ['aside', 'caption', 'figure', 'figcaption', 'table'];
-                    if (heading.closest(ignoredParents.join(','))) {
-                        return; 
-                    }
-
-                    if (level === 1) return; 
-
-                    let id_segment = '';
-                    const isNumericHeading = text.match(/^\s*(\d+)(?:\.|\s|\)|\-)?/);
-                    const isAppendixHeading = text.match(/^(?:Appendix|Annexe)/i);
-
-                    if (level === 2) {
-                        if (isAppendixHeading) {
-                            const letter = getLetterFromAppendixText(text) || toAlpha(++h2_appendix_alpha_counter);
-                            id_segment = `app${letter}`;
-                        } else if (hasAnyNumberedH2) {
-                            id_segment = isNumericHeading ? `toc${++h2_num_counter}` : `toc${toAlpha(++h2_general_alpha_counter)}`;
-                        } else {
-                            id_segment = `toc${++h2_num_counter}`;
-                        }
-                        newId = id_segment;
-
-                    } else { 
-                        const parent_id = lastSeenHeadingIds[level - 1];
-                        if (!parent_id) { 
-                            return;
-                        }
-
-                        if (isAppendixHeading) {
-                            const currentAppCount = (sub_appendix_alpha_counters.get(parent_id) || 0) + 1;
-                            sub_appendix_alpha_counters.set(parent_id, currentAppCount);
-                            id_segment = `app${getLetterFromAppendixText(text) || toAlpha(currentAppCount)}`;
-                        } else {
-                            const currentNumCount = (sub_num_counters.get(parent_id) || 0) + 1;
-                            sub_num_counters.set(parent_id, currentNumCount);
-                            id_segment = String(currentNumCount);
-                        }
-                        newId = `${parent_id}-${id_segment}`;
-                    }
-
-                    lastSeenHeadingIds[level] = newId;
-
-                    // ### START FIX ###
-                    // Reset IDs for all deeper levels to ensure correct nesting.
-                    for (let resetLevel = level + 1; resetLevel <= 6; resetLevel++) {
-                        lastSeenHeadingIds[resetLevel] = '';
-                    }
-                    // ### END FIX ###
-                    
-                    if (oldId && oldId !== newId) {
-                        idChangeMap[oldId] = newId;
-                    }
-                    heading.setAttribute('id', newId);
-                    existingIds.add(newId);
-                });
-        }
-
-        if (currentOptions.idSections) {
-            let sectionChildCounters = {
-                'root': 0
-            };
-            doc.querySelectorAll('section')
-                .forEach(section => {
-                    // Do not ID sections that are inside a table
-                    if (section.closest('table')) {
-                        return;
-                    }
-                    if (section.id && (!/^sec\d+(-\d+)*$/.test(section.id) || section.hasAttribute('class'))) return;
-                    let parentSection = section.parentElement.closest('section');
-                    let parentId = parentSection && parentSection.id && /^sec\d+(-\d+)*$/.test(parentSection.id) ? parentSection.id : 'root';
-                    sectionChildCounters[parentId] = (sectionChildCounters[parentId] || 0) + 1;
-                    const newNum = sectionChildCounters[parentId];
-                    const newId = (parentId === 'root') ? `sec${newNum}` : `${parentId}-${newNum}`;
-                    if (section.id && section.id !== newId) idChangeMap[section.id] = newId;
-                    section.id = newId;
-                });
-        }
-
-        if (currentOptions.idFigures) {
-            let figureCounter = 0;
-            doc.querySelectorAll('figure:not([id])')
-                .forEach(figure => {
-                    figure.id = `fig${++figureCounter}`;
-                });
-        }
-
-        if (currentOptions.idTables || currentOptions.idFigureTables) {
-            let tableCounter = 0;
-            let figureTableCounter = 0;
-
-            doc.querySelectorAll('table').forEach(table => {
-                const oldTableId = table.id;
-                let newTableId = null;
-                const isFigureTable = !!table.closest('figure');
-
-                if ((isFigureTable && currentOptions.idFigureTables) || (!isFigureTable && currentOptions.idTables)) {
-                    newTableId = isFigureTable ? `ftbl${++figureTableCounter}` : `tbl${++tableCounter}`;
-                }
-
-                if (newTableId) {
-                    if (oldTableId && oldTableId !== newTableId) {
-                        idChangeMap[oldTableId] = newTableId;
-                    }
-                    table.id = newTableId;
-                    existingIds.add(newTableId);
-                    
-                    // --- ROBUST FOOTNOTE RE-IDing LOGIC ---
-                    const footnoteIdMap = {};
-
-                    // 1. Handle the main footnote header (e.g., id="fn" or id="tbl1fn").
-                    const oldFnHeaderId = oldTableId ? `${oldTableId}fn` : 'fn';
-                    const fnHeader = table.querySelector(`tfoot [id="${oldFnHeaderId}"], tfoot [id="fn"]`);
-                    if (fnHeader) {
-                        footnoteIdMap[fnHeader.id] = `${newTableId}fn`;
-                    }
-                    
-                    // 2. Build a map of all required footnote ID changes.
-                    table.querySelectorAll('[id*="fn"]').forEach(el => {
-                        const oldId = el.id;
-                        // This regex intelligently parses complex IDs like "tbl1fn2-rf-0".
-                        const idParts = oldId.match(/(?:(.*?))?fn(\d+)((?:-rf)?(?:-\d+)*)?$/);
-                        if (idParts) {
-                            const originalFootnoteNum = idParts[2]; // The core number, e.g., "2".
-                            const oldSuffix = idParts[3] || '';    // The suffix, e.g., "-rf-0".
-                            
-                            const oldPrefix = idParts[1] || '';
-                            const oldBaseId = `${oldPrefix}fn${originalFootnoteNum}`;
-                            
-                            const newBaseId = `${newTableId}fn${originalFootnoteNum}`;
-                            const newFullId = `${newBaseId}${oldSuffix}`;
-
-                            footnoteIdMap[oldId] = newFullId;
-                            footnoteIdMap[oldBaseId] = newBaseId;
-                        }
-                    });
-
-                    // 3. Apply the changes from the map in passes.
-                    // First, update all element IDs within the current table.
-                    table.querySelectorAll('[id]').forEach(el => {
-                        if (footnoteIdMap[el.id]) {
-                            el.id = footnoteIdMap[el.id];
-                        }
-                    });
-                    // Second, update all anchor hrefs within the current table.
-                    table.querySelectorAll('a[href^="#"]').forEach(link => {
-                        const oldAnchor = link.getAttribute('href').substring(1);
-                        if (footnoteIdMap[oldAnchor]) {
-                            link.setAttribute('href', `#${footnoteIdMap[oldAnchor]}`);
-                        }
-                    });
-                }
-            });
-        }
-
-        let finalHtml = doc.body.innerHTML;
-        if (currentOptions.fixFnIds) {
-            finalHtml = applyFixFnIdsLogic(finalHtml);
-            doc.body.innerHTML = finalHtml; // Update doc for the next step
-        }
-
-        doc.querySelectorAll('a[href^="#"]')
-            .forEach(link => {
-                const currentAnchor = link.getAttribute('href')
-                    .substring(1);
-                if (idChangeMap[currentAnchor]) {
-                    link.setAttribute('href', `#${idChangeMap[currentAnchor]}`);
-                }
-            });
-
-        return doc.body.innerHTML;
+        return s || 'A';
     }
+
+    function getLetterFromAppendixText(text) {
+        const match = text.match(/^(?:Appendix|Annexe)\s*([A-Z])?/i);
+        return (match && match[1]) ? match[1].toUpperCase() : null;
+    }
+
+    const existingIds = new Set();
+    doc.querySelectorAll('[id]').forEach(el => existingIds.add(el.id));
+
+    if (currentOptions.idHeadings) {
+        let h2_num_counter = 0;
+        let h2_general_alpha_counter = 0;
+        let h2_appendix_alpha_counter = 0;
+        let sub_num_counters = new Map();
+        let sub_appendix_alpha_counters = new Map();
+
+        const lastSeenHeadingIds = { 2: '', 3: '', 4: '', 5: '', 6: '' };
+
+        let hasAnyNumberedH2 = Array.from(body.querySelectorAll('h2')).some(h => h.textContent.trim().match(/^\s*(\d+)(?:\.|\s|\)|\-)?/));
+
+        doc.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(heading => {
+            const level = parseInt(heading.tagName.substring(1), 10);
+            const text = heading.textContent.trim();
+            const oldId = heading.id;
+            let newId = oldId;
+
+            if (level === 2) {
+                const lowerCaseText = text.toLowerCase();
+                if (oldId === 'toc' || lowerCaseText === 'on this page' || lowerCaseText === 'sur cette page') {
+                    heading.setAttribute('id', 'toc');
+                    return;
+                }
+            }
+            
+            // Logic change for 'preserve' mode
+            if (currentOptions.idGenerationMode === 'preserve' && oldId) {
+                return; 
+            }
+
+            const ignoredParents = ['aside', 'caption', 'figure', 'figcaption', 'table'];
+            if (heading.closest(ignoredParents.join(','))) {
+                return;
+            }
+
+            if (level === 1) return;
+
+            let id_segment = '';
+            const isNumericHeading = text.match(/^\s*(\d+)(?:\.|\s|\)|\-)?/);
+            const isAppendixHeading = text.match(/^(?:Appendix|Annexe)/i);
+
+            if (level === 2) {
+                if (isAppendixHeading) {
+                    const letter = getLetterFromAppendixText(text) || toAlpha(++h2_appendix_alpha_counter);
+                    id_segment = `app${letter}`;
+                } else if (hasAnyNumberedH2) {
+                    id_segment = isNumericHeading ? `toc${++h2_num_counter}` : `toc${toAlpha(++h2_general_alpha_counter)}`;
+                } else {
+                    id_segment = `toc${++h2_num_counter}`;
+                }
+                newId = id_segment;
+
+            } else {
+                const parent_id = lastSeenHeadingIds[level - 1];
+                if (!parent_id) {
+                    return;
+                }
+
+                if (isAppendixHeading) {
+                    const currentAppCount = (sub_appendix_alpha_counters.get(parent_id) || 0) + 1;
+                    sub_appendix_alpha_counters.set(parent_id, currentAppCount);
+                    id_segment = `app${getLetterFromAppendixText(text) || toAlpha(currentAppCount)}`;
+                } else {
+                    const currentNumCount = (sub_num_counters.get(parent_id) || 0) + 1;
+                    sub_num_counters.set(parent_id, currentNumCount);
+                    id_segment = String(currentNumCount);
+                }
+                newId = `${parent_id}-${id_segment}`;
+            }
+
+            lastSeenHeadingIds[level] = newId;
+            
+            for (let resetLevel = level + 1; resetLevel <= 6; resetLevel++) {
+                lastSeenHeadingIds[resetLevel] = '';
+            }
+            
+            if (oldId && oldId !== newId) {
+                idChangeMap[oldId] = newId;
+            }
+            heading.setAttribute('id', newId);
+            existingIds.add(newId);
+        });
+    }
+
+    if (currentOptions.idSections) {
+        let sectionChildCounters = { 'root': 0 };
+        doc.querySelectorAll('section').forEach(section => {
+            if (section.closest('table')) {
+                return;
+            }
+            // Logic change for 'preserve' mode
+            if (currentOptions.idGenerationMode === 'preserve' && section.id) {
+                return;
+            }
+            
+            let parentSection = section.parentElement.closest('section');
+            let parentId = parentSection && parentSection.id && /^sec\d+(-\d+)*$/.test(parentSection.id) ? parentSection.id : 'root';
+            sectionChildCounters[parentId] = (sectionChildCounters[parentId] || 0) + 1;
+            const newNum = sectionChildCounters[parentId];
+            const newId = (parentId === 'root') ? `sec${newNum}` : `${parentId}-${newNum}`;
+            if (section.id && section.id !== newId) idChangeMap[section.id] = newId;
+            section.id = newId;
+        });
+    }
+
+    if (currentOptions.idFigures) {
+        let figureCounter = 0;
+        // Logic change for 'preserve' mode
+        const figureSelector = currentOptions.idGenerationMode === 'preserve' ? 'figure:not([id])' : 'figure';
+        doc.querySelectorAll(figureSelector).forEach(figure => {
+            figure.id = `fig${++figureCounter}`;
+        });
+    }
+
+    if (currentOptions.idTables || currentOptions.idFigureTables) {
+        let tableCounter = 0;
+        let figureTableCounter = 0;
+
+        doc.querySelectorAll('table').forEach(table => {
+            const oldTableId = table.id;
+            
+            // Logic change for 'preserve' mode
+            if (currentOptions.idGenerationMode === 'preserve' && oldTableId) {
+                return;
+            }
+
+            let newTableId = null;
+            const isFigureTable = !!table.closest('figure');
+
+            if ((isFigureTable && currentOptions.idFigureTables) || (!isFigureTable && currentOptions.idTables)) {
+                newTableId = isFigureTable ? `ftbl${++figureTableCounter}` : `tbl${++tableCounter}`;
+            }
+
+            if (newTableId) {
+                if (oldTableId && oldTableId !== newTableId) {
+                    idChangeMap[oldTableId] = newTableId;
+                }
+                table.id = newTableId;
+                existingIds.add(newTableId);
+
+                const footnoteIdMap = {};
+                const oldFnHeaderId = oldTableId ? `${oldTableId}fn` : 'fn';
+                const fnHeader = table.querySelector(`tfoot [id="${oldFnHeaderId}"], tfoot [id="fn"]`);
+                if (fnHeader) {
+                    footnoteIdMap[fnHeader.id] = `${newTableId}fn`;
+                }
+
+                table.querySelectorAll('[id*="fn"]').forEach(el => {
+                    const oldId = el.id;
+                    const idParts = oldId.match(/(?:(.*?))?fn(\d+)((?:-rf)?(?:-\d+)*)?$/);
+                    if (idParts) {
+                        const originalFootnoteNum = idParts[2];
+                        const oldSuffix = idParts[3] || '';
+                        const oldPrefix = idParts[1] || '';
+                        const oldBaseId = `${oldPrefix}fn${originalFootnoteNum}`;
+                        const newBaseId = `${newTableId}fn${originalFootnoteNum}`;
+                        const newFullId = `${newBaseId}${oldSuffix}`;
+                        footnoteIdMap[oldId] = newFullId;
+                        footnoteIdMap[oldBaseId] = newBaseId;
+                    }
+                });
+
+                table.querySelectorAll('[id]').forEach(el => {
+                    if (footnoteIdMap[el.id]) {
+                        el.id = footnoteIdMap[el.id];
+                    }
+                });
+                table.querySelectorAll('a[href^="#"]').forEach(link => {
+                    const oldAnchor = link.getAttribute('href').substring(1);
+                    if (footnoteIdMap[oldAnchor]) {
+                        link.setAttribute('href', `#${footnoteIdMap[oldAnchor]}`);
+                    }
+                });
+            }
+        });
+    }
+
+    let finalHtml = doc.body.innerHTML;
+    if (currentOptions.fixFnIds) {
+        finalHtml = applyFixFnIdsLogic(finalHtml);
+        doc.body.innerHTML = finalHtml;
+    }
+
+    doc.querySelectorAll('a[href^="#"]').forEach(link => {
+        const currentAnchor = link.getAttribute('href').substring(1);
+        if (idChangeMap[currentAnchor]) {
+            link.setAttribute('href', `#${idChangeMap[currentAnchor]}`);
+        }
+    });
+
+    return doc.body.innerHTML;
+}
 
     window.updateEditorStyles = function (enableCustomStyles) {
         if (richTextEditorInstance) {
@@ -3622,7 +3619,19 @@ function showFootnoteAnchorModal(triggeringButton, originalButtonText) {
         const autoIdContentHtml = `
                 <div class="flex flex-col space-y-4">
                     <div>
-                        <span class="text-sm font-medium text-CBD5E1 mr-2">Choose elements to ID:</span> 
+					<div class="mb-4">
+							<span class="text-sm font-medium mr-2">ID Generation Mode:</span>
+							<ul class="list-disc text-sm font-medium ml-6">
+							<li><em>(default)</em> <strong>Preserve</strong> custom/existing ID's (only add missing ones); OR</li>
+							<li><strong>Regenerate</strong> ALL ID's and overwrite them all</li>
+							</ul>
+							<div class="button-group inline-flex mt-2" id="id-generation-mode-group">
+								<button id="preserveIdsBtn" class="px-3 py-1 text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50 font-bold">Preserve existing ID's</button>
+								<button id="regenerateIdsBtn" class="px-3 py-1 text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-opacity-50 font-bold">Regenerate all ID's</button>
+							</div>
+						</div>
+                        <span class="text-sm font-medium text-CBD5E1 mr-2">Choose elements to ID:</span>
+						
                         <div class="space-y-2 mt-2">
                             
                             <div class="toggle-switch-container">
@@ -3678,85 +3687,109 @@ function showFootnoteAnchorModal(triggeringButton, originalButtonText) {
             `;
 
         const modalOverlay = document.createElement('div');
-        modalOverlay.className = 'modal-overlay';
-        modalOverlay.innerHTML = `
-                <div class="modal-content">
-                    <h3>Element ID's Options</h3> 
-                    <div id="modalBody">${autoIdContentHtml}</div>
-                    <div class="flex justify-end mt-4 space-x-2">
-                        <button id="modalCancelAutoIdBtn" class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600">Cancel</button> 
-                        <button id="modalApplyAutoIdBtn" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">Apply IDs</button> 
-                    </div>
-                </div>
-            `;
-        document.body.appendChild(modalOverlay);
+    modalOverlay.className = 'modal-overlay';
+    modalOverlay.innerHTML = `
+        <div class="modal-content">
+            <h3>Element ID's Options</h3>
+            <div id="modalBody">${autoIdContentHtml}</div>
+            <div class="flex justify-end mt-4 space-x-2">
+                <button id="modalCancelAutoIdBtn" class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600">Cancel</button>
+                <button id="modalApplyAutoIdBtn" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">Apply IDs</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modalOverlay);
 
-        function closeModalAndReEnableButtons() {
-            modalOverlay.remove();
-            triggeringButton.removeAttribute('data-temp-active'); 
-            triggeringButton.textContent = originalButtonText; 
-            triggeringButton.classList.remove('bg-green-500', 'hover:bg-green-600');
-            triggeringButton.classList.add('bg-slate-600', 'hover:bg-slate-500'); 
-            updateAllInteractiveButtonStates(); 
+    function closeModalAndReEnableButtons() {
+        modalOverlay.remove();
+        triggeringButton.removeAttribute('data-temp-active');
+        triggeringButton.textContent = originalButtonText;
+        triggeringButton.classList.remove('bg-green-500', 'hover:bg-green-600');
+        triggeringButton.classList.add('bg-slate-600', 'hover:bg-slate-500');
+        updateAllInteractiveButtonStates();
+    }
+
+    document.getElementById('modalCancelAutoIdBtn').addEventListener('click', closeModalAndReEnableButtons);
+
+    const toggleSectionsId = document.getElementById('toggleSectionsId');
+    const toggleHeadingsId = document.getElementById('toggleHeadingsId');
+    const toggleFiguresId = document.getElementById('toggleFiguresId');
+    const toggleTablesId = document.getElementById('toggleTablesId');
+    const toggleFigureTablesId = document.getElementById('toggleFigureTablesId');
+    const toggleFixFnIdsModal = document.getElementById('toggleFixFnIdsModal');
+    const modalApplyAutoIdBtn = document.getElementById('modalApplyAutoIdBtn');
+
+    // New button logic
+    const preserveIdsBtn = document.getElementById('preserveIdsBtn');
+    const regenerateIdsBtn = document.getElementById('regenerateIdsBtn');
+
+    function updateIdModeButtons(activeButton) {
+        if (activeButton === preserveIdsBtn) {
+            preserveIdsBtn.classList.add('active', 'bg-blue-600');
+            preserveIdsBtn.classList.remove('bg-gray-600', 'hover:bg-gray-500');
+            regenerateIdsBtn.classList.remove('active', 'bg-blue-600');
+            regenerateIdsBtn.classList.add('bg-gray-600', 'hover:bg-gray-500');
+        } else {
+            regenerateIdsBtn.classList.add('active', 'bg-blue-600');
+            regenerateIdsBtn.classList.remove('bg-gray-600', 'hover:bg-gray-500');
+            preserveIdsBtn.classList.remove('active', 'bg-blue-600');
+            preserveIdsBtn.classList.add('bg-gray-600', 'hover:bg-gray-500');
         }
+    }
 
-        document.getElementById('modalCancelAutoIdBtn')
-            .addEventListener('click', closeModalAndReEnableButtons);
+    preserveIdsBtn.addEventListener('click', () => updateIdModeButtons(preserveIdsBtn));
+    regenerateIdsBtn.addEventListener('click', () => updateIdModeButtons(regenerateIdsBtn));
+    updateIdModeButtons(preserveIdsBtn); // Set initial state
 
-        const toggleSectionsId = document.getElementById('toggleSectionsId');
-        const toggleHeadingsId = document.getElementById('toggleHeadingsId');
-        const toggleFiguresId = document.getElementById('toggleFiguresId'); 
-        const toggleTablesId = document.getElementById('toggleTablesId');
-        const toggleFigureTablesId = document.getElementById('toggleFigureTablesId');
-        const toggleFixFnIdsModal = document.getElementById('toggleFixFnIdsModal');
-        const modalApplyAutoIdBtn = document.getElementById('modalApplyAutoIdBtn');
 
-        [toggleSectionsId, toggleHeadingsId, toggleFiguresId, toggleTablesId, toggleFigureTablesId, toggleFixFnIdsModal].forEach(toggle => { 
-            toggle.addEventListener('change', (event) => {
-                const parentLabel = event.target.closest('.toggle-switch');
-                if (event.target.checked) {
-                    parentLabel.classList.add('is-checked');
-                } else {
-                    parentLabel.classList.remove('is-checked');
-                }
-            });
-        });
-
-        modalApplyAutoIdBtn.addEventListener('click', () => {
-            const options = {
-                idSections: toggleSectionsId.checked
-                , idHeadings: toggleHeadingsId.checked
-                , idFigures: toggleFiguresId.checked, 
-                idTables: toggleTablesId.checked
-                , idFigureTables: toggleFigureTablesId.checked
-                , fixFnIds: toggleFixFnIdsModal.checked
-            };
-
-            if (monacoEditorInstance) {
-                let currentContent = monacoEditorInstance.getValue();
-                currentContent = protectDataAttributes(currentContent);
-                currentContent = applyAutoId(currentContent, options); 
-                currentContent = restoreDataAttributes(currentContent);
-                currentContent = convertAllEntitiesToNumeric(currentContent);
-                monacoEditorInstance.setValue(currentContent);
-                htmlOutputContent = currentContent;
-                applyEntityHighlighting();
-
-                closeModalAndReEnableButtons(); 
-
-                const capturedOriginalText = originalButtonText;
-
-                triggeringButton.textContent = 'ID\'d!';
-                triggeringButton.classList.add('bg-green-500', 'hover:bg-green-600');
-                triggeringButton.classList.remove('bg-slate-600', 'hover:bg-slate-500'); 
-                setTimeout(() => {
-                    triggeringButton.textContent = capturedOriginalText; 
-                    triggeringButton.classList.remove('bg-green-500', 'hover:bg-green-600');
-                    triggeringButton.classList.add('bg-slate-600', 'hover:bg-slate-500'); 
-                }, 1500);
+    [toggleSectionsId, toggleHeadingsId, toggleFiguresId, toggleTablesId, toggleFigureTablesId, toggleFixFnIdsModal].forEach(toggle => {
+        toggle.addEventListener('change', (event) => {
+            const parentLabel = event.target.closest('.toggle-switch');
+            if (event.target.checked) {
+                parentLabel.classList.add('is-checked');
+            } else {
+                parentLabel.classList.remove('is-checked');
             }
         });
-    }
+    });
+
+    modalApplyAutoIdBtn.addEventListener('click', () => {
+        const idGenerationMode = document.getElementById('regenerateIdsBtn').classList.contains('active') ? 'regenerate' : 'preserve';
+        const options = {
+            idSections: toggleSectionsId.checked,
+            idHeadings: toggleHeadingsId.checked,
+            idFigures: toggleFiguresId.checked,
+            idTables: toggleTablesId.checked,
+            idFigureTables: toggleFigureTablesId.checked,
+            fixFnIds: toggleFixFnIdsModal.checked,
+            idGenerationMode: idGenerationMode // Add the new option here
+        };
+
+        if (monacoEditorInstance) {
+            let currentContent = monacoEditorInstance.getValue();
+            currentContent = protectDataAttributes(currentContent);
+            currentContent = applyAutoId(currentContent, options);
+            currentContent = restoreDataAttributes(currentContent);
+            currentContent = convertAllEntitiesToNumeric(currentContent);
+            monacoEditorInstance.setValue(currentContent);
+            htmlOutputContent = currentContent;
+            applyEntityHighlighting();
+
+            closeModalAndReEnableButtons();
+
+            const capturedOriginalText = originalButtonText;
+
+            triggeringButton.textContent = 'ID\'d!';
+            triggeringButton.classList.add('bg-green-500', 'hover:bg-green-600');
+            triggeringButton.classList.remove('bg-slate-600', 'hover:bg-slate-500');
+            setTimeout(() => {
+                triggeringButton.textContent = capturedOriginalText;
+                triggeringButton.classList.remove('bg-green-500', 'hover:bg-green-600');
+                triggeringButton.classList.add('bg-slate-600', 'hover:bg-slate-500');
+            }, 1500);
+        }
+    });
+}
 
     const quickFormattingToggles = [
         toggleCleanSpaces, toggleCleanUrls, toggleTimeTags, toggleCleanSingleBreaks, toggleCleanPTables, toggleCleanFormattingTags, 
