@@ -394,7 +394,27 @@ input[type="number"]::placeholder {
     margin-left: 0;
 }
 
+/* --- Auto ID Modal Blue Toggles --- */
+.modal-content #id-generation-mode-group {
+    border: none;
+    box-shadow: none;
+    gap: 0.5rem;
+}
 
+.modal-content #id-generation-mode-group button {
+    flex: none;
+    border-radius: 0.5rem;
+    margin: 0;
+    border: 1px solid #475569;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.8rem;
+}
+
+.modal-content #id-generation-mode-group button.active {
+    background-color: #3b82f6; /* Blue active state */
+    color: white;
+    border-color: #3b82f6;
+}
 /* ==========================================================================
    4. MODALS
    ========================================================================== */
