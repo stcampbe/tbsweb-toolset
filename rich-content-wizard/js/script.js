@@ -588,6 +588,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (a.hasAttribute('rel')) {
                         a.removeAttribute('rel');
                     }
+					
+					if (a.hasAttribute('title')) {
+						a.removeAttribute('title');
+					}
                     return;
                 }
 
@@ -635,6 +639,9 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             if (img.hasAttribute('rel')) {
                 img.removeAttribute('rel');
+            }
+			if (img.hasAttribute('title')) {
+                img.removeAttribute('title');
             }
         });
 
@@ -1719,7 +1726,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
         for (const attr of [...element.attributes]) {
-            if (attr.name.startsWith('mso-') || attr.name.startsWith('xmlns') || attr.name === 'align' || attr.name === 'lang') {
+            if (attr.name.startsWith('mso-') || attr.name.startsWith('xmlns') || attr.name === 'align' || attr.name === 'lang' || attr.name === 'title') {
                 element.removeAttribute(attr.name);
             }
         }
