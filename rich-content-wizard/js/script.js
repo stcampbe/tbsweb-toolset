@@ -425,8 +425,10 @@ document.addEventListener('DOMContentLoaded', function () {
 		return htmlString.replace(regex, (match, originalAttrName, quoteType, encodedValue) => {
 			try {
 				let decodedValue = decodeBase64(encodedValue);
+				// Re-escape the inner quotes as &quot;
 				let safeValue = decodedValue.replace(/__DOUBLE_QUOTE_PLACEHOLDER__/g, '&quot;').replace(/__SINGLE_QUOTE_PLACEHOLDER__/g, '&apos;');
-				return `${originalAttrName}=${quoteType}${safeValue}${quoteType}`;
+				// Force the outer quotes to be double quotes
+				return `${originalAttrName}="${safeValue}"`; 
 			} catch (e) {
 				console.error("Error decoding or re-escaping Base64 data-attribute:", e);
 				return '';
@@ -2483,7 +2485,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
     }
 
-    console.log("Toggle Editor View triggered. Current view:", currentView);
+console.log("Toggle Editor View triggered. Current view:", currentView);
     if (currentView === 'richtext') {
         if (default_ifr.contentWindow && default_ifr.contentWindow.getRichEditorContent) {
             richTextContent = default_ifr.contentWindow.getRichEditorContent();
@@ -2491,9 +2493,8 @@ document.addEventListener('DOMContentLoaded', function () {
             richTextContent = '';
         }
 
-        // *** FIX: Restore data attributes EARLIER, before they are needed. ***
-        richTextContent = restoreDataAttributes(richTextContent);
-        richTextContent = restoreGcdsTags(richTextContent);
+        // Perform DOM-based cleaning operations BEFORE restoring protected attributes.
+        // The temporary attributes are safe from DOM parsing/serialization.
         richTextContent = stripStylesFromTables(richTextContent);
 
         try {
@@ -2502,9 +2503,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             doc.querySelectorAll('details').forEach(detail => {
                 const wasOriginallyOpen = detail.hasAttribute('data-was-open');
-                detail.removeAttribute('data-was-open'); // Always remove the temporary attribute first.
-
-                // Now, explicitly set the final state based on our marker.
+                detail.removeAttribute('data-was-open');
                 if (wasOriginallyOpen) {
                     detail.setAttribute('open', 'open');
                 } else {
@@ -2512,7 +2511,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             });
 
-            doc.querySelectorAll('a[href]')
+doc.querySelectorAll('a[href]')
                 .forEach(a => {
                     let href = a.getAttribute('href');
                     const originalHref = href;
@@ -2550,7 +2549,10 @@ document.addEventListener('DOMContentLoaded', function () {
             console.error("Failed to parse and clean HTML, proceeding with raw content.", e);
         }
 
-        // *** FIX: The 'restoreDataAttributes' call was removed from here. ***
+        // Now, restore the protected attributes from the cleaned string content.
+        richTextContent = restoreGcdsTags(richTextContent);
+        richTextContent = restoreDataAttributes(richTextContent);
+
         let processedContent = richTextContent;
 
         if (toggleAutoCleanMsoOnSwitchRichText.checked) {
@@ -2579,7 +2581,7 @@ document.addEventListener('DOMContentLoaded', function () {
         toggleEditorViewBtnCode.classList.remove('bg-green-600', 'hover:bg-green-700', 'bg-slate-800', 'hover:bg-slate-700');
         toggleEditorViewBtnCode.classList.add('bg-cyan-700', 'hover:bg-cyan-800');
 
-        currentView = 'code';
+currentView = 'code';
         [contentModeBtn, tableModeBtn].forEach(btn => {
             btn.disabled = false;
             btn.classList.remove('opacity-50', 'cursor-not-allowed');
