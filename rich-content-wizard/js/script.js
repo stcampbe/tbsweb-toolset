@@ -696,7 +696,7 @@ document.addEventListener('DOMContentLoaded', function () {
         let doc = parser.parseFromString(htmlString, 'text/html');
         const body = doc.body;
 
-        const elementsToUnwrap = Array.from(body.querySelectorAll('div, span'));
+        const elementsToUnwrap = Array.from(body.querySelectorAll('div'));
         elementsToUnwrap.forEach(element => {
             if (element.attributes.length === 0) {
                 const parent = element.parentNode;
