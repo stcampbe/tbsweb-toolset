@@ -537,6 +537,8 @@ const APP_CONFIG = {
         'gc-rprt-prblm',
         'gc-stp-stp',
         'gc-sub-theme',
+		'gc-subway',
+		'gc-thickline',
         'glyphicon',
         'grid',
         'grid_1',
@@ -1157,7 +1159,10 @@ const APP_CONFIG = {
         'z-40',
         'z-50',
         'z-auto',
-        'zoom-in'
+        'zoom-in',
+		
+		// Custom
+		'dpp', 'dpp-avatar', 'dpp-scenario', 'dpp-tip', 'dpp-banner', 'header-rwd', 'bg-cover', 'dpp-home-img', 'dpp-button-list', 'dpp-button', 'dpp-key-topics', 'dpp-panel-body', 'panel-link', 'link-text', 'dpp-guides'
     ]),
     /**
      * @description This is the complete HTML document that gets loaded into the iframe
