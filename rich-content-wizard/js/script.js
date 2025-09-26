@@ -1,5 +1,5 @@
-document.addEventListener('DOMContentLoaded', function () {
-    window.handleRichTextEditorReady = function (editorInstance) {
+document.addEventListener('DOMContentLoaded', function() {
+    window.handleRichTextEditorReady = function(editorInstance) {
         console.log("Parent: Received ready signal from iframe. HugeRTE instance captured.");
         richTextEditorInstance = editorInstance;
 
@@ -10,24 +10,24 @@ document.addEventListener('DOMContentLoaded', function () {
     const default_ifr = document.getElementById('default_ifr');
     const codePanel = document.getElementById('codePanel');
     const richtextOutputPanel = document.getElementById('richtextOutputPanel');
-    const mainEditorArea = document.getElementById('mainEditorArea'); 
-	const infoBtn = document.getElementById('infoBtn');
+    const mainEditorArea = document.getElementById('mainEditorArea');
+    const infoBtn = document.getElementById('infoBtn');
     const infoModal = document.getElementById('infoModal');
     const closeInfoModalBtn = document.getElementById('closeInfoModalBtn');
     const toggleEditorViewBtnRichText = document.getElementById('toggleEditorViewBtnRichText');
     const toggleEditorViewBtnCode = document.getElementById('toggleEditorViewBtnCode');
     const copyCodeBtn = document.getElementById('copyCodeBtn');
     const autoFormatBtn = document.getElementById('autoFormatBtn');
-    const autoEncodeBtn = document.getElementById('autoEncodeBtn'); 
+    const autoEncodeBtn = document.getElementById('autoEncodeBtn');
     const exportHtmlBtn = document.getElementById('exportHtmlBtn');
     const importHtmlBtn = document.getElementById('importHtmlBtn');
     const htmlFileInput = document.getElementById('htmlFileInput');
     const clearAllBtn = document.getElementById('clearAllBtn');
-    const cleanMsoBtn = document.getElementById('cleanMsoBtn'); 
+    const cleanMsoBtn = document.getElementById('cleanMsoBtn');
     const debouncedModalUpdate = debounce(updateModalPreview, 500);
     const validateNowBtn = document.getElementById('validateNowBtn');
     const previewBtn = document.getElementById('previewBtn');
-	const toggleThemeBtn = document.getElementById('toggleThemeBtn');
+    const toggleThemeBtn = document.getElementById('toggleThemeBtn');
     const previewModal = document.getElementById('previewModal');
     const modalPreviewFrame = document.getElementById('modalPreviewFrame');
     const closePreviewModalBtn = document.getElementById('closePreviewModalBtn');
@@ -78,16 +78,16 @@ document.addEventListener('DOMContentLoaded', function () {
     const toggleCleanFormattingTags = document.getElementById('toggleCleanFormattingTags');
     const toggleAutoLevelHeadings = document.getElementById('toggleAutoLevelHeadings');
     const toggleAutoSection = document.getElementById('toggleAutoSection');
-    const toggleCleanPTables = document.getElementById('toggleCleanPTables'); 
-    const formatSelectedBtn = document.getElementById('formatSelectedBtn'); 
+    const toggleCleanPTables = document.getElementById('toggleCleanPTables');
+    const formatSelectedBtn = document.getElementById('formatSelectedBtn');
     const autoCleanMsoToggleCodeContainer = document.getElementById('toggleAutoCleanMsoOnSwitchCode').closest('div.p-2');
 
-    const autoIdBtn = document.getElementById('autoIdBtn'); 
-    const colophonBtn = document.getElementById('colophonBtn'); 
+    const autoIdBtn = document.getElementById('autoIdBtn');
+    const colophonBtn = document.getElementById('colophonBtn');
     const figDescBtn = document.getElementById('figDescBtn');
-    const defListBtn = document.getElementById('defListBtn'); 
-	const footnoteAncBtn = document.getElementById('footnoteAncBtn'); 
-    const footnoteListBtn = document.getElementById('footnoteListBtn'); 
+    const defListBtn = document.getElementById('defListBtn');
+    const footnoteAncBtn = document.getElementById('footnoteAncBtn');
+    const footnoteListBtn = document.getElementById('footnoteListBtn');
 
     const undoBtn = document.getElementById('undoBtn');
     const redoBtn = document.getElementById('redoBtn');
@@ -109,61 +109,31 @@ document.addEventListener('DOMContentLoaded', function () {
         btn.classList.add('opacity-50', 'cursor-not-allowed');
     });
 
-    
+
 
     const monacoEditorContainer = document.getElementById('monacoEditorContainer');
-    const sidebarPanel = document.getElementById('sidebarPanel'); 
+    const sidebarPanel = document.getElementById('sidebarPanel');
 
     const toggleAutoCleanMsoOnSwitchRichText = document.getElementById('toggleAutoCleanMsoOnSwitchRichText');
     const toggleAutoCleanMsoOnSwitchCode = document.getElementById('toggleAutoCleanMsoOnSwitchCode');
 
     const allInteractiveButtons = [
-        toggleEditorViewBtnRichText
-        , toggleEditorViewBtnCode
-        , cleanMsoBtn
-        , importHtmlBtn
-        , exportHtmlBtn
-        , formatSelectedBtn
-        , autoIdBtn
-        , figDescBtn
-        , defListBtn
-        , footnoteAncBtn
-        , footnoteListBtn
-        , colophonBtn
-        , clearAllBtn
-        , autoEncodeBtn
-        , autoFormatBtn
-        , copyCodeBtn
-        , undoBtn
-        , redoBtn
-        , enPageToCBtn
-        , enPageToCH3Btn
-        , frPageToCBtn
-        , frPageToCH3Btn
-        , enSecToCBtn
-        , enSecToCH4Btn
-        , enSecToCH5Btn
-        , enSecToCH6Btn
-        , frSecToCBtn
-        , frSecToCH4Btn
-        , frSecToCH5Btn
-        , frSecToCH6Btn
-    , ];
+        toggleEditorViewBtnRichText, toggleEditorViewBtnCode, cleanMsoBtn, importHtmlBtn, exportHtmlBtn, formatSelectedBtn, autoIdBtn, figDescBtn, defListBtn, footnoteAncBtn, footnoteListBtn, colophonBtn, clearAllBtn, autoEncodeBtn, autoFormatBtn, copyCodeBtn, undoBtn, redoBtn, enPageToCBtn, enPageToCH3Btn, frPageToCBtn, frPageToCH3Btn, enSecToCBtn, enSecToCH4Btn, enSecToCH5Btn, enSecToCH6Btn, frSecToCBtn, frSecToCH4Btn, frSecToCH5Btn, frSecToCH6Btn,
+    ];
 
     const undoStack = [];
     const redoStack = [];
     let isUndoingOrRedoing = false;
-    const UNDO_LIMIT = 50; 
+    const UNDO_LIMIT = 50;
 
-    let richTextEditorInstance; 
-    let monacoEditorInstance; 
-    let currentView = 'richtext'; 
+    let richTextEditorInstance;
+    let monacoEditorInstance;
+    let currentView = 'richtext';
 
     let richTextContent = '';
-    let htmlOutputContent = ''; 
+    let htmlOutputContent = '';
 
     let richTextEditorInstanceFromIframe;
-
 
     let modalShowSections = false;
     let modalShowHeadings = false;
@@ -182,50 +152,45 @@ document.addEventListener('DOMContentLoaded', function () {
     let modalCurrentBreakpoint = 'full';
     const NBSP_PLACEHOLDER = '&#160;';
 
-    let currentLineDecorations = []; 
+    let currentLineDecorations = [];
 
     const validationResultsDiv = document.getElementById('validationResults');
     validationResultsDiv.addEventListener('click', handleResultClick);
 
     function setEditorMode(mode) {
-    if (mode === 'content') {
-        // Style buttons
-        contentModeBtn.classList.remove('bg-gray-600', 'hover:bg-gray-700');
-        contentModeBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
-        tableModeBtn.classList.add('bg-gray-600', 'hover:bg-gray-700');
-        tableModeBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+        if (mode === 'content') {
 
-        // Show content-specific UI elements
-        sidebarPanel.classList.remove('hidden');
-        toggleEditorViewBtnCode.classList.remove('hidden');
-        autoCleanMsoToggleCodeContainer.classList.remove('hidden');
-        cleanMsoBtn.classList.remove('hidden');
-        removeTblModalBtn.classList.remove('hidden');
+            contentModeBtn.classList.remove('bg-gray-600', 'hover:bg-gray-700');
+            contentModeBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+            tableModeBtn.classList.add('bg-gray-600', 'hover:bg-gray-700');
+            tableModeBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
 
-        // Hide table-specific UI elements
-        tableControlsRow1.classList.add('hidden');
-        tableControlsRow2.classList.add('hidden');
+            sidebarPanel.classList.remove('hidden');
+            toggleEditorViewBtnCode.classList.remove('hidden');
+            autoCleanMsoToggleCodeContainer.classList.remove('hidden');
+            cleanMsoBtn.classList.remove('hidden');
+            removeTblModalBtn.classList.remove('hidden');
 
-    } else if (mode === 'table') {
-        // Style buttons
-        tableModeBtn.classList.remove('bg-gray-600', 'hover:bg-gray-700');
-        tableModeBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
-        contentModeBtn.classList.add('bg-gray-600', 'hover:bg-gray-700');
-        contentModeBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+            tableControlsRow1.classList.add('hidden');
+            tableControlsRow2.classList.add('hidden');
 
-        // Hide specific content controls
-        sidebarPanel.classList.add('hidden');
-        toggleEditorViewBtnCode.classList.add('hidden');
-        autoCleanMsoToggleCodeContainer.classList.add('hidden');
-        cleanMsoBtn.classList.add('hidden');
-        removeTblModalBtn.classList.add('hidden');
-        
-        
-        // Show table-specific UI elements
-        tableControlsRow1.classList.remove('hidden');
-        tableControlsRow2.classList.remove('hidden');
+        } else if (mode === 'table') {
+
+            tableModeBtn.classList.remove('bg-gray-600', 'hover:bg-gray-700');
+            tableModeBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+            contentModeBtn.classList.add('bg-gray-600', 'hover:bg-gray-700');
+            contentModeBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+
+            sidebarPanel.classList.add('hidden');
+            toggleEditorViewBtnCode.classList.add('hidden');
+            autoCleanMsoToggleCodeContainer.classList.add('hidden');
+            cleanMsoBtn.classList.add('hidden');
+            removeTblModalBtn.classList.add('hidden');
+
+            tableControlsRow1.classList.remove('hidden');
+            tableControlsRow2.classList.remove('hidden');
+        }
     }
-}
 
     function handleResultClick(event) {
         const listItem = event.target.closest('li[data-line-number]');
@@ -234,12 +199,12 @@ document.addEventListener('DOMContentLoaded', function () {
             currentLineDecorations = monacoEditorInstance.deltaDecorations(currentLineDecorations, []);
             currentLineDecorations = monacoEditorInstance.deltaDecorations(currentLineDecorations, [{
                 range: new monaco.Range(lineNumber, 1, lineNumber, monacoEditorInstance.getModel()
-                    .getLineMaxColumn(lineNumber))
-                , options: {
-                    className: 'highlighted-line'
-                    , isOverviewRuler: true
-                    , overviewRulerLane: monaco.editor.OverviewRulerLane.Full
-                    , overviewRulerColor: 'rgba(100, 149, 237, 0.6)'
+                    .getLineMaxColumn(lineNumber)),
+                options: {
+                    className: 'highlighted-line',
+                    isOverviewRuler: true,
+                    overviewRulerLane: monaco.editor.OverviewRulerLane.Full,
+                    overviewRulerColor: 'rgba(100, 149, 237, 0.6)'
                 }
             }]);
             monacoEditorInstance.revealLineInCenter(lineNumber);
@@ -261,7 +226,7 @@ document.addEventListener('DOMContentLoaded', function () {
             validationResultsDiv.classList.remove('bg-green-100', 'text-green-800', 'border-green-300');
             validationResultsDiv.classList.add('bg-red-100', 'text-red-800', 'border-red-300');
             const errorList = document.createElement('ul');
-            errorList.classList.add('list-none', 'pl-2'); 
+            errorList.classList.add('list-none', 'pl-2');
 
             errors.forEach(error => {
                 const listItem = document.createElement('li');
@@ -314,13 +279,13 @@ document.addEventListener('DOMContentLoaded', function () {
         } catch (e) {
             console.error("Error during HTML validation:", e);
             errors.push({
-                message: `<strong>Validation Error:</strong> An unexpected error occurred: ${e.message}.`
-                , lineNumber: 'N/A'
+                message: `<strong>Validation Error:</strong> An unexpected error occurred: ${e.message}.`,
+                lineNumber: 'N/A'
             });
         } finally {
             displayValidationResults(errors);
         }
-        return errors; 
+        return errors;
     }
 
     function updateUndoRedoButtons() {
@@ -340,7 +305,7 @@ document.addEventListener('DOMContentLoaded', function () {
         undoStack.push(content);
 
         if (undoStack.length > UNDO_LIMIT) {
-            undoStack.shift(); 
+            undoStack.shift();
         }
 
         updateUndoRedoButtons();
@@ -412,39 +377,38 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function protectDataAttributes(htmlString) {
-		const regex = /(data-[a-zA-Z0-9-]+)=(['"])(.*?)\2/g;
-		return htmlString.replace(regex, (match, attrName, quoteType, value) => {
-			const safeValue = value.replace(/"/g, '__DOUBLE_QUOTE_PLACEHOLDER__').replace(/'/g, '__SINGLE_QUOTE_PLACEHOLDER__');
-			const encodedValue = encodeBase64(safeValue);
-			return `data-temp-protected-${attrName}="${encodedValue}"`;
-		});
-	}
+        const regex = /(data-[a-zA-Z0-9-]+)=(['"])(.*?)\2/g;
+        return htmlString.replace(regex, (match, attrName, quoteType, value) => {
+            const safeValue = value.replace(/"/g, '__DOUBLE_QUOTE_PLACEHOLDER__').replace(/'/g, '__SINGLE_QUOTE_PLACEHOLDER__');
+            const encodedValue = encodeBase64(safeValue);
+            return `data-temp-protected-${attrName}="${encodedValue}"`;
+        });
+    }
 
-	function restoreDataAttributes(htmlString) {
-		const regex = /data-temp-protected-(data-[a-zA-Z0-9-]+)=(['"])(.*?)\2/g;
-		return htmlString.replace(regex, (match, originalAttrName, quoteType, encodedValue) => {
-			try {
-				let decodedValue = decodeBase64(encodedValue);
-				// Re-escape the inner quotes as &quot;
-				let safeValue = decodedValue.replace(/__DOUBLE_QUOTE_PLACEHOLDER__/g, '&quot;').replace(/__SINGLE_QUOTE_PLACEHOLDER__/g, '&apos;');
-				// Force the outer quotes to be double quotes
-				return `${originalAttrName}="${safeValue}"`; 
-			} catch (e) {
-				console.error("Error decoding or re-escaping Base64 data-attribute:", e);
-				return '';
-			}
-		});
-	}
+    function restoreDataAttributes(htmlString) {
+        const regex = /data-temp-protected-(data-[a-zA-Z0-9-]+)=(['"])(.*?)\2/g;
+        return htmlString.replace(regex, (match, originalAttrName, quoteType, encodedValue) => {
+            try {
+                let decodedValue = decodeBase64(encodedValue);
+                let safeValue = decodedValue.replace(/__DOUBLE_QUOTE_PLACEHOLDER__/g, '&quot;').replace(/__SINGLE_QUOTE_PLACEHOLDER__/g, '&apos;');
+                return `${originalAttrName}="${safeValue}"`;
+            } catch (e) {
+                console.error("Error decoding or re-escaping Base64 data-attribute:", e);
+                return '';
+            }
+        });
+    }
 
     function decodeHtmlEntities(html) {
         const textarea = document.createElement('textarea');
-        textarea.innerHTML = html; 
-        return textarea.value; 
+        textarea.innerHTML = html;
+        return textarea.value;
     }
 
     function cleanHtmlForRichTextDisplay(content) {
         return decodeHtmlEntities(content);
     }
+
     function protectGcdsTags(htmlString) {
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlString, 'text/html');
@@ -497,7 +461,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (infoBlock) {
                 infoBlock.remove();
             }
-            const innerContent = wrapper.innerHTML; 
+            const innerContent = wrapper.innerHTML;
 
             if (!tagName || !attributesJson) continue;
 
@@ -518,10 +482,11 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         return doc.body.innerHTML;
     }
+
     function applyUrlCleaning(htmlString) {
-        const parser = new DOMParser(); 
+        const parser = new DOMParser();
         const tempDiv = parser.parseFromString(htmlString, 'text/html')
-            .body; 
+            .body;
 
 
 
@@ -538,7 +503,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                     parent.removeChild(a);
                 }
-                return; 
+                return;
             }
 
             if (a.attributes.length === 0) {
@@ -576,7 +541,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         }
                         a.setAttribute('href', href);
                         prepended = true;
-                        break; 
+                        break;
                     }
                 }
 
@@ -588,10 +553,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (a.hasAttribute('rel')) {
                         a.removeAttribute('rel');
                     }
-					
-					if (a.hasAttribute('title')) {
-						a.removeAttribute('title');
-					}
+
+                    if (a.hasAttribute('title')) {
+                        a.removeAttribute('title');
+                    }
                     return;
                 }
 
@@ -607,7 +572,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         if (href.startsWith(mapping.old)) {
                             href = href.replace(mapping.old, mapping.new);
                             a.setAttribute('href', href);
-                            break; 
+                            break;
                         }
                     }
                 }
@@ -629,8 +594,8 @@ document.addEventListener('DOMContentLoaded', function () {
             let src = img.getAttribute('src');
             if (src && src.includes('/content/dam')) {
                 const contentDamIndex = src.indexOf('/content/dam');
-                if (contentDamIndex !== 0) { 
-                    src = src.substring(contentDamIndex); 
+                if (contentDamIndex !== 0) {
+                    src = src.substring(contentDamIndex);
                     img.setAttribute('src', src);
                 }
             }
@@ -640,25 +605,23 @@ document.addEventListener('DOMContentLoaded', function () {
             if (img.hasAttribute('rel')) {
                 img.removeAttribute('rel');
             }
-			if (img.hasAttribute('title')) {
+            if (img.hasAttribute('title')) {
                 img.removeAttribute('title');
             }
         });
 
         return tempDiv.innerHTML;
     }
-	
-	function applyFixFnIdsLogic(htmlString) {
+
+    function applyFixFnIdsLogic(htmlString) {
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlString, 'text/html');
 
-        // 1. Group all referrer `<sup>` tags by their base ID.
         const baseIdToSupElements = new Map();
         const supElements = doc.querySelectorAll('sup[id*="-rf"]');
 
         supElements.forEach(sup => {
             const originalId = sup.id;
-            // Robustly get the base ID (e.g., "tbl1fn2" from "tbl1fn2-rf-1")
             const baseId = originalId.replace(/-rf(-\d+)?$/, '');
 
             if (!baseIdToSupElements.has(baseId)) {
@@ -667,11 +630,9 @@ document.addEventListener('DOMContentLoaded', function () {
             baseIdToSupElements.get(baseId).push(sup);
         });
 
-        // 2. Process each group of referrers.
         for (const [baseId, supList] of baseIdToSupElements.entries()) {
             let canonicalTargetId;
 
-            // 2a. ONLY re-number the `<sup>` tags if there is more than one.
             if (supList.length > 1) {
                 canonicalTargetId = `${baseId}-rf-0`;
                 supList.forEach((sup, index) => {
@@ -679,19 +640,16 @@ document.addEventListener('DOMContentLoaded', function () {
                     sup.id = newSupId;
                 });
             } else if (supList.length === 1) {
-                // 2b. If there is only one, ensure its ID is the simple version and set that as the target.
                 canonicalTargetId = `${baseId}-rf`;
                 supList[0].id = canonicalTargetId;
             } else {
-                continue; // Should not happen, but good practice.
+                continue;
             }
 
-            // 3. Find the corresponding definition list item (`<dd>`) and fix its return link.
-            const ddElement = doc.getElementById(baseId); // e.g., get element with id="tbl1fn1"
+            const ddElement = doc.getElementById(baseId);
             if (ddElement) {
                 const returnLink = ddElement.querySelector('a[href*="-rf"]');
                 if (returnLink) {
-                    // Update the link to point to the correct canonical target ID.
                     returnLink.setAttribute('href', `#${canonicalTargetId}`);
                 }
             }
@@ -731,17 +689,15 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         const walker = doc.createTreeWalker(
-            body
-            , NodeFilter.SHOW_TEXT, {
-                acceptNode: function (node) {
+            body, NodeFilter.SHOW_TEXT, {
+                acceptNode: function(node) {
                     const txt = node.nodeValue;
                     if (txt.trim() === '' && (txt.length > 1 || /[\r\n\t]/.test(txt))) {
                         return NodeFilter.FILTER_ACCEPT;
                     }
                     return NodeFilter.FILTER_REJECT;
                 }
-            }
-            , false
+            }, false
         );
 
         const nodesToRemove = [];
@@ -770,7 +726,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
         doc.body.innerHTML = cleanedHtml;
-        const finalBody = doc.body; 
+        const finalBody = doc.body;
 
         const elementsToCheckForEmptiness = Array.from(finalBody.querySelectorAll('p, ul, li, div, span, strong, em, u, b, i, section, article, code, h1, h2, h3, h4, h5, h6'));
 
@@ -792,15 +748,13 @@ document.addEventListener('DOMContentLoaded', function () {
                         element.parentNode.replaceChild(doc.createTextNode(' '), element);
                     }
                 }
-            }
-            else {
+            } else {
                 if (['div', 'span', 'section'].includes(tagName) && element.attributes.length > 0) {
-                    continue; 
+                    continue;
                 }
                 if (element.textContent === ' ' && ['strong', 'em', 'u', 'b', 'i'].includes(tagName)) {
                     element.parentNode.replaceChild(
-                        doc.createTextNode(' ')
-                        , element
+                        doc.createTextNode(' '), element
                     );
                     continue;
                 }
@@ -820,8 +774,8 @@ document.addEventListener('DOMContentLoaded', function () {
         elementsToTrim.forEach(element => {
             let currentHtml = element.innerHTML;
 
-            currentHtml = currentHtml.replace(/^(?:&nbsp;|\s|&#160;|\u00A0)+/, ''); 
-            currentHtml = currentHtml.replace(/(?:&nbsp;|\s|&#160;|\u00A0)+$/, ''); 
+            currentHtml = currentHtml.replace(/^(?:&nbsp;|\s|&#160;|\u00A0)+/, '');
+            currentHtml = currentHtml.replace(/(?:&nbsp;|\s|&#160;|\u00A0)+$/, '');
 
             element.innerHTML = currentHtml;
         });
@@ -852,7 +806,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             if (isInsideTable) {
-                continue; 
+                continue;
             }
 
             const newParagraph = doc.createElement('p');
@@ -881,7 +835,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         for (let i = pElementsInCells.length - 1; i >= 0; i--) {
             const pTag = pElementsInCells[i];
-            const parentCell = pTag.parentNode; 
+            const parentCell = pTag.parentNode;
 
             const closestCell = pTag.closest('td, th');
 
@@ -976,12 +930,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function convertAllEntitiesToNumeric(htmlString) {
         const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = htmlString; 
+        tempDiv.innerHTML = htmlString;
 
         const walker = document.createTreeWalker(
-            tempDiv
-            , NodeFilter.SHOW_TEXT, {
-                acceptNode: function (textNode) {
+            tempDiv, NodeFilter.SHOW_TEXT, {
+                acceptNode: function(textNode) {
                     let parent = textNode.parentNode;
                     while (parent) {
                         const tagName = parent.tagName ? parent.tagName.toLowerCase() : '';
@@ -992,8 +945,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                     return NodeFilter.FILTER_ACCEPT;
                 }
-            }
-            , false
+            }, false
 
         );
 
@@ -1005,23 +957,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
         textNodesToProcess.forEach(textNode => {
             let text = textNode.nodeValue;
-            text = text.replace(/’/g, '&#8217;'); 
-            text = text.replace(/&rsquo;/g, '&#8217;'); 
-            text = text.replace(/“/g, '&#8220;'); 
-            text = text.replace(/&ldquo;/g, '&#8220;'); 
-            text = text.replace(/”/g, '&#8221;'); 
-            text = text.replace(/&rdquo;/g, '&#8221;'); 
-            text = text.replace(/«/g, '&#171;'); 
-            text = text.replace(/&laquo;/g, '&#171;'); 
-            text = text.replace(/»/g, '&#187;'); 
-            text = text.replace(/&raquo;/g, '&#187;'); 
-            text = text.replace(/\u00A0/g, '&#160;'); 
-            text = text.replace(/&nbsp;/g, '&#160;'); 
+            text = text.replace(/’/g, '&#8217;');
+            text = text.replace(/&rsquo;/g, '&#8217;');
+            text = text.replace(/“/g, '&#8220;');
+            text = text.replace(/&ldquo;/g, '&#8220;');
+            text = text.replace(/”/g, '&#8221;');
+            text = text.replace(/&rdquo;/g, '&#8221;');
+            text = text.replace(/«/g, '&#171;');
+            text = text.replace(/&laquo;/g, '&#171;');
+            text = text.replace(/»/g, '&#187;');
+            text = text.replace(/&raquo;/g, '&#187;');
+            text = text.replace(/\u00A0/g, '&#160;');
+            text = text.replace(/&nbsp;/g, '&#160;');
 
             textNode.nodeValue = text;
         });
 
-        let processedHtml = tempDiv.innerHTML; 
+        let processedHtml = tempDiv.innerHTML;
 
         processedHtml = processedHtml.replace(/&nbsp;/g, '&#160;');
         processedHtml = processedHtml.replace(/&rsquo;/g, '&#8217;');
@@ -1035,7 +987,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return processedHtml;
     }
 
-    
+
 
     function applyCleanLists(htmlString) {
         const parser = new DOMParser();
@@ -1124,7 +1076,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         const clonedChild = child.cloneNode(false);
                         clonedChild.innerHTML = extractAllowedContentForLists(child);
                         contentHtml += clonedChild.outerHTML;
-                    } else if (tagName === 'a' && child.hasAttribute('href')) { 
+                    } else if (tagName === 'a' && child.hasAttribute('href')) {
                         contentHtml += child.outerHTML;
                     } else {
                         contentHtml += extractAllowedContentForLists(child);
@@ -1155,14 +1107,14 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         const targetElements = Array.from(body.querySelectorAll('p, h1, h2, h3, h4, h5, h6'));
-        const elementsToReplace = new Map(); 
-        const elementsToRemove = new Set(); 
+        const elementsToReplace = new Map();
+        const elementsToRemove = new Set();
 
         for (let i = 0; i < targetElements.length; i++) {
             const element = targetElements[i];
 
             if (elementsToRemove.has(element)) {
-                continue; 
+                continue;
             }
 
             const tagName = element.tagName.toLowerCase();
@@ -1186,9 +1138,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 if (level === null) {
                     element.removeAttribute('class');
-                    element.removeAttribute('style'); 
+                    element.removeAttribute('style');
                     element.classList.add('MsoNormal');
-                    continue; 
+                    continue;
                 }
 
                 const msoListIgnoreSpan = element.querySelector('span[style*="mso-list: Ignore"]');
@@ -1212,8 +1164,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
                 let currentListStack = [{
-                    domElement: newRootListElement
-                    , level: level
+                    domElement: newRootListElement,
+                    level: level
                 }];
                 let currentParentList = newRootListElement;
 
@@ -1226,18 +1178,18 @@ document.addEventListener('DOMContentLoaded', function () {
                     li.innerHTML = listItemContent;
                 }
                 currentParentList.appendChild(li);
-                elementsToReplace.set(element, newRootListElement); 
+                elementsToReplace.set(element, newRootListElement);
 
                 element.removeAttribute('class');
                 element.removeAttribute('style');
 
 
                 let nextSibling = element.nextElementSibling;
-                let currentSequenceIndex = i + 1; 
+                let currentSequenceIndex = i + 1;
 
                 while (nextSibling && currentSequenceIndex < targetElements.length) {
-                    const nextElement = targetElements[currentSequenceIndex]; 
-                    if (nextElement !== nextSibling) { 
+                    const nextElement = targetElements[currentSequenceIndex];
+                    if (nextElement !== nextSibling) {
                         break;
                     }
 
@@ -1258,10 +1210,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     if (isNextMsoListParagraphClass || nextMatchesNewRule) {
                         let nextLevel = getLevel(nextStyleAttr);
-						if (nextLevel === null && isNextMsoListParagraphClass) {
-        const currentDepth = currentListStack[currentListStack.length - 1].level;
-        nextLevel = currentDepth;
-    }
+                        if (nextLevel === null && isNextMsoListParagraphClass) {
+                            const currentDepth = currentListStack[currentListStack.length - 1].level;
+                            nextLevel = currentDepth;
+                        }
                         if (nextLevel === null) {
                             nextElement.removeAttribute('class');
                             nextElement.removeAttribute('style');
@@ -1299,8 +1251,8 @@ document.addEventListener('DOMContentLoaded', function () {
                             }
                             targetLi.appendChild(nestedListElement);
                             currentListStack.push({
-                                domElement: nestedListElement
-                                , level: nextLevel
+                                domElement: nestedListElement,
+                                level: nextLevel
                             });
                             currentParentList = nestedListElement;
 
@@ -1317,7 +1269,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                     currentParentList.appendChild(targetLi);
                                 }
                                 let newNestedList;
-                                if (currentListStack.length + 1 === nextLevel) { 
+                                if (currentListStack.length + 1 === nextLevel) {
                                     if (nextListType === 'ordered-numeric') {
                                         newNestedList = doc.createElement('ol');
                                     } else if (nextListType === 'ordered-alpha') {
@@ -1326,13 +1278,13 @@ document.addEventListener('DOMContentLoaded', function () {
                                     } else {
                                         newNestedList = doc.createElement('ul');
                                     }
-                                } else { 
+                                } else {
                                     newNestedList = doc.createElement('ul');
                                 }
                                 targetLi.appendChild(newNestedList);
                                 currentListStack.push({
-                                    domElement: newNestedList
-                                    , level: currentListStack.length + 1
+                                    domElement: newNestedList,
+                                    level: currentListStack.length + 1
                                 });
                                 currentParentList = newNestedList;
                             }
@@ -1348,7 +1300,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             nextLi.innerHTML = nextListItemContent;
                         }
                         currentParentList.appendChild(nextLi);
-                        elementsToRemove.add(nextElement); 
+                        elementsToRemove.add(nextElement);
 
                         nextElement.removeAttribute('class');
                         nextElement.removeAttribute('style');
@@ -1356,10 +1308,10 @@ document.addEventListener('DOMContentLoaded', function () {
                         nextSibling = nextElement.nextElementSibling;
                         currentSequenceIndex++;
                     } else {
-                        break; 
+                        break;
                     }
                 }
-                i = currentSequenceIndex - 1; 
+                i = currentSequenceIndex - 1;
             }
         }
 
@@ -1399,11 +1351,11 @@ document.addEventListener('DOMContentLoaded', function () {
         doc.querySelectorAll('table')
             .forEach(table => {
                 table.classList.remove('MsoTable');
-                if (!table.getAttribute('class')) { 
+                if (!table.getAttribute('class')) {
                     table.removeAttribute('class');
                 }
 
-                table.removeAttribute('style'); 
+                table.removeAttribute('style');
                 table.querySelectorAll('*')
                     .forEach(descendant => {
                         descendant.removeAttribute('style');
@@ -1438,15 +1390,15 @@ document.addEventListener('DOMContentLoaded', function () {
                                 p.removeAttribute('align');
                                 let tailwindAlignClass = '';
                                 switch (alignAttr.toLowerCase()) {
-                                case 'left':
-                                    tailwindAlignClass = 'text-left';
-                                    break;
-                                case 'center':
-                                    tailwindAlignClass = 'text-center';
-                                    break;
-                                case 'right':
-                                    tailwindAlignClass = 'text-right';
-                                    break;
+                                    case 'left':
+                                        tailwindAlignClass = 'text-left';
+                                        break;
+                                    case 'center':
+                                        tailwindAlignClass = 'text-center';
+                                        break;
+                                    case 'right':
+                                        tailwindAlignClass = 'text-right';
+                                        break;
                                 }
                                 if (tailwindAlignClass) {
                                     parentCell.classList.add(tailwindAlignClass);
@@ -1464,7 +1416,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const tables = doc.querySelectorAll('table');
 
         tables.forEach(table => {
-            // Condition: Table must contain exactly one cell (<td> or <th>).
             const cells = table.querySelectorAll('td, th');
             const isSingleCell = cells.length === 1;
 
@@ -1473,11 +1424,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 const parent = table.parentNode;
 
                 if (parent) {
-                    // Move all content from the cell to just before the table.
                     while (cell.firstChild) {
                         parent.insertBefore(cell.firstChild, table);
                     }
-                    // Remove the now-empty table structure.
                     parent.removeChild(table);
                 }
             }
@@ -1486,264 +1435,278 @@ document.addEventListener('DOMContentLoaded', function () {
         return doc.body.innerHTML;
     }
 
+    function isClassAllowed(className, config) {
+        if (!className || !config) return false;
+
+        if (config.exact.has(className)) {
+            return true;
+        }
+        if (config.prefixes.some(prefix => className.startsWith(prefix))) {
+            return true;
+        }
+        return false;
+    }
+
+
     function applyCleanMsoCode(htmlString) {
-    if (!htmlString) return '';
+        if (!htmlString) return '';
 
-    // Phase 1: Aggressive Regex Pre-processing
-    let cleanHtml = htmlString
-        .replace(/<!--[\s\S]*?-->/gi, '') 
-        .replace(/<xml>[\s\S]*?<\/xml>/gi, '') 
-        .replace(/<\/?o:p[^>]*>/gi, ''); 
+        let cleanHtml = htmlString
+            .replace(/<!--[\s\S]*?-->/gi, '')
+            .replace(/<xml>[\s\S]*?<\/xml>/gi, '')
+            .replace(/<\/?o:p[^>]*>/gi, '');
 
-    // Phase 2: DOM-based Targeted Cleaning
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(cleanHtml, 'text/html');
-    const body = doc.body;
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(cleanHtml, 'text/html');
+        const body = doc.body;
 
-    // Handle Deletions and Insertions
-    body.querySelectorAll('del, span.msoDel').forEach(el => el.remove());
-    body.querySelectorAll('ins, span.msoIns').forEach(el => {
-        if (el.parentNode) {
-            while (el.firstChild) { el.parentNode.insertBefore(el.firstChild, el); }
-            el.remove();
-        }
-    });
-
-    // Remove MSO Endnote/Comment lists and links
-    body.querySelectorAll(
-        '[style*="mso-element: comment-list"], [style*="mso-element: endnote-list"], a[href*="#_msocom"], a[href*="#_edn"]'
-    ).forEach(el => el.remove());
-
-    // Convert local/embedded images to a placeholder
-    body.querySelectorAll('img').forEach(img => {
-        const src = img.getAttribute('src');
-        if (src && (src.startsWith('file://') || src.startsWith('data:'))) {
-            const replacementDiv = doc.createElement('div');
-            replacementDiv.classList.add('clearfix');
-            const replacementMark = doc.createElement('mark');
-            replacementMark.textContent = 'IMAGE NOT IMPORTED';
-            replacementDiv.appendChild(replacementMark);
-            if (img.parentNode) {
-                img.parentNode.replaceChild(replacementDiv, img);
-            }
-        }
-    });
-
-    // Clean invalid <hr> tags
-    body.querySelectorAll('hr').forEach(hr => {
-        const allowedAttrs = new Set(['class', 'id']);
-        if (Array.from(hr.attributes).some(attr => !allowedAttrs.has(attr.name.toLowerCase()))) {
-            hr.remove();
-        }
-    });
-
-    // Fix for spacer spans
-    body.querySelectorAll('span[style*="mso-tab-count"], span[style*="mso-spacerun"]').forEach(span => {
-        if (span.parentNode) {
-            span.parentNode.replaceChild(doc.createTextNode(' '), span);
-        }
-    });
-
-    // Unwrap other MSO-specific field code spans
-    body.querySelectorAll('span[style*="mso-element"]').forEach(span => {
-        if (span.parentNode) {
-            while (span.firstChild) { span.parentNode.insertBefore(span.firstChild, span); }
-            span.remove();
-        }
-    });
-
-    // Simplify Table of Contents links
-    body.querySelectorAll('a[href*="_Toc"]').forEach(a => {
-        let cleanText = a.textContent.replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
-        cleanText = cleanText.replace(/\.\s+\d+$/, '.');
-        a.textContent = cleanText;
-    });
-    
-    // Remove empty legacy anchor tags
-    body.querySelectorAll('a:not([href])').forEach(anchor => {
-    const parent = anchor.parentNode;
-    if (parent) {
-        // Move all of the anchor's children to become direct children of the parent,
-        // effectively placing them where the anchor tag used to be.
-        while (anchor.firstChild) {
-            parent.insertBefore(anchor.firstChild, anchor);
-        }
-        // Now that the anchor tag is empty, remove it.
-        parent.removeChild(anchor);
-    }
-});
-
-    // Unwrap unnecessary container divs
-    body.querySelectorAll('div[class*="WordSection"], div[class*="DocumentTitle"]').forEach(div => {
-         if (div.parentNode) {
-            while (div.firstChild) { div.parentNode.insertBefore(div.firstChild, div); }
-            div.remove();
-        }
-    });
-    
-    // --- Full, robust footnote processing ---
-    const occurrenceMap = new Map();
-    const refInfoMap = new Map();
-    let tableCounter = 0;
-    const tableElementToIdMap = new Map();
-    const processedFootnoteDefinitions = []; 
-
-    const allPotentialRefs = Array.from(doc.querySelectorAll('a[href*="#_ftn"], span.MsoFootnoteReference'));
-
-    allPotentialRefs.forEach(refElement => {
-        if (refElement.tagName === 'SPAN' && refElement.classList.contains('MsoFootnoteReference') && refElement.closest('a[href*="#_ftn"]')) { return; }
-        let originalNum;
-        const linkRef = refElement.closest('a');
-        if (linkRef && linkRef.href.includes('#_ftn')) {
-            const match = linkRef.getAttribute('href').match(/#_ftn(\d+)/);
-            if (match) originalNum = match[1];
-        } else {
-            const refText = refElement.textContent.trim().replace(/\[|\]/g, '');
-            const footnoteListItems = doc.querySelectorAll('p[style*="mso-element: footnote"], div[style*="mso-element: footnote"]');
-            for (const item of footnoteListItems) {
-                const itemRefSpan = item.querySelector('span.MsoFootnoteReference');
-                if (itemRefSpan && itemRefSpan.textContent.trim().replace(/\[|\]/g, '') === refText) {
-                    const anchor = item.querySelector('a[name^="_ftn"]');
-                    if (anchor) {
-                        const match = anchor.getAttribute('name').match(/_ftn(\d+)/);
-                        if (match) originalNum = match[1];
-                        break;
-                    }
+        body.querySelectorAll('del, span.msoDel').forEach(el => el.remove());
+        body.querySelectorAll('ins, span.msoIns').forEach(el => {
+            if (el.parentNode) {
+                while (el.firstChild) {
+                    el.parentNode.insertBefore(el.firstChild, el);
                 }
-            }
-        }
-        if (!originalNum) return;
-        const containingTable = refElement.closest('table');
-        let baseId;
-        if (containingTable) {
-            if (!tableElementToIdMap.has(containingTable)) {
-                tableCounter++;
-                tableElementToIdMap.set(containingTable, `tbl${tableCounter}`);
-            }
-            const tableId = tableElementToIdMap.get(containingTable);
-            baseId = `${tableId}fn${originalNum}`;
-        } else {
-            baseId = `fn${originalNum}`;
-        }
-        occurrenceMap.set(baseId, (occurrenceMap.get(baseId) || 0) + 1);
-        if (!refInfoMap.has(baseId)) {
-            refInfoMap.set(baseId, { elements: [], originalNum: originalNum, isTable: !!containingTable, tableElement: containingTable });
-        }
-        refInfoMap.get(baseId).elements.push(refElement);
-    });
-    
-    for (const [baseId, refInfo] of refInfoMap.entries()) {
-        const { elements, originalNum, isTable, tableElement } = refInfo;
-        const totalOccurrences = occurrenceMap.get(baseId);
-        elements.forEach((refElement, index) => {
-            let elementToReplace = refElement.closest('sup') || refElement;
-            const linkText = `[${refElement.textContent.trim().replace(/\[|\]/g, '')}]`;
-            const newSup = doc.createElement('sup');
-            newSup.id = totalOccurrences > 1 ? `${baseId}-rf${index + 1}` : `${baseId}-rf`;
-            const newLink = doc.createElement('a');
-            newLink.href = `#${baseId}`;
-            newLink.textContent = linkText;
-            newSup.appendChild(newLink);
-            if (elementToReplace.parentNode) {
-                elementToReplace.parentNode.replaceChild(newSup, elementToReplace);
+                el.remove();
             }
         });
-        const definitionAnchor = doc.querySelector(`a[name="_ftn${originalNum}"]`);
-        if (definitionAnchor) {
-            const definitionContainer = definitionAnchor.closest('div[style*="mso-element: footnote"], p[style*="mso-element: footnote"]');
-            if (definitionContainer) {
-                const firstRefSupId = totalOccurrences > 1 ? `${baseId}-rf1` : `${baseId}-rf`;
-                const originalRefNumber = (definitionContainer.querySelector('span.MsoFootnoteReference, a[href*="_ftnref"]') || { textContent: `[${originalNum}]` }).textContent;
-                const oldRef = definitionContainer.querySelector('span.MsoFootnoteReference, a[href*="_ftnref"]');
-                if (oldRef) oldRef.remove();
-                
-                // *** CRITICAL FIX: Rebuild the entire structure correctly ***
-                const finalDiv = doc.createElement('div');
-                finalDiv.id = baseId;
-                const finalP = doc.createElement('p');
-                const returnLink = doc.createElement('a');
-                returnLink.href = `#${firstRefSupId}`;
-                returnLink.textContent = originalRefNumber.trim();
-                
-                // Get the actual content, stripping the container <p> if necessary.
-                let footnoteContentHtml;
-                const innerP = definitionContainer.querySelector('p');
-                if (definitionContainer.tagName.toLowerCase() !== 'p' && innerP) {
-                    footnoteContentHtml = innerP.innerHTML;
-                } else {
-                    footnoteContentHtml = definitionContainer.innerHTML;
-                }
 
-                // Build the paragraph content as a single unit.
-                finalP.innerHTML = returnLink.outerHTML + footnoteContentHtml.trim();
-                finalDiv.appendChild(finalP);
-                
-                definitionContainer.remove();
-                definitionAnchor.remove();
+        body.querySelectorAll(
+            '[style*="mso-element: comment-list"], [style*="mso-element: endnote-list"], a[href*="#_msocom"], a[href*="#_edn"]'
+        ).forEach(el => el.remove());
 
-                if (isTable && tableElement) {
-                    const firstRow = tableElement.querySelector('tr');
-                    const colCount = firstRow ? firstRow.cells.length : 1;
-                    const newRow = doc.createElement('tr');
-                    const newCell = doc.createElement('td');
-                    newCell.setAttribute('colspan', colCount);
-                    newCell.appendChild(finalDiv);
-                    newRow.appendChild(newCell);
-                    let tfoot = tableElement.querySelector('tfoot');
-                    if (!tfoot) {
-                        tfoot = doc.createElement('tfoot');
-                        tableElement.appendChild(tfoot);
-                    }
-                    tfoot.appendChild(newRow);
-                } else {
-                    processedFootnoteDefinitions.push(finalDiv);
+        body.querySelectorAll('img').forEach(img => {
+            const src = img.getAttribute('src');
+            if (src && (src.startsWith('file://') || src.startsWith('data:'))) {
+                const replacementDiv = doc.createElement('div');
+                replacementDiv.classList.add('clearfix');
+                const replacementMark = doc.createElement('mark');
+                replacementMark.textContent = 'IMAGE NOT IMPORTED';
+                replacementDiv.appendChild(replacementMark);
+                if (img.parentNode) {
+                    img.parentNode.replaceChild(replacementDiv, img);
                 }
             }
-        }
-    }
-    
-    // Structure the final footnote list correctly
-    const footnoteListContainer = body.querySelector('div[style*="mso-element: footnote-list"]');
-    if (footnoteListContainer) {
-        // *** CRITICAL FIX: Create aside with NO class ***
-        const aside = doc.createElement('aside');
-        processedFootnoteDefinitions.forEach(note => {
-            aside.appendChild(note);
         });
-        footnoteListContainer.parentNode.replaceChild(aside, footnoteListContainer);
-    }
 
-    // --- Phase 3: Final Attribute Cleaning ---
-    const allElements = Array.from(body.querySelectorAll('*'));
-    for (const element of allElements) {
-        element.removeAttribute('style');
-        if (element.hasAttribute('class')) {
-            const allowedClasses = element.getAttribute('class').split(/\s+/).filter(cls => APP_CONFIG.wet4AllowedClasses.has(cls));
-            if (allowedClasses.length > 0) {
-                element.setAttribute('class', allowedClasses.join(' '));
+        body.querySelectorAll('hr').forEach(hr => {
+            const allowedAttrs = new Set(['class', 'id']);
+            if (Array.from(hr.attributes).some(attr => !allowedAttrs.has(attr.name.toLowerCase()))) {
+                hr.remove();
+            }
+        });
+
+        body.querySelectorAll('span[style*="mso-tab-count"], span[style*="mso-spacerun"]').forEach(span => {
+            if (span.parentNode) {
+                span.parentNode.replaceChild(doc.createTextNode(' '), span);
+            }
+        });
+
+        body.querySelectorAll('span[style*="mso-element"]').forEach(span => {
+            if (span.parentNode) {
+                while (span.firstChild) {
+                    span.parentNode.insertBefore(span.firstChild, span);
+                }
+                span.remove();
+            }
+        });
+
+        body.querySelectorAll('a[href*="_Toc"]').forEach(a => {
+            let cleanText = a.textContent.replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+            cleanText = cleanText.replace(/\.\s+\d+$/, '.');
+            a.textContent = cleanText;
+        });
+
+        body.querySelectorAll('a:not([href])').forEach(anchor => {
+            const parent = anchor.parentNode;
+            if (parent) {
+                while (anchor.firstChild) {
+                    parent.insertBefore(anchor.firstChild, anchor);
+                }
+                parent.removeChild(anchor);
+            }
+        });
+
+        body.querySelectorAll('div[class*="WordSection"], div[class*="DocumentTitle"]').forEach(div => {
+            if (div.parentNode) {
+                while (div.firstChild) {
+                    div.parentNode.insertBefore(div.firstChild, div);
+                }
+                div.remove();
+            }
+        });
+
+        const occurrenceMap = new Map();
+        const refInfoMap = new Map();
+        let tableCounter = 0;
+        const tableElementToIdMap = new Map();
+        const processedFootnoteDefinitions = [];
+
+        const allPotentialRefs = Array.from(doc.querySelectorAll('a[href*="#_ftn"], span.MsoFootnoteReference'));
+
+        allPotentialRefs.forEach(refElement => {
+            if (refElement.tagName === 'SPAN' && refElement.classList.contains('MsoFootnoteReference') && refElement.closest('a[href*="#_ftn"]')) {
+                return;
+            }
+            let originalNum;
+            const linkRef = refElement.closest('a');
+            if (linkRef && linkRef.href.includes('#_ftn')) {
+                const match = linkRef.getAttribute('href').match(/#_ftn(\d+)/);
+                if (match) originalNum = match[1];
             } else {
-                element.removeAttribute('class');
+                const refText = refElement.textContent.trim().replace(/\[|\]/g, '');
+                const footnoteListItems = doc.querySelectorAll('p[style*="mso-element: footnote"], div[style*="mso-element: footnote"]');
+                for (const item of footnoteListItems) {
+                    const itemRefSpan = item.querySelector('span.MsoFootnoteReference');
+                    if (itemRefSpan && itemRefSpan.textContent.trim().replace(/\[|\]/g, '') === refText) {
+                        const anchor = item.querySelector('a[name^="_ftn"]');
+                        if (anchor) {
+                            const match = anchor.getAttribute('name').match(/_ftn(\d+)/);
+                            if (match) originalNum = match[1];
+                            break;
+                        }
+                    }
+                }
+            }
+            if (!originalNum) return;
+            const containingTable = refElement.closest('table');
+            let baseId;
+            if (containingTable) {
+                if (!tableElementToIdMap.has(containingTable)) {
+                    tableCounter++;
+                    tableElementToIdMap.set(containingTable, `tbl${tableCounter}`);
+                }
+                const tableId = tableElementToIdMap.get(containingTable);
+                baseId = `${tableId}fn${originalNum}`;
+            } else {
+                baseId = `fn${originalNum}`;
+            }
+            occurrenceMap.set(baseId, (occurrenceMap.get(baseId) || 0) + 1);
+            if (!refInfoMap.has(baseId)) {
+                refInfoMap.set(baseId, {
+                    elements: [],
+                    originalNum: originalNum,
+                    isTable: !!containingTable,
+                    tableElement: containingTable
+                });
+            }
+            refInfoMap.get(baseId).elements.push(refElement);
+        });
+
+        for (const [baseId, refInfo] of refInfoMap.entries()) {
+            const {
+                elements,
+                originalNum,
+                isTable,
+                tableElement
+            } = refInfo;
+            const totalOccurrences = occurrenceMap.get(baseId);
+            elements.forEach((refElement, index) => {
+                let elementToReplace = refElement.closest('sup') || refElement;
+                const linkText = `[${refElement.textContent.trim().replace(/\[|\]/g, '')}]`;
+                const newSup = doc.createElement('sup');
+                newSup.id = totalOccurrences > 1 ? `${baseId}-rf${index + 1}` : `${baseId}-rf`;
+                const newLink = doc.createElement('a');
+                newLink.href = `#${baseId}`;
+                newLink.textContent = linkText;
+                newSup.appendChild(newLink);
+                if (elementToReplace.parentNode) {
+                    elementToReplace.parentNode.replaceChild(newSup, elementToReplace);
+                }
+            });
+            const definitionAnchor = doc.querySelector(`a[name="_ftn${originalNum}"]`);
+            if (definitionAnchor) {
+                const definitionContainer = definitionAnchor.closest('div[style*="mso-element: footnote"], p[style*="mso-element: footnote"]');
+                if (definitionContainer) {
+                    const firstRefSupId = totalOccurrences > 1 ? `${baseId}-rf1` : `${baseId}-rf`;
+                    const originalRefNumber = (definitionContainer.querySelector('span.MsoFootnoteReference, a[href*="_ftnref"]') || {
+                        textContent: `[${originalNum}]`
+                    }).textContent;
+                    const oldRef = definitionContainer.querySelector('span.MsoFootnoteReference, a[href*="_ftnref"]');
+                    if (oldRef) oldRef.remove();
+
+                    const finalDiv = doc.createElement('div');
+                    finalDiv.id = baseId;
+                    const finalP = doc.createElement('p');
+                    const returnLink = doc.createElement('a');
+                    returnLink.href = `#${firstRefSupId}`;
+                    returnLink.textContent = originalRefNumber.trim();
+
+                    let footnoteContentHtml;
+                    const innerP = definitionContainer.querySelector('p');
+                    if (definitionContainer.tagName.toLowerCase() !== 'p' && innerP) {
+                        footnoteContentHtml = innerP.innerHTML;
+                    } else {
+                        footnoteContentHtml = definitionContainer.innerHTML;
+                    }
+
+                    finalP.innerHTML = returnLink.outerHTML + footnoteContentHtml.trim();
+                    finalDiv.appendChild(finalP);
+
+                    definitionContainer.remove();
+                    definitionAnchor.remove();
+
+                    if (isTable && tableElement) {
+                        const firstRow = tableElement.querySelector('tr');
+                        const colCount = firstRow ? firstRow.cells.length : 1;
+                        const newRow = doc.createElement('tr');
+                        const newCell = doc.createElement('td');
+                        newCell.setAttribute('colspan', colCount);
+                        newCell.appendChild(finalDiv);
+                        newRow.appendChild(newCell);
+                        let tfoot = tableElement.querySelector('tfoot');
+                        if (!tfoot) {
+                            tfoot = doc.createElement('tfoot');
+                            tableElement.appendChild(tfoot);
+                        }
+                        tfoot.appendChild(newRow);
+                    } else {
+                        processedFootnoteDefinitions.push(finalDiv);
+                    }
+                }
             }
         }
-        for (const attr of [...element.attributes]) {
-            if (attr.name.startsWith('mso-') || attr.name.startsWith('xmlns') || attr.name === 'align' || attr.name === 'lang' || attr.name === 'title') {
-                element.removeAttribute(attr.name);
+
+        const footnoteListContainer = body.querySelector('div[style*="mso-element: footnote-list"]');
+        if (footnoteListContainer) {
+            const aside = doc.createElement('aside');
+            processedFootnoteDefinitions.forEach(note => {
+                aside.appendChild(note);
+            });
+            footnoteListContainer.parentNode.replaceChild(aside, footnoteListContainer);
+        }
+
+        const allElements = Array.from(body.querySelectorAll('*'));
+        for (const element of allElements) {
+            element.removeAttribute('style');
+            if (element.hasAttribute('class')) {
+                const allowedClasses = element.getAttribute('class')
+                    .trim()
+                    .split(/\s+/)
+                    .filter(cls => isClassAllowed(cls, APP_CONFIG.allowedClassesConfig));
+
+                if (allowedClasses.length > 0) {
+                    element.setAttribute('class', allowedClasses.join(' '));
+                } else {
+                    element.removeAttribute('class');
+                }
+            }
+            for (const attr of [...element.attributes]) {
+                if (attr.name.startsWith('mso-') || attr.name.startsWith('xmlns') || attr.name === 'align' || attr.name === 'lang' || attr.name === 'title') {
+                    element.removeAttribute(attr.name);
+                }
             }
         }
+
+        body.querySelectorAll('p').forEach(p => {
+            if (p.textContent.trim().replace(/\s|&nbsp;/g, '') === '' && !p.querySelector('img, br')) {
+                p.remove();
+            }
+        });
+
+        body.normalize();
+
+        return body.innerHTML;
     }
-
-    body.querySelectorAll('p').forEach(p => {
-        if (p.textContent.trim().replace(/\s|&nbsp;/g, '') === '' && !p.querySelector('img, br')) {
-             p.remove();
-        }
-    });
-    
-    body.normalize();
-
-    return body.innerHTML;
-}
-
-
 
     function applyCleanFormattingTags(htmlString) {
         const parser = new DOMParser();
@@ -1774,7 +1737,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const iElements = Array.from(doc.querySelectorAll('i'));
         for (let i = iElements.length - 1; i >= 0; i--) {
-            const i_tag = iElements[i]; 
+            const i_tag = iElements[i];
             if (i_tag.parentNode) {
                 const em = doc.createElement('em');
                 while (i_tag.firstChild) {
@@ -1790,31 +1753,26 @@ document.addEventListener('DOMContentLoaded', function () {
     function removeLayoutTables(htmlString) {
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlString, 'text/html');
-        
-        // Find all tables that do NOT have a class or an ID.
+
         const layoutTables = Array.from(doc.querySelectorAll('table:not([class]):not([id])'));
 
         layoutTables.forEach(table => {
             const parent = table.parentNode;
             if (!parent) return;
 
-            // Create a fragment to hold the unwrapped content.
             const fragment = doc.createDocumentFragment();
             const cells = table.querySelectorAll('td, th');
-            
+
             cells.forEach((cell, index) => {
-                // Move all content from the cell.
                 while (cell.firstChild) {
                     fragment.appendChild(cell.firstChild);
                 }
-                
-                // Add a space between the content of different cells, but not after the last one.
+
                 if (index < cells.length - 1) {
                     fragment.appendChild(doc.createTextNode(' '));
                 }
             });
 
-            // Replace the table with its unwrapped content.
             parent.replaceChild(fragment, table);
         });
 
@@ -1855,12 +1813,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
             let currentContent = monacoEditorInstance.getValue();
             let cleanedContent = removeLayoutTables(currentContent);
-            
+
             monacoEditorInstance.setValue(cleanedContent);
-            
+
             closeModalAndReEnableButtons();
 
-            // UI Feedback
             triggeringButton.textContent = 'Removed!';
             triggeringButton.classList.add('bg-green-500', 'hover:bg-green-600');
             triggeringButton.classList.remove('bg-slate-600', 'hover:bg-slate-700');
@@ -1884,25 +1841,25 @@ document.addEventListener('DOMContentLoaded', function () {
             (h.getAttribute('property') === 'name' || h.id === 'wb-cont')
         );
 
-        let levelAdjustmentForGlobalShift = 0; 
+        let levelAdjustmentForGlobalShift = 0;
         let firstRelevantHeadingFound = false;
 
         for (const h of headings) {
             if (h === specialH1) {
-                continue; 
+                continue;
             }
             if (!firstRelevantHeadingFound) {
                 const actualLevel = parseInt(h.tagName.substring(1), 10);
                 levelAdjustmentForGlobalShift = 2 - actualLevel;
                 firstRelevantHeadingFound = true;
-                break; 
+                break;
             }
         }
 
-        let effectivePreviousLevel = 0; 
+        let effectivePreviousLevel = 0;
 
         for (let i = 0; i < headings.length; i++) {
-            let currentHeading = headings[i]; 
+            let currentHeading = headings[i];
 
             if (currentHeading === specialH1) {
                 effectivePreviousLevel = 1;
@@ -1913,7 +1870,7 @@ document.addEventListener('DOMContentLoaded', function () {
             let newLevel;
 
             let globallyAdjustedLevel = currentActualLevel + levelAdjustmentForGlobalShift;
-            globallyAdjustedLevel = Math.max(2, globallyAdjustedLevel); 
+            globallyAdjustedLevel = Math.max(2, globallyAdjustedLevel);
 
 
             if (effectivePreviousLevel === 0) {
@@ -1935,7 +1892,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (currentHeading.parentNode) {
                     currentHeading.parentNode.replaceChild(newHeadingTag, currentHeading);
                 }
-                headings[i] = newHeadingTag; 
+                headings[i] = newHeadingTag;
             }
 
             effectivePreviousLevel = newLevel;
@@ -1951,9 +1908,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const newBody = doc.createElement('body');
         let currentSectionStack = [{
-            domElement: newBody
-            , level: 0
-        }]; 
+            domElement: newBody,
+            level: 0
+        }];
 
         while (originalBody.firstChild) {
             const node = originalBody.firstChild;
@@ -1961,15 +1918,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (node.nodeType === Node.ELEMENT_NODE) {
                 const tagName = node.tagName.toLowerCase();
-                let nodeLevel = null; 
-                let shouldCreateNewSectionForNode = true; 
-                let isProtectedSection = false; 
+                let nodeLevel = null;
+                let shouldCreateNewSectionForNode = true;
+                let isProtectedSection = false;
 
                 if (tagName === 'section') {
                     if (node.id.includes('colophon') || node.querySelector('p')
                         ?.textContent?.includes('©') || node.hasAttribute('class') || (node.id && !/^sec\d+(-\d+)*$/.test(node.id))) {
                         isProtectedSection = true;
-                        shouldCreateNewSectionForNode = false; 
+                        shouldCreateNewSectionForNode = false;
                     } else {
                         const fragment = doc.createDocumentFragment();
                         while (node.firstChild) {
@@ -1984,35 +1941,35 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (headingLevelMatch) {
                     nodeLevel = parseInt(headingLevelMatch[1], 10);
                 } else if (tagName === 'aside') {
-                    nodeLevel = 2; 
-                    shouldCreateNewSectionForNode = false; 
+                    nodeLevel = 2;
+                    shouldCreateNewSectionForNode = false;
                 }
 
                 if (isProtectedSection) {
                     let parentToAppendTo = currentSectionStack[currentSectionStack.length - 1].domElement;
                     parentToAppendTo.appendChild(node);
-                } else if (nodeLevel !== null) { 
+                } else if (nodeLevel !== null) {
                     while (currentSectionStack.length > 1 && nodeLevel <= currentSectionStack[currentSectionStack.length - 1].level) {
                         currentSectionStack.pop();
                     }
 
                     let currentParentDomElement = currentSectionStack[currentSectionStack.length - 1].domElement;
 
-                    if (shouldCreateNewSectionForNode) { 
+                    if (shouldCreateNewSectionForNode) {
                         const newSection = doc.createElement('section');
                         currentParentDomElement.appendChild(newSection);
                         currentSectionStack.push({
-                            domElement: newSection
-                            , level: nodeLevel
+                            domElement: newSection,
+                            level: nodeLevel
                         });
                         currentSectionStack[currentSectionStack.length - 1].domElement.appendChild(node);
-                    } else { 
+                    } else {
                         currentParentDomElement.appendChild(node);
                     }
-                } else { 
+                } else {
                     currentSectionStack[currentSectionStack.length - 1].domElement.appendChild(node);
                 }
-            } else { 
+            } else {
                 currentSectionStack[currentSectionStack.length - 1].domElement.appendChild(node);
             }
         }
@@ -2021,238 +1978,244 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function applyAutoId(htmlString, options = {}) {
-    const defaultOptions = {
-        idSections: true,
-        idHeadings: true,
-        idFigures: true,
-        idTables: true,
-        idFigureTables: true,
-        fixFnIds: false,
-        idGenerationMode: 'preserve' // 'preserve' or 'regenerate'
-    };
-    const currentOptions = {
-        ...defaultOptions,
-        ...options
-    };
+        const defaultOptions = {
+            idSections: true,
+            idHeadings: true,
+            idFigures: true,
+            idTables: true,
+            idFigureTables: true,
+            fixFnIds: false,
+            idGenerationMode: 'preserve'
+        };
+        const currentOptions = {
+            ...defaultOptions,
+            ...options
+        };
 
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(htmlString, 'text/html');
-    const body = doc.body;
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlString, 'text/html');
+        const body = doc.body;
 
-    const idChangeMap = {};
+        const idChangeMap = {};
 
-    function toAlpha(num) {
-        let s = '';
-        while (num > 0) {
-            let t = (num - 1) % 26;
-            s = String.fromCharCode(65 + t) + s;
-            num = Math.floor((num - t) / 26);
+        function toAlpha(num) {
+            let s = '';
+            while (num > 0) {
+                let t = (num - 1) % 26;
+                s = String.fromCharCode(65 + t) + s;
+                num = Math.floor((num - t) / 26);
+            }
+            return s || 'A';
         }
-        return s || 'A';
-    }
 
-    function getLetterFromAppendixText(text) {
-        const match = text.match(/^(?:Appendix|Annexe)\s*([A-Z])?/i);
-        return (match && match[1]) ? match[1].toUpperCase() : null;
-    }
+        function getLetterFromAppendixText(text) {
+            const match = text.match(/^(?:Appendix|Annexe)\s*([A-Z])?/i);
+            return (match && match[1]) ? match[1].toUpperCase() : null;
+        }
 
-    const existingIds = new Set();
-    doc.querySelectorAll('[id]').forEach(el => existingIds.add(el.id));
+        const existingIds = new Set();
+        doc.querySelectorAll('[id]').forEach(el => existingIds.add(el.id));
 
-    if (currentOptions.idHeadings) {
-        let h2_num_counter = 0;
-        let h2_general_alpha_counter = 0;
-        let h2_appendix_alpha_counter = 0;
-        let sub_num_counters = new Map();
-        let sub_appendix_alpha_counters = new Map();
+        if (currentOptions.idHeadings) {
+            let h2_num_counter = 0;
+            let h2_general_alpha_counter = 0;
+            let h2_appendix_alpha_counter = 0;
+            let sub_num_counters = new Map();
+            let sub_appendix_alpha_counters = new Map();
 
-        const lastSeenHeadingIds = { 2: '', 3: '', 4: '', 5: '', 6: '' };
+            const lastSeenHeadingIds = {
+                2: '',
+                3: '',
+                4: '',
+                5: '',
+                6: ''
+            };
 
-        let hasAnyNumberedH2 = Array.from(body.querySelectorAll('h2')).some(h => h.textContent.trim().match(/^\s*(\d+)(?:\.|\s|\)|\-)?/));
+            let hasAnyNumberedH2 = Array.from(body.querySelectorAll('h2')).some(h => h.textContent.trim().match(/^\s*(\d+)(?:\.|\s|\)|\-)?/));
 
-        doc.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(heading => {
-            const level = parseInt(heading.tagName.substring(1), 10);
-            const text = heading.textContent.trim();
-            const oldId = heading.id;
-            let newId = oldId;
+            doc.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(heading => {
+                const level = parseInt(heading.tagName.substring(1), 10);
+                const text = heading.textContent.trim();
+                const oldId = heading.id;
+                let newId = oldId;
 
-            if (level === 2) {
-                const lowerCaseText = text.toLowerCase();
-                if (oldId === 'toc' || lowerCaseText === 'on this page' || lowerCaseText === 'sur cette page') {
-                    heading.setAttribute('id', 'toc');
-                    return;
+                if (level === 2) {
+                    const lowerCaseText = text.toLowerCase();
+                    if (oldId === 'toc' || lowerCaseText === 'on this page' || lowerCaseText === 'sur cette page') {
+                        heading.setAttribute('id', 'toc');
+                        return;
+                    }
                 }
-            }
-            
-            // Logic change for 'preserve' mode
-            if (currentOptions.idGenerationMode === 'preserve' && oldId) {
-                return; 
-            }
 
-            const ignoredParents = ['aside', 'caption', 'figure', 'figcaption', 'table'];
-            if (heading.closest(ignoredParents.join(','))) {
-                return;
-            }
-
-            if (level === 1) return;
-
-            let id_segment = '';
-            const isNumericHeading = text.match(/^\s*(\d+)(?:\.|\s|\)|\-)?/);
-            const isAppendixHeading = text.match(/^(?:Appendix|Annexe)/i);
-
-            if (level === 2) {
-                if (isAppendixHeading) {
-                    const letter = getLetterFromAppendixText(text) || toAlpha(++h2_appendix_alpha_counter);
-                    id_segment = `app${letter}`;
-                } else if (hasAnyNumberedH2) {
-                    id_segment = isNumericHeading ? `toc${++h2_num_counter}` : `toc${toAlpha(++h2_general_alpha_counter)}`;
-                } else {
-                    id_segment = `toc${++h2_num_counter}`;
-                }
-                newId = id_segment;
-
-            } else {
-                const parent_id = lastSeenHeadingIds[level - 1];
-                if (!parent_id) {
+                if (currentOptions.idGenerationMode === 'preserve' && oldId) {
                     return;
                 }
 
-                if (isAppendixHeading) {
-                    const currentAppCount = (sub_appendix_alpha_counters.get(parent_id) || 0) + 1;
-                    sub_appendix_alpha_counters.set(parent_id, currentAppCount);
-                    id_segment = `app${getLetterFromAppendixText(text) || toAlpha(currentAppCount)}`;
+                const ignoredParents = ['aside', 'caption', 'figure', 'figcaption', 'table'];
+                if (heading.closest(ignoredParents.join(','))) {
+                    return;
+                }
+
+                if (level === 1) return;
+
+                let id_segment = '';
+                const isNumericHeading = text.match(/^\s*(\d+)(?:\.|\s|\)|\-)?/);
+                const isAppendixHeading = text.match(/^(?:Appendix|Annexe)/i);
+
+                if (level === 2) {
+                    if (isAppendixHeading) {
+                        const letter = getLetterFromAppendixText(text) || toAlpha(++h2_appendix_alpha_counter);
+                        id_segment = `app${letter}`;
+                    } else if (hasAnyNumberedH2) {
+                        id_segment = isNumericHeading ? `toc${++h2_num_counter}` : `toc${toAlpha(++h2_general_alpha_counter)}`;
+                    } else {
+                        id_segment = `toc${++h2_num_counter}`;
+                    }
+                    newId = id_segment;
+
                 } else {
-                    const currentNumCount = (sub_num_counters.get(parent_id) || 0) + 1;
-                    sub_num_counters.set(parent_id, currentNumCount);
-                    id_segment = String(currentNumCount);
-                }
-                newId = `${parent_id}-${id_segment}`;
-            }
+                    const parent_id = lastSeenHeadingIds[level - 1];
+                    if (!parent_id) {
+                        return;
+                    }
 
-            lastSeenHeadingIds[level] = newId;
-            
-            for (let resetLevel = level + 1; resetLevel <= 6; resetLevel++) {
-                lastSeenHeadingIds[resetLevel] = '';
-            }
-            
-            if (oldId && oldId !== newId) {
-                idChangeMap[oldId] = newId;
-            }
-            heading.setAttribute('id', newId);
-            existingIds.add(newId);
-        });
-    }
-
-    if (currentOptions.idSections) {
-        let sectionChildCounters = { 'root': 0 };
-        doc.querySelectorAll('section').forEach(section => {
-            if (section.closest('table')) {
-                return;
-            }
-            // Logic change for 'preserve' mode
-            if (currentOptions.idGenerationMode === 'preserve' && section.id) {
-                return;
-            }
-            
-            let parentSection = section.parentElement.closest('section');
-            let parentId = parentSection && parentSection.id && /^sec\d+(-\d+)*$/.test(parentSection.id) ? parentSection.id : 'root';
-            sectionChildCounters[parentId] = (sectionChildCounters[parentId] || 0) + 1;
-            const newNum = sectionChildCounters[parentId];
-            const newId = (parentId === 'root') ? `sec${newNum}` : `${parentId}-${newNum}`;
-            if (section.id && section.id !== newId) idChangeMap[section.id] = newId;
-            section.id = newId;
-        });
-    }
-
-    if (currentOptions.idFigures) {
-        let figureCounter = 0;
-        // Logic change for 'preserve' mode
-        const figureSelector = currentOptions.idGenerationMode === 'preserve' ? 'figure:not([id])' : 'figure';
-        doc.querySelectorAll(figureSelector).forEach(figure => {
-            figure.id = `fig${++figureCounter}`;
-        });
-    }
-
-    if (currentOptions.idTables || currentOptions.idFigureTables) {
-        let tableCounter = 0;
-        let figureTableCounter = 0;
-
-        doc.querySelectorAll('table').forEach(table => {
-            const oldTableId = table.id;
-            
-            // Logic change for 'preserve' mode
-            if (currentOptions.idGenerationMode === 'preserve' && oldTableId) {
-                return;
-            }
-
-            let newTableId = null;
-            const isFigureTable = !!table.closest('figure');
-
-            if ((isFigureTable && currentOptions.idFigureTables) || (!isFigureTable && currentOptions.idTables)) {
-                newTableId = isFigureTable ? `ftbl${++figureTableCounter}` : `tbl${++tableCounter}`;
-            }
-
-            if (newTableId) {
-                if (oldTableId && oldTableId !== newTableId) {
-                    idChangeMap[oldTableId] = newTableId;
-                }
-                table.id = newTableId;
-                existingIds.add(newTableId);
-
-                const footnoteIdMap = {};
-                const oldFnHeaderId = oldTableId ? `${oldTableId}fn` : 'fn';
-                const fnHeader = table.querySelector(`tfoot [id="${oldFnHeaderId}"], tfoot [id="fn"]`);
-                if (fnHeader) {
-                    footnoteIdMap[fnHeader.id] = `${newTableId}fn`;
+                    if (isAppendixHeading) {
+                        const currentAppCount = (sub_appendix_alpha_counters.get(parent_id) || 0) + 1;
+                        sub_appendix_alpha_counters.set(parent_id, currentAppCount);
+                        id_segment = `app${getLetterFromAppendixText(text) || toAlpha(currentAppCount)}`;
+                    } else {
+                        const currentNumCount = (sub_num_counters.get(parent_id) || 0) + 1;
+                        sub_num_counters.set(parent_id, currentNumCount);
+                        id_segment = String(currentNumCount);
+                    }
+                    newId = `${parent_id}-${id_segment}`;
                 }
 
-                table.querySelectorAll('[id*="fn"]').forEach(el => {
-                    const oldId = el.id;
-                    const idParts = oldId.match(/(?:(.*?))?fn(\d+)((?:-rf)?(?:-\d+)*)?$/);
-                    if (idParts) {
-                        const originalFootnoteNum = idParts[2];
-                        const oldSuffix = idParts[3] || '';
-                        const oldPrefix = idParts[1] || '';
-                        const oldBaseId = `${oldPrefix}fn${originalFootnoteNum}`;
-                        const newBaseId = `${newTableId}fn${originalFootnoteNum}`;
-                        const newFullId = `${newBaseId}${oldSuffix}`;
-                        footnoteIdMap[oldId] = newFullId;
-                        footnoteIdMap[oldBaseId] = newBaseId;
-                    }
-                });
+                lastSeenHeadingIds[level] = newId;
 
-                table.querySelectorAll('[id]').forEach(el => {
-                    if (footnoteIdMap[el.id]) {
-                        el.id = footnoteIdMap[el.id];
-                    }
-                });
-                table.querySelectorAll('a[href^="#"]').forEach(link => {
-                    const oldAnchor = link.getAttribute('href').substring(1);
-                    if (footnoteIdMap[oldAnchor]) {
-                        link.setAttribute('href', `#${footnoteIdMap[oldAnchor]}`);
-                    }
-                });
-            }
-        });
-    }
+                for (let resetLevel = level + 1; resetLevel <= 6; resetLevel++) {
+                    lastSeenHeadingIds[resetLevel] = '';
+                }
 
-    let finalHtml = doc.body.innerHTML;
-    if (currentOptions.fixFnIds) {
-        finalHtml = applyFixFnIdsLogic(finalHtml);
-        doc.body.innerHTML = finalHtml;
-    }
-
-    doc.querySelectorAll('a[href^="#"]').forEach(link => {
-        const currentAnchor = link.getAttribute('href').substring(1);
-        if (idChangeMap[currentAnchor]) {
-            link.setAttribute('href', `#${idChangeMap[currentAnchor]}`);
+                if (oldId && oldId !== newId) {
+                    idChangeMap[oldId] = newId;
+                }
+                heading.setAttribute('id', newId);
+                existingIds.add(newId);
+            });
         }
-    });
 
-    return doc.body.innerHTML;
-}
+        if (currentOptions.idSections) {
+            let sectionChildCounters = {
+                'root': 0
+            };
+            doc.querySelectorAll('section').forEach(section => {
+                if (section.closest('table')) {
+                    return;
+                }
 
-    window.updateEditorStyles = function (enableCustomStyles) {
+                if (currentOptions.idGenerationMode === 'preserve' && section.id) {
+                    return;
+                }
+
+                let parentSection = section.parentElement.closest('section');
+                let parentId = parentSection && parentSection.id && /^sec\d+(-\d+)*$/.test(parentSection.id) ? parentSection.id : 'root';
+                sectionChildCounters[parentId] = (sectionChildCounters[parentId] || 0) + 1;
+                const newNum = sectionChildCounters[parentId];
+                const newId = (parentId === 'root') ? `sec${newNum}` : `${parentId}-${newNum}`;
+                if (section.id && section.id !== newId) idChangeMap[section.id] = newId;
+                section.id = newId;
+            });
+        }
+
+        if (currentOptions.idFigures) {
+            let figureCounter = 0;
+
+            const figureSelector = currentOptions.idGenerationMode === 'preserve' ? 'figure:not([id])' : 'figure';
+            doc.querySelectorAll(figureSelector).forEach(figure => {
+                figure.id = `fig${++figureCounter}`;
+            });
+        }
+
+        if (currentOptions.idTables || currentOptions.idFigureTables) {
+            let tableCounter = 0;
+            let figureTableCounter = 0;
+
+            doc.querySelectorAll('table').forEach(table => {
+                const oldTableId = table.id;
+
+                if (currentOptions.idGenerationMode === 'preserve' && oldTableId) {
+                    return;
+                }
+
+                let newTableId = null;
+                const isFigureTable = !!table.closest('figure');
+
+                if ((isFigureTable && currentOptions.idFigureTables) || (!isFigureTable && currentOptions.idTables)) {
+                    newTableId = isFigureTable ? `ftbl${++figureTableCounter}` : `tbl${++tableCounter}`;
+                }
+
+                if (newTableId) {
+                    if (oldTableId && oldTableId !== newTableId) {
+                        idChangeMap[oldTableId] = newTableId;
+                    }
+                    table.id = newTableId;
+                    existingIds.add(newTableId);
+
+                    const footnoteIdMap = {};
+                    const oldFnHeaderId = oldTableId ? `${oldTableId}fn` : 'fn';
+                    const fnHeader = table.querySelector(`tfoot [id="${oldFnHeaderId}"], tfoot [id="fn"]`);
+                    if (fnHeader) {
+                        footnoteIdMap[fnHeader.id] = `${newTableId}fn`;
+                    }
+
+                    table.querySelectorAll('[id*="fn"]').forEach(el => {
+                        const oldId = el.id;
+                        const idParts = oldId.match(/(?:(.*?))?fn(\d+)((?:-rf)?(?:-\d+)*)?$/);
+                        if (idParts) {
+                            const originalFootnoteNum = idParts[2];
+                            const oldSuffix = idParts[3] || '';
+                            const oldPrefix = idParts[1] || '';
+                            const oldBaseId = `${oldPrefix}fn${originalFootnoteNum}`;
+                            const newBaseId = `${newTableId}fn${originalFootnoteNum}`;
+                            const newFullId = `${newBaseId}${oldSuffix}`;
+                            footnoteIdMap[oldId] = newFullId;
+                            footnoteIdMap[oldBaseId] = newBaseId;
+                        }
+                    });
+
+                    table.querySelectorAll('[id]').forEach(el => {
+                        if (footnoteIdMap[el.id]) {
+                            el.id = footnoteIdMap[el.id];
+                        }
+                    });
+                    table.querySelectorAll('a[href^="#"]').forEach(link => {
+                        const oldAnchor = link.getAttribute('href').substring(1);
+                        if (footnoteIdMap[oldAnchor]) {
+                            link.setAttribute('href', `#${footnoteIdMap[oldAnchor]}`);
+                        }
+                    });
+                }
+            });
+        }
+
+        let finalHtml = doc.body.innerHTML;
+        if (currentOptions.fixFnIds) {
+            finalHtml = applyFixFnIdsLogic(finalHtml);
+            doc.body.innerHTML = finalHtml;
+        }
+
+        doc.querySelectorAll('a[href^="#"]').forEach(link => {
+            const currentAnchor = link.getAttribute('href').substring(1);
+            if (idChangeMap[currentAnchor]) {
+                link.setAttribute('href', `#${idChangeMap[currentAnchor]}`);
+            }
+        });
+
+        return doc.body.innerHTML;
+    }
+
+    window.updateEditorStyles = function(enableCustomStyles) {
         if (richTextEditorInstance) {
             const editorDoc = richTextEditorInstance.getDoc();
             const customStyleSheet = editorDoc.getElementById('tinymce-custom-content-css');
@@ -2261,16 +2224,16 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
     };
-    window.setRichEditorContent = function (content) {
+    window.setRichEditorContent = function(content) {
         if (richTextEditorInstance) {
             richTextEditorInstance.setContent(cleanHtmlForRichTextDisplay(content));
-            richTextEditorInstance.focus(); 
+            richTextEditorInstance.focus();
         } else {
             console.warn('Parent: HugeRTE editor not yet initialized. Content will be set once ready.');
         }
     };
 
-    window.getRichEditorContent = function () {
+    window.getRichEditorContent = function() {
         if (richTextEditorInstance) {
             const content = richTextEditorInstance.getContent();
             return content;
@@ -2410,18 +2373,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function updateModalPreview() {
         const previewOptions = {
-            showSections: modalShowSections
-            , showHeadings: modalShowHeadings
-            , useContainerDiv: modalUseContainerDiv
-            , showTitle: modalShowTitle
-            , imageSourceMode: modalImageSourceMode
-            , bylineMode: modalBylineMode
-            , enableCss: modalEnableCss
-            , urlSourceMode: modalUrlSourceMode
-            , currentLanguage: modalCurrentLanguage
-            , currentFramework: modalCurrentFramework
-            , h1TitleEn: modalH1TitleEn
-            , h1TitleFr: modalH1TitleFr
+            showSections: modalShowSections,
+            showHeadings: modalShowHeadings,
+            useContainerDiv: modalUseContainerDiv,
+            showTitle: modalShowTitle,
+            imageSourceMode: modalImageSourceMode,
+            bylineMode: modalBylineMode,
+            enableCss: modalEnableCss,
+            urlSourceMode: modalUrlSourceMode,
+            currentLanguage: modalCurrentLanguage,
+            currentFramework: modalCurrentFramework,
+            h1TitleEn: modalH1TitleEn,
+            h1TitleFr: modalH1TitleFr
         };
         const fullHtml = generateFullHtml(previewOptions);
         const iframeDocument = modalPreviewFrame.contentDocument || modalPreviewFrame.contentWindow.document;
@@ -2431,18 +2394,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
         let iframeWidth = '100%';
         switch (modalCurrentBreakpoint) {
-        case 'xs':
-            iframeWidth = '375px';
-            break;
-        case 'sm':
-            iframeWidth = '640px';
-            break;
-        case 'md':
-            iframeWidth = '992px';
-            break;
-        case 'full':
-            iframeWidth = '100%';
-            break;
+            case 'xs':
+                iframeWidth = '375px';
+                break;
+            case 'sm':
+                iframeWidth = '640px';
+                break;
+            case 'md':
+                iframeWidth = '992px';
+                break;
+            case 'full':
+                iframeWidth = '100%';
+                break;
         }
         modalPreviewFrame.style.width = iframeWidth;
         modalPreviewFrame.style.margin = (iframeWidth === '100%') ? '0' : '0 auto';
@@ -2486,155 +2449,152 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function toggleEditorView() {
-    const anyTempMessageActive = allInteractiveButtons.some(btn => btn.getAttribute('data-temp-active') === 'true');
-    if (anyTempMessageActive) {
-        console.log("Toggle prevented: another button is active.");
-        return;
-    }
-
-console.log("Toggle Editor View triggered. Current view:", currentView);
-    if (currentView === 'richtext') {
-        if (default_ifr.contentWindow && default_ifr.contentWindow.getRichEditorContent) {
-            richTextContent = default_ifr.contentWindow.getRichEditorContent();
-        } else {
-            richTextContent = '';
+        const anyTempMessageActive = allInteractiveButtons.some(btn => btn.getAttribute('data-temp-active') === 'true');
+        if (anyTempMessageActive) {
+            console.log("Toggle prevented: another button is active.");
+            return;
         }
 
-        // Perform DOM-based cleaning operations BEFORE restoring protected attributes.
-        // The temporary attributes are safe from DOM parsing/serialization.
-        richTextContent = stripStylesFromTables(richTextContent);
+        console.log("Toggle Editor View triggered. Current view:", currentView);
+        if (currentView === 'richtext') {
+            if (default_ifr.contentWindow && default_ifr.contentWindow.getRichEditorContent) {
+                richTextContent = default_ifr.contentWindow.getRichEditorContent();
+            } else {
+                richTextContent = '';
+            }
 
-        try {
+            richTextContent = stripStylesFromTables(richTextContent);
+
+            try {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(richTextContent, 'text/html');
+
+                doc.querySelectorAll('details').forEach(detail => {
+                    const wasOriginallyOpen = detail.hasAttribute('data-was-open');
+                    detail.removeAttribute('data-was-open');
+                    if (wasOriginallyOpen) {
+                        detail.setAttribute('open', 'open');
+                    } else {
+                        detail.removeAttribute('open');
+                    }
+                });
+
+                doc.querySelectorAll('a[href]')
+                    .forEach(a => {
+                        let href = a.getAttribute('href');
+                        const originalHref = href;
+                        if (href.startsWith('https://can01.safelinks.protection.outlook.com')) {
+                            try {
+                                const urlObj = new URL(href);
+                                const actualUrlParam = urlObj.searchParams.get('url');
+                                if (actualUrlParam) href = decodeURIComponent(actualUrlParam);
+                            } catch (e) {
+                                console.error("Error parsing Outlook Safelink URL:", e);
+                            }
+                        }
+                        if (href.includes('/content/canadasite') || href.includes('/content/dam')) {
+                            const contentPath = href.includes('/content/canadasite') ? '/content/canadasite' : '/content/dam';
+                            const contentIndex = href.indexOf(contentPath);
+                            if (contentIndex > 0) href = href.substring(contentIndex);
+                        }
+                        if (href !== originalHref) a.setAttribute('href', href);
+                    });
+                doc.querySelectorAll('img[src]')
+                    .forEach(img => {
+                        let src = img.getAttribute('src');
+                        if (src.includes('/content/dam')) {
+                            const contentIndex = src.indexOf('/content/dam');
+                            if (contentIndex > 0) {
+                                src = src.substring(contentIndex);
+                                img.setAttribute('src', src);
+                            }
+                        }
+                    });
+
+                richTextContent = doc.body.innerHTML;
+
+            } catch (e) {
+                console.error("Failed to parse and clean HTML, proceeding with raw content.", e);
+            }
+
+            richTextContent = restoreGcdsTags(richTextContent);
+            richTextContent = restoreDataAttributes(richTextContent);
+
+            let processedContent = richTextContent;
+
+            if (toggleAutoCleanMsoOnSwitchRichText.checked) {
+                processedContent = applyCleanLists(processedContent);
+                processedContent = applyCleanTablesBasic(processedContent);
+                processedContent = unwrapSingleCellTables(processedContent);
+                processedContent = applyCleanMsoCode(processedContent);
+                processedContent = applyAutoSpacing(processedContent);
+            }
+
+            htmlOutputContent = processedContent;
+            if (monacoEditorInstance) {
+                monacoEditorInstance.setValue(htmlOutputContent);
+                monacoEditorInstance.focus();
+                applyEntityHighlighting();
+            }
+            autoFormatBtn.click();
+
+            richtextOutputPanel.classList.remove('panel-visible');
+            richtextOutputPanel.classList.add('panel-hidden');
+            mainEditorArea.classList.remove('panel-hidden');
+            mainEditorArea.classList.add('panel-visible');
+
+            toggleEditorViewBtnRichText.classList.remove('bg-green-600', 'hover:bg-green-700', 'bg-cyan-700', 'hover:bg-cyan-800');
+            toggleEditorViewBtnRichText.classList.add('bg-slate-800', 'hover:bg-slate-700');
+            toggleEditorViewBtnCode.classList.remove('bg-green-600', 'hover:bg-green-700', 'bg-slate-800', 'hover:bg-slate-700');
+            toggleEditorViewBtnCode.classList.add('bg-cyan-700', 'hover:bg-cyan-800');
+
+            currentView = 'code';
+            [contentModeBtn, tableModeBtn].forEach(btn => {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            });
+            updateCleanMsoButtonState();
+        } else {
+            if (monacoEditorInstance) {
+                htmlOutputContent = monacoEditorInstance.getValue();
+            } else {
+                htmlOutputContent = '';
+            }
+
             const parser = new DOMParser();
-            const doc = parser.parseFromString(richTextContent, 'text/html');
-
+            const doc = parser.parseFromString(htmlOutputContent, 'text/html');
             doc.querySelectorAll('details').forEach(detail => {
-                const wasOriginallyOpen = detail.hasAttribute('data-was-open');
-                detail.removeAttribute('data-was-open');
-                if (wasOriginallyOpen) {
-                    detail.setAttribute('open', 'open');
-                } else {
-                    detail.removeAttribute('open');
+                if (detail.hasAttribute('open')) {
+                    detail.setAttribute('data-was-open', 'true');
                 }
             });
+            htmlOutputContent = doc.body.innerHTML;
 
-doc.querySelectorAll('a[href]')
-                .forEach(a => {
-                    let href = a.getAttribute('href');
-                    const originalHref = href;
-                    if (href.startsWith('https://can01.safelinks.protection.outlook.com')) {
-                        try {
-                            const urlObj = new URL(href);
-                            const actualUrlParam = urlObj.searchParams.get('url');
-                            if (actualUrlParam) href = decodeURIComponent(actualUrlParam);
-                        } catch (e) {
-                            console.error("Error parsing Outlook Safelink URL:", e);
-                        }
-                    }
-                    if (href.includes('/content/canadasite') || href.includes('/content/dam')) {
-                        const contentPath = href.includes('/content/canadasite') ? '/content/canadasite' : '/content/dam';
-                        const contentIndex = href.indexOf(contentPath);
-                        if (contentIndex > 0) href = href.substring(contentIndex);
-                    }
-                    if (href !== originalHref) a.setAttribute('href', href);
-                });
-            doc.querySelectorAll('img[src]')
-                .forEach(img => {
-                    let src = img.getAttribute('src');
-                    if (src.includes('/content/dam')) {
-                        const contentIndex = src.indexOf('/content/dam');
-                        if (contentIndex > 0) {
-                            src = src.substring(contentIndex);
-                            img.setAttribute('src', src);
-                        }
-                    }
-                });
+            let contentToSendToRichText = protectDataAttributes(htmlOutputContent);
+            contentToSendToRichText = protectGcdsTags(contentToSendToRichText);
 
-            richTextContent = doc.body.innerHTML;
-
-        } catch (e) {
-            console.error("Failed to parse and clean HTML, proceeding with raw content.", e);
-        }
-
-        // Now, restore the protected attributes from the cleaned string content.
-        richTextContent = restoreGcdsTags(richTextContent);
-        richTextContent = restoreDataAttributes(richTextContent);
-
-        let processedContent = richTextContent;
-
-        if (toggleAutoCleanMsoOnSwitchRichText.checked) {
-            processedContent = applyCleanLists(processedContent);
-            processedContent = applyCleanTablesBasic(processedContent);
-            processedContent = unwrapSingleCellTables(processedContent);
-            processedContent = applyCleanMsoCode(processedContent);
-            processedContent = applyAutoSpacing(processedContent);
-        }
-
-        htmlOutputContent = processedContent;
-        if (monacoEditorInstance) {
-            monacoEditorInstance.setValue(htmlOutputContent);
-            monacoEditorInstance.focus();
-            applyEntityHighlighting();
-        }
-        autoFormatBtn.click();
-
-        richtextOutputPanel.classList.remove('panel-visible');
-        richtextOutputPanel.classList.add('panel-hidden');
-        mainEditorArea.classList.remove('panel-hidden');
-        mainEditorArea.classList.add('panel-visible');
-
-        toggleEditorViewBtnRichText.classList.remove('bg-green-600', 'hover:bg-green-700', 'bg-cyan-700', 'hover:bg-cyan-800');
-        toggleEditorViewBtnRichText.classList.add('bg-slate-800', 'hover:bg-slate-700');
-        toggleEditorViewBtnCode.classList.remove('bg-green-600', 'hover:bg-green-700', 'bg-slate-800', 'hover:bg-slate-700');
-        toggleEditorViewBtnCode.classList.add('bg-cyan-700', 'hover:bg-cyan-800');
-
-currentView = 'code';
-        [contentModeBtn, tableModeBtn].forEach(btn => {
-            btn.disabled = false;
-            btn.classList.remove('opacity-50', 'cursor-not-allowed');
-        });
-        updateCleanMsoButtonState();
-    } else {
-        if (monacoEditorInstance) {
-            htmlOutputContent = monacoEditorInstance.getValue();
-        } else {
-            htmlOutputContent = '';
-        }
-
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(htmlOutputContent, 'text/html');
-        doc.querySelectorAll('details').forEach(detail => {
-            if (detail.hasAttribute('open')) {
-                detail.setAttribute('data-was-open', 'true');
+            richTextContent = contentToSendToRichText;
+            if (default_ifr.contentWindow && default_ifr.contentWindow.setRichEditorContent) {
+                default_ifr.contentWindow.setRichEditorContent(cleanHtmlForRichTextDisplay(richTextContent));
             }
-        });
-        htmlOutputContent = doc.body.innerHTML;
 
-        let contentToSendToRichText = protectDataAttributes(htmlOutputContent);
-        contentToSendToRichText = protectGcdsTags(contentToSendToRichText);
+            mainEditorArea.classList.remove('panel-visible');
+            mainEditorArea.classList.add('panel-hidden');
+            richtextOutputPanel.classList.remove('panel-hidden');
+            richtextOutputPanel.classList.add('panel-visible');
 
-        richTextContent = contentToSendToRichText;
-        if (default_ifr.contentWindow && default_ifr.contentWindow.setRichEditorContent) {
-            default_ifr.contentWindow.setRichEditorContent(cleanHtmlForRichTextDisplay(richTextContent));
+            toggleEditorViewBtnCode.classList.remove('bg-green-600', 'hover:bg-green-700', 'bg-slate-800', 'hover:bg-slate-700');
+            toggleEditorViewBtnCode.classList.add('bg-cyan-700', 'hover:bg-cyan-800');
+            updateGoToHtmlButtonColor();
+
+            currentView = 'richtext';
+            [contentModeBtn, tableModeBtn].forEach(btn => {
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+            });
+            updateCleanMsoButtonState();
         }
-
-        mainEditorArea.classList.remove('panel-visible');
-        mainEditorArea.classList.add('panel-hidden');
-        richtextOutputPanel.classList.remove('panel-hidden');
-        richtextOutputPanel.classList.add('panel-visible');
-
-        toggleEditorViewBtnCode.classList.remove('bg-green-600', 'hover:bg-green-700', 'bg-slate-800', 'hover:bg-slate-700');
-        toggleEditorViewBtnCode.classList.add('bg-cyan-700', 'hover:bg-cyan-800');
-        updateGoToHtmlButtonColor();
-
-        currentView = 'richtext';
-        [contentModeBtn, tableModeBtn].forEach(btn => {
-            btn.disabled = true;
-            btn.classList.add('opacity-50', 'cursor-not-allowed');
-        });
-        updateCleanMsoButtonState();
     }
-}
 
     let entityDecorations = [];
 
@@ -2654,12 +2614,12 @@ currentView = 'code';
             const endPos = model.getPositionAt(match.index + match[0].length);
 
             newDecorations.push({
-                range: new monaco.Range(startPos.lineNumber, startPos.column, endPos.lineNumber, endPos.column)
-                , options: {
-                    inlineClassName: 'entity-highlight'
-                    , hoverMessage: {
+                range: new monaco.Range(startPos.lineNumber, startPos.column, endPos.lineNumber, endPos.column),
+                options: {
+                    inlineClassName: 'entity-highlight',
+                    hoverMessage: {
                         value: 'HTML Character Entity'
-                    } 
+                    }
                 }
             });
         }
@@ -2678,7 +2638,7 @@ currentView = 'code';
     }
 
     function updateCleanMsoButtonState() {
-        const isAutoCleanEnabled = toggleAutoCleanMsoOnSwitchRichText.checked; 
+        const isAutoCleanEnabled = toggleAutoCleanMsoOnSwitchRichText.checked;
         if (isAutoCleanEnabled) {
             cleanMsoBtn.disabled = true;
             cleanMsoBtn.classList.remove('bg-blue-700', 'hover:bg-blue-800');
@@ -2689,25 +2649,22 @@ currentView = 'code';
             cleanMsoBtn.classList.add('bg-blue-700', 'hover:bg-blue-800');
         }
     }
-	
-	function syncMsoTogglesOnLoad() {
-		const isChecked = toggleAutoCleanMsoOnSwitchRichText.checked;
-		
-		// Sync the code view toggle's checked state
-		toggleAutoCleanMsoOnSwitchCode.checked = isChecked;
 
-		// Sync the visual class for both toggles
-		toggleAutoCleanMsoOnSwitchRichText.closest('.toggle-switch').classList.toggle('is-checked', isChecked);
-		toggleAutoCleanMsoOnSwitchCode.closest('.toggle-switch').classList.toggle('is-checked', isChecked);
-		
-		// Update any UI elements that depend on this state
-		updateGoToHtmlButtonColor();
-		updateCleanMsoButtonState();
-	}
+    function syncMsoTogglesOnLoad() {
+        const isChecked = toggleAutoCleanMsoOnSwitchRichText.checked;
+
+        toggleAutoCleanMsoOnSwitchCode.checked = isChecked;
+
+        toggleAutoCleanMsoOnSwitchRichText.closest('.toggle-switch').classList.toggle('is-checked', isChecked);
+        toggleAutoCleanMsoOnSwitchCode.closest('.toggle-switch').classList.toggle('is-checked', isChecked);
+
+        updateGoToHtmlButtonColor();
+        updateCleanMsoButtonState();
+    }
 
     function debounce(func, delay) {
         let timeout;
-        return function (...args) {
+        return function(...args) {
             const context = this;
             clearTimeout(timeout);
             timeout = setTimeout(() => func.apply(context, args), delay);
@@ -2718,7 +2675,7 @@ currentView = 'code';
         if (monacoEditorInstance) {
             monacoEditorInstance.layout();
         }
-    }, 200); 
+    }, 200);
     const toggleRichTextStyles = document.getElementById('toggleRichTextStyles');
     toggleRichTextStyles.addEventListener('change', (event) => {
         const isEnabled = event.target.checked;
@@ -2729,6 +2686,7 @@ currentView = 'code';
             default_ifr.contentWindow.updateEditorStyles(isEnabled);
         }
     });
+
     function showModal(title, contentHtml, triggeringButton, originalButtonText) {
         const modalOverlay = document.createElement('div');
         modalOverlay.className = 'modal-overlay';
@@ -2746,11 +2704,11 @@ currentView = 'code';
 
         function closeModalAndReEnableButtons() {
             modalOverlay.remove();
-            triggeringButton.removeAttribute('data-temp-active'); 
+            triggeringButton.removeAttribute('data-temp-active');
             triggeringButton.textContent = originalButtonText;
             triggeringButton.classList.remove('bg-green-500', 'hover:bg-green-600');
             triggeringButton.classList.add('bg-slate-600', 'hover:bg-slate-500');
-            updateAllInteractiveButtonStates(); 
+            updateAllInteractiveButtonStates();
         }
 
 
@@ -2764,20 +2722,20 @@ currentView = 'code';
         const idISBNBtn = document.getElementById('idISBNBtn');
         const idISSNBtn = document.getElementById('idISSNBtn');
         const colophonYearInput = document.getElementById('colophonYear');
-        const colophonNumberInput = document.getElementById('colophonNumber'); 
+        const colophonNumberInput = document.getElementById('colophonNumber');
         const modalInsertBtn = document.getElementById('modalInsertBtn');
 
-        let selectedLanguage = 'English'; 
-        let selectedMonarch = 'King'; 
-        let selectedIdentifier = 'ISBN'; 
+        let selectedLanguage = 'English';
+        let selectedMonarch = 'King';
+        let selectedIdentifier = 'ISBN';
 
         function updateButtonActiveState(buttons, activeBtn) {
             buttons.forEach(btn => {
-                btn.classList.remove('active', 'bg-indigo-600'); 
-                btn.classList.add('bg-gray-600', 'hover:bg-gray-500'); 
+                btn.classList.remove('active', 'bg-indigo-600');
+                btn.classList.add('bg-gray-600', 'hover:bg-gray-500');
             });
-            activeBtn.classList.add('active', 'bg-indigo-600'); 
-            activeBtn.classList.remove('bg-gray-600', 'hover:bg-gray-500'); 
+            activeBtn.classList.add('active', 'bg-indigo-600');
+            activeBtn.classList.remove('bg-gray-600', 'hover:bg-gray-500');
         }
 
         updateButtonActiveState([langEnglishBtn, langFrenchBtn], langEnglishBtn);
@@ -2838,19 +2796,19 @@ currentView = 'code';
 
             if (monacoEditorInstance) {
                 let currentContent = monacoEditorInstance.getValue();
-                currentContent = protectDataAttributes(currentContent); 
+                currentContent = protectDataAttributes(currentContent);
 
                 currentContent += colophonHtmlContent;
 
-                currentContent = restoreDataAttributes(currentContent); 
-                currentContent = convertAllEntitiesToNumeric(currentContent); 
+                currentContent = restoreDataAttributes(currentContent);
+                currentContent = convertAllEntitiesToNumeric(currentContent);
 
                 monacoEditorInstance.setValue(currentContent);
-                htmlOutputContent = currentContent; 
-                applyEntityHighlighting(); 
+                htmlOutputContent = currentContent;
+                applyEntityHighlighting();
             }
 
-            closeModalAndReEnableButtons(); 
+            closeModalAndReEnableButtons();
 
             const capturedOriginalText = originalButtonText;
 
@@ -2858,12 +2816,13 @@ currentView = 'code';
             triggeringButton.classList.add('bg-green-500', 'hover:bg-green-600');
             triggeringButton.classList.remove('bg-slate-600', 'hover:bg-slate-500');
             setTimeout(() => {
-                triggeringButton.textContent = capturedOriginalText; 
+                triggeringButton.textContent = capturedOriginalText;
                 triggeringButton.classList.remove('bg-green-500', 'hover:bg-green-600');
                 triggeringButton.classList.add('bg-slate-600', 'hover:bg-slate-500');
             }, 1500);
         });
     }
+
     function showFigureModal(triggeringButton, originalButtonText) {
         const figureModalContentHtml = `
         <div class="flex flex-col space-y-4">
@@ -2998,7 +2957,7 @@ currentView = 'code';
         showFigureModal(figDescBtn, originalText);
     });
 
-    	
+
     footnoteAncBtn.addEventListener('click', () => {
         const originalText = footnoteAncBtn.textContent;
         footnoteAncBtn.textContent = 'Opening...';
@@ -3008,8 +2967,9 @@ currentView = 'code';
         updateAllInteractiveButtonStates();
         showFootnoteAnchorModal(footnoteAncBtn, originalText);
     });
-function showFootnoteAnchorModal(triggeringButton, originalButtonText) {
-    const modalContentHtml = `
+
+    function showFootnoteAnchorModal(triggeringButton, originalButtonText) {
+        const modalContentHtml = `
         <div class="flex flex-col space-y-4">
             <div>
                 <span class="text-sm font-medium text-gray-200 mr-2">Language:</span>
@@ -3021,9 +2981,9 @@ function showFootnoteAnchorModal(triggeringButton, originalButtonText) {
         </div>
     `;
 
-    const modalOverlay = document.createElement('div');
-    modalOverlay.className = 'modal-overlay';
-    modalOverlay.innerHTML = `
+        const modalOverlay = document.createElement('div');
+        modalOverlay.className = 'modal-overlay';
+        modalOverlay.innerHTML = `
         <div class="modal-content">
             <h3>Process All Footnotes</h3>
             <div id="modalBody">${modalContentHtml}</div>
@@ -3033,372 +2993,376 @@ function showFootnoteAnchorModal(triggeringButton, originalButtonText) {
             </div>
         </div>
     `;
-    document.body.appendChild(modalOverlay);
+        document.body.appendChild(modalOverlay);
 
-    function closeModalAndReEnableButtons() {
-        modalOverlay.remove();
-        triggeringButton.removeAttribute('data-temp-active');
-        triggeringButton.textContent = originalButtonText;
-        triggeringButton.classList.remove('bg-green-500', 'hover:bg-green-600');
-        triggeringButton.classList.add('bg-slate-600', 'hover:bg-slate-500');
-        updateAllInteractiveButtonStates();
-    }
+        function closeModalAndReEnableButtons() {
+            modalOverlay.remove();
+            triggeringButton.removeAttribute('data-temp-active');
+            triggeringButton.textContent = originalButtonText;
+            triggeringButton.classList.remove('bg-green-500', 'hover:bg-green-600');
+            triggeringButton.classList.add('bg-slate-600', 'hover:bg-slate-500');
+            updateAllInteractiveButtonStates();
+        }
 
-    document.getElementById('modalCancelFnAncBtn').addEventListener('click', closeModalAndReEnableButtons);
+        document.getElementById('modalCancelFnAncBtn').addEventListener('click', closeModalAndReEnableButtons);
 
-    const langEnglishBtn = document.getElementById('fnAncLangEnglishBtn');
-    const langFrenchBtn = document.getElementById('fnAncLangFrenchBtn');
-    const modalInsertBtn = document.getElementById('modalInsertFnAncBtn');
+        const langEnglishBtn = document.getElementById('fnAncLangEnglishBtn');
+        const langFrenchBtn = document.getElementById('fnAncLangFrenchBtn');
+        const modalInsertBtn = document.getElementById('modalInsertFnAncBtn');
 
-    let selectedLanguage = 'English';
+        let selectedLanguage = 'English';
 
-    function updateButtonActiveState(buttons, activeBtn) {
-        buttons.forEach(btn => {
-            btn.classList.remove('active', 'bg-indigo-600');
-            btn.classList.add('bg-gray-600', 'hover:bg-gray-500');
-        });
-        activeBtn.classList.add('active', 'bg-indigo-600');
-        activeBtn.classList.remove('bg-gray-600', 'hover:bg-gray-500');
-    }
+        function updateButtonActiveState(buttons, activeBtn) {
+            buttons.forEach(btn => {
+                btn.classList.remove('active', 'bg-indigo-600');
+                btn.classList.add('bg-gray-600', 'hover:bg-gray-500');
+            });
+            activeBtn.classList.add('active', 'bg-indigo-600');
+            activeBtn.classList.remove('bg-gray-600', 'hover:bg-gray-500');
+        }
 
-    updateButtonActiveState([langEnglishBtn, langFrenchBtn], langEnglishBtn);
-
-    langEnglishBtn.addEventListener('click', () => {
-        selectedLanguage = 'English';
         updateButtonActiveState([langEnglishBtn, langFrenchBtn], langEnglishBtn);
-    });
 
-    langFrenchBtn.addEventListener('click', () => {
-        selectedLanguage = 'French';
-        updateButtonActiveState([langEnglishBtn, langFrenchBtn], langFrenchBtn);
-    });
-    
-    modalInsertBtn.addEventListener('click', () => {
-    if (!monacoEditorInstance) return;
+        langEnglishBtn.addEventListener('click', () => {
+            selectedLanguage = 'English';
+            updateButtonActiveState([langEnglishBtn, langFrenchBtn], langEnglishBtn);
+        });
 
-    let editorContent = monacoEditorInstance.getValue();
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(editorContent, 'text/html');
-    const selectedLanguage = document.getElementById('fnAncLangEnglishBtn').classList.contains('active') ? 'English' : 'French';
+        langFrenchBtn.addEventListener('click', () => {
+            selectedLanguage = 'French';
+            updateButtonActiveState([langEnglishBtn, langFrenchBtn], langFrenchBtn);
+        });
 
-    const tableFootnoteSymbolMap = new Map();
-    const pageFootnoteSymbolMap = new Map();
-    const pageIdChangeMap = new Map();
+        modalInsertBtn.addEventListener('click', () => {
+            if (!monacoEditorInstance) return;
 
-    // --- PART 1: PROCESS AND RE-SEQUENCE PAGE-LEVEL FOOTNOTES ---
-    const pageFootnoteSources = Array.from(doc.querySelectorAll('aside.wb-fnote dd[id*="fn"], aside:not(.wb-fnote) div[id*="fn"]'));
+            let editorContent = monacoEditorInstance.getValue();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(editorContent, 'text/html');
+            const selectedLanguage = document.getElementById('fnAncLangEnglishBtn').classList.contains('active') ? 'English' : 'French';
 
-    if (pageFootnoteSources.length > 0) {
-        let fnCounter = 0;
-        const uniqueFootnotes = new Map();
+            const tableFootnoteSymbolMap = new Map();
+            const pageFootnoteSymbolMap = new Map();
+            const pageIdChangeMap = new Map();
 
-        // Pass 1: Gather unique footnotes and create renumbering maps.
-        pageFootnoteSources.forEach(sourceEl => {
-            const oldId = sourceEl.id;
-            let contentHtml = '', symbol = '';
+            const pageFootnoteSources = Array.from(doc.querySelectorAll('aside.wb-fnote dd[id*="fn"], aside:not(.wb-fnote) div[id*="fn"]'));
 
-            if (sourceEl.tagName.toLowerCase() === 'dd') { // Formatted
-                const p = sourceEl.querySelector('p:not(.fn-rtn)');
-                contentHtml = p ? p.innerHTML.trim() : '';
-                const dt = sourceEl.previousElementSibling;
-                if (dt && dt.tagName.toLowerCase() === 'dt') {
-                    symbol = dt.textContent.replace(/^(Footnote|Note de bas de page)\s*/, '').trim();
+            if (pageFootnoteSources.length > 0) {
+                let fnCounter = 0;
+                const uniqueFootnotes = new Map();
+
+                pageFootnoteSources.forEach(sourceEl => {
+                    const oldId = sourceEl.id;
+                    let contentHtml = '',
+                        symbol = '';
+
+                    if (sourceEl.tagName.toLowerCase() === 'dd') {
+                        const p = sourceEl.querySelector('p:not(.fn-rtn)');
+                        contentHtml = p ? p.innerHTML.trim() : '';
+                        const dt = sourceEl.previousElementSibling;
+                        if (dt && dt.tagName.toLowerCase() === 'dt') {
+                            symbol = dt.textContent.replace(/^(Footnote|Note de bas de page)\s*/, '').trim();
+                        }
+                    } else {
+                        const p = sourceEl.querySelector('p');
+                        if (p) {
+                            const returnLink = p.querySelector('a[href*="-rf"]');
+                            if (returnLink) {
+                                symbol = returnLink.textContent.trim().replace(/\[|\]/g, '');
+                                const tempP = p.cloneNode(true);
+                                tempP.querySelector('a[href*="-rf"]').remove();
+                                contentHtml = tempP.innerHTML.trim();
+                            }
+                        }
+                    }
+
+                    if (!uniqueFootnotes.has(contentHtml)) {
+                        fnCounter++;
+                        const isNumericSymbol = /^\d+$/.test(symbol);
+                        uniqueFootnotes.set(contentHtml, {
+                            newFnNum: fnCounter,
+                            displaySymbol: isNumericSymbol ? fnCounter.toString() : symbol,
+                            content: contentHtml
+                        });
+                    }
+                    const newFnInfo = uniqueFootnotes.get(contentHtml);
+                    pageIdChangeMap.set(oldId, `fn${newFnInfo.newFnNum}`);
+                });
+
+                const existingAside = doc.querySelector('aside.wb-fnote, aside:not(.wb-fnote)');
+                const newAside = doc.createElement('aside');
+                newAside.className = 'wb-fnote';
+                newAside.setAttribute('role', 'note');
+
+                const h2 = doc.createElement('h2');
+                h2.id = 'fn';
+                h2.textContent = selectedLanguage === 'English' ? 'Footnotes' : 'Notes de bas de page';
+                newAside.appendChild(h2);
+
+                const dl = doc.createElement('dl');
+                const sortedUniqueFootnotes = Array.from(uniqueFootnotes.values()).sort((a, b) => a.newFnNum - b.newFnNum);
+
+                sortedUniqueFootnotes.forEach(fnInfo => {
+                    const {
+                        newFnNum,
+                        displaySymbol,
+                        content
+                    } = fnInfo;
+                    const newBaseId = `fn${newFnNum}`;
+                    pageFootnoteSymbolMap.set(newBaseId, displaySymbol);
+
+                    const dt = doc.createElement('dt');
+                    dt.textContent = (selectedLanguage === 'English' ? 'Footnote ' : 'Note de bas de page ') + displaySymbol;
+                    const dd = doc.createElement('dd');
+                    dd.id = newBaseId;
+                    dd.innerHTML = `<p>${content}</p>`;
+                    const returnP = doc.createElement('p');
+                    returnP.className = 'fn-rtn';
+                    const newReturnLink = doc.createElement('a');
+
+                    newReturnLink.href = `#${newBaseId}-rf`;
+
+                    newReturnLink.innerHTML = selectedLanguage === 'English' ?
+                        `<span class="wb-inv">Return to footnote </span>${displaySymbol}<span class="wb-inv"> referrer</span>` :
+                        `<span class="wb-inv">Retour à la note de bas de page </span>${displaySymbol}`;
+                    returnP.appendChild(newReturnLink);
+                    dd.appendChild(returnP);
+                    dl.appendChild(dt);
+                    dl.appendChild(dd);
+                });
+
+                newAside.appendChild(dl);
+
+                if (existingAside && existingAside.parentNode) {
+                    existingAside.parentNode.replaceChild(newAside, existingAside);
+                } else {
+                    doc.body.appendChild(newAside);
                 }
-            } else { // Unformatted
-                const p = sourceEl.querySelector('p');
-                if (p) {
-                    const returnLink = p.querySelector('a[href*="-rf"]');
+            }
+
+            doc.querySelectorAll('table[id]').forEach(table => {
+                const tableId = table.id;
+                const tableNum = tableId.replace(/\D/g, '') || '1';
+                const isFigureTable = !!table.closest('figure');
+                const labelWordEn = isFigureTable ? 'Figure' : 'Table';
+                const labelWordFr = isFigureTable ? 'Figure' : 'Tableau';
+                const prepositionFr = isFigureTable ? 'de la' : 'du';
+
+                const footnoteSources = Array.from(table.querySelectorAll('tfoot div[id*="fn"], tfoot dd[id*="fn"]'));
+                if (footnoteSources.length === 0) return;
+
+                let fnCounter = 0;
+                const uniqueFootnotes = new Map();
+                const idChangeMap = new Map();
+
+                footnoteSources.forEach(sourceEl => {
+                    const oldId = sourceEl.id;
+                    let contentHtml = '',
+                        symbol = '';
+
+                    if (sourceEl.tagName.toLowerCase() === 'dd') {
+                        const p = sourceEl.querySelector('p:not(.fn-rtn)');
+                        contentHtml = p ? p.innerHTML.trim() : '';
+                        const dt = sourceEl.previousElementSibling;
+                        if (dt && dt.tagName.toLowerCase() === 'dt') {
+                            const dtText = dt.textContent.trim();
+                            const symbolMatch = dtText.match(/(?:Note|Note)\s*(.*)/);
+                            symbol = symbolMatch ? symbolMatch[1].replace(/du tableau.*|de la figure.*/, '').trim() : '';
+                        }
+                    } else {
+                        const p = sourceEl.querySelector('p');
+                        if (p) {
+                            const returnLink = p.querySelector('a[href*="-rf"]');
+                            if (returnLink) {
+                                symbol = returnLink.textContent.trim().replace(/\[|\]/g, '');
+                                const tempP = p.cloneNode(true);
+                                tempP.querySelector('a[href*="-rf"]').remove();
+                                contentHtml = tempP.innerHTML.trim();
+                            }
+                        }
+                    }
+
+                    if (!uniqueFootnotes.has(contentHtml)) {
+                        fnCounter++;
+                        const isNumericSymbol = /^\d+$/.test(symbol);
+                        uniqueFootnotes.set(contentHtml, {
+                            newFnNum: fnCounter,
+                            displaySymbol: isNumericSymbol ? fnCounter.toString() : symbol,
+                            content: contentHtml
+                        });
+                    }
+                    const newFnInfo = uniqueFootnotes.get(contentHtml);
+                    idChangeMap.set(oldId, `${tableId}_fn${newFnInfo.newFnNum}`);
+                });
+
+                table.querySelectorAll('thead sup[id*="fn"], tbody sup[id*="fn"]').forEach(sup => {
+                    const oldSupId = sup.id;
+                    const oldBaseId = oldSupId.replace(/-rf(-\d+)?$/, '');
+                    const newBaseId = idChangeMap.get(oldBaseId);
+                    if (newBaseId) {
+                        const newSupId = oldSupId.replace(oldBaseId, newBaseId);
+                        sup.id = newSupId;
+                        const anchor = sup.querySelector('a');
+                        if (anchor) {
+                            anchor.setAttribute('href', `#${newBaseId}`);
+                        }
+                    }
+                });
+
+                let tfoot = table.querySelector('tfoot');
+                if (tfoot) tfoot.innerHTML = '';
+                else {
+                    tfoot = doc.createElement('tfoot');
+                    table.appendChild(tfoot);
+                }
+
+                const firstRow = table.querySelector('thead tr, tbody tr, tr');
+                const colCount = firstRow ? firstRow.cells.length : 1;
+
+                const newSection = doc.createElement('section');
+                newSection.className = 'wb-fnote';
+                const h2 = doc.createElement('h2');
+                h2.id = `${tableId}fn`;
+                h2.className = 'wb-inv';
+                h2.textContent = selectedLanguage === 'English' ? `${labelWordEn} ${tableNum} Notes` : `Notes ${prepositionFr} ${labelWordFr.toLowerCase()} ${tableNum}`;
+                newSection.appendChild(h2);
+
+                const dl = doc.createElement('dl');
+                const sortedUniqueFootnotes = Array.from(uniqueFootnotes.values()).sort((a, b) => a.newFnNum - b.newFnNum);
+
+                sortedUniqueFootnotes.forEach(fnInfo => {
+                    const {
+                        newFnNum,
+                        displaySymbol,
+                        content
+                    } = fnInfo;
+                    const newBaseId = `${tableId}_fn${newFnNum}`;
+
+                    tableFootnoteSymbolMap.set(newBaseId, displaySymbol);
+
+                    const dt = doc.createElement('dt');
+                    dt.textContent = selectedLanguage === 'English' ? `${labelWordEn} ${tableNum} Note ${displaySymbol}` : `Note ${displaySymbol} ${prepositionFr} ${labelWordFr.toLowerCase()} ${tableNum}`;
+
+                    const dd = doc.createElement('dd');
+                    dd.id = newBaseId;
+                    dd.innerHTML = `<p>${content}</p>`;
+
+                    const supsForThisNote = Array.from(table.querySelectorAll(`sup[id^="${newBaseId}-rf"]`));
+                    const firstSupId = supsForThisNote.length > 0 ? supsForThisNote[0].id : `${newBaseId}-rf`;
+
+                    const returnP = doc.createElement('p');
+                    returnP.className = 'fn-rtn';
+                    const newReturnLink = doc.createElement('a');
+                    newReturnLink.href = `#${firstSupId}`;
+
+                    if (selectedLanguage === 'English') {
+                        newReturnLink.innerHTML = `<span class="wb-inv">Return to ${labelWordEn.toLowerCase()} ${tableNum} note </span>${displaySymbol}<span class="wb-inv"> referrer</span>`;
+                    } else {
+                        newReturnLink.innerHTML = `<span class="wb-inv">Retour à la note </span>${displaySymbol}<span class="wb-inv"> ${prepositionFr} ${labelWordFr.toLowerCase()} ${tableNum}</span>`;
+                    }
+                    returnP.appendChild(newReturnLink);
+                    dd.appendChild(returnP);
+
+                    dl.appendChild(dt);
+                    dl.appendChild(dd);
+                });
+
+                newSection.appendChild(dl);
+                const newTd = doc.createElement('td');
+                newTd.setAttribute('colspan', colCount);
+                newTd.appendChild(newSection);
+                const newTr = doc.createElement('tr');
+                newTr.appendChild(newTd);
+                tfoot.appendChild(newTr);
+            });
+
+            doc.querySelectorAll('sup a[href*="fn"]').forEach(anchor => {
+                anchor.querySelectorAll('span.wb-inv').forEach(span => span.remove());
+                let visibleText = anchor.innerHTML.trim();
+
+                const href = anchor.getAttribute('href');
+                let wbInvText = '';
+
+                const sup = anchor.closest('sup');
+                if (!sup) return;
+
+                if (href.includes('tbl')) {
+                    const newBaseId = href.substring(1);
+                    if (tableFootnoteSymbolMap.has(newBaseId)) {
+                        visibleText = tableFootnoteSymbolMap.get(newBaseId);
+                    }
+
+                    const containingTable = anchor.closest('table');
+                    const isFigureTable = containingTable ? !!containingTable.closest('figure') : false;
+                    const labelWordEn = isFigureTable ? 'Figure' : 'Table';
+                    const labelWordFr = isFigureTable ? 'Figure' : 'Tableau';
+                    const prepositionFr = isFigureTable ? 'de la' : 'du';
+
+                    const tableNumMatch = href.match(/tbl(\d+)/);
+                    const tableNum = tableNumMatch ? tableNumMatch[1] : '';
+
+                    wbInvText = selectedLanguage === 'English' ? `${labelWordEn} ${tableNum} note ` : `Note ${prepositionFr} ${labelWordFr.toLowerCase()} ${tableNum} `;
+                } else {
+                    const oldSupId = sup.id;
+                    const oldBaseId = oldSupId.replace(/-rf(-\d+)?$/, '');
+
+                    if (pageIdChangeMap.has(oldBaseId)) {
+                        const newBaseId = pageIdChangeMap.get(oldBaseId);
+                        const suffixMatch = oldSupId.match(/-rf(-\d+)?$/);
+                        const suffix = suffixMatch ? suffixMatch[0] : '-rf';
+                        sup.id = newBaseId + suffix;
+                        anchor.href = `#${newBaseId}`;
+                        if (pageFootnoteSymbolMap.has(newBaseId)) {
+                            visibleText = pageFootnoteSymbolMap.get(newBaseId);
+                        }
+                    } else {
+                        const currentBaseId = href.substring(1);
+                        if (pageFootnoteSymbolMap.has(currentBaseId)) {
+                            visibleText = pageFootnoteSymbolMap.get(currentBaseId);
+                        }
+                    }
+                    wbInvText = selectedLanguage === 'English' ? 'Footnote ' : 'Note de bas de page ';
+                }
+
+                if (visibleText) {
+                    anchor.classList.add('fn-lnk');
+                    anchor.innerHTML = `<span class="wb-inv">${wbInvText}</span>${visibleText}`;
+                }
+            });
+
+            doc.querySelectorAll('dd[id*="fn"]').forEach(dd => {
+                const baseId = dd.id;
+                const firstSup = doc.querySelector(`sup[id^="${baseId}-rf"]`);
+                if (firstSup) {
+                    const returnLink = dd.querySelector('p.fn-rtn a');
                     if (returnLink) {
-                        symbol = returnLink.textContent.trim().replace(/\[|\]/g, '');
-                        const tempP = p.cloneNode(true);
-                        tempP.querySelector('a[href*="-rf"]').remove();
-                        contentHtml = tempP.innerHTML.trim();
+                        returnLink.href = `#${firstSup.id}`;
                     }
                 }
-            }
+            });
 
-            if (!uniqueFootnotes.has(contentHtml)) {
-                fnCounter++;
-                const isNumericSymbol = /^\d+$/.test(symbol);
-                uniqueFootnotes.set(contentHtml, {
-                    newFnNum: fnCounter,
-                    displaySymbol: isNumericSymbol ? fnCounter.toString() : symbol,
-                    content: contentHtml
-                });
-            }
-            const newFnInfo = uniqueFootnotes.get(contentHtml);
-            pageIdChangeMap.set(oldId, `fn${newFnInfo.newFnNum}`);
+            const updatedContent = doc.body.innerHTML;
+
+            let finalContent = html_beautify(updatedContent, {
+                indent_size: 4,
+                space_in_paren: true
+            });
+
+            finalContent = doAutoEncode(finalContent);
+
+            monacoEditorInstance.setValue(finalContent);
+            closeModalAndReEnableButtons();
+
+            triggeringButton.textContent = 'Formatted!';
+            triggeringButton.classList.add('bg-green-500', 'hover:bg-green-600');
+            triggeringButton.classList.remove('bg-slate-600', 'hover:bg-slate-500');
+            setTimeout(() => {
+                triggeringButton.textContent = originalButtonText;
+                triggeringButton.classList.remove('bg-green-500', 'hover:bg-green-600');
+                triggeringButton.classList.add('bg-slate-600', 'hover:bg-slate-500');
+            }, 1500);
         });
-
-        // Pass 2: Rebuild the entire <aside> footnote section.
-        const existingAside = doc.querySelector('aside.wb-fnote, aside:not(.wb-fnote)');
-        const newAside = doc.createElement('aside');
-        newAside.className = 'wb-fnote';
-        newAside.setAttribute('role', 'note');
-
-        const h2 = doc.createElement('h2');
-        h2.id = 'fn';
-        h2.textContent = selectedLanguage === 'English' ? 'Footnotes' : 'Notes de bas de page';
-        newAside.appendChild(h2);
-
-        const dl = doc.createElement('dl');
-        const sortedUniqueFootnotes = Array.from(uniqueFootnotes.values()).sort((a, b) => a.newFnNum - b.newFnNum);
-
-        sortedUniqueFootnotes.forEach(fnInfo => {
-            const { newFnNum, displaySymbol, content } = fnInfo;
-            const newBaseId = `fn${newFnNum}`;
-            pageFootnoteSymbolMap.set(newBaseId, displaySymbol);
-
-            const dt = doc.createElement('dt');
-            dt.textContent = (selectedLanguage === 'English' ? 'Footnote ' : 'Note de bas de page ') + displaySymbol;
-            const dd = doc.createElement('dd');
-            dd.id = newBaseId;
-            dd.innerHTML = `<p>${content}</p>`;
-            const returnP = doc.createElement('p');
-            returnP.className = 'fn-rtn';
-            const newReturnLink = doc.createElement('a');
-            
-            newReturnLink.href = `#${newBaseId}-rf`; 
-            
-            newReturnLink.innerHTML = selectedLanguage === 'English' ?
-                `<span class="wb-inv">Return to footnote </span>${displaySymbol}<span class="wb-inv"> referrer</span>` :
-                `<span class="wb-inv">Retour à la note de bas de page </span>${displaySymbol}`;
-            returnP.appendChild(newReturnLink);
-            dd.appendChild(returnP);
-            dl.appendChild(dt);
-            dl.appendChild(dd);
-        });
-
-        newAside.appendChild(dl);
-
-        if (existingAside && existingAside.parentNode) {
-            existingAside.parentNode.replaceChild(newAside, existingAside);
-        } else {
-            doc.body.appendChild(newAside);
-        }
     }
-
-
-    // --- PART 2: PROCESS AND RE-SEQUENCE TABLE-LEVEL FOOTNOTES ---
-    doc.querySelectorAll('table[id]').forEach(table => {
-        const tableId = table.id;
-        const tableNum = tableId.replace(/\D/g, '') || '1';
-        const isFigureTable = !!table.closest('figure');
-        const labelWordEn = isFigureTable ? 'Figure' : 'Table';
-        const labelWordFr = isFigureTable ? 'Figure' : 'Tableau';
-        const prepositionFr = isFigureTable ? 'de la' : 'du';
-
-        const footnoteSources = Array.from(table.querySelectorAll('tfoot div[id*="fn"], tfoot dd[id*="fn"]'));
-        if (footnoteSources.length === 0) return;
-
-        let fnCounter = 0;
-        const uniqueFootnotes = new Map();
-        const idChangeMap = new Map();
-
-        footnoteSources.forEach(sourceEl => {
-            const oldId = sourceEl.id;
-            let contentHtml = '', symbol = '';
-
-            if (sourceEl.tagName.toLowerCase() === 'dd') {
-                const p = sourceEl.querySelector('p:not(.fn-rtn)');
-                contentHtml = p ? p.innerHTML.trim() : '';
-                const dt = sourceEl.previousElementSibling;
-                if (dt && dt.tagName.toLowerCase() === 'dt') {
-                    const dtText = dt.textContent.trim();
-                    const symbolMatch = dtText.match(/(?:Note|Note)\s*(.*)/);
-                    symbol = symbolMatch ? symbolMatch[1].replace(/du tableau.*|de la figure.*/, '').trim() : '';
-                }
-            } else {
-                const p = sourceEl.querySelector('p');
-                if (p) {
-                    const returnLink = p.querySelector('a[href*="-rf"]');
-                    if (returnLink) {
-                        symbol = returnLink.textContent.trim().replace(/\[|\]/g, '');
-                        const tempP = p.cloneNode(true);
-                        tempP.querySelector('a[href*="-rf"]').remove();
-                        contentHtml = tempP.innerHTML.trim();
-                    }
-                }
-            }
-
-            if (!uniqueFootnotes.has(contentHtml)) {
-                fnCounter++;
-                const isNumericSymbol = /^\d+$/.test(symbol);
-                uniqueFootnotes.set(contentHtml, {
-                    newFnNum: fnCounter,
-                    displaySymbol: isNumericSymbol ? fnCounter.toString() : symbol,
-                    content: contentHtml
-                });
-            }
-            const newFnInfo = uniqueFootnotes.get(contentHtml);
-            idChangeMap.set(oldId, `${tableId}_fn${newFnInfo.newFnNum}`);
-        });
-
-        table.querySelectorAll('thead sup[id*="fn"], tbody sup[id*="fn"]').forEach(sup => {
-            const oldSupId = sup.id;
-            const oldBaseId = oldSupId.replace(/-rf(-\d+)?$/, '');
-            const newBaseId = idChangeMap.get(oldBaseId);
-            if (newBaseId) {
-                const newSupId = oldSupId.replace(oldBaseId, newBaseId);
-                sup.id = newSupId;
-                const anchor = sup.querySelector('a');
-                if (anchor) {
-                    anchor.setAttribute('href', `#${newBaseId}`);
-                }
-            }
-        });
-
-        let tfoot = table.querySelector('tfoot');
-        if (tfoot) tfoot.innerHTML = '';
-        else {
-            tfoot = doc.createElement('tfoot');
-            table.appendChild(tfoot);
-        }
-
-        const firstRow = table.querySelector('thead tr, tbody tr, tr');
-        const colCount = firstRow ? firstRow.cells.length : 1;
-
-        const newSection = doc.createElement('section');
-        newSection.className = 'wb-fnote';
-        const h2 = doc.createElement('h2');
-        h2.id = `${tableId}fn`;
-        h2.className = 'wb-inv';
-        h2.textContent = selectedLanguage === 'English' ? `${labelWordEn} ${tableNum} Notes` : `Notes ${prepositionFr} ${labelWordFr.toLowerCase()} ${tableNum}`;
-        newSection.appendChild(h2);
-
-        const dl = doc.createElement('dl');
-        const sortedUniqueFootnotes = Array.from(uniqueFootnotes.values()).sort((a, b) => a.newFnNum - b.newFnNum);
-
-        sortedUniqueFootnotes.forEach(fnInfo => {
-            const { newFnNum, displaySymbol, content } = fnInfo;
-            const newBaseId = `${tableId}_fn${newFnNum}`;
-            
-            tableFootnoteSymbolMap.set(newBaseId, displaySymbol);
-
-            const dt = doc.createElement('dt');
-            dt.textContent = selectedLanguage === 'English' ? `${labelWordEn} ${tableNum} Note ${displaySymbol}` : `Note ${displaySymbol} ${prepositionFr} ${labelWordFr.toLowerCase()} ${tableNum}`;
-
-            const dd = doc.createElement('dd');
-            dd.id = newBaseId;
-            dd.innerHTML = `<p>${content}</p>`;
-
-            const supsForThisNote = Array.from(table.querySelectorAll(`sup[id^="${newBaseId}-rf"]`));
-            const firstSupId = supsForThisNote.length > 0 ? supsForThisNote[0].id : `${newBaseId}-rf`;
-
-            const returnP = doc.createElement('p');
-            returnP.className = 'fn-rtn';
-            const newReturnLink = doc.createElement('a');
-            newReturnLink.href = `#${firstSupId}`;
-
-            if (selectedLanguage === 'English') {
-                newReturnLink.innerHTML = `<span class="wb-inv">Return to ${labelWordEn.toLowerCase()} ${tableNum} note </span>${displaySymbol}<span class="wb-inv"> referrer</span>`;
-            } else {
-                newReturnLink.innerHTML = `<span class="wb-inv">Retour à la note </span>${displaySymbol}<span class="wb-inv"> ${prepositionFr} ${labelWordFr.toLowerCase()} ${tableNum}</span>`;
-            }
-            returnP.appendChild(newReturnLink);
-            dd.appendChild(returnP);
-
-            dl.appendChild(dt);
-            dl.appendChild(dd);
-        });
-
-        newSection.appendChild(dl);
-        const newTd = doc.createElement('td');
-        newTd.setAttribute('colspan', colCount);
-        newTd.appendChild(newSection);
-        const newTr = doc.createElement('tr');
-        newTr.appendChild(newTd);
-        tfoot.appendChild(newTr);
-    });
-
-    // --- PART 3: FORMAT ALL ANCHORS AND FINALIZE RETURN LINKS ---
-    doc.querySelectorAll('sup a[href*="fn"]').forEach(anchor => {
-        anchor.querySelectorAll('span.wb-inv').forEach(span => span.remove());
-        let visibleText = anchor.innerHTML.trim(); 
-        
-        const href = anchor.getAttribute('href');
-        let wbInvText = '';
-
-        const sup = anchor.closest('sup');
-        if (!sup) return;
-
-        if (href.includes('tbl')) {
-            const newBaseId = href.substring(1); 
-            if (tableFootnoteSymbolMap.has(newBaseId)) {
-                visibleText = tableFootnoteSymbolMap.get(newBaseId);
-            }
-
-            const containingTable = anchor.closest('table');
-            const isFigureTable = containingTable ? !!containingTable.closest('figure') : false;
-            const labelWordEn = isFigureTable ? 'Figure' : 'Table';
-            const labelWordFr = isFigureTable ? 'Figure' : 'Tableau';
-            const prepositionFr = isFigureTable ? 'de la' : 'du';
-            
-            const tableNumMatch = href.match(/tbl(\d+)/);
-            const tableNum = tableNumMatch ? tableNumMatch[1] : '';
-
-            wbInvText = selectedLanguage === 'English' ? `${labelWordEn} ${tableNum} note ` : `Note ${prepositionFr} ${labelWordFr.toLowerCase()} ${tableNum} `;
-        } else { // Page Footnote
-            const oldSupId = sup.id;
-            const oldBaseId = oldSupId.replace(/-rf(-\d+)?$/, '');
-
-            if (pageIdChangeMap.has(oldBaseId)) {
-                const newBaseId = pageIdChangeMap.get(oldBaseId);
-                const suffixMatch = oldSupId.match(/-rf(-\d+)?$/);
-                const suffix = suffixMatch ? suffixMatch[0] : '-rf';
-                sup.id = newBaseId + suffix;
-                anchor.href = `#${newBaseId}`;
-                if (pageFootnoteSymbolMap.has(newBaseId)) {
-                    visibleText = pageFootnoteSymbolMap.get(newBaseId);
-                }
-            } else {
-                const currentBaseId = href.substring(1);
-                if (pageFootnoteSymbolMap.has(currentBaseId)) {
-                    visibleText = pageFootnoteSymbolMap.get(currentBaseId);
-                }
-            }
-            wbInvText = selectedLanguage === 'English' ? 'Footnote ' : 'Note de bas de page ';
-        }
-
-        if (visibleText) {
-            anchor.classList.add('fn-lnk');
-            anchor.innerHTML = `<span class="wb-inv">${wbInvText}</span>${visibleText}`;
-        }
-    });
-    
-    doc.querySelectorAll('dd[id*="fn"]').forEach(dd => {
-        const baseId = dd.id;
-        const firstSup = doc.querySelector(`sup[id^="${baseId}-rf"]`);
-        if(firstSup) {
-            const returnLink = dd.querySelector('p.fn-rtn a');
-            if (returnLink) {
-                returnLink.href = `#${firstSup.id}`;
-            }
-        }
-    });
-
-    const updatedContent = doc.body.innerHTML;
-
-    let finalContent = html_beautify(updatedContent, {
-        indent_size: 4,
-        space_in_paren: true
-    });
-    
-    finalContent = doAutoEncode(finalContent);
-
-    monacoEditorInstance.setValue(finalContent);
-    closeModalAndReEnableButtons();
-
-    triggeringButton.textContent = 'Formatted!';
-    triggeringButton.classList.add('bg-green-500', 'hover:bg-green-600');
-    triggeringButton.classList.remove('bg-slate-600', 'hover:bg-slate-500');
-    setTimeout(() => {
-        triggeringButton.textContent = originalButtonText;
-        triggeringButton.classList.remove('bg-green-500', 'hover:bg-green-600');
-        triggeringButton.classList.add('bg-slate-600', 'hover:bg-slate-500');
-    }, 1500);
-});
-}
 
     function showFootnoteModal(triggeringButton, originalButtonText) {
         const footnoteContentHtml = `
@@ -3442,11 +3406,11 @@ function showFootnoteAnchorModal(triggeringButton, originalButtonText) {
 
         function closeModalAndReEnableButtons() {
             modalOverlay.remove();
-            triggeringButton.removeAttribute('data-temp-active'); 
-            triggeringButton.textContent = originalButtonText; 
+            triggeringButton.removeAttribute('data-temp-active');
+            triggeringButton.textContent = originalButtonText;
             triggeringButton.classList.remove('bg-green-500', 'hover:bg-green-600');
             triggeringButton.classList.add('bg-slate-600', 'hover:bg-slate-500');
-            updateAllInteractiveButtonStates(); 
+            updateAllInteractiveButtonStates();
         }
 
         document.getElementById('modalCancelFnBtn')
@@ -3462,11 +3426,11 @@ function showFootnoteAnchorModal(triggeringButton, originalButtonText) {
 
         function updateFnButtonActiveState(buttons, activeBtn) {
             buttons.forEach(btn => {
-                btn.classList.remove('active', 'bg-indigo-600'); 
-                btn.classList.add('bg-gray-600', 'hover:bg-gray-500'); 
+                btn.classList.remove('active', 'bg-indigo-600');
+                btn.classList.add('bg-gray-600', 'hover:bg-gray-500');
             });
-            activeBtn.classList.add('active', 'bg-indigo-600'); 
-            activeBtn.classList.remove('bg-gray-600', 'hover:bg-gray-500'); 
+            activeBtn.classList.add('active', 'bg-indigo-600');
+            activeBtn.classList.remove('bg-gray-600', 'hover:bg-gray-500');
         }
 
         updateFnButtonActiveState([fnLangEnglishBtn, fnLangFrenchBtn], fnLangEnglishBtn);
@@ -3483,15 +3447,15 @@ function showFootnoteAnchorModal(triggeringButton, originalButtonText) {
 
         fnCountInput.addEventListener('input', (event) => {
             const input = event.target;
-            input.value = input.value.replace(/\D/g, ''); 
+            input.value = input.value.replace(/\D/g, '');
             if (input.value === '') {
-                input.value = '1'; 
+                input.value = '1';
             }
         });
 
         modalInsertFnBtn.addEventListener('click', () => {
             const idPrefix = fnIdPrefixInput.value.trim();
-            const footnoteCount = parseInt(fnCountInput.value) || 1; 
+            const footnoteCount = parseInt(fnCountInput.value) || 1;
 
             const capturedOriginalText = originalButtonText;
 
@@ -3517,7 +3481,7 @@ function showFootnoteAnchorModal(triggeringButton, originalButtonText) {
 
             if (monacoEditorInstance) {
                 let currentContent = monacoEditorInstance.getValue();
-                currentContent = protectDataAttributes(currentContent); 
+                currentContent = protectDataAttributes(currentContent);
 
                 const colophonSectionMatch = currentContent.match(/<section[^>]*id=["'][^"']*colophon[^"']*["'][^>]*>/i);
                 let insertionIndex = -1;
@@ -3533,30 +3497,31 @@ function showFootnoteAnchorModal(triggeringButton, originalButtonText) {
                     if (bodyEndTagIndex !== -1) {
                         currentContent = currentContent.substring(0, bodyEndTagIndex) + footnoteHtmlContent + '\n' + currentContent.substring(bodyEndTagIndex);
                     } else {
-                        currentContent += footnoteHtmlContent; 
+                        currentContent += footnoteHtmlContent;
                     }
                 }
 
-                currentContent = restoreDataAttributes(currentContent); 
-                currentContent = convertAllEntitiesToNumeric(currentContent); 
+                currentContent = restoreDataAttributes(currentContent);
+                currentContent = convertAllEntitiesToNumeric(currentContent);
 
                 monacoEditorInstance.setValue(currentContent);
                 htmlOutputContent = currentContent;
                 applyEntityHighlighting();
             }
 
-            closeModalAndReEnableButtons(); 
+            closeModalAndReEnableButtons();
 
             triggeringButton.textContent = 'Inserted!';
             triggeringButton.classList.add('bg-green-500', 'hover:bg-green-600');
-            triggeringButton.classList.remove('bg-slate-600', 'hover:bg-slate-500'); 
+            triggeringButton.classList.remove('bg-slate-600', 'hover:bg-slate-500');
             setTimeout(() => {
-                triggeringButton.textContent = capturedOriginalText; 
+                triggeringButton.textContent = capturedOriginalText;
                 triggeringButton.classList.remove('bg-green-500', 'hover:bg-green-600');
                 triggeringButton.classList.add('bg-slate-600', 'hover:bg-slate-500');
             }, 1500);
         });
     }
+
     function showRegexGuideModal(triggeringButton, originalButtonText) {
         const regexGuideContentHtml = `
         <p class="mb-4">Regular expressions are patterns used to match character combinations in strings. Here are some common metacharacters:</p>
@@ -3588,7 +3553,7 @@ function showFootnoteAnchorModal(triggeringButton, originalButtonText) {
     `;
 
         const modalOverlay = document.createElement('div');
-        modalOverlay.className = 'modal-overlay'; 
+        modalOverlay.className = 'modal-overlay';
         modalOverlay.innerHTML = `
         <div class="modal-content regex-guide-modal-content">
             <h3>Regex Guide</h3> 
@@ -3602,11 +3567,11 @@ function showFootnoteAnchorModal(triggeringButton, originalButtonText) {
 
         function closeModalAndReEnableButtons() {
             modalOverlay.remove();
-            triggeringButton.removeAttribute('data-temp-active'); 
-            triggeringButton.textContent = originalButtonText; 
+            triggeringButton.removeAttribute('data-temp-active');
+            triggeringButton.textContent = originalButtonText;
             triggeringButton.classList.remove('bg-green-500', 'hover:bg-green-600');
-            triggeringButton.classList.add('bg-gray-600', 'hover:bg-gray-700'); 
-            updateAllInteractiveButtonStates(); 
+            triggeringButton.classList.add('bg-gray-600', 'hover:bg-gray-700');
+            updateAllInteractiveButtonStates();
         }
 
         document.getElementById('modalCloseRegexBtn')
@@ -3620,10 +3585,11 @@ function showFootnoteAnchorModal(triggeringButton, originalButtonText) {
 
         triggeringButton.textContent = 'Opening...';
         triggeringButton.classList.add('bg-green-500', 'hover:bg-green-600');
-        triggeringButton.classList.remove('bg-gray-600', 'hover:bg-gray-700'); 
-        triggeringButton.setAttribute('data-temp-active', 'true'); 
-        updateAllInteractiveButtonStates(); 
+        triggeringButton.classList.remove('bg-gray-600', 'hover:bg-gray-700');
+        triggeringButton.setAttribute('data-temp-active', 'true');
+        updateAllInteractiveButtonStates();
     }
+
     function showAutoIdModal(triggeringButton, originalButtonText) {
         const autoIdContentHtml = `
                 <div class="flex flex-col space-y-4">
@@ -3696,8 +3662,8 @@ function showFootnoteAnchorModal(triggeringButton, originalButtonText) {
             `;
 
         const modalOverlay = document.createElement('div');
-    modalOverlay.className = 'modal-overlay';
-    modalOverlay.innerHTML = `
+        modalOverlay.className = 'modal-overlay';
+        modalOverlay.innerHTML = `
         <div class="modal-content">
             <h3>Element ID's Options</h3>
             <div id="modalBody">${autoIdContentHtml}</div>
@@ -3707,101 +3673,100 @@ function showFootnoteAnchorModal(triggeringButton, originalButtonText) {
             </div>
         </div>
     `;
-    document.body.appendChild(modalOverlay);
+        document.body.appendChild(modalOverlay);
 
-    function closeModalAndReEnableButtons() {
-        modalOverlay.remove();
-        triggeringButton.removeAttribute('data-temp-active');
-        triggeringButton.textContent = originalButtonText;
-        triggeringButton.classList.remove('bg-green-500', 'hover:bg-green-600');
-        triggeringButton.classList.add('bg-slate-600', 'hover:bg-slate-500');
-        updateAllInteractiveButtonStates();
-    }
-
-    document.getElementById('modalCancelAutoIdBtn').addEventListener('click', closeModalAndReEnableButtons);
-
-    const toggleSectionsId = document.getElementById('toggleSectionsId');
-    const toggleHeadingsId = document.getElementById('toggleHeadingsId');
-    const toggleFiguresId = document.getElementById('toggleFiguresId');
-    const toggleTablesId = document.getElementById('toggleTablesId');
-    const toggleFigureTablesId = document.getElementById('toggleFigureTablesId');
-    const toggleFixFnIdsModal = document.getElementById('toggleFixFnIdsModal');
-    const modalApplyAutoIdBtn = document.getElementById('modalApplyAutoIdBtn');
-
-    // New button logic
-    const preserveIdsBtn = document.getElementById('preserveIdsBtn');
-    const regenerateIdsBtn = document.getElementById('regenerateIdsBtn');
-
-    function updateIdModeButtons(activeButton) {
-        if (activeButton === preserveIdsBtn) {
-            preserveIdsBtn.classList.add('active', 'bg-blue-600');
-            preserveIdsBtn.classList.remove('bg-gray-600', 'hover:bg-gray-500');
-            regenerateIdsBtn.classList.remove('active', 'bg-blue-600');
-            regenerateIdsBtn.classList.add('bg-gray-600', 'hover:bg-gray-500');
-        } else {
-            regenerateIdsBtn.classList.add('active', 'bg-blue-600');
-            regenerateIdsBtn.classList.remove('bg-gray-600', 'hover:bg-gray-500');
-            preserveIdsBtn.classList.remove('active', 'bg-blue-600');
-            preserveIdsBtn.classList.add('bg-gray-600', 'hover:bg-gray-500');
+        function closeModalAndReEnableButtons() {
+            modalOverlay.remove();
+            triggeringButton.removeAttribute('data-temp-active');
+            triggeringButton.textContent = originalButtonText;
+            triggeringButton.classList.remove('bg-green-500', 'hover:bg-green-600');
+            triggeringButton.classList.add('bg-slate-600', 'hover:bg-slate-500');
+            updateAllInteractiveButtonStates();
         }
-    }
 
-    preserveIdsBtn.addEventListener('click', () => updateIdModeButtons(preserveIdsBtn));
-    regenerateIdsBtn.addEventListener('click', () => updateIdModeButtons(regenerateIdsBtn));
-    updateIdModeButtons(preserveIdsBtn); // Set initial state
+        document.getElementById('modalCancelAutoIdBtn').addEventListener('click', closeModalAndReEnableButtons);
 
+        const toggleSectionsId = document.getElementById('toggleSectionsId');
+        const toggleHeadingsId = document.getElementById('toggleHeadingsId');
+        const toggleFiguresId = document.getElementById('toggleFiguresId');
+        const toggleTablesId = document.getElementById('toggleTablesId');
+        const toggleFigureTablesId = document.getElementById('toggleFigureTablesId');
+        const toggleFixFnIdsModal = document.getElementById('toggleFixFnIdsModal');
+        const modalApplyAutoIdBtn = document.getElementById('modalApplyAutoIdBtn');
 
-    [toggleSectionsId, toggleHeadingsId, toggleFiguresId, toggleTablesId, toggleFigureTablesId, toggleFixFnIdsModal].forEach(toggle => {
-        toggle.addEventListener('change', (event) => {
-            const parentLabel = event.target.closest('.toggle-switch');
-            if (event.target.checked) {
-                parentLabel.classList.add('is-checked');
+        const preserveIdsBtn = document.getElementById('preserveIdsBtn');
+        const regenerateIdsBtn = document.getElementById('regenerateIdsBtn');
+
+        function updateIdModeButtons(activeButton) {
+            if (activeButton === preserveIdsBtn) {
+                preserveIdsBtn.classList.add('active', 'bg-blue-600');
+                preserveIdsBtn.classList.remove('bg-gray-600', 'hover:bg-gray-500');
+                regenerateIdsBtn.classList.remove('active', 'bg-blue-600');
+                regenerateIdsBtn.classList.add('bg-gray-600', 'hover:bg-gray-500');
             } else {
-                parentLabel.classList.remove('is-checked');
+                regenerateIdsBtn.classList.add('active', 'bg-blue-600');
+                regenerateIdsBtn.classList.remove('bg-gray-600', 'hover:bg-gray-500');
+                preserveIdsBtn.classList.remove('active', 'bg-blue-600');
+                preserveIdsBtn.classList.add('bg-gray-600', 'hover:bg-gray-500');
+            }
+        }
+
+        preserveIdsBtn.addEventListener('click', () => updateIdModeButtons(preserveIdsBtn));
+        regenerateIdsBtn.addEventListener('click', () => updateIdModeButtons(regenerateIdsBtn));
+        updateIdModeButtons(preserveIdsBtn);
+
+
+        [toggleSectionsId, toggleHeadingsId, toggleFiguresId, toggleTablesId, toggleFigureTablesId, toggleFixFnIdsModal].forEach(toggle => {
+            toggle.addEventListener('change', (event) => {
+                const parentLabel = event.target.closest('.toggle-switch');
+                if (event.target.checked) {
+                    parentLabel.classList.add('is-checked');
+                } else {
+                    parentLabel.classList.remove('is-checked');
+                }
+            });
+        });
+
+        modalApplyAutoIdBtn.addEventListener('click', () => {
+            const idGenerationMode = document.getElementById('regenerateIdsBtn').classList.contains('active') ? 'regenerate' : 'preserve';
+            const options = {
+                idSections: toggleSectionsId.checked,
+                idHeadings: toggleHeadingsId.checked,
+                idFigures: toggleFiguresId.checked,
+                idTables: toggleTablesId.checked,
+                idFigureTables: toggleFigureTablesId.checked,
+                fixFnIds: toggleFixFnIdsModal.checked,
+                idGenerationMode: idGenerationMode
+            };
+
+            if (monacoEditorInstance) {
+                let currentContent = monacoEditorInstance.getValue();
+                currentContent = protectDataAttributes(currentContent);
+                currentContent = applyAutoId(currentContent, options);
+                currentContent = restoreDataAttributes(currentContent);
+                currentContent = convertAllEntitiesToNumeric(currentContent);
+                monacoEditorInstance.setValue(currentContent);
+                htmlOutputContent = currentContent;
+                applyEntityHighlighting();
+
+                closeModalAndReEnableButtons();
+
+                const capturedOriginalText = originalButtonText;
+
+                triggeringButton.textContent = 'ID\'d!';
+                triggeringButton.classList.add('bg-green-500', 'hover:bg-green-600');
+                triggeringButton.classList.remove('bg-slate-600', 'hover:bg-slate-500');
+                setTimeout(() => {
+                    triggeringButton.textContent = capturedOriginalText;
+                    triggeringButton.classList.remove('bg-green-500', 'hover:bg-green-600');
+                    triggeringButton.classList.add('bg-slate-600', 'hover:bg-slate-500');
+                }, 1500);
             }
         });
-    });
-
-    modalApplyAutoIdBtn.addEventListener('click', () => {
-        const idGenerationMode = document.getElementById('regenerateIdsBtn').classList.contains('active') ? 'regenerate' : 'preserve';
-        const options = {
-            idSections: toggleSectionsId.checked,
-            idHeadings: toggleHeadingsId.checked,
-            idFigures: toggleFiguresId.checked,
-            idTables: toggleTablesId.checked,
-            idFigureTables: toggleFigureTablesId.checked,
-            fixFnIds: toggleFixFnIdsModal.checked,
-            idGenerationMode: idGenerationMode // Add the new option here
-        };
-
-        if (monacoEditorInstance) {
-            let currentContent = monacoEditorInstance.getValue();
-            currentContent = protectDataAttributes(currentContent);
-            currentContent = applyAutoId(currentContent, options);
-            currentContent = restoreDataAttributes(currentContent);
-            currentContent = convertAllEntitiesToNumeric(currentContent);
-            monacoEditorInstance.setValue(currentContent);
-            htmlOutputContent = currentContent;
-            applyEntityHighlighting();
-
-            closeModalAndReEnableButtons();
-
-            const capturedOriginalText = originalButtonText;
-
-            triggeringButton.textContent = 'ID\'d!';
-            triggeringButton.classList.add('bg-green-500', 'hover:bg-green-600');
-            triggeringButton.classList.remove('bg-slate-600', 'hover:bg-slate-500');
-            setTimeout(() => {
-                triggeringButton.textContent = capturedOriginalText;
-                triggeringButton.classList.remove('bg-green-500', 'hover:bg-green-600');
-                triggeringButton.classList.add('bg-slate-600', 'hover:bg-slate-500');
-            }, 1500);
-        }
-    });
-}
+    }
 
     const quickFormattingToggles = [
-        toggleCleanSpaces, toggleCleanUrls, toggleTimeTags, toggleCleanSingleBreaks, toggleCleanPTables, toggleCleanFormattingTags, 
+        toggleCleanSpaces, toggleCleanUrls, toggleTimeTags, toggleCleanSingleBreaks, toggleCleanPTables, toggleCleanFormattingTags,
         toggleAutoLevelHeadings, toggleAutoSection
     ];
 
@@ -3865,7 +3830,7 @@ function showFootnoteAnchorModal(triggeringButton, originalButtonText) {
 
     function updateModalWetGcdsButtonState() {
         modalWetGcdsToggleBtn.classList.remove('bg-blue-600', 'bg-indigo-600');
-        modalWetGcdsToggleBtn.innerHTML = ''; 
+        modalWetGcdsToggleBtn.innerHTML = '';
         if (modalCurrentFramework === 'wet') {
             modalWetGcdsToggleBtn.classList.add('bg-blue-600');
             modalWetGcdsToggleBtn.textContent = 'WET4';
@@ -3901,118 +3866,120 @@ function showFootnoteAnchorModal(triggeringButton, originalButtonText) {
         else if (modalCurrentBreakpoint === 'full') modalBreakpointFullBtn.classList.add('active', 'bg-indigo-600');
     }
 
-   
-        const toggleBottomPanel = document.getElementById('toggleBottomPanel');
-        const searchAndValidatePanel = document.getElementById('searchAndValidatePanel');
-        const searchValidateToggle = document.getElementById('searchValidateToggle');
 
-        const openSearchControlsBtn = document.getElementById('openSearchControlsBtn');
-        const openValidationBtn = document.getElementById('openValidationBtn');
+    const toggleBottomPanel = document.getElementById('toggleBottomPanel');
+    const searchAndValidatePanel = document.getElementById('searchAndValidatePanel');
+    const searchValidateToggle = document.getElementById('searchValidateToggle');
 
-        const searchControlsView = document.getElementById('searchRegex');
-        const validationResultsView = document.getElementById('validationResultsContainer');
+    const openSearchControlsBtn = document.getElementById('openSearchControlsBtn');
+    const openValidationBtn = document.getElementById('openValidationBtn');
 
-        
+    const searchControlsView = document.getElementById('searchRegex');
+    const validationResultsView = document.getElementById('validationResultsContainer');
 
-        toggleBottomPanel.addEventListener('click', () => {
-    const isPanelHidden = searchAndValidatePanel.classList.toggle('hidden');
-    // Use the panel's state to determine if the inner toggle should be visible
-    searchValidateToggle.classList.toggle('hidden', isPanelHidden);
-    toggleBottomPanel.textContent = isPanelHidden ? 'Show Panel' : 'Hide Panel';
-});
 
-        openSearchControlsBtn.addEventListener('click', () => {
-            searchControlsView.classList.remove('view-hidden');
-            openSearchControlsBtn.classList.add('active');
 
-            validationResultsView.classList.add('view-hidden');
-            openValidationBtn.classList.remove('active');
-        });
+    toggleBottomPanel.addEventListener('click', () => {
+        const isPanelHidden = searchAndValidatePanel.classList.toggle('hidden');
+        searchValidateToggle.classList.toggle('hidden', isPanelHidden);
+        toggleBottomPanel.textContent = isPanelHidden ? 'Show Panel' : 'Hide Panel';
+    });
 
-        openValidationBtn.addEventListener('click', () => {
-            searchReset.click();
-            validationResultsView.classList.remove('view-hidden');
-            openValidationBtn.classList.add('active');
+    openSearchControlsBtn.addEventListener('click', () => {
+        searchControlsView.classList.remove('view-hidden');
+        openSearchControlsBtn.classList.add('active');
 
-            searchControlsView.classList.add('view-hidden');
-            openSearchControlsBtn.classList.remove('active');
-        });
-        validateNowBtn.addEventListener('click', async () => {
-            searchReset.click();
-            openValidationBtn.click();
+        validationResultsView.classList.add('view-hidden');
+        openValidationBtn.classList.remove('active');
+    });
 
-            if (searchAndValidatePanel.classList.contains('hidden')) {
-                toggleBottomPanel.click();
-            }
+    openValidationBtn.addEventListener('click', () => {
+        searchReset.click();
+        validationResultsView.classList.remove('view-hidden');
+        openValidationBtn.classList.add('active');
 
-            if (monacoEditorInstance) {
-                const codeToValidate = monacoEditorInstance.getValue();
-                const errors = await validateHtmlContent(codeToValidate);
+        searchControlsView.classList.add('view-hidden');
+        openSearchControlsBtn.classList.remove('active');
+    });
+    validateNowBtn.addEventListener('click', async () => {
+        searchReset.click();
+        openValidationBtn.click();
 
-                validateNowBtn.disabled = true;
-
-                if (errors.length === 0) {
-                    validateNowBtn.classList.remove('bg-blue-700', 'hover:bg-blue-600', 'bg-red-600', 'hover:bg-red-700');
-                    validateNowBtn.classList.add('bg-green-600', 'hover:bg-green-700');
-                    validateNowBtn.innerHTML = '<i class="fa-solid fa-check"></i> Valid!';
-                } else {
-                    validateNowBtn.classList.remove('bg-blue-700', 'hover:bg-blue-600', 'bg-green-600', 'hover:bg-green-700');
-                    validateNowBtn.classList.add('bg-red-600', 'hover:bg-red-700');
-                    validateNowBtn.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> ${errors.length} Errors`;
-                }
-
-                setTimeout(() => {
-                    validateNowBtn.classList.remove('bg-green-600', 'hover:bg-green-700', 'bg-red-600', 'hover:bg-red-700');
-                    validateNowBtn.classList.add('bg-blue-700', 'hover:bg-blue-600');
-                    validateNowBtn.innerHTML = '<i class="fa-solid fa-check-double"></i> Validate';
-                    validateNowBtn.disabled = false;
-                }, 2500); 
-
-            } else {
-                const validationResultsDiv = document.getElementById('validationResults');
-                validationResultsDiv.innerHTML = '<p class="text-red-700 text-center">Error: Editor not found.</p>';
-            }
-        });
-        function initializeViews() {
-            searchControlsView.classList.remove('view-hidden');
-            openSearchControlsBtn.classList.add('active');
-
-            validationResultsView.classList.add('view-hidden');
-            openValidationBtn.classList.remove('active');
+        if (searchAndValidatePanel.classList.contains('hidden')) {
+            toggleBottomPanel.click();
         }
 
-        initializeViews();
-        default_ifr.src = 'about:blank?cachebust=' + new Date()
-            .getTime();
-        default_ifr.addEventListener('load', () => {
-            console.log("Parent: Iframe has loaded. Commanding editor initialization.");
-            if (default_ifr.contentWindow && typeof default_ifr.contentWindow.initializeEditor === 'function') {
-                default_ifr.contentWindow.initializeEditor();
+        if (monacoEditorInstance) {
+            const codeToValidate = monacoEditorInstance.getValue();
+            const errors = await validateHtmlContent(codeToValidate);
+
+            validateNowBtn.disabled = true;
+
+            if (errors.length === 0) {
+                validateNowBtn.classList.remove('bg-blue-700', 'hover:bg-blue-600', 'bg-red-600', 'hover:bg-red-700');
+                validateNowBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                validateNowBtn.innerHTML = '<i class="fa-solid fa-check"></i> Valid!';
             } else {
-                console.error("Parent: Iframe loaded, but its initializeEditor function was not found.");
+                validateNowBtn.classList.remove('bg-blue-700', 'hover:bg-blue-600', 'bg-green-600', 'hover:bg-green-700');
+                validateNowBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+                validateNowBtn.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> ${errors.length} Errors`;
             }
+
+            setTimeout(() => {
+                validateNowBtn.classList.remove('bg-green-600', 'hover:bg-green-700', 'bg-red-600', 'hover:bg-red-700');
+                validateNowBtn.classList.add('bg-blue-700', 'hover:bg-blue-600');
+                validateNowBtn.innerHTML = '<i class="fa-solid fa-check-double"></i> Validate';
+                validateNowBtn.disabled = false;
+            }, 2500);
+
+        } else {
+            const validationResultsDiv = document.getElementById('validationResults');
+            validationResultsDiv.innerHTML = '<p class="text-red-700 text-center">Error: Editor not found.</p>';
+        }
+    });
+
+    function initializeViews() {
+        searchControlsView.classList.remove('view-hidden');
+        openSearchControlsBtn.classList.add('active');
+
+        validationResultsView.classList.add('view-hidden');
+        openValidationBtn.classList.remove('active');
+    }
+
+    initializeViews();
+    default_ifr.src = 'about:blank?cachebust=' + new Date()
+        .getTime();
+    default_ifr.addEventListener('load', () => {
+        console.log("Parent: Iframe has loaded. Commanding editor initialization.");
+        if (default_ifr.contentWindow && typeof default_ifr.contentWindow.initializeEditor === 'function') {
+            default_ifr.contentWindow.initializeEditor();
+        } else {
+            console.error("Parent: Iframe loaded, but its initializeEditor function was not found.");
+        }
+    });
+    console.log("Parent window.onload triggered.");
+    richtextOutputPanel.classList.add('panel-visible');
+    mainEditorArea.classList.add('panel-hidden');
+
+    toggleEditorViewBtnCode.classList.add('bg-cyan-700', 'hover:bg-cyan-800');
+    toggleEditorViewBtnCode.classList.remove('bg-cyan-700', 'hover:bg-cyan-800', 'bg-slate-800', 'hover:bg-slate-700');
+    updateGoToHtmlButtonColor();
+
+    require.config({
+        paths: APP_CONFIG.monacoLoaderPaths
+    });
+    require(['vs/editor/editor.main'], function() {
+        monaco.languages.html.htmlDefaults.setOptions({
+            wrapLineLength: 500,
         });
-        console.log("Parent window.onload triggered.");
-        richtextOutputPanel.classList.add('panel-visible');
-        mainEditorArea.classList.add('panel-hidden'); 
+        monacoEditorInstance = monaco.editor.create(
+            monacoEditorContainer,
+            APP_CONFIG.getMonacoEditorOptions(htmlOutputContent)
+        );
+        window.monacoEditorInstance = monacoEditorInstance;
+        console.log("Monaco editor initialized.");
 
-        toggleEditorViewBtnCode.classList.add('bg-cyan-700', 'hover:bg-cyan-800');
-        toggleEditorViewBtnCode.classList.remove('bg-cyan-700', 'hover:bg-cyan-800', 'bg-slate-800', 'hover:bg-slate-700'); 
-        updateGoToHtmlButtonColor(); 
-
-        require.config({ paths: APP_CONFIG.monacoLoaderPaths });
-        require(['vs/editor/editor.main'], function () {
-            monaco.languages.html.htmlDefaults.setOptions({
-                wrapLineLength: 500
-            , });
-            monacoEditorInstance = monaco.editor.create(
-                monacoEditorContainer, 
-                APP_CONFIG.getMonacoEditorOptions(htmlOutputContent)
-            );
-            window.monacoEditorInstance = monacoEditorInstance;
-            console.log("Monaco editor initialized.");
-			
-			let currentMonacoTheme = 'dark'; // Initial theme
+        let currentMonacoTheme = 'dark';
 
         toggleThemeBtn.addEventListener('click', () => {
             if (currentMonacoTheme === 'dark') {
@@ -4028,1488 +3995,1455 @@ function showFootnoteAnchorModal(triggeringButton, originalButtonText) {
             }
         });
 
-            monacoEditorInstance.addCommand(monaco.KeyCode.KeyZ | monaco.KeyMod.CtrlCmd, () => {
-                undoBtn.click();
-            });
+        monacoEditorInstance.addCommand(monaco.KeyCode.KeyZ | monaco.KeyMod.CtrlCmd, () => {
+            undoBtn.click();
+        });
 
-            monacoEditorInstance.addCommand(monaco.KeyCode.KeyY | monaco.KeyMod.CtrlCmd, () => {
-                redoBtn.click();
-            });
+        monacoEditorInstance.addCommand(monaco.KeyCode.KeyY | monaco.KeyMod.CtrlCmd, () => {
+            redoBtn.click();
+        });
 
+        recordState(monacoEditorInstance.getValue());
+        updateUndoRedoButtons();
+
+        const debouncedRecordState = debounce(() => {
             recordState(monacoEditorInstance.getValue());
-            updateUndoRedoButtons(); 
+        }, 500);
 
-            const debouncedRecordState = debounce(() => {
-                recordState(monacoEditorInstance.getValue());
-            }, 500); 
+        monacoEditorInstance.onDidChangeModelContent(() => {
+            htmlOutputContent = monacoEditorInstance.getValue();
 
-            monacoEditorInstance.onDidChangeModelContent(() => {
-                htmlOutputContent = monacoEditorInstance.getValue();
-
-                if (!isUndoingOrRedoing) {
-                    debouncedRecordState();
-                }
-
-                applyEntityHighlighting();
-
-                populateTagDropdown();
-                populateIdDropdown();
-                resetSearchState(true);
-            });
-
+            if (!isUndoingOrRedoing) {
+                debouncedRecordState();
+            }
 
             applyEntityHighlighting();
 
-
-            window.addEventListener('resize', debouncedMonacoLayout);
-
-            const findInput = document.getElementById('find-input');
-            const replaceInput = document.getElementById('replace-input');
-            const findNextButton = document.getElementById('find-next-button');
-            const findPreviousButton = document.getElementById('find-previous-button');
-            const replaceOneButton = document.getElementById('replace-one-button');
-            const replaceAllButton = document.getElementById('replace-all-button');
-            const tagDropdown = document.getElementById('target-tag-dropdown');
-            const idDropdown = document.getElementById('target-id-dropdown');
-            const enableRegexCheckbox = document.getElementById('enable-regex');
-            const matchCaseCheckbox = document.getElementById('match-case');
-            const highlightAllCheckbox = document.getElementById('highlight-all');
-            const sequenceCheckbox = document.getElementById('sequence');
-            const sequenceContainer = document.getElementById('sequence-container');
-            const sequenceRangeContainer = document.getElementById('sequence-range-container');
-            const startIndexInput = document.getElementById('start-index');
-            const endIndexInput = document.getElementById('end-index');
-            const matchCountSpan = document.getElementById('match-count');
-            const regexGuideButton = document.getElementById('regex-guide-button');
-            const searchRegex = document.getElementById('searchRegex'); 
-            allInteractiveButtons.push(regexGuideButton);
-
-            let allDecorations = [];
-            let allMatches = [];
-            let currentMatchIndex = -1;
-            let currentFindText = '';
-            let currentSelectedId = 'all';
-            let currentSelectedTag = 'all';
-            let currentIsRegex = false;
-            let currentMatchCase = false;
-
-
-
-            let searchControlsVisible = true; 
-
-            function toggleSearchControls() {
-                searchControlsVisible = !searchControlsVisible;
-
-                if (searchControlsVisible) {
-                    searchRegex.classList.remove('search-controls-hidden');
-                    searchRegex.classList.add('search-controls-visible');
-
-                    searchAndValidatePanel.classList.remove('hidden');
-                    searchAndValidatePanel.classList.remove('search-controls-hidden'); 
-                    searchAndValidatePanel.classList.add('search-controls-visible'); 
-
-                    toggleBottomPanel.textContent = 'Hide Panel';
-                } else {
-                    searchRegex.classList.remove('search-controls-visible');
-                    searchRegex.classList.add('search-controls-hidden');
-
-                    toggleBottomPanel.textContent = 'Show Panel';
-                }
-            }
-
-            toggleBottomPanel.addEventListener('click', toggleSearchControls);
-
-            searchAndValidatePanel.classList.remove('hidden'); 
-            searchRegex.classList.add('search-controls-visible'); 
-
-            function populateTagDropdown() {
-                const currentSelection = tagDropdown.value; 
-                const editorValue = monacoEditorInstance.getValue();
-                const tagRegex = /<(\w+)(?=\s|>)/g;
-                const uniqueTags = new Set();
-                let match;
-
-                while ((match = tagRegex.exec(editorValue)) !== null) {
-                    uniqueTags.add(match[1]);
-                }
-
-                tagDropdown.innerHTML = '';
-                const defaultOption = document.createElement('option');
-                defaultOption.value = 'all';
-                defaultOption.textContent = 'All Tags';
-                tagDropdown.appendChild(defaultOption);
-
-                const sortedTags = [...uniqueTags].sort();
-
-                sortedTags.forEach(tag => {
-                    const option = document.createElement('option');
-                    option.value = tag;
-                    option.textContent = `<${tag}>`;
-                    tagDropdown.appendChild(option);
-                });
-
-                if (Array.from(tagDropdown.options)
-                    .some(option => option.value === currentSelection)) {
-                    tagDropdown.value = currentSelection;
-                } else {
-                    tagDropdown.value = 'all'; 
-                }
-            }
-
-            function populateTagDropdown() {
-                const currentSelection = tagDropdown.value;
-                const editorValue = monacoEditorInstance.getValue(); 
-                const tagRegex = /<(\w+)(?=\s|>)/g;
-                const uniqueTags = new Set();
-                let match;
-
-                while ((match = tagRegex.exec(editorValue)) !== null) {
-                    uniqueTags.add(match[1]);
-                }
-
-                tagDropdown.innerHTML = '';
-                const defaultOption = document.createElement('option');
-                defaultOption.value = 'all';
-                defaultOption.textContent = 'All Tags';
-                tagDropdown.appendChild(defaultOption);
-
-                const sortedTags = [...uniqueTags].sort();
-
-                sortedTags.forEach(tag => {
-                    const option = document.createElement('option');
-                    option.value = tag;
-                    option.textContent = `<${tag}>`;
-                    tagDropdown.appendChild(option);
-                });
-
-                if (Array.from(tagDropdown.options)
-                    .some(option => option.value === currentSelection)) {
-                    tagDropdown.value = currentSelection;
-                } else {
-                    tagDropdown.value = 'all';
-                }
-            }
-
-            function populateIdDropdown() {
-                const currentSelection = idDropdown.value;
-                const editorValue = monacoEditorInstance.getValue(); 
-                const idRegex = /id="([^"]+)"/g;
-                const uniqueIds = [];
-                const seenIds = new Set();
-
-                let match;
-                while ((match = idRegex.exec(editorValue)) !== null) {
-                    const id = match[1];
-                    if (!seenIds.has(id)) {
-                        uniqueIds.push(id);
-                        seenIds.add(id);
-                    }
-                }
-
-                idDropdown.innerHTML = '';
-                const defaultOption = document.createElement('option');
-                defaultOption.value = 'all';
-                defaultOption.textContent = 'All ID\'s';
-                idDropdown.appendChild(defaultOption);
-
-                uniqueIds.forEach(id => {
-                    const option = document.createElement('option');
-                    option.value = id;
-                    option.textContent = `#${id}`;
-                    idDropdown.appendChild(option);
-                });
-
-                if (Array.from(idDropdown.options)
-                    .some(option => option.value === currentSelection)) {
-                    idDropdown.value = currentSelection;
-                } else {
-                    idDropdown.value = 'all';
-                }
-            }
-
             populateTagDropdown();
             populateIdDropdown();
+            resetSearchState(true);
+        });
 
 
-            function toggleSequenceVisibility() {
-                if (enableRegexCheckbox.checked) {
-                    sequenceContainer.classList.remove('max-h-0', 'opacity-0', 'pointer-events-none');
-                    sequenceContainer.classList.add('max-h-40', 'opacity-100');
-                } else {
-                    sequenceContainer.classList.remove('max-h-40', 'opacity-0', 'pointer-events-none');
-                    sequenceContainer.classList.add('max-h-0', 'opacity-0', 'pointer-events-none');
+        applyEntityHighlighting();
+
+
+        window.addEventListener('resize', debouncedMonacoLayout);
+
+        const findInput = document.getElementById('find-input');
+        const replaceInput = document.getElementById('replace-input');
+        const findNextButton = document.getElementById('find-next-button');
+        const findPreviousButton = document.getElementById('find-previous-button');
+        const replaceOneButton = document.getElementById('replace-one-button');
+        const replaceAllButton = document.getElementById('replace-all-button');
+        const tagDropdown = document.getElementById('target-tag-dropdown');
+        const idDropdown = document.getElementById('target-id-dropdown');
+        const enableRegexCheckbox = document.getElementById('enable-regex');
+        const matchCaseCheckbox = document.getElementById('match-case');
+        const highlightAllCheckbox = document.getElementById('highlight-all');
+        const sequenceCheckbox = document.getElementById('sequence');
+        const sequenceContainer = document.getElementById('sequence-container');
+        const sequenceRangeContainer = document.getElementById('sequence-range-container');
+        const startIndexInput = document.getElementById('start-index');
+        const endIndexInput = document.getElementById('end-index');
+        const matchCountSpan = document.getElementById('match-count');
+        const regexGuideButton = document.getElementById('regex-guide-button');
+        const searchRegex = document.getElementById('searchRegex');
+        allInteractiveButtons.push(regexGuideButton);
+
+        let allDecorations = [];
+        let allMatches = [];
+        let currentMatchIndex = -1;
+        let currentFindText = '';
+        let currentSelectedId = 'all';
+        let currentSelectedTag = 'all';
+        let currentIsRegex = false;
+        let currentMatchCase = false;
+
+
+
+        let searchControlsVisible = true;
+
+        function toggleSearchControls() {
+            searchControlsVisible = !searchControlsVisible;
+
+            if (searchControlsVisible) {
+                searchRegex.classList.remove('search-controls-hidden');
+                searchRegex.classList.add('search-controls-visible');
+
+                searchAndValidatePanel.classList.remove('hidden');
+                searchAndValidatePanel.classList.remove('search-controls-hidden');
+                searchAndValidatePanel.classList.add('search-controls-visible');
+
+                toggleBottomPanel.textContent = 'Hide Panel';
+            } else {
+                searchRegex.classList.remove('search-controls-visible');
+                searchRegex.classList.add('search-controls-hidden');
+
+                toggleBottomPanel.textContent = 'Show Panel';
+            }
+        }
+
+        toggleBottomPanel.addEventListener('click', toggleSearchControls);
+
+        searchAndValidatePanel.classList.remove('hidden');
+        searchRegex.classList.add('search-controls-visible');
+
+        function populateTagDropdown() {
+            const currentSelection = tagDropdown.value;
+            const editorValue = monacoEditorInstance.getValue();
+            const tagRegex = /<(\w+)(?=\s|>)/g;
+            const uniqueTags = new Set();
+            let match;
+
+            while ((match = tagRegex.exec(editorValue)) !== null) {
+                uniqueTags.add(match[1]);
+            }
+
+            tagDropdown.innerHTML = '';
+            const defaultOption = document.createElement('option');
+            defaultOption.value = 'all';
+            defaultOption.textContent = 'All Tags';
+            tagDropdown.appendChild(defaultOption);
+
+            const sortedTags = [...uniqueTags].sort();
+
+            sortedTags.forEach(tag => {
+                const option = document.createElement('option');
+                option.value = tag;
+                option.textContent = `<${tag}>`;
+                tagDropdown.appendChild(option);
+            });
+
+            if (Array.from(tagDropdown.options)
+                .some(option => option.value === currentSelection)) {
+                tagDropdown.value = currentSelection;
+            } else {
+                tagDropdown.value = 'all';
+            }
+        }
+
+        function populateTagDropdown() {
+            const currentSelection = tagDropdown.value;
+            const editorValue = monacoEditorInstance.getValue();
+            const tagRegex = /<(\w+)(?=\s|>)/g;
+            const uniqueTags = new Set();
+            let match;
+
+            while ((match = tagRegex.exec(editorValue)) !== null) {
+                uniqueTags.add(match[1]);
+            }
+
+            tagDropdown.innerHTML = '';
+            const defaultOption = document.createElement('option');
+            defaultOption.value = 'all';
+            defaultOption.textContent = 'All Tags';
+            tagDropdown.appendChild(defaultOption);
+
+            const sortedTags = [...uniqueTags].sort();
+
+            sortedTags.forEach(tag => {
+                const option = document.createElement('option');
+                option.value = tag;
+                option.textContent = `<${tag}>`;
+                tagDropdown.appendChild(option);
+            });
+
+            if (Array.from(tagDropdown.options)
+                .some(option => option.value === currentSelection)) {
+                tagDropdown.value = currentSelection;
+            } else {
+                tagDropdown.value = 'all';
+            }
+        }
+
+        function populateIdDropdown() {
+            const currentSelection = idDropdown.value;
+            const editorValue = monacoEditorInstance.getValue();
+            const idRegex = /id="([^"]+)"/g;
+            const uniqueIds = [];
+            const seenIds = new Set();
+
+            let match;
+            while ((match = idRegex.exec(editorValue)) !== null) {
+                const id = match[1];
+                if (!seenIds.has(id)) {
+                    uniqueIds.push(id);
+                    seenIds.add(id);
                 }
             }
 
-            sequenceCheckbox.addEventListener('change', () => {
-                if (sequenceCheckbox.checked) {
-                    sequenceRangeContainer.classList.remove('opacity-0', 'pointer-events-none');
-                } else {
-                    sequenceRangeContainer.classList.add('opacity-0', 'pointer-events-none');
-                }
+            idDropdown.innerHTML = '';
+            const defaultOption = document.createElement('option');
+            defaultOption.value = 'all';
+            defaultOption.textContent = 'All ID\'s';
+            idDropdown.appendChild(defaultOption);
+
+            uniqueIds.forEach(id => {
+                const option = document.createElement('option');
+                option.value = id;
+                option.textContent = `#${id}`;
+                idDropdown.appendChild(option);
             });
 
-            function toggleRegexBorder() {
-                if (enableRegexCheckbox.checked) {
-                    findInput.classList.add('regex-active-border');
-                    replaceInput.classList.add('regex-active-border');
-                } else {
-                    findInput.classList.remove('regex-active-border');
-                    replaceInput.classList.remove('regex-active-border');
-                }
+            if (Array.from(idDropdown.options)
+                .some(option => option.value === currentSelection)) {
+                idDropdown.value = currentSelection;
+            } else {
+                idDropdown.value = 'all';
             }
+        }
 
-            enableRegexCheckbox.addEventListener('change', () => {
-                toggleSequenceVisibility();
-                toggleRegexBorder();
-                resetSearchState(true);
-            });
+        populateTagDropdown();
+        populateIdDropdown();
 
+
+        function toggleSequenceVisibility() {
+            if (enableRegexCheckbox.checked) {
+                sequenceContainer.classList.remove('max-h-0', 'opacity-0', 'pointer-events-none');
+                sequenceContainer.classList.add('max-h-40', 'opacity-100');
+            } else {
+                sequenceContainer.classList.remove('max-h-40', 'opacity-0', 'pointer-events-none');
+                sequenceContainer.classList.add('max-h-0', 'opacity-0', 'pointer-events-none');
+            }
+        }
+
+        sequenceCheckbox.addEventListener('change', () => {
+            if (sequenceCheckbox.checked) {
+                sequenceRangeContainer.classList.remove('opacity-0', 'pointer-events-none');
+            } else {
+                sequenceRangeContainer.classList.add('opacity-0', 'pointer-events-none');
+            }
+        });
+
+        function toggleRegexBorder() {
+            if (enableRegexCheckbox.checked) {
+                findInput.classList.add('regex-active-border');
+                replaceInput.classList.add('regex-active-border');
+            } else {
+                findInput.classList.remove('regex-active-border');
+                replaceInput.classList.remove('regex-active-border');
+            }
+        }
+
+        enableRegexCheckbox.addEventListener('change', () => {
             toggleSequenceVisibility();
             toggleRegexBorder();
+            resetSearchState(true);
+        });
 
-            function getContextString() {
-                const selectedId = idDropdown.value;
-                const selectedTag = tagDropdown.value;
-                let contextText = '';
+        toggleSequenceVisibility();
+        toggleRegexBorder();
 
-                if (selectedId !== 'all' && selectedTag !== 'all') {
-                    contextText = ` in selected <span class="text-blue-400 font-bold">#${selectedId}</span> and <span class="text-purple-400 font-bold">&lt;${selectedTag}&gt;</span> tags only`;
-                } else if (selectedId !== 'all') {
-                    contextText = ` in selected <span class="text-blue-400 font-bold">#${selectedId}</span> only`;
-                } else if (selectedTag !== 'all') {
-                    contextText = ` in selected <span class="text-purple-400 font-bold">&lt;${selectedTag}&gt;</span> tags only`;
-                }
-                return contextText;
+        function getContextString() {
+            const selectedId = idDropdown.value;
+            const selectedTag = tagDropdown.value;
+            let contextText = '';
+
+            if (selectedId !== 'all' && selectedTag !== 'all') {
+                contextText = ` in selected <span class="text-blue-400 font-bold">#${selectedId}</span> and <span class="text-purple-400 font-bold">&lt;${selectedTag}&gt;</span> tags only`;
+            } else if (selectedId !== 'all') {
+                contextText = ` in selected <span class="text-blue-400 font-bold">#${selectedId}</span> only`;
+            } else if (selectedTag !== 'all') {
+                contextText = ` in selected <span class="text-purple-400 font-bold">&lt;${selectedTag}&gt;</span> tags only`;
             }
+            return contextText;
+        }
 
-            function findMatches() {
-                const findText = findInput.value;
-                if (!findText) return [];
+        function findMatches() {
+            const findText = findInput.value;
+            if (!findText) return [];
 
-                const selectedId = idDropdown.value;
-                const selectedTag = tagDropdown.value;
-                const isRegex = enableRegexCheckbox.checked;
-                const matchCase = matchCaseCheckbox.checked;
-                const isCaseSensitive = matchCase;
-                const model = monacoEditorInstance.getModel();
-                const editorValue = model.getValue();
-                let matches = [];
-                let searchScopeRange = null; 
+            const selectedId = idDropdown.value;
+            const selectedTag = tagDropdown.value;
+            const isRegex = enableRegexCheckbox.checked;
+            const matchCase = matchCaseCheckbox.checked;
+            const isCaseSensitive = matchCase;
+            const model = monacoEditorInstance.getModel();
+            const editorValue = model.getValue();
+            let matches = [];
+            let searchScopeRange = null;
 
-                if (selectedId !== 'all') {
-                    const idAttributeRegex = new RegExp(`<(\\w+)([^>]*id="${selectedId}"[^>]*)>`, 'i'); 
-                    const idMatch = idAttributeRegex.exec(editorValue);
+            if (selectedId !== 'all') {
+                const idAttributeRegex = new RegExp(`<(\\w+)([^>]*id="${selectedId}"[^>]*)>`, 'i');
+                const idMatch = idAttributeRegex.exec(editorValue);
 
-                    if (idMatch) {
-                        const startOffset = idMatch.index;
-                        const tagName = idMatch[1];
-                        const tagContent = idMatch[2];
+                if (idMatch) {
+                    const startOffset = idMatch.index;
+                    const tagName = idMatch[1];
+                    const tagContent = idMatch[2];
 
-                        const isSelfClosing = tagContent.endsWith('/') || ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'].includes(tagName.toLowerCase());
+                    const isSelfClosing = tagContent.endsWith('/') || ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'].includes(tagName.toLowerCase());
 
-                        if (isSelfClosing) {
-                            searchScopeRange = new monaco.Range(
-                                model.getPositionAt(startOffset)
-                                .lineNumber
-                                , model.getPositionAt(startOffset)
-                                .column
-                                , model.getPositionAt(startOffset + idMatch[0].length)
-                                .lineNumber
-                                , model.getPositionAt(startOffset + idMatch[0].length)
-                                .column
-                            );
-                        } else {
-                            searchScopeRange = findFullElementRange(model, startOffset);
-                        }
+                    if (isSelfClosing) {
+                        searchScopeRange = new monaco.Range(
+                            model.getPositionAt(startOffset)
+                            .lineNumber, model.getPositionAt(startOffset)
+                            .column, model.getPositionAt(startOffset + idMatch[0].length)
+                            .lineNumber, model.getPositionAt(startOffset + idMatch[0].length)
+                            .column
+                        );
                     } else {
-                        return []; 
+                        searchScopeRange = findFullElementRange(model, startOffset);
                     }
-                }
-
-                if (selectedTag !== 'all') {
-                    let currentSearchAreaRange = searchScopeRange; 
-                    let allRangesToSearch = []; 
-
-                    const tagOpeningRegex = new RegExp(`<${selectedTag}([^>]*)>`, 'gi');
-                    tagOpeningRegex.lastIndex = currentSearchAreaRange ? model.getOffsetAt(currentSearchAreaRange.getStartPosition()) : 0;
-
-                    let match;
-                    while ((match = tagOpeningRegex.exec(editorValue)) !== null) {
-                        const matchStartOffset = match.index;
-                        const matchEndOffset = match.index + match[0].length;
-
-                        if (currentSearchAreaRange) {
-                            const matchStartPos = model.getPositionAt(matchStartOffset);
-                            if (!currentSearchAreaRange.containsPosition(matchStartPos) && matchStartOffset >= model.getOffsetAt(currentSearchAreaRange.getEndPosition())) {
-                                break;
-                            }
-                            if (!currentSearchAreaRange.containsPosition(matchStartPos)) {
-                                continue; 
-                            }
-                        }
-
-                        const elementFullRange = findFullElementRange(model, matchStartOffset);
-                        if (elementFullRange) {
-                            allRangesToSearch.push(elementFullRange);
-                        }
-                    }
-
-                    if (allRangesToSearch.length > 0) {
-                        allRangesToSearch.forEach(range => {
-                            matches.push(...model.findMatches(findText, range, isRegex, isCaseSensitive, null, true));
-                        });
-                    } else {
-                        return []; 
-                    }
-
                 } else {
-                    const textToSearch = findText; 
-                    matches = model.findMatches(textToSearch, searchScopeRange, isRegex, isCaseSensitive, null, true);
+                    return [];
                 }
-
-                return matches;
             }
 
-            function findFullElementRange(model, initialStartOffset) {
-                const editorValue = model.getValue();
-                const startPos = model.getPositionAt(initialStartOffset);
+            if (selectedTag !== 'all') {
+                let currentSearchAreaRange = searchScopeRange;
+                let allRangesToSearch = [];
 
-                const openTagMatch = editorValue.substring(initialStartOffset)
-                    .match(/^<(\w+)([^>]*)>/);
-                if (!openTagMatch) {
-                    return null; 
-                }
+                const tagOpeningRegex = new RegExp(`<${selectedTag}([^>]*)>`, 'gi');
+                tagOpeningRegex.lastIndex = currentSearchAreaRange ? model.getOffsetAt(currentSearchAreaRange.getStartPosition()) : 0;
 
-                const tagName = openTagMatch[1];
-                const tagContent = openTagMatch[2]; 
-                const openTagLength = openTagMatch[0].length;
-                const isSelfClosing = tagContent.endsWith('/') || ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'].includes(tagName.toLowerCase());
+                let match;
+                while ((match = tagOpeningRegex.exec(editorValue)) !== null) {
+                    const matchStartOffset = match.index;
+                    const matchEndOffset = match.index + match[0].length;
 
-                if (isSelfClosing) {
-                    return new monaco.Range(
-                        startPos.lineNumber
-                        , startPos.column
-                        , model.getPositionAt(initialStartOffset + openTagLength)
-                        .lineNumber
-                        , model.getPositionAt(initialStartOffset + openTagLength)
-                        .column
-                    );
-                }
-
-                let balance = 1; 
-                let currentOffset = initialStartOffset + openTagLength;
-
-                const openingTagRegex = new RegExp(`<${tagName}([^>]*)>`, 'gi');
-                const closingTagRegex = new RegExp(`<\/${tagName}>`, 'gi');
-
-                openingTagRegex.lastIndex = currentOffset;
-                closingTagRegex.lastIndex = currentOffset;
-
-                let nextOpenMatch = openingTagRegex.exec(editorValue);
-                let nextCloseMatch = closingTagRegex.exec(editorValue);
-
-                while (balance > 0 && (nextOpenMatch || nextCloseMatch)) {
-                    if (nextCloseMatch && (!nextOpenMatch || nextCloseMatch.index < nextOpenMatch.index)) {
-                        balance--;
-                        currentOffset = nextCloseMatch.index + nextCloseMatch[0].length;
-                        if (balance === 0) {
-                            return new monaco.Range(
-                                startPos.lineNumber
-                                , startPos.column
-                                , model.getPositionAt(currentOffset)
-                                .lineNumber
-                                , model.getPositionAt(currentOffset)
-                                .column
-                            );
+                    if (currentSearchAreaRange) {
+                        const matchStartPos = model.getPositionAt(matchStartOffset);
+                        if (!currentSearchAreaRange.containsPosition(matchStartPos) && matchStartOffset >= model.getOffsetAt(currentSearchAreaRange.getEndPosition())) {
+                            break;
                         }
-                        openingTagRegex.lastIndex = currentOffset;
-                        closingTagRegex.lastIndex = currentOffset;
-                        nextOpenMatch = openingTagRegex.exec(editorValue);
-                        nextCloseMatch = closingTagRegex.exec(editorValue);
-                    } else if (nextOpenMatch) {
-                        balance++;
-                        currentOffset = nextOpenMatch.index + nextOpenMatch[0].length;
-                        openingTagRegex.lastIndex = currentOffset;
-                        closingTagRegex.lastIndex = currentOffset;
-                        nextOpenMatch = openingTagRegex.exec(editorValue);
-                        nextCloseMatch = closingTagRegex.exec(editorValue);
-                    } else {
-                        break;
+                        if (!currentSearchAreaRange.containsPosition(matchStartPos)) {
+                            continue;
+                        }
+                    }
+
+                    const elementFullRange = findFullElementRange(model, matchStartOffset);
+                    if (elementFullRange) {
+                        allRangesToSearch.push(elementFullRange);
                     }
                 }
 
+                if (allRangesToSearch.length > 0) {
+                    allRangesToSearch.forEach(range => {
+                        matches.push(...model.findMatches(findText, range, isRegex, isCaseSensitive, null, true));
+                    });
+                } else {
+                    return [];
+                }
+
+            } else {
+                const textToSearch = findText;
+                matches = model.findMatches(textToSearch, searchScopeRange, isRegex, isCaseSensitive, null, true);
+            }
+
+            return matches;
+        }
+
+        function findFullElementRange(model, initialStartOffset) {
+            const editorValue = model.getValue();
+            const startPos = model.getPositionAt(initialStartOffset);
+
+            const openTagMatch = editorValue.substring(initialStartOffset)
+                .match(/^<(\w+)([^>]*)>/);
+            if (!openTagMatch) {
+                return null;
+            }
+
+            const tagName = openTagMatch[1];
+            const tagContent = openTagMatch[2];
+            const openTagLength = openTagMatch[0].length;
+            const isSelfClosing = tagContent.endsWith('/') || ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'].includes(tagName.toLowerCase());
+
+            if (isSelfClosing) {
                 return new monaco.Range(
-                    startPos.lineNumber
-                    , startPos.column
-                    , model.getPositionAt(initialStartOffset + openTagLength)
-                    .lineNumber
-                    , model.getPositionAt(initialStartOffset + openTagLength)
+                    startPos.lineNumber, startPos.column, model.getPositionAt(initialStartOffset + openTagLength)
+                    .lineNumber, model.getPositionAt(initialStartOffset + openTagLength)
                     .column
                 );
             }
 
-            function updateDecorations() {
-                const newDecorations = [];
-                const selectedId = idDropdown.value;
-                const selectedTag = tagDropdown.value;
-                const editorValue = monacoEditorInstance.getModel()
-                    .getValue();
-                const model = monacoEditorInstance.getModel();
+            let balance = 1;
+            let currentOffset = initialStartOffset + openTagLength;
 
-                let idBlockRange = null;
+            const openingTagRegex = new RegExp(`<${tagName}([^>]*)>`, 'gi');
+            const closingTagRegex = new RegExp(`<\/${tagName}>`, 'gi');
 
-                if (selectedId !== 'all') {
-                    const idAttributeRegex = new RegExp(`<(\\w+)([^>]*id="${selectedId}"[^>]*)>`, 'i'); 
-                    const idMatch = idAttributeRegex.exec(editorValue);
+            openingTagRegex.lastIndex = currentOffset;
+            closingTagRegex.lastIndex = currentOffset;
 
-                    if (idMatch) {
-                        const startOffset = idMatch.index;
-                        const tagName = idMatch[1]; 
-                        const tagContent = idMatch[2]; 
+            let nextOpenMatch = openingTagRegex.exec(editorValue);
+            let nextCloseMatch = closingTagRegex.exec(editorValue);
 
-                        const isSelfClosing = tagContent.endsWith('/') || ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'].includes(tagName.toLowerCase());
+            while (balance > 0 && (nextOpenMatch || nextCloseMatch)) {
+                if (nextCloseMatch && (!nextOpenMatch || nextCloseMatch.index < nextOpenMatch.index)) {
+                    balance--;
+                    currentOffset = nextCloseMatch.index + nextCloseMatch[0].length;
+                    if (balance === 0) {
+                        return new monaco.Range(
+                            startPos.lineNumber, startPos.column, model.getPositionAt(currentOffset)
+                            .lineNumber, model.getPositionAt(currentOffset)
+                            .column
+                        );
+                    }
+                    openingTagRegex.lastIndex = currentOffset;
+                    closingTagRegex.lastIndex = currentOffset;
+                    nextOpenMatch = openingTagRegex.exec(editorValue);
+                    nextCloseMatch = closingTagRegex.exec(editorValue);
+                } else if (nextOpenMatch) {
+                    balance++;
+                    currentOffset = nextOpenMatch.index + nextOpenMatch[0].length;
+                    openingTagRegex.lastIndex = currentOffset;
+                    closingTagRegex.lastIndex = currentOffset;
+                    nextOpenMatch = openingTagRegex.exec(editorValue);
+                    nextCloseMatch = closingTagRegex.exec(editorValue);
+                } else {
+                    break;
+                }
+            }
 
-                        if (isSelfClosing) {
-                            idBlockRange = new monaco.Range(
-                                model.getPositionAt(startOffset)
-                                .lineNumber
-                                , model.getPositionAt(startOffset)
-                                .column
-                                , model.getPositionAt(startOffset + idMatch[0].length)
-                                .lineNumber
-                                , model.getPositionAt(startOffset + idMatch[0].length)
-                                .column
-                            );
-                        } else {
-                            idBlockRange = findFullElementRange(model, startOffset);
-                        }
+            return new monaco.Range(
+                startPos.lineNumber, startPos.column, model.getPositionAt(initialStartOffset + openTagLength)
+                .lineNumber, model.getPositionAt(initialStartOffset + openTagLength)
+                .column
+            );
+        }
+
+        function updateDecorations() {
+            const newDecorations = [];
+            const selectedId = idDropdown.value;
+            const selectedTag = tagDropdown.value;
+            const editorValue = monacoEditorInstance.getModel()
+                .getValue();
+            const model = monacoEditorInstance.getModel();
+
+            let idBlockRange = null;
+
+            if (selectedId !== 'all') {
+                const idAttributeRegex = new RegExp(`<(\\w+)([^>]*id="${selectedId}"[^>]*)>`, 'i');
+                const idMatch = idAttributeRegex.exec(editorValue);
+
+                if (idMatch) {
+                    const startOffset = idMatch.index;
+                    const tagName = idMatch[1];
+                    const tagContent = idMatch[2];
+
+                    const isSelfClosing = tagContent.endsWith('/') || ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'].includes(tagName.toLowerCase());
+
+                    if (isSelfClosing) {
+                        idBlockRange = new monaco.Range(
+                            model.getPositionAt(startOffset)
+                            .lineNumber, model.getPositionAt(startOffset)
+                            .column, model.getPositionAt(startOffset + idMatch[0].length)
+                            .lineNumber, model.getPositionAt(startOffset + idMatch[0].length)
+                            .column
+                        );
+                    } else {
+                        idBlockRange = findFullElementRange(model, startOffset);
                     }
                 }
+            }
 
-                if (idBlockRange) {
+            if (idBlockRange) {
+                newDecorations.push({
+                    range: idBlockRange,
+                    options: {
+                        inlineClassName: 'id-highlight'
+                    }
+                });
+            }
+
+            if (selectedTag !== 'all') {
+                let contentToSearchForTags = editorValue;
+                let baseOffsetForTags = 0;
+                let searchStartOffset = 0;
+
+                if (selectedId !== 'all' && idBlockRange) {
+                    searchStartOffset = model.getOffsetAt(new monaco.Position(idBlockRange.startLineNumber, idBlockRange.startColumn));
+                    contentToSearchForTags = model.getValueInRange(idBlockRange);
+                    baseOffsetForTags = searchStartOffset;
+                }
+
+                const tagOpeningRegex = new RegExp(`<${selectedTag}([^>]*)>`, 'gi');
+                tagOpeningRegex.lastIndex = searchStartOffset;
+
+                let match;
+                while ((match = tagOpeningRegex.exec(editorValue)) !== null) {
+                    if (selectedId !== 'all' && idBlockRange) {
+                        const matchStartPos = model.getPositionAt(match.index);
+                        if (!idBlockRange.containsPosition(matchStartPos)) {
+                            if (match.index >= model.getOffsetAt(idBlockRange.getEndPosition())) {
+                                break;
+                            }
+                            continue;
+                        }
+                    }
+
+                    const currentElementFullRange = findFullElementRange(model, match.index);
+                    if (currentElementFullRange) {
+                        newDecorations.push({
+                            range: currentElementFullRange,
+                            options: {
+                                inlineClassName: 'tag-highlight'
+                            }
+                        });
+                    }
+                }
+            }
+
+            if (allMatches.length > 0) {
+                if (highlightAllCheckbox.checked) {
+                    allMatches.forEach(match => {
+                        newDecorations.push({
+                            range: match.range,
+                            options: {
+                                inlineClassName: 'highlight-all-magenta'
+                            }
+                        });
+                    });
+                    if (currentMatchIndex !== -1) {
+                        newDecorations.push({
+                            range: allMatches[currentMatchIndex].range,
+                            options: {
+                                inlineClassName: 'find-current-match-highlight'
+                            }
+                        });
+                    }
+                } else if (currentMatchIndex !== -1) {
                     newDecorations.push({
-                        range: idBlockRange
-                        , options: {
-                            inlineClassName: 'id-highlight'
+                        range: allMatches[currentMatchIndex].range,
+                        options: {
+                            inlineClassName: 'find-highlight'
                         }
                     });
                 }
 
-                if (selectedTag !== 'all') {
-                    let contentToSearchForTags = editorValue;
-                    let baseOffsetForTags = 0;
-                    let searchStartOffset = 0; 
+                if (currentMatchIndex !== -1) {
+                    monacoEditorInstance.revealRangeInCenterIfOutsideViewport(allMatches[currentMatchIndex].range, 0);
+                    const position = allMatches[currentMatchIndex].range.getStartPosition();
+                    monacoEditorInstance.setPosition(position);
 
-                    if (selectedId !== 'all' && idBlockRange) {
-                        searchStartOffset = model.getOffsetAt(new monaco.Position(idBlockRange.startLineNumber, idBlockRange.startColumn));
-                        contentToSearchForTags = model.getValueInRange(idBlockRange); 
-                        baseOffsetForTags = searchStartOffset; 
-                    }
+                    matchCountSpan.innerHTML = `${currentMatchIndex + 1} of ${allMatches.length}${getContextString()}`;
+                }
+            } else {
+                const matchCase = matchCaseCheckbox.checked;
+                let statusMessage = "No matches";
+                let optionsDescription = [];
 
-                    const tagOpeningRegex = new RegExp(`<${selectedTag}([^>]*)>`, 'gi'); 
-                    tagOpeningRegex.lastIndex = searchStartOffset; 
-
-                    let match;
-                    while ((match = tagOpeningRegex.exec(editorValue)) !== null) {
-                        if (selectedId !== 'all' && idBlockRange) {
-                            const matchStartPos = model.getPositionAt(match.index);
-                            if (!idBlockRange.containsPosition(matchStartPos)) {
-                                if (match.index >= model.getOffsetAt(idBlockRange.getEndPosition())) {
-                                    break;
-                                }
-                                continue; 
-                            }
-                        }
-
-                        const currentElementFullRange = findFullElementRange(model, match.index);
-                        if (currentElementFullRange) {
-                            newDecorations.push({
-                                range: currentElementFullRange
-                                , options: {
-                                    inlineClassName: 'tag-highlight'
-                                }
-                            });
-                        }
-                    }
+                if (findInput.value === '') {
+                    matchCountSpan.innerHTML = "";
+                    allDecorations = monacoEditorInstance.deltaDecorations(allDecorations, newDecorations);
+                    return;
                 }
 
-                if (allMatches.length > 0) {
-                    if (highlightAllCheckbox.checked) {
-                        allMatches.forEach(match => {
-                            newDecorations.push({
-                                range: match.range
-                                , options: {
-                                    inlineClassName: 'highlight-all-magenta'
-                                }
-                            });
-                        });
-                        if (currentMatchIndex !== -1) {
-                            newDecorations.push({
-                                range: allMatches[currentMatchIndex].range
-                                , options: {
-                                    inlineClassName: 'find-current-match-highlight'
-                                }
-                            });
-                        }
-                    } else if (currentMatchIndex !== -1) {
-                        newDecorations.push({
-                            range: allMatches[currentMatchIndex].range
-                            , options: {
-                                inlineClassName: 'find-highlight'
-                            }
-                        });
-                    }
-
-                    if (currentMatchIndex !== -1) {
-                        monacoEditorInstance.revealRangeInCenterIfOutsideViewport(allMatches[currentMatchIndex].range, 0);
-                        const position = allMatches[currentMatchIndex].range.getStartPosition();
-                        monacoEditorInstance.setPosition(position);
-
-                        matchCountSpan.innerHTML = `${currentMatchIndex + 1} of ${allMatches.length}${getContextString()}`;
-                    }
-                } else {
-                    const matchCase = matchCaseCheckbox.checked;
-                    let statusMessage = "No matches";
-                    let optionsDescription = [];
-
-                    if (findInput.value === '') {
-                        matchCountSpan.innerHTML = "";
-                        allDecorations = monacoEditorInstance.deltaDecorations(allDecorations, newDecorations);
-                        return;
-                    }
-
-                    if (matchCase) {
-                        optionsDescription.push("case-sensitive");
-                    }
-
-                    if (optionsDescription.length > 0) {
-                        statusMessage = `No ${optionsDescription.join(' ')} matches`;
-                    }
-                    matchCountSpan.innerHTML = `${statusMessage}${getContextString()}`;
+                if (matchCase) {
+                    optionsDescription.push("case-sensitive");
                 }
 
-                allDecorations = monacoEditorInstance.deltaDecorations(allDecorations, newDecorations);
+                if (optionsDescription.length > 0) {
+                    statusMessage = `No ${optionsDescription.join(' ')} matches`;
+                }
+                matchCountSpan.innerHTML = `${statusMessage}${getContextString()}`;
             }
 
-            function resetSearchState(force = false) {
-                const newFindText = findInput.value;
-                const newSelectedId = idDropdown.value;
-                const newSelectedTag = tagDropdown.value;
-                const newIsRegex = enableRegexCheckbox.checked;
-                const newMatchCase = matchCaseCheckbox.checked;
+            allDecorations = monacoEditorInstance.deltaDecorations(allDecorations, newDecorations);
+        }
 
-                const criteriaChanged = (
-                    newFindText !== currentFindText ||
-                    newSelectedId !== currentSelectedId ||
-                    newSelectedTag !== currentSelectedTag ||
-                    newIsRegex !== currentIsRegex ||
-                    newMatchCase !== currentMatchCase
-                );
+        function resetSearchState(force = false) {
+            const newFindText = findInput.value;
+            const newSelectedId = idDropdown.value;
+            const newSelectedTag = tagDropdown.value;
+            const newIsRegex = enableRegexCheckbox.checked;
+            const newMatchCase = matchCaseCheckbox.checked;
 
-                if (force || criteriaChanged) {
-                    currentFindText = newFindText;
-                    currentSelectedId = newSelectedId;
-                    currentSelectedTag = newSelectedTag;
-                    currentIsRegex = newIsRegex;
-                    currentMatchCase = newMatchCase;
+            const criteriaChanged = (
+                newFindText !== currentFindText ||
+                newSelectedId !== currentSelectedId ||
+                newSelectedTag !== currentSelectedTag ||
+                newIsRegex !== currentIsRegex ||
+                newMatchCase !== currentMatchCase
+            );
 
-                    allMatches = findMatches();
-                    currentMatchIndex = -1;
+            if (force || criteriaChanged) {
+                currentFindText = newFindText;
+                currentSelectedId = newSelectedId;
+                currentSelectedTag = newSelectedTag;
+                currentIsRegex = newIsRegex;
+                currentMatchCase = newMatchCase;
 
-                    if (allMatches.length > 0 && newFindText !== '') {
-                        currentMatchIndex = 0;
+                allMatches = findMatches();
+                currentMatchIndex = -1;
+
+                if (allMatches.length > 0 && newFindText !== '') {
+                    currentMatchIndex = 0;
+                }
+            }
+
+            updateDecorations();
+        }
+
+        function processReplacement(originalMatchText, replaceText, isRegex, isSequencing, sequenceCurrentValue) {
+            let finalReplacement = replaceText;
+
+            if (isSequencing) {
+                if (finalReplacement.includes('{$#+}')) {
+                    finalReplacement = finalReplacement.replaceAll('{$#+}', sequenceCurrentValue.toString());
+                } else if (finalReplacement.includes('{$#-}')) {
+                    finalReplacement = finalReplacement.replaceAll('{$#-}', sequenceCurrentValue.toString());
+                }
+            }
+
+            if (isRegex) {
+                const findText = findInput.value;
+                const matchCase = matchCaseCheckbox.checked;
+                const pattern = findText;
+                const regexForGroups = new RegExp(pattern, matchCase ? '' : 'i');
+
+                const groupMatch = regexForGroups.exec(originalMatchText);
+
+                if (groupMatch) {
+                    finalReplacement = finalReplacement.replaceAll('$&', groupMatch[0] || '');
+                    for (let i = 1; i < groupMatch.length; i++) {
+                        const placeholder = `$${i}`;
+                        finalReplacement = finalReplacement.replaceAll(placeholder, groupMatch[i] || '');
                     }
                 }
+            }
+            return finalReplacement;
+        }
 
+        findNextButton.addEventListener('click', () => {
+            resetSearchState();
+            if (allMatches.length > 0) {
+                currentMatchIndex = (currentMatchIndex + 1) % allMatches.length;
                 updateDecorations();
+            } else {}
+        });
+
+        findPreviousButton.addEventListener('click', () => {
+            resetSearchState();
+            if (allMatches.length > 0) {
+                currentMatchIndex = (currentMatchIndex - 1 + allMatches.length) % allMatches.length;
+                updateDecorations();
+            } else {}
+        });
+
+        replaceOneButton.addEventListener('click', () => {
+            const findText = findInput.value;
+            const replaceText = replaceInput.value;
+            const isRegex = enableRegexCheckbox.checked;
+            const isSequencing = sequenceCheckbox.checked && (replaceText.includes('{$#+}') || replaceText.includes('{$#-}'));
+            let startIndex = parseInt(startIndexInput.value, 10);
+
+            if (!findText) {
+                updateDecorations();
+                return;
             }
 
-            function processReplacement(originalMatchText, replaceText, isRegex, isSequencing, sequenceCurrentValue) {
+            if (isSequencing && isNaN(startIndex)) {
+                showMessageBox("Please enter a valid number for 'Start' index when sequencing.", true);
+                return;
+            }
+
+            if (allMatches.length === 0 || currentMatchIndex === -1 || currentMatchIndex >= allMatches.length) {
+                resetSearchState();
+                if (allMatches.length === 0) {
+                    updateDecorations();
+                    return;
+                }
+            }
+
+            const matchToReplace = allMatches[currentMatchIndex];
+            const originalMatchRange = matchToReplace.range;
+            const originalMatchText = monacoEditorInstance.getModel()
+                .getValueInRange(originalMatchRange);
+
+            const processedReplaceText = processReplacement(
+                originalMatchText, replaceText, isRegex, isSequencing, startIndex
+            );
+
+            monacoEditorInstance.executeEdits(
+                null, [{
+                    range: originalMatchRange,
+                    text: processedReplaceText,
+                    forceMoveMarkers: true
+                }]
+            );
+
+            if (isSequencing) {
+                if (replaceText.includes('{$#+}')) {
+                    startIndexInput.value = (startIndex + 1)
+                        .toString();
+                } else if (replaceText.includes('{$#-}')) {
+                    startIndexInput.value = (startIndex - 1)
+                        .toString();
+                }
+            }
+
+            const oldEndPosition = originalMatchRange.getEndPosition();
+
+            resetSearchState(true);
+
+            let newCurrentMatchIndex = -1;
+
+            for (let i = 0; i < allMatches.length; i++) {
+                const newMatchRange = allMatches[i].range;
+                if (monaco.Position.compare(newMatchRange.getStartPosition(), oldEndPosition) >= 0) {
+                    newCurrentMatchIndex = i;
+                    break;
+                }
+            }
+
+            if (newCurrentMatchIndex !== -1) {
+                currentMatchIndex = newCurrentMatchIndex;
+            } else if (allMatches.length > 0) {
+                currentMatchIndex = 0;
+            } else {
+                currentMatchIndex = -1;
+            }
+
+            allDecorations = monacoEditorInstance.deltaDecorations(allDecorations, []);
+            updateDecorations();
+        });
+
+        idDropdown.addEventListener('change', () => resetSearchState(true));
+        tagDropdown.addEventListener('change', () => resetSearchState(true));
+        matchCaseCheckbox.addEventListener('change', () => resetSearchState(true));
+        highlightAllCheckbox.addEventListener('change', updateDecorations);
+        findInput.addEventListener('input', () => resetSearchState(true));
+
+        searchReset.addEventListener('click', () => {
+            findInput.value = '';
+            replaceInput.value = '';
+
+            tagDropdown.value = 'all';
+            idDropdown.value = 'all';
+
+            if (matchCaseCheckbox.checked) {
+                matchCaseCheckbox.checked = false;
+            }
+            if (highlightAllCheckbox.checked) {
+                highlightAllCheckbox.checked = false;
+            }
+            if (enableRegexCheckbox.checked) {
+                enableRegexCheckbox.checked = false;
+                toggleSequenceVisibility();
+                toggleRegexBorder();
+            }
+            if (sequenceCheckbox.checked) {
+                sequenceCheckbox.checked = false;
+                sequenceRangeContainer.classList.add('opacity-0', 'pointer-events-none');
+            }
+
+            startIndexInput.value = '1';
+            endIndexInput.value = '';
+
+            matchCountSpan.innerHTML = '';
+
+            resetSearchState(true);
+        });
+
+        replaceAllButton.addEventListener('click', () => {
+            const findText = findInput.value;
+            const replaceText = replaceInput.value;
+            const isRegex = enableRegexCheckbox.checked;
+            const matchCase = matchCaseCheckbox.checked;
+            const isSequencing = sequenceCheckbox.checked && (replaceText.includes('{$#+}') || replaceText.includes('{$#-}'));
+
+            if (!findText) {
+                resetSearchState();
+                matchCountSpan.innerHTML = "Enter text to find.";
+                return;
+            }
+
+            let startIndex = parseInt(startIndexInput.value, 10);
+            if (isSequencing && (isNaN(startIndex) || startIndex < 0)) {
+                showMessageBox("Please enter a valid non-negative number for 'Start' index when sequencing.", true);
+                return;
+            }
+
+            let matchesToReplace = findMatches();
+
+            if (matchesToReplace.length === 0) {
+                resetSearchState();
+                return;
+            }
+
+            const edits = [];
+            let replacementCount = 0;
+            let sequenceCounter = startIndex;
+
+            const endIndex = parseInt(endIndexInput.value, 10);
+            const hasEndIndex = isSequencing && !isNaN(endIndex);
+
+            const pattern = isRegex ? findText : escapeRegExp(findText);
+
+            let filteredMatches = matchesToReplace;
+            if (hasEndIndex) {
+                filteredMatches = matchesToReplace.filter((match, index) => {
+                    const currentMatchSequenceValue = sequenceCounter + index;
+                    return currentMatchSequenceValue <= endIndex;
+                });
+            }
+
+            filteredMatches.forEach((match, index) => {
+                const effectiveSequenceValue = sequenceCounter + index;
+
                 let finalReplacement = replaceText;
 
                 if (isSequencing) {
                     if (finalReplacement.includes('{$#+}')) {
-                        finalReplacement = finalReplacement.replaceAll('{$#+}', sequenceCurrentValue.toString());
+                        finalReplacement = finalReplacement.replaceAll('{$#+}', effectiveSequenceValue.toString());
                     } else if (finalReplacement.includes('{$#-}')) {
-                        finalReplacement = finalReplacement.replaceAll('{$#-}', sequenceCurrentValue.toString());
+                        finalReplacement = finalReplacement.replaceAll('{$#-}', effectiveSequenceValue.toString());
                     }
                 }
 
                 if (isRegex) {
-                    const findText = findInput.value;
-                    const matchCase = matchCaseCheckbox.checked;
-                    const pattern = findText; 
+                    const originalMatchText = monacoEditorInstance.getModel()
+                        .getValueInRange(match.range);
                     const regexForGroups = new RegExp(pattern, matchCase ? '' : 'i');
-
                     const groupMatch = regexForGroups.exec(originalMatchText);
 
                     if (groupMatch) {
                         finalReplacement = finalReplacement.replaceAll('$&', groupMatch[0] || '');
+
                         for (let i = 1; i < groupMatch.length; i++) {
                             const placeholder = `$${i}`;
                             finalReplacement = finalReplacement.replaceAll(placeholder, groupMatch[i] || '');
                         }
                     }
                 }
-                return finalReplacement;
+
+                edits.push({
+                    range: match.range,
+                    text: finalReplacement
+                });
+                replacementCount++;
+            });
+
+            if (edits.length === 0) {
+                matchCountSpan.innerHTML = "No matches found within the specified sequence range.";
+                return;
             }
 
-            findNextButton.addEventListener('click', () => {
-                resetSearchState();
-                if (allMatches.length > 0) {
-                    currentMatchIndex = (currentMatchIndex + 1) % allMatches.length;
-                    updateDecorations();
-                } else {
-                }
-            });
-
-            findPreviousButton.addEventListener('click', () => {
-                resetSearchState();
-                if (allMatches.length > 0) {
-                    currentMatchIndex = (currentMatchIndex - 1 + allMatches.length) % allMatches.length;
-                    updateDecorations();
-                } else {
-                }
-            });
-
-            replaceOneButton.addEventListener('click', () => {
-                const findText = findInput.value;
-                const replaceText = replaceInput.value;
-                const isRegex = enableRegexCheckbox.checked;
-                const isSequencing = sequenceCheckbox.checked && (replaceText.includes('{$#+}') || replaceText.includes('{$#-}'));
-                let startIndex = parseInt(startIndexInput.value, 10);
-
-                if (!findText) {
-                    updateDecorations();
-                    return;
-                }
-
-                if (isSequencing && isNaN(startIndex)) {
-                    showMessageBox("Please enter a valid number for 'Start' index when sequencing.", true);
-                    return;
-                }
-
-                if (allMatches.length === 0 || currentMatchIndex === -1 || currentMatchIndex >= allMatches.length) {
-                    resetSearchState();
-                    if (allMatches.length === 0) {
-                        updateDecorations();
-                        return;
-                    }
-                }
-
-                const matchToReplace = allMatches[currentMatchIndex];
-                const originalMatchRange = matchToReplace.range;
-                const originalMatchText = monacoEditorInstance.getModel()
-                    .getValueInRange(originalMatchRange); 
-
-                const processedReplaceText = processReplacement(
-                    originalMatchText
-                    , replaceText
-                    , isRegex
-                    , isSequencing
-                    , startIndex
+            monacoEditorInstance.getModel()
+                .pushEditOperations(
+                    [], edits, () => null
                 );
 
-                monacoEditorInstance.executeEdits( 
-                    null
-                    , [{
-                        range: originalMatchRange
-                        , text: processedReplaceText
-                        , forceMoveMarkers: true
-                    }]
-                );
-
-                if (isSequencing) {
-                    if (replaceText.includes('{$#+}')) {
-                        startIndexInput.value = (startIndex + 1)
-                            .toString();
-                    } else if (replaceText.includes('{$#-}')) {
-                        startIndexInput.value = (startIndex - 1)
-                            .toString();
-                    }
-                }
-
-                const oldEndPosition = originalMatchRange.getEndPosition();
-
-                resetSearchState(true);
-
-                let newCurrentMatchIndex = -1;
-
-                for (let i = 0; i < allMatches.length; i++) {
-                    const newMatchRange = allMatches[i].range;
-                    if (monaco.Position.compare(newMatchRange.getStartPosition(), oldEndPosition) >= 0) {
-                        newCurrentMatchIndex = i;
-                        break;
-                    }
-                }
-
-                if (newCurrentMatchIndex !== -1) {
-                    currentMatchIndex = newCurrentMatchIndex;
-                } else if (allMatches.length > 0) {
-                    currentMatchIndex = 0;
-                } else {
-                    currentMatchIndex = -1;
-                }
-
-                allDecorations = monacoEditorInstance.deltaDecorations(allDecorations, []); 
-                updateDecorations();
-            });
-
-            idDropdown.addEventListener('change', () => resetSearchState(true));
-            tagDropdown.addEventListener('change', () => resetSearchState(true));
-            matchCaseCheckbox.addEventListener('change', () => resetSearchState(true));
-            highlightAllCheckbox.addEventListener('change', updateDecorations);
-            findInput.addEventListener('input', () => resetSearchState(true));
-
-            searchReset.addEventListener('click', () => {
-                findInput.value = '';
-                replaceInput.value = '';
-
-                tagDropdown.value = 'all';
-                idDropdown.value = 'all';
-
-                if (matchCaseCheckbox.checked) {
-                    matchCaseCheckbox.checked = false;
-                }
-                if (highlightAllCheckbox.checked) {
-                    highlightAllCheckbox.checked = false;
-                }
-                if (enableRegexCheckbox.checked) {
-                    enableRegexCheckbox.checked = false;
-                    toggleSequenceVisibility();
-                    toggleRegexBorder();
-                }
-                if (sequenceCheckbox.checked) {
-                    sequenceCheckbox.checked = false;
-                    sequenceRangeContainer.classList.add('opacity-0', 'pointer-events-none');
-                }
-
-                startIndexInput.value = '1';
-                endIndexInput.value = '';
-
-                matchCountSpan.innerHTML = '';
-
-                resetSearchState(true);
-            });
-
-            replaceAllButton.addEventListener('click', () => {
-                const findText = findInput.value;
-                const replaceText = replaceInput.value;
-                const isRegex = enableRegexCheckbox.checked;
-                const matchCase = matchCaseCheckbox.checked;
-                const isSequencing = sequenceCheckbox.checked && (replaceText.includes('{$#+}') || replaceText.includes('{$#-}'));
-
-                if (!findText) {
-                    resetSearchState(); 
-                    matchCountSpan.innerHTML = "Enter text to find.";
-                    return;
-                }
-
-                let startIndex = parseInt(startIndexInput.value, 10);
-                if (isSequencing && (isNaN(startIndex) || startIndex < 0)) { 
-                    showMessageBox("Please enter a valid non-negative number for 'Start' index when sequencing.", true);
-                    return;
-                }
-
-                let matchesToReplace = findMatches();
-
-                if (matchesToReplace.length === 0) {
-                    resetSearchState(); 
-                    return;
-                }
-
-                const edits = [];
-                let replacementCount = 0;
-                let sequenceCounter = startIndex; 
-
-                const endIndex = parseInt(endIndexInput.value, 10);
-                const hasEndIndex = isSequencing && !isNaN(endIndex);
-
-                const pattern = isRegex ? findText : escapeRegExp(findText);
-
-                let filteredMatches = matchesToReplace;
-                if (hasEndIndex) {
-                    filteredMatches = matchesToReplace.filter((match, index) => {
-                        const currentMatchSequenceValue = sequenceCounter + index;
-                        return currentMatchSequenceValue <= endIndex;
-                    });
-                }
-
-                filteredMatches.forEach((match, index) => {
-                    const effectiveSequenceValue = sequenceCounter + index;
-
-                    let finalReplacement = replaceText;
-
-                    if (isSequencing) {
-                        if (finalReplacement.includes('{$#+}')) {
-                            finalReplacement = finalReplacement.replaceAll('{$#+}', effectiveSequenceValue.toString());
-                        } else if (finalReplacement.includes('{$#-}')) {
-                            finalReplacement = finalReplacement.replaceAll('{$#-}', effectiveSequenceValue.toString());
-                        }
-                    }
-
-                    if (isRegex) {
-                        const originalMatchText = monacoEditorInstance.getModel()
-                            .getValueInRange(match.range);
-                        const regexForGroups = new RegExp(pattern, matchCase ? '' : 'i');
-                        const groupMatch = regexForGroups.exec(originalMatchText);
-
-                        if (groupMatch) {
-                            finalReplacement = finalReplacement.replaceAll('$&', groupMatch[0] || '');
-
-                            for (let i = 1; i < groupMatch.length; i++) {
-                                const placeholder = `$${i}`;
-                                finalReplacement = finalReplacement.replaceAll(placeholder, groupMatch[i] || '');
-                            }
-                        }
-                    }
-
-                    edits.push({
-                        range: match.range
-                        , text: finalReplacement
-                    });
-                    replacementCount++;
-                });
-
-                if (edits.length === 0) {
-                    matchCountSpan.innerHTML = "No matches found within the specified sequence range.";
-                    return;
-                }
-
-                monacoEditorInstance.getModel()
-                    .pushEditOperations(
-                        []
-                        , edits
-                        , () => null 
-                    );
-
-                matchCountSpan.innerHTML = `Replaced ${replacementCount} occurrences.`;
-                resetSearchState(true); 
-            });
-
-            regexGuideButton.addEventListener('click', () => {
-                const originalText = regexGuideButton.textContent;
-                showRegexGuideModal(regexGuideButton, originalText);
-            });
-            updateAllInteractiveButtonStates();
+            matchCountSpan.innerHTML = `Replaced ${replacementCount} occurrences.`;
+            resetSearchState(true);
         });
 
-        copyCodeBtn.addEventListener('click', async () => {
-            const codeContent = monacoEditorInstance ? monacoEditorInstance.getValue() : '';
-            try {
-                await navigator.clipboard.writeText(codeContent);
-                const originalHTML = copyCodeBtn.innerHTML; 
-                copyCodeBtn.textContent = 'Copied!';
-                copyCodeBtn.classList.add('bg-green-500', 'hover:bg-green-600');
-                copyCodeBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
-                copyCodeBtn.disabled = true;
-                copyCodeBtn.setAttribute('data-temp-active', 'true');
-                updateAllInteractiveButtonStates();
-                setTimeout(() => {
-                    copyCodeBtn.innerHTML = originalHTML; 
-                    copyCodeBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-                    copyCodeBtn.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
-                    copyCodeBtn.disabled = false;
-                    copyCodeBtn.removeAttribute('data-temp-active');
-                    updateAllInteractiveButtonStates();
-                }, 1500);
-            } catch (err) {
-                console.error('Failed to copy text: ', err);
-            }
+        regexGuideButton.addEventListener('click', () => {
+            const originalText = regexGuideButton.textContent;
+            showRegexGuideModal(regexGuideButton, originalText);
         });
+        updateAllInteractiveButtonStates();
+    });
 
-        autoFormatBtn.addEventListener('click', () => {
-            if (monacoEditorInstance) {
-                let currentContent = monacoEditorInstance.getValue();
-                currentContent = protectDataAttributes(currentContent); 
-
-                let formattedContent = html_beautify(currentContent, {
-                    indent_size: 4, 
-                    space_in_paren: true 
-                });
-
-                formattedContent = restoreDataAttributes(formattedContent); 
-                formattedContent = convertAllEntitiesToNumeric(formattedContent); 
-
-                monacoEditorInstance.setValue(formattedContent);
-                applyEntityHighlighting(); 
-
-                const originalText = autoFormatBtn.textContent;
-                autoFormatBtn.textContent = 'Formatted!';
-                autoFormatBtn.classList.add('bg-green-500', 'hover:bg-green-600');
-                autoFormatBtn.classList.remove('bg-red-700', 'hover:bg-red-800'); 
-                autoFormatBtn.disabled = true; 
-                autoFormatBtn.setAttribute('data-temp-active', 'true'); 
-                updateAllInteractiveButtonStates(); 
-                setTimeout(() => {
-                    autoFormatBtn.textContent = originalText;
-                    autoFormatBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-                    autoFormatBtn.classList.add('bg-red-700', 'hover:bg-red-800'); 
-                    autoFormatBtn.disabled = false; 
-                    autoFormatBtn.removeAttribute('data-temp-active'); 
-                    updateAllInteractiveButtonStates(); 
-                }, 1500);
-            }
-        });
-
-        autoEncodeBtn.addEventListener('click', () => {
-            if (monacoEditorInstance) {
-                let currentContent = monacoEditorInstance.getValue();
-                let encodedContent = doAutoEncode(currentContent); 
-
-                monacoEditorInstance.setValue(encodedContent);
-                htmlOutputContent = encodedContent; 
-                applyEntityHighlighting(); 
-
-                const originalText = autoEncodeBtn.textContent;
-                autoEncodeBtn.textContent = 'Encoded!';
-                autoEncodeBtn.classList.add('bg-green-500', 'hover:bg-green-600');
-                autoEncodeBtn.classList.remove('bg-red-700', 'hover:bg-red-800'); 
-                autoEncodeBtn.disabled = true; 
-                autoEncodeBtn.setAttribute('data-temp-active', 'true'); 
-                updateAllInteractiveButtonStates(); 
-                setTimeout(() => {
-                    autoEncodeBtn.textContent = originalText;
-                    autoEncodeBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-                    autoEncodeBtn.classList.add('bg-red-700', 'hover:bg-red-800'); 
-                    autoEncodeBtn.disabled = false; 
-                    autoEncodeBtn.removeAttribute('data-temp-active'); 
-                    updateAllInteractiveButtonStates(); 
-                }, 1500);
-            }
-        });
-
-        exportHtmlBtn.addEventListener('click', () => {
-            const htmlContent = monacoEditorInstance ? monacoEditorInstance.getValue() : '';
-            const blob = new Blob([htmlContent], {
-                type: 'text/html'
-            });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'index.html';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            const originalHTML = exportHtmlBtn.innerHTML; 
-            exportHtmlBtn.textContent = 'Exported!';
-            exportHtmlBtn.classList.add('bg-green-500', 'hover:bg-green-600');
-            exportHtmlBtn.classList.remove('bg-red-700', 'hover:bg-red-800');
-            exportHtmlBtn.disabled = true;
-            exportHtmlBtn.setAttribute('data-temp-active', 'true');
+    copyCodeBtn.addEventListener('click', async () => {
+        const codeContent = monacoEditorInstance ? monacoEditorInstance.getValue() : '';
+        try {
+            await navigator.clipboard.writeText(codeContent);
+            const originalHTML = copyCodeBtn.innerHTML;
+            copyCodeBtn.textContent = 'Copied!';
+            copyCodeBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+            copyCodeBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
+            copyCodeBtn.disabled = true;
+            copyCodeBtn.setAttribute('data-temp-active', 'true');
             updateAllInteractiveButtonStates();
             setTimeout(() => {
-                exportHtmlBtn.innerHTML = originalHTML; 
-                exportHtmlBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-                exportHtmlBtn.classList.add('bg-red-700', 'hover:bg-red-800');
-                exportHtmlBtn.disabled = false;
-                exportHtmlBtn.removeAttribute('data-temp-active');
+                copyCodeBtn.innerHTML = originalHTML;
+                copyCodeBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                copyCodeBtn.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
+                copyCodeBtn.disabled = false;
+                copyCodeBtn.removeAttribute('data-temp-active');
                 updateAllInteractiveButtonStates();
             }, 1500);
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
+        }
+    });
+
+    autoFormatBtn.addEventListener('click', () => {
+        if (monacoEditorInstance) {
+            let currentContent = monacoEditorInstance.getValue();
+            currentContent = protectDataAttributes(currentContent);
+
+            let formattedContent = html_beautify(currentContent, {
+                indent_size: 4,
+                space_in_paren: true
+            });
+
+            formattedContent = restoreDataAttributes(formattedContent);
+            formattedContent = convertAllEntitiesToNumeric(formattedContent);
+
+            monacoEditorInstance.setValue(formattedContent);
+            applyEntityHighlighting();
+
+            const originalText = autoFormatBtn.textContent;
+            autoFormatBtn.textContent = 'Formatted!';
+            autoFormatBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+            autoFormatBtn.classList.remove('bg-red-700', 'hover:bg-red-800');
+            autoFormatBtn.disabled = true;
+            autoFormatBtn.setAttribute('data-temp-active', 'true');
+            updateAllInteractiveButtonStates();
+            setTimeout(() => {
+                autoFormatBtn.textContent = originalText;
+                autoFormatBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                autoFormatBtn.classList.add('bg-red-700', 'hover:bg-red-800');
+                autoFormatBtn.disabled = false;
+                autoFormatBtn.removeAttribute('data-temp-active');
+                updateAllInteractiveButtonStates();
+            }, 1500);
+        }
+    });
+
+    autoEncodeBtn.addEventListener('click', () => {
+        if (monacoEditorInstance) {
+            let currentContent = monacoEditorInstance.getValue();
+            let encodedContent = doAutoEncode(currentContent);
+
+            monacoEditorInstance.setValue(encodedContent);
+            htmlOutputContent = encodedContent;
+            applyEntityHighlighting();
+
+            const originalText = autoEncodeBtn.textContent;
+            autoEncodeBtn.textContent = 'Encoded!';
+            autoEncodeBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+            autoEncodeBtn.classList.remove('bg-red-700', 'hover:bg-red-800');
+            autoEncodeBtn.disabled = true;
+            autoEncodeBtn.setAttribute('data-temp-active', 'true');
+            updateAllInteractiveButtonStates();
+            setTimeout(() => {
+                autoEncodeBtn.textContent = originalText;
+                autoEncodeBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                autoEncodeBtn.classList.add('bg-red-700', 'hover:bg-red-800');
+                autoEncodeBtn.disabled = false;
+                autoEncodeBtn.removeAttribute('data-temp-active');
+                updateAllInteractiveButtonStates();
+            }, 1500);
+        }
+    });
+
+    exportHtmlBtn.addEventListener('click', () => {
+        const htmlContent = monacoEditorInstance ? monacoEditorInstance.getValue() : '';
+        const blob = new Blob([htmlContent], {
+            type: 'text/html'
         });
-
-        importHtmlBtn.addEventListener('click', () => htmlFileInput.click());
-        htmlFileInput.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const importedContent = e.target.result;
-                    if (monacoEditorInstance) {
-                        monacoEditorInstance.setValue(importedContent);
-                        htmlOutputContent = importedContent;
-                        applyEntityHighlighting();
-                    }
-                    const originalHTML = importHtmlBtn.innerHTML; 
-                    importHtmlBtn.textContent = 'Imported!';
-                    importHtmlBtn.classList.add('bg-green-500', 'hover:bg-green-600');
-                    importHtmlBtn.classList.remove('bg-purple-700', 'hover:bg-purple-800');
-                    importHtmlBtn.disabled = true;
-                    importHtmlBtn.setAttribute('data-temp-active', 'true');
-                    updateAllInteractiveButtonStates();
-                    setTimeout(() => {
-                        importHtmlBtn.innerHTML = originalHTML; 
-                        importHtmlBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-                        importHtmlBtn.classList.add('bg-purple-700', 'hover:bg-purple-800');
-                        htmlFileInput.value = null;
-                        importHtmlBtn.removeAttribute('data-temp-active');
-                        updateAllInteractiveButtonStates();
-                    }, 1500);
-                };
-                reader.readAsText(file);
-            }
-        });
-
-        toggleEditorViewBtnRichText.addEventListener('click', toggleEditorView);
-        toggleEditorViewBtnCode.addEventListener('click', toggleEditorView);
-
-        cleanMsoBtn.addEventListener('click', () => {
-    if (monacoEditorInstance) {
-        let currentContent = monacoEditorInstance.getValue();
-        currentContent = protectDataAttributes(currentContent);
-        currentContent = unwrapSingleCellTables(currentContent);
-        currentContent = applyCleanLists(currentContent);
-        console.log("Clean MSO Lists applied by Clean MSO button.");
-        currentContent = applyCleanTablesBasic(currentContent);
-        console.log("Clean MSO Tables applied by Clean MSO button.");
-        
-        currentContent = applyCleanMsoCode(currentContent);
-        console.log("Clean MSO Code (including IMGs) applied by Clean MSO button.");
-        currentContent = applyAutoSpacing(currentContent);
-        console.log("Clean Spaces applied by Clean MSO button.");
-        currentContent = restoreDataAttributes(currentContent);
-        currentContent = convertAllEntitiesToNumeric(currentContent);
-        monacoEditorInstance.setValue(currentContent);
-        htmlOutputContent = currentContent;
-        applyEntityHighlighting();
-        autoEncodeBtn.click();
-        const originalHTML = cleanMsoBtn.innerHTML;
-        cleanMsoBtn.innerHTML = '<i class="fa-solid fa-eraser"></i> Cleaned!';
-        cleanMsoBtn.classList.add('bg-green-500', 'hover:bg-green-600');
-        cleanMsoBtn.classList.remove('bg-blue-700', 'hover:bg-blue-800');
-        cleanMsoBtn.disabled = true;
-        cleanMsoBtn.setAttribute('data-temp-active', 'true');
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'index.html';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        const originalHTML = exportHtmlBtn.innerHTML;
+        exportHtmlBtn.textContent = 'Exported!';
+        exportHtmlBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+        exportHtmlBtn.classList.remove('bg-red-700', 'hover:bg-red-800');
+        exportHtmlBtn.disabled = true;
+        exportHtmlBtn.setAttribute('data-temp-active', 'true');
         updateAllInteractiveButtonStates();
         setTimeout(() => {
-            cleanMsoBtn.innerHTML = originalHTML;
-            cleanMsoBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-            cleanMsoBtn.classList.add('bg-blue-700', 'hover:bg-blue-800');
-            cleanMsoBtn.disabled = false;
-            cleanMsoBtn.removeAttribute('data-temp-active');
+            exportHtmlBtn.innerHTML = originalHTML;
+            exportHtmlBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+            exportHtmlBtn.classList.add('bg-red-700', 'hover:bg-red-800');
+            exportHtmlBtn.disabled = false;
+            exportHtmlBtn.removeAttribute('data-temp-active');
             updateAllInteractiveButtonStates();
-            updateCleanMsoButtonState();
         }, 1500);
-    }
-});
+    });
 
-        clearAllBtn.addEventListener('click', () => {
-            if (monacoEditorInstance) {
-                monacoEditorInstance.setValue('');
-                htmlOutputContent = '';
-                applyEntityHighlighting();
-            }
-            const originalHTML = clearAllBtn.innerHTML; 
-            clearAllBtn.textContent = 'Cleared!';
-            clearAllBtn.classList.add('bg-green-500', 'hover:bg-green-600');
-            clearAllBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
-            clearAllBtn.disabled = true;
-            clearAllBtn.setAttribute('data-temp-active', 'true');
-            updateAllInteractiveButtonStates();
-            setTimeout(() => {
-                clearAllBtn.innerHTML = originalHTML; 
-                clearAllBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-                clearAllBtn.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
-                clearAllBtn.disabled = false;
-                clearAllBtn.removeAttribute('data-temp-active');
-                updateAllInteractiveButtonStates();
-            }, 1500);
-        });
-
-        const iframeDocument = default_ifr.contentDocument || default_ifr.contentWindow.document;
-        iframeDocument.open();
-        iframeDocument.write(APP_CONFIG.richTextEditorTemplate);
-        iframeDocument.close();
-
-        toggleAutoCleanMsoOnSwitchRichText.addEventListener('change', (event) => {
-            const isChecked = event.target.checked;
-            const parentLabel = event.target.closest('.toggle-switch');
-            if (isChecked) {
-                parentLabel.classList.add('is-checked');
-            } else {
-                parentLabel.classList.remove('is-checked');
-            }
-            toggleAutoCleanMsoOnSwitchCode.checked = isChecked; 
-            toggleAutoCleanMsoOnSwitchCode.closest('.toggle-switch')
-                .classList.toggle('is-checked', isChecked);
-            console.log(`Auto-Clean MSO on RichText switch is now: ${isChecked ? 'ON' : 'OFF'}`);
-            updateGoToHtmlButtonColor(); 
-            updateCleanMsoButtonState(); 
-        });
-
-        toggleAutoCleanMsoOnSwitchCode.addEventListener('change', (event) => {
-            const isChecked = event.target.checked;
-            const parentLabel = event.target.closest('.toggle-switch');
-            if (isChecked) {
-                parentLabel.classList.add('is-checked');
-                toggleAutoCleanMsoOnSwitchCode.checked = true;
-            } else {
-                parentLabel.classList.remove('is-checked');
-                toggleAutoCleanMsoOnSwitchCode.checked = false;
-            }
-            toggleAutoCleanMsoOnSwitchRichText.checked = isChecked; 
-            toggleAutoCleanMsoOnSwitchRichText.closest('.toggle-switch')
-                .classList.toggle('is-checked', isChecked);
-            console.log(`Auto-Clean MSO on Code switch is now: ${isChecked ? 'ON' : 'OFF'}`);
-            updateCleanMsoButtonState(); 
-        });
-
-        quickFormattingToggles.forEach(toggle => {
-            if (toggle.id === 'toggleCleanSingleBreaks' || toggle.id === 'toggleCleanFormattingTags' || toggle.id === 'toggleCleanPTables') {
-                toggle.checked = false;
-                toggle.closest('.toggle-switch')
-                    .classList.remove('is-checked');
-            } else {
-                toggle.checked = true;
-                toggle.closest('.toggle-switch')
-                    .classList.add('is-checked');
-            }
-
-            toggle.addEventListener('change', (event) => {
-                const parentLabel = event.target.closest('.toggle-switch');
-                if (event.target.checked) {
-                    parentLabel.classList.add('is-checked');
-                } else {
-                    parentLabel.classList.remove('is-checked');
+    importHtmlBtn.addEventListener('click', () => htmlFileInput.click());
+    htmlFileInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const importedContent = e.target.result;
+                if (monacoEditorInstance) {
+                    monacoEditorInstance.setValue(importedContent);
+                    htmlOutputContent = importedContent;
+                    applyEntityHighlighting();
                 }
-                updateFormatButtonState(); 
-            });
-        });
-
-        updateFormatButtonState();
-
-		// Add this line to synchronize the MSO toggles on page load
-		syncMsoTogglesOnLoad();
-
-		formatSelectedBtn.addEventListener('click', async () => {
-            console.log("Format button clicked.");
-            if (monacoEditorInstance) {
-                console.log("Monaco instance is valid.");
-                let currentContent = monacoEditorInstance.getValue();
-                console.log("Content before processing (length):", currentContent.length);
-
-                currentContent = protectDataAttributes(currentContent);
-
-                currentContent = applyNBSPPlaceholders(currentContent);
-
-                if (toggleCleanSingleBreaks.checked) {
-                    currentContent = applyCleanSingleBreaks(currentContent);
-                    console.log("Clean Single Breaks applied. Content length:", currentContent.length);
-                }
-                if (toggleCleanPTables.checked) {
-                    currentContent = applyCleanPTagsInTables(currentContent);
-                    console.log("Clean <p> in Tables applied. Content length:", currentContent.length);
-                }
-                if (toggleCleanSpaces.checked) {
-                    currentContent = applyAutoSpacing(currentContent);
-                    console.log("Clean Spaces applied. Content length:", currentContent.length);
-                }
-                if (toggleCleanUrls.checked) {
-                    currentContent = applyUrlCleaning(currentContent);
-                    console.log("Clean URLs applied. Content length:", currentContent.length);
-                }
-                if (toggleCleanFormattingTags.checked) {
-                    currentContent = applyCleanFormattingTags(currentContent);
-                    console.log("Clean <U> | <B> | <I> applied. Content length:", currentContent.length);
-                }
-                if (toggleAutoLevelHeadings.checked) {
-                    currentContent = applyAutoLevelHeadings(currentContent);
-                    console.log("Auto-Level Headings applied. Content length:", currentContent.length);
-                }
-                if (toggleAutoSection.checked) {
-                    currentContent = applyAutoSectioning(currentContent);
-                    console.log("Auto-Section applied. Content length:", currentContent.length);
-                }
-                if (toggleTimeTags.checked) {
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(currentContent, 'text/html');
-                    const body = doc.body;
-
-                    body.querySelectorAll('time')
-                        .forEach(timeEl => {
-                            const parent = timeEl.parentNode;
-                            if (parent) {
-                                while (timeEl.firstChild) {
-                                    parent.insertBefore(timeEl.firstChild, timeEl);
-                                }
-                                parent.removeChild(timeEl);
-                            }
-                        });
-
-                    const walker = doc.createTreeWalker(
-                        body
-                        , NodeFilter.SHOW_TEXT, {
-                            acceptNode: function (node) {
-                                const parentTag = node.parentNode.tagName.toLowerCase();
-                                if (['script', 'style', 'time'].includes(parentTag)) {
-                                    return NodeFilter.FILTER_REJECT;
-                                }
-                                return NodeFilter.FILTER_ACCEPT;
-                            }
-                        }
-                        , false
-                    );
-
-                    const textNodes = [];
-                    let currentNode;
-                    while (currentNode = walker.nextNode()) {
-                        textNodes.push(currentNode);
-                    }
-
-                    const monthMap = {
-                        'january': '01'
-                        , 'jan': '01'
-                        , 'janvier': '01'
-                        , 'february': '02'
-                        , 'feb': '02'
-                        , 'février': '02'
-                        , 'march': '03'
-                        , 'mar': '03'
-                        , 'mars': '03'
-                        , 'april': '04'
-                        , 'apr': '04'
-                        , 'avril': '04'
-                        , 'may': '05'
-                        , 'mai': '05'
-                        , 'june': '06'
-                        , 'jun': '06'
-                        , 'juin': '06'
-                        , 'july': '07'
-                        , 'jul': '07'
-                        , 'juillet': '07'
-                        , 'august': '08'
-                        , 'aug': '08'
-                        , 'août': '08'
-                        , 'september': '09'
-                        , 'sep': '09'
-                        , 'septembre': '09'
-                        , 'october': '10'
-                        , 'oct': '10'
-                        , 'octobre': '10'
-                        , 'november': '11'
-                        , 'nov': '11'
-                        , 'novembre': '11'
-                        , 'december': '12'
-                        , 'dec': '12'
-                        , 'décembre': '12'
-                    };
-
-                    function getMonthNumber(monthName) {
-                        return monthMap[monthName.toLowerCase()] || null;
-                    }
-
-                    const sortedMonthKeys = Object.keys(monthMap)
-                        .sort((a, b) => b.length - a.length);
-                    const monthPattern = sortedMonthKeys.map(m => m.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'))
-                        .join('|');
-                    const spaceOrNBSPChar = `(?:\\s|${NBSP_PLACEHOLDER})+`;
-                    const daySuffixPattern = '(?:<sup>er<\\/sup>|<sup>st<\\/sup>|<sup>nd<\\/sup>|<sup>rd<\\/sup>|<sup>th<\\/sup>|er|st|nd|rd|th)?';
-
-                    const regexIsoDateFull = /(?<!\d)(\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01]))(?!\d)/g;
-                    const regexMonthDayYear = new RegExp(`(?<!\\d)\\b(${monthPattern})\\b${spaceOrNBSPChar}(\\d{1,2}${daySuffixPattern})\\s*,?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'gi');
-                    const regexDayMonthYear = new RegExp(`(?<!\\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2}${daySuffixPattern})${spaceOrNBSPChar}\\b(${monthPattern})\\b\\s*,?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'gi');
-                    const regexMonthYear = new RegExp(`(?<!\\d)\\b(${monthPattern})\\b${spaceOrNBSPChar}(\\d{4})(?!\\d|(?:${spaceOrNBSPChar}\\d{1,2}))`, 'gi');
-                    const regexMonthDayNoYear = new RegExp(`(?<!\\d)\\b(${monthPattern})\\b${spaceOrNBSPChar}(\\d{1,2}${daySuffixPattern})(?!\\d|(?:${spaceOrNBSPChar}\\d{4}))(?!-)`, 'gi');
-                    const regexDayMonthNoYear = new RegExp(`(?<!\\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2}${daySuffixPattern})${spaceOrNBSPChar}\\b(${monthPattern})\\b(?!\d|(?:${spaceOrNBSPChar}\\d{4}))(?!-)`, 'gi');
-
-                    const patternsToTest = [{
-                            name: 'IsoDateFull'
-                            , regex: regexIsoDateFull
-                            , handler: (match) => match[1]
-                            , priority: 3
-                        }
-                        , {
-                            name: 'MonthDayYear'
-                            , regex: regexMonthDayYear
-                            , handler: (match) => {
-                                const [, month, dayPart, year] = match;
-                                const monthNum = getMonthNumber(month);
-                                let cleanDay = dayPart.replace(/(?:<sup>er<\/sup>|<sup>st<\/sup>|<sup>nd<\/sup>|<sup>rd<\/sup>|<sup>th<\/sup>|er|st|nd|rd|th)/gi, '')
-                                    .trim();
-                                const parsedDay = parseInt(cleanDay);
-                                if (!monthNum || isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) return null;
-                                return `${year}-${monthNum}-${String(parsedDay).padStart(2, '0')}`;
-                            }
-                            , priority: 2
-                        }
-                        , {
-                            name: 'DayMonthYear'
-                            , regex: regexDayMonthYear
-                            , handler: (match) => {
-                                const [, dayPart, month, year] = match;
-                                const monthNum = getMonthNumber(month);
-                                let cleanDay = dayPart.replace(/(?:<sup>er<\/sup>|<sup>st<\/sup>|<sup>nd<\/sup>|<sup>rd<\/sup>|<sup>th<\/sup>|er|st|nd|rd|th)/gi, '')
-                                    .trim();
-                                const parsedDay = parseInt(cleanDay);
-                                if (!monthNum || isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) return null;
-                                return `${year}-${monthNum}-${String(parsedDay).padStart(2, '0')}`;
-                            }
-                            , priority: 2
-                        }
-                        , {
-                            name: 'MonthYear'
-                            , regex: regexMonthYear
-                            , handler: (match) => {
-                                const [, month, year] = match;
-                                const monthNum = getMonthNumber(month);
-                                if (!monthNum) return null;
-                                return `${year}-${monthNum}`;
-                            }
-                            , priority: 2
-                        }
-                        , {
-                            name: 'MonthDayNoYear'
-                            , regex: regexMonthDayNoYear
-                            , handler: (match) => {
-                                const [, month, dayPart] = match;
-                                const monthNum = getMonthNumber(month);
-                                let cleanDay = dayPart.replace(/(?:<sup>er<\/sup>|<sup>st<\/sup>|<sup>nd<\/sup>|<sup>rd<\/sup>|<sup>th<\/sup>|er|st|nd|rd|th)/gi, '')
-                                    .trim();
-                                const parsedDay = parseInt(cleanDay);
-                                if (!monthNum || isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) return null;
-                                return `${monthNum}-${String(parsedDay).padStart(2, '0')}`;
-                            }
-                            , priority: 1
-                        }
-                        , {
-                            name: 'DayMonthNoYear'
-                            , regex: regexDayMonthNoYear
-                            , handler: (match) => {
-                                const [, dayPart, month] = match;
-                                const monthNum = getMonthNumber(month);
-                                let cleanDay = dayPart.replace(/(?:<sup>er<\/sup>|<sup>st<\/sup>|<sup>nd<\/sup>|<sup>rd<\/sup>|<sup>th<\/sup>|er|st|nd|rd|th)/gi, '')
-                                    .trim();
-                                const parsedDay = parseInt(cleanDay);
-                                if (!monthNum || isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) return null;
-                                return `${monthNum}-${String(parsedDay).padStart(2, '0')}`;
-                            }
-                            , priority: 1
-                        }
-                    ];
-
-                    for (let i = textNodes.length - 1; i >= 0; i--) {
-                        const node = textNodes[i];
-                        const text = node.nodeValue;
-
-                        let allMatchesInNode = [];
-                        patternsToTest.forEach(pattern => {
-                            let localRegex = new RegExp(pattern.regex.source, 'gi'); 
-                            let match;
-                            while ((match = localRegex.exec(text)) !== null) {
-                                const datetimeValue = pattern.handler(match);
-                                if (datetimeValue) {
-                                    allMatchesInNode.push({
-                                        start: match.index
-                                        , end: match.index + match[0].length
-                                        , original: match[0]
-                                        , datetime: datetimeValue
-                                        , priority: pattern.priority
-                                    });
-                                }
-                            }
-                        });
-
-                        if (allMatchesInNode.length === 0) continue;
-
-                        allMatchesInNode.sort((a, b) => {
-                            if (a.start !== b.start) return a.start - b.start;
-                            if (a.original.length !== b.original.length) return b.original.length - a.original.length;
-                            return b.priority - a.priority;
-                        });
-
-                        let nonOverlappingMatches = [];
-                        if (allMatchesInNode.length > 0) {
-                            nonOverlappingMatches.push(allMatchesInNode[0]);
-                            for (let j = 1; j < allMatchesInNode.length; j++) {
-                                const currentMatch = allMatchesInNode[j];
-                                const lastAddedMatch = nonOverlappingMatches[nonOverlappingMatches.length - 1];
-                                if (currentMatch.start >= lastAddedMatch.end) {
-                                    nonOverlappingMatches.push(currentMatch);
-                                }
-                            }
-                        }
-
-                        if (nonOverlappingMatches.length > 0) {
-                            const parent = node.parentNode;
-                            const fragment = doc.createDocumentFragment();
-                            let lastIndex = 0;
-
-                            nonOverlappingMatches.forEach(match => {
-                                if (match.start > lastIndex) {
-                                    fragment.appendChild(doc.createTextNode(text.substring(lastIndex, match.start)));
-                                }
-                                const timeEl = doc.createElement('time');
-                                timeEl.className = 'nowrap';
-                                timeEl.setAttribute('datetime', match.datetime);
-
-                                const tempDiv = doc.createElement('div');
-                                tempDiv.innerHTML = match.original;
-                                while (tempDiv.firstChild) {
-                                    timeEl.appendChild(tempDiv.firstChild);
-                                }
-                                fragment.appendChild(timeEl);
-
-                                lastIndex = match.end;
-                            });
-
-                            if (lastIndex < text.length) {
-                                fragment.appendChild(doc.createTextNode(text.substring(lastIndex)));
-                            }
-
-                            if (parent) {
-                                parent.replaceChild(fragment, node);
-                            }
-                        }
-                    }
-
-                    currentContent = body.innerHTML;
-                    console.log("Time Tags applied using DOM walker. Content length:", currentContent.length);
-
-                }
-
-
-
-
-                currentContent = revertNBSPPlaceholders(currentContent); 
-                currentContent = restoreDataAttributes(currentContent);
-                currentContent = doAutoEncode(currentContent); 
-                console.log("Auto-Encode applied. Content length:", currentContent.length);
-
-
-                monacoEditorInstance.setValue(currentContent);
-                htmlOutputContent = currentContent;
-                applyEntityHighlighting();
-
-                const originalText = formatSelectedBtn.textContent;
-                formatSelectedBtn.textContent = 'Formatted!';
-                formatSelectedBtn.classList.add('bg-green-500', 'hover:bg-green-600');
-                formatSelectedBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700'); 
-                formatSelectedBtn.disabled = true;
-                formatSelectedBtn.setAttribute('data-temp-active', 'true');
+                const originalHTML = importHtmlBtn.innerHTML;
+                importHtmlBtn.textContent = 'Imported!';
+                importHtmlBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+                importHtmlBtn.classList.remove('bg-purple-700', 'hover:bg-purple-800');
+                importHtmlBtn.disabled = true;
+                importHtmlBtn.setAttribute('data-temp-active', 'true');
                 updateAllInteractiveButtonStates();
                 setTimeout(() => {
-                    formatSelectedBtn.textContent = originalText;
-                    formatSelectedBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-                    formatSelectedBtn.classList.add('bg-blue-600', 'hover:bg-blue-700'); 
-                    formatSelectedBtn.disabled = false;
-                    formatSelectedBtn.removeAttribute('data-temp-active');
+                    importHtmlBtn.innerHTML = originalHTML;
+                    importHtmlBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                    importHtmlBtn.classList.add('bg-purple-700', 'hover:bg-purple-800');
+                    htmlFileInput.value = null;
+                    importHtmlBtn.removeAttribute('data-temp-active');
                     updateAllInteractiveButtonStates();
                 }, 1500);
+            };
+            reader.readAsText(file);
+        }
+    });
+
+    toggleEditorViewBtnRichText.addEventListener('click', toggleEditorView);
+    toggleEditorViewBtnCode.addEventListener('click', toggleEditorView);
+
+    cleanMsoBtn.addEventListener('click', () => {
+        if (monacoEditorInstance) {
+            let currentContent = monacoEditorInstance.getValue();
+            currentContent = protectDataAttributes(currentContent);
+            currentContent = unwrapSingleCellTables(currentContent);
+            currentContent = applyCleanLists(currentContent);
+            console.log("Clean MSO Lists applied by Clean MSO button.");
+            currentContent = applyCleanTablesBasic(currentContent);
+            console.log("Clean MSO Tables applied by Clean MSO button.");
+
+            currentContent = applyCleanMsoCode(currentContent);
+            console.log("Clean MSO Code (including IMGs) applied by Clean MSO button.");
+            currentContent = applyAutoSpacing(currentContent);
+            console.log("Clean Spaces applied by Clean MSO button.");
+            currentContent = restoreDataAttributes(currentContent);
+            currentContent = convertAllEntitiesToNumeric(currentContent);
+            monacoEditorInstance.setValue(currentContent);
+            htmlOutputContent = currentContent;
+            applyEntityHighlighting();
+            autoEncodeBtn.click();
+            const originalHTML = cleanMsoBtn.innerHTML;
+            cleanMsoBtn.innerHTML = '<i class="fa-solid fa-eraser"></i> Cleaned!';
+            cleanMsoBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+            cleanMsoBtn.classList.remove('bg-blue-700', 'hover:bg-blue-800');
+            cleanMsoBtn.disabled = true;
+            cleanMsoBtn.setAttribute('data-temp-active', 'true');
+            updateAllInteractiveButtonStates();
+            setTimeout(() => {
+                cleanMsoBtn.innerHTML = originalHTML;
+                cleanMsoBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                cleanMsoBtn.classList.add('bg-blue-700', 'hover:bg-blue-800');
+                cleanMsoBtn.disabled = false;
+                cleanMsoBtn.removeAttribute('data-temp-active');
+                updateAllInteractiveButtonStates();
+                updateCleanMsoButtonState();
+            }, 1500);
+        }
+    });
+
+    clearAllBtn.addEventListener('click', () => {
+        if (monacoEditorInstance) {
+            monacoEditorInstance.setValue('');
+            htmlOutputContent = '';
+            applyEntityHighlighting();
+        }
+        const originalHTML = clearAllBtn.innerHTML;
+        clearAllBtn.textContent = 'Cleared!';
+        clearAllBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+        clearAllBtn.classList.remove('bg-zinc-700', 'hover:bg-zinc-600');
+        clearAllBtn.disabled = true;
+        clearAllBtn.setAttribute('data-temp-active', 'true');
+        updateAllInteractiveButtonStates();
+        setTimeout(() => {
+            clearAllBtn.innerHTML = originalHTML;
+            clearAllBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+            clearAllBtn.classList.add('bg-zinc-700', 'hover:bg-zinc-600');
+            clearAllBtn.disabled = false;
+            clearAllBtn.removeAttribute('data-temp-active');
+            updateAllInteractiveButtonStates();
+        }, 1500);
+    });
+
+    const iframeDocument = default_ifr.contentDocument || default_ifr.contentWindow.document;
+    iframeDocument.open();
+    iframeDocument.write(APP_CONFIG.richTextEditorTemplate);
+    iframeDocument.close();
+
+    toggleAutoCleanMsoOnSwitchRichText.addEventListener('change', (event) => {
+        const isChecked = event.target.checked;
+        const parentLabel = event.target.closest('.toggle-switch');
+        if (isChecked) {
+            parentLabel.classList.add('is-checked');
+        } else {
+            parentLabel.classList.remove('is-checked');
+        }
+        toggleAutoCleanMsoOnSwitchCode.checked = isChecked;
+        toggleAutoCleanMsoOnSwitchCode.closest('.toggle-switch')
+            .classList.toggle('is-checked', isChecked);
+        console.log(`Auto-Clean MSO on RichText switch is now: ${isChecked ? 'ON' : 'OFF'}`);
+        updateGoToHtmlButtonColor();
+        updateCleanMsoButtonState();
+    });
+
+    toggleAutoCleanMsoOnSwitchCode.addEventListener('change', (event) => {
+        const isChecked = event.target.checked;
+        const parentLabel = event.target.closest('.toggle-switch');
+        if (isChecked) {
+            parentLabel.classList.add('is-checked');
+            toggleAutoCleanMsoOnSwitchCode.checked = true;
+        } else {
+            parentLabel.classList.remove('is-checked');
+            toggleAutoCleanMsoOnSwitchCode.checked = false;
+        }
+        toggleAutoCleanMsoOnSwitchRichText.checked = isChecked;
+        toggleAutoCleanMsoOnSwitchRichText.closest('.toggle-switch')
+            .classList.toggle('is-checked', isChecked);
+        console.log(`Auto-Clean MSO on Code switch is now: ${isChecked ? 'ON' : 'OFF'}`);
+        updateCleanMsoButtonState();
+    });
+
+    quickFormattingToggles.forEach(toggle => {
+        if (toggle.id === 'toggleCleanSingleBreaks' || toggle.id === 'toggleCleanFormattingTags' || toggle.id === 'toggleCleanPTables') {
+            toggle.checked = false;
+            toggle.closest('.toggle-switch')
+                .classList.remove('is-checked');
+        } else {
+            toggle.checked = true;
+            toggle.closest('.toggle-switch')
+                .classList.add('is-checked');
+        }
+
+        toggle.addEventListener('change', (event) => {
+            const parentLabel = event.target.closest('.toggle-switch');
+            if (event.target.checked) {
+                parentLabel.classList.add('is-checked');
             } else {
-                console.error("Monaco editor instance is not available.");
+                parentLabel.classList.remove('is-checked');
             }
+            updateFormatButtonState();
         });
+    });
 
-        autoIdBtn.addEventListener('click', () => {
-            const originalText = autoIdBtn.textContent;
-            autoIdBtn.textContent = 'Opening...';
-            autoIdBtn.classList.add('bg-green-500', 'hover:bg-green-600');
-            autoIdBtn.classList.remove('bg-slate-600', 'hover:bg-slate-500');
-            autoIdBtn.setAttribute('data-temp-active', 'true'); 
-            updateAllInteractiveButtonStates(); 
-            showAutoIdModal(autoIdBtn, originalText); 
-        });
+    updateFormatButtonState();
 
-        colophonBtn.addEventListener('click', () => {
-            const originalText = colophonBtn.textContent;
-            colophonBtn.textContent = 'Opening...';
-            colophonBtn.classList.add('bg-green-500', 'hover:bg-green-600');
-            colophonBtn.classList.remove('bg-slate-600', 'hover:bg-slate-500');
-            colophonBtn.setAttribute('data-temp-active', 'true'); 
-            updateAllInteractiveButtonStates(); 
+    syncMsoTogglesOnLoad();
 
-            const colophonHtmlContent = `
+    formatSelectedBtn.addEventListener('click', async () => {
+        console.log("Format button clicked.");
+        if (monacoEditorInstance) {
+            console.log("Monaco instance is valid.");
+            let currentContent = monacoEditorInstance.getValue();
+            console.log("Content before processing (length):", currentContent.length);
+
+            currentContent = protectDataAttributes(currentContent);
+
+            currentContent = applyNBSPPlaceholders(currentContent);
+
+            if (toggleCleanSingleBreaks.checked) {
+                currentContent = applyCleanSingleBreaks(currentContent);
+                console.log("Clean Single Breaks applied. Content length:", currentContent.length);
+            }
+            if (toggleCleanPTables.checked) {
+                currentContent = applyCleanPTagsInTables(currentContent);
+                console.log("Clean <p> in Tables applied. Content length:", currentContent.length);
+            }
+            if (toggleCleanSpaces.checked) {
+                currentContent = applyAutoSpacing(currentContent);
+                console.log("Clean Spaces applied. Content length:", currentContent.length);
+            }
+            if (toggleCleanUrls.checked) {
+                currentContent = applyUrlCleaning(currentContent);
+                console.log("Clean URLs applied. Content length:", currentContent.length);
+            }
+            if (toggleCleanFormattingTags.checked) {
+                currentContent = applyCleanFormattingTags(currentContent);
+                console.log("Clean <U> | <B> | <I> applied. Content length:", currentContent.length);
+            }
+            if (toggleAutoLevelHeadings.checked) {
+                currentContent = applyAutoLevelHeadings(currentContent);
+                console.log("Auto-Level Headings applied. Content length:", currentContent.length);
+            }
+            if (toggleAutoSection.checked) {
+                currentContent = applyAutoSectioning(currentContent);
+                console.log("Auto-Section applied. Content length:", currentContent.length);
+            }
+            if (toggleTimeTags.checked) {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(currentContent, 'text/html');
+                const body = doc.body;
+
+                body.querySelectorAll('time')
+                    .forEach(timeEl => {
+                        const parent = timeEl.parentNode;
+                        if (parent) {
+                            while (timeEl.firstChild) {
+                                parent.insertBefore(timeEl.firstChild, timeEl);
+                            }
+                            parent.removeChild(timeEl);
+                        }
+                    });
+
+                const walker = doc.createTreeWalker(
+                    body, NodeFilter.SHOW_TEXT, {
+                        acceptNode: function(node) {
+                            const parentTag = node.parentNode.tagName.toLowerCase();
+                            if (['script', 'style', 'time'].includes(parentTag)) {
+                                return NodeFilter.FILTER_REJECT;
+                            }
+                            return NodeFilter.FILTER_ACCEPT;
+                        }
+                    }, false
+                );
+
+                const textNodes = [];
+                let currentNode;
+                while (currentNode = walker.nextNode()) {
+                    textNodes.push(currentNode);
+                }
+
+                const monthMap = {
+                    'january': '01',
+                    'jan': '01',
+                    'janvier': '01',
+                    'february': '02',
+                    'feb': '02',
+                    'février': '02',
+                    'march': '03',
+                    'mar': '03',
+                    'mars': '03',
+                    'april': '04',
+                    'apr': '04',
+                    'avril': '04',
+                    'may': '05',
+                    'mai': '05',
+                    'june': '06',
+                    'jun': '06',
+                    'juin': '06',
+                    'july': '07',
+                    'jul': '07',
+                    'juillet': '07',
+                    'august': '08',
+                    'aug': '08',
+                    'août': '08',
+                    'september': '09',
+                    'sep': '09',
+                    'septembre': '09',
+                    'october': '10',
+                    'oct': '10',
+                    'octobre': '10',
+                    'november': '11',
+                    'nov': '11',
+                    'novembre': '11',
+                    'december': '12',
+                    'dec': '12',
+                    'décembre': '12'
+                };
+
+                function getMonthNumber(monthName) {
+                    return monthMap[monthName.toLowerCase()] || null;
+                }
+
+                const sortedMonthKeys = Object.keys(monthMap)
+                    .sort((a, b) => b.length - a.length);
+                const monthPattern = sortedMonthKeys.map(m => m.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'))
+                    .join('|');
+                const spaceOrNBSPChar = `(?:\\s|${NBSP_PLACEHOLDER})+`;
+                const daySuffixPattern = '(?:<sup>er<\\/sup>|<sup>st<\\/sup>|<sup>nd<\\/sup>|<sup>rd<\\/sup>|<sup>th<\\/sup>|er|st|nd|rd|th)?';
+
+                const regexIsoDateFull = /(?<!\d)(\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01]))(?!\d)/g;
+                const regexMonthDayYear = new RegExp(`(?<!\\d)\\b(${monthPattern})\\b${spaceOrNBSPChar}(\\d{1,2}${daySuffixPattern})\\s*,?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'gi');
+                const regexDayMonthYear = new RegExp(`(?<!\\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2}${daySuffixPattern})${spaceOrNBSPChar}\\b(${monthPattern})\\b\\s*,?${spaceOrNBSPChar}(\\d{4})(?!\\d)`, 'gi');
+                const regexMonthYear = new RegExp(`(?<!\\d)\\b(${monthPattern})\\b${spaceOrNBSPChar}(\\d{4})(?!\\d|(?:${spaceOrNBSPChar}\\d{1,2}))`, 'gi');
+                const regexMonthDayNoYear = new RegExp(`(?<!\\d)\\b(${monthPattern})\\b${spaceOrNBSPChar}(\\d{1,2}${daySuffixPattern})(?!\\d|(?:${spaceOrNBSPChar}\\d{4}))(?!-)`, 'gi');
+                const regexDayMonthNoYear = new RegExp(`(?<!\\d)(?:(?:le|the)${spaceOrNBSPChar})?(\\d{1,2}${daySuffixPattern})${spaceOrNBSPChar}\\b(${monthPattern})\\b(?!\d|(?:${spaceOrNBSPChar}\\d{4}))(?!-)`, 'gi');
+
+                const patternsToTest = [{
+                    name: 'IsoDateFull',
+                    regex: regexIsoDateFull,
+                    handler: (match) => match[1],
+                    priority: 3
+                }, {
+                    name: 'MonthDayYear',
+                    regex: regexMonthDayYear,
+                    handler: (match) => {
+                        const [, month, dayPart, year] = match;
+                        const monthNum = getMonthNumber(month);
+                        let cleanDay = dayPart.replace(/(?:<sup>er<\/sup>|<sup>st<\/sup>|<sup>nd<\/sup>|<sup>rd<\/sup>|<sup>th<\/sup>|er|st|nd|rd|th)/gi, '')
+                            .trim();
+                        const parsedDay = parseInt(cleanDay);
+                        if (!monthNum || isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) return null;
+                        return `${year}-${monthNum}-${String(parsedDay).padStart(2, '0')}`;
+                    },
+                    priority: 2
+                }, {
+                    name: 'DayMonthYear',
+                    regex: regexDayMonthYear,
+                    handler: (match) => {
+                        const [, dayPart, month, year] = match;
+                        const monthNum = getMonthNumber(month);
+                        let cleanDay = dayPart.replace(/(?:<sup>er<\/sup>|<sup>st<\/sup>|<sup>nd<\/sup>|<sup>rd<\/sup>|<sup>th<\/sup>|er|st|nd|rd|th)/gi, '')
+                            .trim();
+                        const parsedDay = parseInt(cleanDay);
+                        if (!monthNum || isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) return null;
+                        return `${year}-${monthNum}-${String(parsedDay).padStart(2, '0')}`;
+                    },
+                    priority: 2
+                }, {
+                    name: 'MonthYear',
+                    regex: regexMonthYear,
+                    handler: (match) => {
+                        const [, month, year] = match;
+                        const monthNum = getMonthNumber(month);
+                        if (!monthNum) return null;
+                        return `${year}-${monthNum}`;
+                    },
+                    priority: 2
+                }, {
+                    name: 'MonthDayNoYear',
+                    regex: regexMonthDayNoYear,
+                    handler: (match) => {
+                        const [, month, dayPart] = match;
+                        const monthNum = getMonthNumber(month);
+                        let cleanDay = dayPart.replace(/(?:<sup>er<\/sup>|<sup>st<\/sup>|<sup>nd<\/sup>|<sup>rd<\/sup>|<sup>th<\/sup>|er|st|nd|rd|th)/gi, '')
+                            .trim();
+                        const parsedDay = parseInt(cleanDay);
+                        if (!monthNum || isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) return null;
+                        return `${monthNum}-${String(parsedDay).padStart(2, '0')}`;
+                    },
+                    priority: 1
+                }, {
+                    name: 'DayMonthNoYear',
+                    regex: regexDayMonthNoYear,
+                    handler: (match) => {
+                        const [, dayPart, month] = match;
+                        const monthNum = getMonthNumber(month);
+                        let cleanDay = dayPart.replace(/(?:<sup>er<\/sup>|<sup>st<\/sup>|<sup>nd<\/sup>|<sup>rd<\/sup>|<sup>th<\/sup>|er|st|nd|rd|th)/gi, '')
+                            .trim();
+                        const parsedDay = parseInt(cleanDay);
+                        if (!monthNum || isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) return null;
+                        return `${monthNum}-${String(parsedDay).padStart(2, '0')}`;
+                    },
+                    priority: 1
+                }];
+
+                for (let i = textNodes.length - 1; i >= 0; i--) {
+                    const node = textNodes[i];
+                    const text = node.nodeValue;
+
+                    let allMatchesInNode = [];
+                    patternsToTest.forEach(pattern => {
+                        let localRegex = new RegExp(pattern.regex.source, 'gi');
+                        let match;
+                        while ((match = localRegex.exec(text)) !== null) {
+                            const datetimeValue = pattern.handler(match);
+                            if (datetimeValue) {
+                                allMatchesInNode.push({
+                                    start: match.index,
+                                    end: match.index + match[0].length,
+                                    original: match[0],
+                                    datetime: datetimeValue,
+                                    priority: pattern.priority
+                                });
+                            }
+                        }
+                    });
+
+                    if (allMatchesInNode.length === 0) continue;
+
+                    allMatchesInNode.sort((a, b) => {
+                        if (a.start !== b.start) return a.start - b.start;
+                        if (a.original.length !== b.original.length) return b.original.length - a.original.length;
+                        return b.priority - a.priority;
+                    });
+
+                    let nonOverlappingMatches = [];
+                    if (allMatchesInNode.length > 0) {
+                        nonOverlappingMatches.push(allMatchesInNode[0]);
+                        for (let j = 1; j < allMatchesInNode.length; j++) {
+                            const currentMatch = allMatchesInNode[j];
+                            const lastAddedMatch = nonOverlappingMatches[nonOverlappingMatches.length - 1];
+                            if (currentMatch.start >= lastAddedMatch.end) {
+                                nonOverlappingMatches.push(currentMatch);
+                            }
+                        }
+                    }
+
+                    if (nonOverlappingMatches.length > 0) {
+                        const parent = node.parentNode;
+                        const fragment = doc.createDocumentFragment();
+                        let lastIndex = 0;
+
+                        nonOverlappingMatches.forEach(match => {
+                            if (match.start > lastIndex) {
+                                fragment.appendChild(doc.createTextNode(text.substring(lastIndex, match.start)));
+                            }
+                            const timeEl = doc.createElement('time');
+                            timeEl.className = 'nowrap';
+                            timeEl.setAttribute('datetime', match.datetime);
+
+                            const tempDiv = doc.createElement('div');
+                            tempDiv.innerHTML = match.original;
+                            while (tempDiv.firstChild) {
+                                timeEl.appendChild(tempDiv.firstChild);
+                            }
+                            fragment.appendChild(timeEl);
+
+                            lastIndex = match.end;
+                        });
+
+                        if (lastIndex < text.length) {
+                            fragment.appendChild(doc.createTextNode(text.substring(lastIndex)));
+                        }
+
+                        if (parent) {
+                            parent.replaceChild(fragment, node);
+                        }
+                    }
+                }
+
+                currentContent = body.innerHTML;
+                console.log("Time Tags applied using DOM walker. Content length:", currentContent.length);
+
+            }
+
+
+
+
+            currentContent = revertNBSPPlaceholders(currentContent);
+            currentContent = restoreDataAttributes(currentContent);
+            currentContent = doAutoEncode(currentContent);
+            console.log("Auto-Encode applied. Content length:", currentContent.length);
+
+
+            monacoEditorInstance.setValue(currentContent);
+            htmlOutputContent = currentContent;
+            applyEntityHighlighting();
+
+            const originalText = formatSelectedBtn.textContent;
+            formatSelectedBtn.textContent = 'Formatted!';
+            formatSelectedBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+            formatSelectedBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+            formatSelectedBtn.disabled = true;
+            formatSelectedBtn.setAttribute('data-temp-active', 'true');
+            updateAllInteractiveButtonStates();
+            setTimeout(() => {
+                formatSelectedBtn.textContent = originalText;
+                formatSelectedBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                formatSelectedBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                formatSelectedBtn.disabled = false;
+                formatSelectedBtn.removeAttribute('data-temp-active');
+                updateAllInteractiveButtonStates();
+            }, 1500);
+        } else {
+            console.error("Monaco editor instance is not available.");
+        }
+    });
+
+    autoIdBtn.addEventListener('click', () => {
+        const originalText = autoIdBtn.textContent;
+        autoIdBtn.textContent = 'Opening...';
+        autoIdBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+        autoIdBtn.classList.remove('bg-slate-600', 'hover:bg-slate-500');
+        autoIdBtn.setAttribute('data-temp-active', 'true');
+        updateAllInteractiveButtonStates();
+        showAutoIdModal(autoIdBtn, originalText);
+    });
+
+    colophonBtn.addEventListener('click', () => {
+        const originalText = colophonBtn.textContent;
+        colophonBtn.textContent = 'Opening...';
+        colophonBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+        colophonBtn.classList.remove('bg-slate-600', 'hover:bg-slate-500');
+        colophonBtn.setAttribute('data-temp-active', 'true');
+        updateAllInteractiveButtonStates();
+
+        const colophonHtmlContent = `
                     <div class="flex flex-col space-y-4">
                         <div>
                             <span class="text-sm font-medium text-CBD5E1 mr-2">Language:</span> 
@@ -5542,587 +5476,587 @@ function showFootnoteAnchorModal(triggeringButton, originalButtonText) {
                         </div>
                     </div>
                 `;
-            showModal('Insert Colophon', colophonHtmlContent, colophonBtn, originalText); 
-        });
+        showModal('Insert Colophon', colophonHtmlContent, colophonBtn, originalText);
+    });
 
 
-        defListBtn.addEventListener('click', () => {
-            if (!monacoEditorInstance) return;
+    defListBtn.addEventListener('click', () => {
+        if (!monacoEditorInstance) return;
 
-            const originalText = defListBtn.textContent;
-            const htmlString = monacoEditorInstance.getValue();
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(htmlString, 'text/html');
-            const body = doc.body;
+        const originalText = defListBtn.textContent;
+        const htmlString = monacoEditorInstance.getValue();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlString, 'text/html');
+        const body = doc.body;
 
-            const allDls = Array.from(body.querySelectorAll('dl'))
-                .filter(dl => !dl.closest('table') && !dl.closest('aside'));
+        const allDls = Array.from(body.querySelectorAll('dl'))
+            .filter(dl => !dl.closest('table') && !dl.closest('aside'));
 
-            if (allDls.length === 0) {
-                defListBtn.textContent = 'ERROR: Insert <dl> tag first!';
-                defListBtn.classList.add('bg-red-500', 'hover:bg-red-600');
-                defListBtn.classList.remove('bg-slate-600', 'hover:bg-slate-500');
-                defListBtn.disabled = true;
-                setTimeout(() => {
-                    defListBtn.textContent = originalText;
-                    defListBtn.classList.remove('bg-red-500', 'hover:bg-red-600');
-                    defListBtn.classList.add('bg-slate-600', 'hover:bg-slate-500');
-                    defListBtn.disabled = false;
-                }, 2500);
-                return;
-            }
-
-            const unformattedDls = allDls.filter(dl => dl.querySelector(':scope > p, :scope > h1, :scope > h2, :scope > h3, :scope > h4, :scope > h5, :scope > h6'));
-
-            if (unformattedDls.length === 0) {
-                defListBtn.textContent = 'Already formatted!';
-                defListBtn.classList.add('bg-blue-500', 'hover:bg-blue-600');
-                defListBtn.classList.remove('bg-slate-600', 'hover:bg-slate-500');
-                defListBtn.disabled = true;
-                setTimeout(() => {
-                    defListBtn.textContent = originalText;
-                    defListBtn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
-                    defListBtn.classList.add('bg-slate-600', 'hover:bg-slate-500');
-                    defListBtn.disabled = false;
-                }, 2000);
-                return;
-            }
-
-            defListBtn.textContent = 'Formatting...';
-            defListBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+        if (allDls.length === 0) {
+            defListBtn.textContent = 'ERROR: Insert <dl> tag first!';
+            defListBtn.classList.add('bg-red-500', 'hover:bg-red-600');
             defListBtn.classList.remove('bg-slate-600', 'hover:bg-slate-500');
             defListBtn.disabled = true;
-            defListBtn.setAttribute('data-temp-active', 'true');
-            updateAllInteractiveButtonStates();
-
-            try {
-                unformattedDls.forEach(dl => {
-                    const newChildren = [];
-                    let currentDdNodes = [];
-
-                    const flushDdContent = () => {
-                        if (currentDdNodes.length > 0) {
-                            const dd = doc.createElement('dd');
-                            currentDdNodes.forEach(node => dd.appendChild(node));
-                            newChildren.push(dd);
-                            currentDdNodes = [];
-                        }
-                    };
-
-                    const originalChildren = Array.from(dl.childNodes);
-
-                    originalChildren.forEach(node => {
-                        let isDtPattern = false;
-
-                        if (node.nodeType === Node.ELEMENT_NODE) {
-                            const tagName = node.tagName.toLowerCase();
-                            if (/^h[1-6]$/.test(tagName)) {
-                                isDtPattern = true;
-                            } else if (tagName === 'p') {
-                                const significantChildren = Array.from(node.childNodes)
-                                    .filter(n =>
-                                        n.nodeType === Node.ELEMENT_NODE || (n.nodeType === Node.TEXT_NODE && n.textContent.trim() !== '')
-                                    );
-                                if (significantChildren.length === 1 && significantChildren[0].tagName?.toLowerCase() === 'strong') {
-                                    isDtPattern = true;
-                                }
-                            }
-                        }
-
-                        if (isDtPattern) {
-                            flushDdContent();
-                            const dt = doc.createElement('dt');
-                            let contentSourceNode = node;
-                            if (node.tagName.toLowerCase() === 'p') {
-                                contentSourceNode = node.querySelector('strong');
-                            }
-                            while (contentSourceNode.firstChild) {
-                                dt.appendChild(contentSourceNode.firstChild);
-                            }
-                            newChildren.push(dt);
-                        } else {
-                            if (node.nodeType === Node.ELEMENT_NODE || (node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== '')) {
-                                currentDdNodes.push(node);
-                            }
-                        }
-                    });
-
-                    flushDdContent();
-                    dl.innerHTML = '';
-                    newChildren.forEach(newNode => dl.appendChild(newNode));
-                });
-
-                body.querySelectorAll('dd')
-                    .forEach(dd => {
-                        const significantChildren = Array.from(dd.childNodes)
-                            .filter(node =>
-                                node.nodeType === Node.ELEMENT_NODE || (node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== '')
-                            );
-                        if (significantChildren.length === 1 && significantChildren[0].nodeType === Node.ELEMENT_NODE && significantChildren[0].tagName.toLowerCase() === 'p') {
-                            const p = significantChildren[0];
-                            while (p.firstChild) {
-                                dd.appendChild(p.firstChild);
-                            }
-                            dd.removeChild(p);
-                        }
-                    });
-
-                const rawUpdatedHtml = body.innerHTML;
-                const formattedHtml = html_beautify(rawUpdatedHtml, {
-                    indent_size: 4
-                    , extra_liners: ['dl', 'dt', 'dd', 'p', 'ul', 'ol', 'li']
-                });
-
-                monacoEditorInstance.setValue(formattedHtml);
-                defListBtn.textContent = 'Formatted!';
-
-            } catch (error) {
-                console.error("Error formatting definition lists:", error);
-                defListBtn.textContent = 'Error!';
-                defListBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
-                defListBtn.classList.add('bg-red-500', 'hover:bg-red-600');
-            }
-
             setTimeout(() => {
                 defListBtn.textContent = originalText;
-                defListBtn.classList.remove('bg-green-500', 'hover:bg-green-600', 'bg-red-500', 'hover:bg-red-600');
+                defListBtn.classList.remove('bg-red-500', 'hover:bg-red-600');
                 defListBtn.classList.add('bg-slate-600', 'hover:bg-slate-500');
                 defListBtn.disabled = false;
-                defListBtn.removeAttribute('data-temp-active');
-                updateAllInteractiveButtonStates();
-            }, 1500);
-        });
-        footnoteListBtn.addEventListener('click', () => {
-            const originalText = footnoteListBtn.textContent;
-            footnoteListBtn.textContent = 'Opening...';
-            footnoteListBtn.classList.add('bg-green-500', 'hover:bg-green-600');
-            footnoteListBtn.classList.remove('bg-slate-600', 'hover:bg-slate-500');
-            footnoteListBtn.setAttribute('data-temp-active', 'true');
-            updateAllInteractiveButtonStates();
-            showFootnoteModal(footnoteListBtn, originalText); 
-        });
-        function generateUniqueId(baseText, existingIds) {
-            let id = baseText.toLowerCase()
-                .replace(/[^a-z0-9\s-]/g, '') 
-                .replace(/\s+/g, '-') 
-                .replace(/^-+|-+$/g, ''); 
-
-            if (!id) { 
-                id = 'auto-id';
-            }
-
-            let counter = 1;
-            let uniqueId = id;
-            while (existingIds.has(uniqueId)) {
-                uniqueId = `${id}-${counter}`;
-                counter++;
-            }
-            existingIds.add(uniqueId); 
-            return uniqueId;
+            }, 2500);
+            return;
         }
 
-        function escapeRegExp(string) {
-            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); 
+        const unformattedDls = allDls.filter(dl => dl.querySelector(':scope > p, :scope > h1, :scope > h2, :scope > h3, :scope > h4, :scope > h5, :scope > h6'));
+
+        if (unformattedDls.length === 0) {
+            defListBtn.textContent = 'Already formatted!';
+            defListBtn.classList.add('bg-blue-500', 'hover:bg-blue-600');
+            defListBtn.classList.remove('bg-slate-600', 'hover:bg-slate-500');
+            defListBtn.disabled = true;
+            setTimeout(() => {
+                defListBtn.textContent = originalText;
+                defListBtn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+                defListBtn.classList.add('bg-slate-600', 'hover:bg-slate-500');
+                defListBtn.disabled = false;
+            }, 2000);
+            return;
         }
 
-        function collectExistingListClasses(listElement, liClassMap, aClassMap) {
-            Array.from(listElement.children)
-                .forEach(child => {
-                    if (child.tagName.toLowerCase() === 'li') {
-                        const li = child;
-                        const a = li.querySelector('a');
-                        const hrefTargetId = a ? a.getAttribute('href')
-                            ?.substring(1) : null;
+        defListBtn.textContent = 'Formatting...';
+        defListBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+        defListBtn.classList.remove('bg-slate-600', 'hover:bg-slate-500');
+        defListBtn.disabled = true;
+        defListBtn.setAttribute('data-temp-active', 'true');
+        updateAllInteractiveButtonStates();
 
-                        if (hrefTargetId) {
-                            if (li.className) {
-                                liClassMap.set(hrefTargetId, li.className);
-                            }
-                            if (a && a.className) {
-                                aClassMap.set(hrefTargetId, a.className);
+        try {
+            unformattedDls.forEach(dl => {
+                const newChildren = [];
+                let currentDdNodes = [];
+
+                const flushDdContent = () => {
+                    if (currentDdNodes.length > 0) {
+                        const dd = doc.createElement('dd');
+                        currentDdNodes.forEach(node => dd.appendChild(node));
+                        newChildren.push(dd);
+                        currentDdNodes = [];
+                    }
+                };
+
+                const originalChildren = Array.from(dl.childNodes);
+
+                originalChildren.forEach(node => {
+                    let isDtPattern = false;
+
+                    if (node.nodeType === Node.ELEMENT_NODE) {
+                        const tagName = node.tagName.toLowerCase();
+                        if (/^h[1-6]$/.test(tagName)) {
+                            isDtPattern = true;
+                        } else if (tagName === 'p') {
+                            const significantChildren = Array.from(node.childNodes)
+                                .filter(n =>
+                                    n.nodeType === Node.ELEMENT_NODE || (n.nodeType === Node.TEXT_NODE && n.textContent.trim() !== '')
+                                );
+                            if (significantChildren.length === 1 && significantChildren[0].tagName?.toLowerCase() === 'strong') {
+                                isDtPattern = true;
                             }
                         }
+                    }
 
-                        Array.from(li.children)
-                            .forEach(liChild => {
-                                if (liChild.tagName.toLowerCase() === 'ul' || liChild.tagName.toLowerCase() === 'ol') {
-                                    collectExistingListClasses(liChild, liClassMap, aClassMap);
-                                }
-                            });
+                    if (isDtPattern) {
+                        flushDdContent();
+                        const dt = doc.createElement('dt');
+                        let contentSourceNode = node;
+                        if (node.tagName.toLowerCase() === 'p') {
+                            contentSourceNode = node.querySelector('strong');
+                        }
+                        while (contentSourceNode.firstChild) {
+                            dt.appendChild(contentSourceNode.firstChild);
+                        }
+                        newChildren.push(dt);
+                    } else {
+                        if (node.nodeType === Node.ELEMENT_NODE || (node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== '')) {
+                            currentDdNodes.push(node);
+                        }
                     }
                 });
+
+                flushDdContent();
+                dl.innerHTML = '';
+                newChildren.forEach(newNode => dl.appendChild(newNode));
+            });
+
+            body.querySelectorAll('dd')
+                .forEach(dd => {
+                    const significantChildren = Array.from(dd.childNodes)
+                        .filter(node =>
+                            node.nodeType === Node.ELEMENT_NODE || (node.nodeType === Node.TEXT_NODE && node.textContent.trim() !== '')
+                        );
+                    if (significantChildren.length === 1 && significantChildren[0].nodeType === Node.ELEMENT_NODE && significantChildren[0].tagName.toLowerCase() === 'p') {
+                        const p = significantChildren[0];
+                        while (p.firstChild) {
+                            dd.appendChild(p.firstChild);
+                        }
+                        dd.removeChild(p);
+                    }
+                });
+
+            const rawUpdatedHtml = body.innerHTML;
+            const formattedHtml = html_beautify(rawUpdatedHtml, {
+                indent_size: 4,
+                extra_liners: ['dl', 'dt', 'dd', 'p', 'ul', 'ol', 'li']
+            });
+
+            monacoEditorInstance.setValue(formattedHtml);
+            defListBtn.textContent = 'Formatted!';
+
+        } catch (error) {
+            console.error("Error formatting definition lists:", error);
+            defListBtn.textContent = 'Error!';
+            defListBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+            defListBtn.classList.add('bg-red-500', 'hover:bg-red-600');
         }
 
-        function insertPageToc(maxLevel, lang) {
-            const html = monacoEditorInstance.getValue();
-            const doc = new DOMParser()
-                .parseFromString(html, 'text/html');
-            const existingIds = new Set();
-            doc.querySelectorAll('[id]')
-                .forEach(el => existingIds.add(el.id));
+        setTimeout(() => {
+            defListBtn.textContent = originalText;
+            defListBtn.classList.remove('bg-green-500', 'hover:bg-green-600', 'bg-red-500', 'hover:bg-red-600');
+            defListBtn.classList.add('bg-slate-600', 'hover:bg-slate-500');
+            defListBtn.disabled = false;
+            defListBtn.removeAttribute('data-temp-active');
+            updateAllInteractiveButtonStates();
+        }, 1500);
+    });
+    footnoteListBtn.addEventListener('click', () => {
+        const originalText = footnoteListBtn.textContent;
+        footnoteListBtn.textContent = 'Opening...';
+        footnoteListBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+        footnoteListBtn.classList.remove('bg-slate-600', 'hover:bg-slate-500');
+        footnoteListBtn.setAttribute('data-temp-active', 'true');
+        updateAllInteractiveButtonStates();
+        showFootnoteModal(footnoteListBtn, originalText);
+    });
 
-            doc.querySelectorAll('h1, h2, h3, h4, h5, h6')
-                .forEach(heading => {
-                    if (!heading.id) {
-                        heading.id = generateUniqueId(heading.textContent || `heading-${heading.tagName.toLowerCase()}`, existingIds);
+    function generateUniqueId(baseText, existingIds) {
+        let id = baseText.toLowerCase()
+            .replace(/[^a-z0-9\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/^-+|-+$/g, '');
+
+        if (!id) {
+            id = 'auto-id';
+        }
+
+        let counter = 1;
+        let uniqueId = id;
+        while (existingIds.has(uniqueId)) {
+            uniqueId = `${id}-${counter}`;
+            counter++;
+        }
+        existingIds.add(uniqueId);
+        return uniqueId;
+    }
+
+    function escapeRegExp(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    function collectExistingListClasses(listElement, liClassMap, aClassMap) {
+        Array.from(listElement.children)
+            .forEach(child => {
+                if (child.tagName.toLowerCase() === 'li') {
+                    const li = child;
+                    const a = li.querySelector('a');
+                    const hrefTargetId = a ? a.getAttribute('href')
+                        ?.substring(1) : null;
+
+                    if (hrefTargetId) {
+                        if (li.className) {
+                            liClassMap.set(hrefTargetId, li.className);
+                        }
+                        if (a && a.className) {
+                            aClassMap.set(hrefTargetId, a.className);
+                        }
                     }
-                });
 
-            let pageTocSectionClass = '';
-            let pageTocH2Class = '';
-            let pageTocUlClass = '';
-            let initialListTagName = 'ul'; 
-            const pageTocLiClassMap = new Map();
-            const pageTocALinkClassMap = new Map();
-
-            let oldToc = doc.getElementById('page-nav');
-            if (oldToc) {
-                pageTocSectionClass = oldToc.getAttribute('class') || '';
-                const existingH2 = oldToc.querySelector('h2');
-                if (existingH2) {
-                    pageTocH2Class = existingH2.getAttribute('class') || '';
+                    Array.from(li.children)
+                        .forEach(liChild => {
+                            if (liChild.tagName.toLowerCase() === 'ul' || liChild.tagName.toLowerCase() === 'ol') {
+                                collectExistingListClasses(liChild, liClassMap, aClassMap);
+                            }
+                        });
                 }
-                const existingUlOrOl = oldToc.querySelector('ul, ol');
+            });
+    }
+
+    function insertPageToc(maxLevel, lang) {
+        const html = monacoEditorInstance.getValue();
+        const doc = new DOMParser()
+            .parseFromString(html, 'text/html');
+        const existingIds = new Set();
+        doc.querySelectorAll('[id]')
+            .forEach(el => existingIds.add(el.id));
+
+        doc.querySelectorAll('h1, h2, h3, h4, h5, h6')
+            .forEach(heading => {
+                if (!heading.id) {
+                    heading.id = generateUniqueId(heading.textContent || `heading-${heading.tagName.toLowerCase()}`, existingIds);
+                }
+            });
+
+        let pageTocSectionClass = '';
+        let pageTocH2Class = '';
+        let pageTocUlClass = '';
+        let initialListTagName = 'ul';
+        const pageTocLiClassMap = new Map();
+        const pageTocALinkClassMap = new Map();
+
+        let oldToc = doc.getElementById('page-nav');
+        if (oldToc) {
+            pageTocSectionClass = oldToc.getAttribute('class') || '';
+            const existingH2 = oldToc.querySelector('h2');
+            if (existingH2) {
+                pageTocH2Class = existingH2.getAttribute('class') || '';
+            }
+            const existingUlOrOl = oldToc.querySelector('ul, ol');
+            if (existingUlOrOl) {
+                pageTocUlClass = existingUlOrOl.getAttribute('class') || '';
+                initialListTagName = existingUlOrOl.tagName.toLowerCase();
+                collectExistingListClasses(existingUlOrOl, pageTocLiClassMap, pageTocALinkClassMap);
+            }
+            oldToc.remove();
+        } else {
+            const existingH2ByContent = Array.from(doc.querySelectorAll('h2'))
+                .find(h =>
+                    h.textContent.trim()
+                    .toLowerCase() === 'on this page' || h.textContent.trim()
+                    .toLowerCase() === 'sur cette page'
+                );
+            if (existingH2ByContent && existingH2ByContent.parentNode && existingH2ByContent.parentNode.tagName.toLowerCase() === 'section') {
+                const potentialOldTocSection = existingH2ByContent.parentNode;
+                pageTocSectionClass = potentialOldTocSection.getAttribute('class') || '';
+                pageTocH2Class = existingH2ByContent.getAttribute('class') || '';
+                const existingUlOrOl = potentialOldTocSection.querySelector('ul, ol');
                 if (existingUlOrOl) {
                     pageTocUlClass = existingUlOrOl.getAttribute('class') || '';
                     initialListTagName = existingUlOrOl.tagName.toLowerCase();
                     collectExistingListClasses(existingUlOrOl, pageTocLiClassMap, pageTocALinkClassMap);
                 }
-                oldToc.remove();
-            } else {
-                const existingH2ByContent = Array.from(doc.querySelectorAll('h2'))
-                    .find(h =>
-                        h.textContent.trim()
-                        .toLowerCase() === 'on this page' || h.textContent.trim()
-                        .toLowerCase() === 'sur cette page'
-                    );
-                if (existingH2ByContent && existingH2ByContent.parentNode && existingH2ByContent.parentNode.tagName.toLowerCase() === 'section') {
-                    const potentialOldTocSection = existingH2ByContent.parentNode;
-                    pageTocSectionClass = potentialOldTocSection.getAttribute('class') || '';
-                    pageTocH2Class = existingH2ByContent.getAttribute('class') || '';
-                    const existingUlOrOl = potentialOldTocSection.querySelector('ul, ol');
-                    if (existingUlOrOl) {
-                        pageTocUlClass = existingUlOrOl.getAttribute('class') || '';
-                        initialListTagName = existingUlOrOl.tagName.toLowerCase();
-                        collectExistingListClasses(existingUlOrOl, pageTocLiClassMap, pageTocALinkClassMap);
-                    }
-                    potentialOldTocSection.remove();
+                potentialOldTocSection.remove();
+            }
+        }
+
+        const relevantHeadings = Array.from(doc.querySelectorAll('h1, h2, h3, h4, h5, h6'))
+            .filter(h => {
+                return parseInt(h.tagName.substring(1), 10) <= maxLevel && !h.closest('aside') && !h.closest('table');
+            });
+
+        if (!relevantHeadings.length) return;
+
+
+        const rootUl = doc.createElement(initialListTagName);
+        if (pageTocUlClass) rootUl.setAttribute('class', pageTocUlClass);
+
+        let currentListStack = [{
+            domElement: rootUl,
+            level: 2,
+            tagName: initialListTagName
+        }];
+        let currentListDomElement = rootUl;
+
+        relevantHeadings.forEach(h => {
+            const hLevel = parseInt(h.tagName.substring(1), 10);
+            const txt = h.innerHTML.trim();
+            const id = h.id;
+            const liClass = pageTocLiClassMap.get(id) || '';
+            const aClass = pageTocALinkClassMap.get(id) || '';
+
+            const li = doc.createElement('li');
+            if (liClass) li.setAttribute('class', liClass);
+            const a = doc.createElement('a');
+            a.setAttribute('href', `#${id}`);
+            a.innerHTML = txt;
+            if (aClass) a.setAttribute('class', aClass);
+            li.appendChild(a);
+
+            while (currentListStack.length > 1 && hLevel < currentListStack[currentListStack.length - 1].level) {
+                currentListStack.pop();
+            }
+            currentListDomElement = currentListStack[currentListStack.length - 1].domElement;
+
+            if (hLevel > currentListStack[currentListStack.length - 1].level) {
+                const parentLiElement = currentListDomElement.lastElementChild;
+
+                if (parentLiElement && parentLiElement.tagName.toLowerCase() === 'li') {
+                    const newNestedListDomElement = doc.createElement(initialListTagName);
+                    parentLiElement.appendChild(newNestedListDomElement);
+
+                    currentListStack.push({
+                        domElement: newNestedListDomElement,
+                        level: hLevel,
+                        tagName: initialListTagName
+                    });
+                    currentListDomElement = newNestedListDomElement;
+                } else {
+                    console.warn(`H${hLevel} (${txt}) found with no valid parent LI to nest under. Appending to current UL.`);
                 }
             }
 
-            const relevantHeadings = Array.from(doc.querySelectorAll('h1, h2, h3, h4, h5, h6'))
-                .filter(h => {
-                    return parseInt(h.tagName.substring(1), 10) <= maxLevel && !h.closest('aside') && !h.closest('table');
-                });
+            currentListDomElement.appendChild(li);
+        });
 
-            if (!relevantHeadings.length) return;
+        const finalHtmlListContent = rootUl.outerHTML;
 
-
-            const rootUl = doc.createElement(initialListTagName);
-            if (pageTocUlClass) rootUl.setAttribute('class', pageTocUlClass);
-
-            let currentListStack = [{
-                domElement: rootUl
-                , level: 2
-                , tagName: initialListTagName
-            }];
-            let currentListDomElement = rootUl; 
-
-            relevantHeadings.forEach(h => {
-                const hLevel = parseInt(h.tagName.substring(1), 10);
-                const txt = h.innerHTML.trim();
-                const id = h.id;
-                const liClass = pageTocLiClassMap.get(id) || '';
-                const aClass = pageTocALinkClassMap.get(id) || '';
-
-                const li = doc.createElement('li');
-                if (liClass) li.setAttribute('class', liClass);
-                const a = doc.createElement('a');
-                a.setAttribute('href', `#${id}`);
-                a.innerHTML = txt;
-                if (aClass) a.setAttribute('class', aClass);
-                li.appendChild(a);
-
-                while (currentListStack.length > 1 && hLevel < currentListStack[currentListStack.length - 1].level) {
-                    currentListStack.pop();
-                }
-                currentListDomElement = currentListStack[currentListStack.length - 1].domElement; 
-
-                if (hLevel > currentListStack[currentListStack.length - 1].level) {
-                    const parentLiElement = currentListDomElement.lastElementChild; 
-
-                    if (parentLiElement && parentLiElement.tagName.toLowerCase() === 'li') {
-                        const newNestedListDomElement = doc.createElement(initialListTagName); 
-                        parentLiElement.appendChild(newNestedListDomElement); 
-
-                        currentListStack.push({
-                            domElement: newNestedListDomElement
-                            , level: hLevel
-                            , tagName: initialListTagName
-                        });
-                        currentListDomElement = newNestedListDomElement; 
-                    } else {
-                        console.warn(`H${hLevel} (${txt}) found with no valid parent LI to nest under. Appending to current UL.`);
-                    }
-                }
-
-                currentListDomElement.appendChild(li);
-            });
-
-            const finalHtmlListContent = rootUl.outerHTML;
-
-            const tocTitle = lang === 'en' ? 'On this page' : 'Sur cette page';
-            const toc = `
+        const tocTitle = lang === 'en' ? 'On this page' : 'Sur cette page';
+        const toc = `
     <section id="page-nav"${pageTocSectionClass ? ` class="${pageTocSectionClass}"` : ''}>
         <h2 id="toc"${pageTocH2Class ? ` class="${pageTocH2Class}"` : ''}>${tocTitle}</h2>
         ${finalHtmlListContent}
     </section>`;
 
-            const firstSection = doc.querySelector('section');
-            if (firstSection) {
-                firstSection.insertAdjacentHTML('beforebegin', toc);
-            } else {
-                doc.body.insertAdjacentHTML('afterbegin', toc);
-            }
-
-            monacoEditorInstance.setValue(doc.body.innerHTML);
-            autoFormatBtn.click(); 
+        const firstSection = doc.querySelector('section');
+        if (firstSection) {
+            firstSection.insertAdjacentHTML('beforebegin', toc);
+        } else {
+            doc.body.insertAdjacentHTML('afterbegin', toc);
         }
 
-        document.getElementById('enPageToCBtn')
-            .addEventListener('click', () => insertPageToc(2, 'en')); 
-        document.getElementById('frPageToCBtn')
-            .addEventListener('click', () => insertPageToc(2, 'fr')); 
-        document.getElementById('enPageToCH3Btn')
-            .addEventListener('click', () => insertPageToc(3, 'en')); 
-        document.getElementById('frPageToCH3Btn')
-            .addEventListener('click', () => insertPageToc(3, 'fr')); 
+        monacoEditorInstance.setValue(doc.body.innerHTML);
+        autoFormatBtn.click();
+    }
+
+    document.getElementById('enPageToCBtn')
+        .addEventListener('click', () => insertPageToc(2, 'en'));
+    document.getElementById('frPageToCBtn')
+        .addEventListener('click', () => insertPageToc(2, 'fr'));
+    document.getElementById('enPageToCH3Btn')
+        .addEventListener('click', () => insertPageToc(3, 'en'));
+    document.getElementById('frPageToCH3Btn')
+        .addEventListener('click', () => insertPageToc(3, 'fr'));
 
 
-        function insertSectionToc(maxLevel, lang) {
-            const html = monacoEditorInstance.getValue();
-            const doc = new DOMParser()
-                .parseFromString(html, 'text/html');
-            const existingIds = new Set();
-            doc.querySelectorAll('[id]')
-                .forEach(el => existingIds.add(el.id));
+    function insertSectionToc(maxLevel, lang) {
+        const html = monacoEditorInstance.getValue();
+        const doc = new DOMParser()
+            .parseFromString(html, 'text/html');
+        const existingIds = new Set();
+        doc.querySelectorAll('[id]')
+            .forEach(el => existingIds.add(el.id));
 
-            doc.querySelectorAll('h2, h3, h4, h5, h6')
-                .forEach(heading => {
-                    if (!heading.id) {
-                        heading.id = generateUniqueId(heading.textContent || `heading-${heading.tagName.toLowerCase()}`, existingIds);
-                    }
-                });
+        doc.querySelectorAll('h2, h3, h4, h5, h6')
+            .forEach(heading => {
+                if (!heading.id) {
+                    heading.id = generateUniqueId(heading.textContent || `heading-${heading.tagName.toLowerCase()}`, existingIds);
+                }
+            });
 
-            const liClassMap = new Map();
-            const aClassMap = new Map();
-            const rootListTypeMap = new Map(); 
+        const liClassMap = new Map();
+        const aClassMap = new Map();
+        const rootListTypeMap = new Map();
 
-            doc.querySelectorAll('details[id^="sec-nav-"]')
-                .forEach(existingDetails => {
-                    const detailsId = existingDetails.id;
-                    const existingUlOrOl = existingDetails.querySelector('ul, ol');
+        doc.querySelectorAll('details[id^="sec-nav-"]')
+            .forEach(existingDetails => {
+                const detailsId = existingDetails.id;
+                const existingUlOrOl = existingDetails.querySelector('ul, ol');
 
-                    if (existingUlOrOl) {
-                        rootListTypeMap.set(detailsId, existingUlOrOl.tagName.toLowerCase());
+                if (existingUlOrOl) {
+                    rootListTypeMap.set(detailsId, existingUlOrOl.tagName.toLowerCase());
 
-                        collectExistingListClasses(existingUlOrOl, liClassMap, aClassMap);
-                    }
-                });
+                    collectExistingListClasses(existingUlOrOl, liClassMap, aClassMap);
+                }
+            });
 
-            Array.from(doc.querySelectorAll('h2'))
-                .forEach(h2 => {
-                    const items = [];
-                    let currentElement = h2.nextElementSibling;
-                    while (currentElement && !['h1', 'h2'].includes(currentElement.tagName.toLowerCase())) {
-                        Array.from(currentElement.querySelectorAll('h3, h4, h5, h6'))
-                            .forEach(subHeading => {
-                                const subLevel = parseInt(subHeading.tagName.substring(1), 10);
-                                if (subLevel <= maxLevel) {
-                                    items.push(subHeading);
-                                }
-                            });
-                        currentElement = currentElement.nextElementSibling;
-                    }
+        Array.from(doc.querySelectorAll('h2'))
+            .forEach(h2 => {
+                const items = [];
+                let currentElement = h2.nextElementSibling;
+                while (currentElement && !['h1', 'h2'].includes(currentElement.tagName.toLowerCase())) {
+                    Array.from(currentElement.querySelectorAll('h3, h4, h5, h6'))
+                        .forEach(subHeading => {
+                            const subLevel = parseInt(subHeading.tagName.substring(1), 10);
+                            if (subLevel <= maxLevel) {
+                                items.push(subHeading);
+                            }
+                        });
+                    currentElement = currentElement.nextElementSibling;
+                }
 
-                    const detailsId = 'sec-nav-' + h2.id;
-                    let details = doc.getElementById(detailsId);
-                    let summary, ulOrOl;
-                    let oldDetailsClasses = details ? details.getAttribute('class') || '' : '';
-                    let oldSummaryClasses = details ? (details.querySelector('summary') ? details.querySelector('summary')
-                        .getAttribute('class') || '' : '') : '';
-                    let oldListClasses = details ? (details.querySelector('ul, ol') ? details.querySelector('ul, ol')
-                        .getAttribute('class') || '' : '') : '';
-                    let initialListTagName = rootListTypeMap.get(detailsId) || 'ul';
+                const detailsId = 'sec-nav-' + h2.id;
+                let details = doc.getElementById(detailsId);
+                let summary, ulOrOl;
+                let oldDetailsClasses = details ? details.getAttribute('class') || '' : '';
+                let oldSummaryClasses = details ? (details.querySelector('summary') ? details.querySelector('summary')
+                    .getAttribute('class') || '' : '') : '';
+                let oldListClasses = details ? (details.querySelector('ul, ol') ? details.querySelector('ul, ol')
+                    .getAttribute('class') || '' : '') : '';
+                let initialListTagName = rootListTypeMap.get(detailsId) || 'ul';
 
-                    if (!details) {
-                        const potentialDetails = Array.from(h2.parentNode.children)
-                            .find(child => {
-                                return child.tagName.toLowerCase() === 'details' &&
-                                    !child.id &&
-                                    child === h2.nextElementSibling && 
-                                    child.querySelector('summary') &&
-                                    (child.querySelector('summary')
-                                        .textContent.trim()
-                                        .toLowerCase() === 'in this section' ||
-                                        child.querySelector('summary')
-                                        .textContent.trim()
-                                        .toLowerCase() === 'dans cette section');
-                            });
+                if (!details) {
+                    const potentialDetails = Array.from(h2.parentNode.children)
+                        .find(child => {
+                            return child.tagName.toLowerCase() === 'details' &&
+                                !child.id &&
+                                child === h2.nextElementSibling &&
+                                child.querySelector('summary') &&
+                                (child.querySelector('summary')
+                                    .textContent.trim()
+                                    .toLowerCase() === 'in this section' ||
+                                    child.querySelector('summary')
+                                    .textContent.trim()
+                                    .toLowerCase() === 'dans cette section');
+                        });
 
-                        if (potentialDetails) {
-                            details = potentialDetails;
-                            details.id = detailsId;
-                            existingIds.add(detailsId); 
-                            oldDetailsClasses = details.getAttribute('class') || '';
-                            oldSummaryClasses = details.querySelector('summary') ? details.querySelector('summary')
-                                .getAttribute('class') || '' : '';
-                            oldListClasses = details.querySelector('ul, ol') ? details.querySelector('ul', 'ol')
-                                .getAttribute('class') || '' : '';
-                            const existingUl = details.querySelector('ul');
-                            const existingOl = details.querySelector('ol');
-                            if (existingUl) initialListTagName = 'ul';
-                            else if (existingOl) initialListTagName = 'ol';
-                        }
-                    }
-
-                    if (!items.length && (!details || !details.id || !details.id.startsWith('sec-nav-'))) {
-                        return;
-                    }
-                    if (!items.length && details) { 
-                        details.remove();
-                        return;
-                    }
-
-
-                    if (details) {
-                        summary = details.querySelector('summary');
-                        ulOrOl = details.querySelector('ul, ol');
-                        if (ulOrOl) {
-                            ulOrOl.innerHTML = ''; 
-                        } else {
-                            ulOrOl = doc.createElement(initialListTagName);
-                            if (oldListClasses) ulOrOl.setAttribute('class', oldListClasses);
-                            details.appendChild(ulOrOl);
-                        }
-                    } else {
-                        details = doc.createElement('details');
+                    if (potentialDetails) {
+                        details = potentialDetails;
                         details.id = detailsId;
-                        summary = doc.createElement('summary');
-                        summary.className = 'wb-toggle';
-                        ulOrOl = doc.createElement(initialListTagName); 
-                        details.appendChild(summary);
+                        existingIds.add(detailsId);
+                        oldDetailsClasses = details.getAttribute('class') || '';
+                        oldSummaryClasses = details.querySelector('summary') ? details.querySelector('summary')
+                            .getAttribute('class') || '' : '';
+                        oldListClasses = details.querySelector('ul, ol') ? details.querySelector('ul', 'ol')
+                            .getAttribute('class') || '' : '';
+                        const existingUl = details.querySelector('ul');
+                        const existingOl = details.querySelector('ol');
+                        if (existingUl) initialListTagName = 'ul';
+                        else if (existingOl) initialListTagName = 'ol';
+                    }
+                }
+
+                if (!items.length && (!details || !details.id || !details.id.startsWith('sec-nav-'))) {
+                    return;
+                }
+                if (!items.length && details) {
+                    details.remove();
+                    return;
+                }
+
+
+                if (details) {
+                    summary = details.querySelector('summary');
+                    ulOrOl = details.querySelector('ul, ol');
+                    if (ulOrOl) {
+                        ulOrOl.innerHTML = '';
+                    } else {
+                        ulOrOl = doc.createElement(initialListTagName);
+                        if (oldListClasses) ulOrOl.setAttribute('class', oldListClasses);
                         details.appendChild(ulOrOl);
                     }
+                } else {
+                    details = doc.createElement('details');
+                    details.id = detailsId;
+                    summary = doc.createElement('summary');
+                    summary.className = 'wb-toggle';
+                    ulOrOl = doc.createElement(initialListTagName);
+                    details.appendChild(summary);
+                    details.appendChild(ulOrOl);
+                }
 
-                    if (oldDetailsClasses) details.setAttribute('class', oldDetailsClasses);
-                    if (oldSummaryClasses) summary.setAttribute('class', oldSummaryClasses);
-                    if (oldListClasses) ulOrOl.setAttribute('class', oldListClasses);
+                if (oldDetailsClasses) details.setAttribute('class', oldDetailsClasses);
+                if (oldSummaryClasses) summary.setAttribute('class', oldSummaryClasses);
+                if (oldListClasses) ulOrOl.setAttribute('class', oldListClasses);
 
-                    summary.setAttribute('data-toggle', '{"print":"on"}');
-                    summary.textContent = lang === 'en' ? 'In this section' : 'Dans cette section';
+                summary.setAttribute('data-toggle', '{"print":"on"}');
+                summary.textContent = lang === 'en' ? 'In this section' : 'Dans cette section';
 
-                    let currentListStack = [{
-                        domElement: ulOrOl
-                        , level: 3
-                        , tagName: initialListTagName
-                    }];
+                let currentListStack = [{
+                    domElement: ulOrOl,
+                    level: 3,
+                    tagName: initialListTagName
+                }];
 
-                    items.forEach(el => {
-                        const elLevel = parseInt(el.tagName.substring(1), 10);
-                        const li = doc.createElement('li');
-                        const a = doc.createElement('a');
-                        const hrefTargetId = el.id;
-                        a.href = `#${hrefTargetId}`;
-                        a.innerHTML = el.innerHTML.trim();
+                items.forEach(el => {
+                    const elLevel = parseInt(el.tagName.substring(1), 10);
+                    const li = doc.createElement('li');
+                    const a = doc.createElement('a');
+                    const hrefTargetId = el.id;
+                    a.href = `#${hrefTargetId}`;
+                    a.innerHTML = el.innerHTML.trim();
 
-                        if (liClassMap.has(hrefTargetId)) {
-                            li.setAttribute('class', liClassMap.get(hrefTargetId));
-                        }
-                        if (aClassMap.has(hrefTargetId)) {
-                            a.setAttribute('class', aClassMap.get(hrefTargetId));
-                        }
+                    if (liClassMap.has(hrefTargetId)) {
+                        li.setAttribute('class', liClassMap.get(hrefTargetId));
+                    }
+                    if (aClassMap.has(hrefTargetId)) {
+                        a.setAttribute('class', aClassMap.get(hrefTargetId));
+                    }
 
-                        li.appendChild(a);
+                    li.appendChild(a);
 
-                        let currentParentListContainer = currentListStack[currentListStack.length - 1];
-                        let currentParentList = currentParentListContainer.domElement;
-                        let currentParentLevel = currentParentListContainer.level;
-                        let currentParentListType = currentParentListContainer.tagName;
+                    let currentParentListContainer = currentListStack[currentListStack.length - 1];
+                    let currentParentList = currentParentListContainer.domElement;
+                    let currentParentLevel = currentParentListContainer.level;
+                    let currentParentListType = currentParentListContainer.tagName;
 
-                        if (elLevel > currentParentLevel) {
-                            while (elLevel > currentParentLevel) {
-                                let newNestedListTagName = 'ul';
-                                if (currentParentListType === 'ol') {
-                                    newNestedListTagName = 'ol';
-                                }
-                                const newNestedList = doc.createElement(newNestedListTagName);
-
-                                if (currentParentList.lastElementChild && currentParentList.lastElementChild.tagName.toLowerCase() === 'li') {
-                                    currentParentList.lastElementChild.appendChild(newNestedList);
-                                } else {
-                                    console.warn(`Unexpected structure: Appending new ${newNestedListTagName.toUpperCase()} to ${currentParentList.tagName.toUpperCase()} without preceding LI.`);
-                                    currentParentList.appendChild(newNestedList);
-                                }
-                                currentListStack.push({
-                                    domElement: newNestedList
-                                    , level: currentParentLevel + 1
-                                    , tagName: newNestedListTagName
-                                });
-                                currentParentList = newNestedList;
-                                currentParentLevel++;
-                                currentParentListType = newNestedListTagName;
+                    if (elLevel > currentParentLevel) {
+                        while (elLevel > currentParentLevel) {
+                            let newNestedListTagName = 'ul';
+                            if (currentParentListType === 'ol') {
+                                newNestedListTagName = 'ol';
                             }
-                            currentParentList.appendChild(li);
-                        } else if (elLevel < currentParentLevel) {
-                            while (currentListStack.length > 1 && elLevel < currentListStack[currentListStack.length - 1].level) {
-                                currentListStack.pop();
-                            }
-                            currentParentListContainer = currentListStack[currentListStack.length - 1];
-                            currentParentList = currentParentListContainer.domElement;
-                            currentParentList.appendChild(li);
-                        } else {
-                            currentParentList.appendChild(li);
-                        }
-                    });
+                            const newNestedList = doc.createElement(newNestedListTagName);
 
-                    if (!doc.getElementById(detailsId)) { 
-                        h2.parentNode.insertBefore(details, h2.nextSibling);
+                            if (currentParentList.lastElementChild && currentParentList.lastElementChild.tagName.toLowerCase() === 'li') {
+                                currentParentList.lastElementChild.appendChild(newNestedList);
+                            } else {
+                                console.warn(`Unexpected structure: Appending new ${newNestedListTagName.toUpperCase()} to ${currentParentList.tagName.toUpperCase()} without preceding LI.`);
+                                currentParentList.appendChild(newNestedList);
+                            }
+                            currentListStack.push({
+                                domElement: newNestedList,
+                                level: currentParentLevel + 1,
+                                tagName: newNestedListTagName
+                            });
+                            currentParentList = newNestedList;
+                            currentParentLevel++;
+                            currentParentListType = newNestedListTagName;
+                        }
+                        currentParentList.appendChild(li);
+                    } else if (elLevel < currentParentLevel) {
+                        while (currentListStack.length > 1 && elLevel < currentListStack[currentListStack.length - 1].level) {
+                            currentListStack.pop();
+                        }
+                        currentParentListContainer = currentListStack[currentListStack.length - 1];
+                        currentParentList = currentParentListContainer.domElement;
+                        currentParentList.appendChild(li);
+                    } else {
+                        currentParentList.appendChild(li);
                     }
                 });
 
-            monacoEditorInstance.setValue(doc.body.innerHTML);
-            autoFormatBtn.click();
-        }
-
-        document.getElementById('formatSelectedBtn')
-            .addEventListener('click', () => {
-                const unformattedCode = monacoEditorInstance.getValue();
-
-                const options = {
-                    indent_size: 4, 
-                    space_in_empty_paren: true 
-                };
-
-                const formattedCode = html_beautify(unformattedCode, options);
-
-                monacoEditorInstance.setValue(formattedCode);
+                if (!doc.getElementById(detailsId)) {
+                    h2.parentNode.insertBefore(details, h2.nextSibling);
+                }
             });
-        document.getElementById('cleanMsoBtn')
-            .addEventListener('click', () => {
-                const unformattedCode = monacoEditorInstance.getValue();
 
-                const options = {
-                    indent_size: 4, 
-                    space_in_empty_paren: true 
-                };
+        monacoEditorInstance.setValue(doc.body.innerHTML);
+        autoFormatBtn.click();
+    }
 
-                const formattedCode = html_beautify(unformattedCode, options);
+    document.getElementById('formatSelectedBtn')
+        .addEventListener('click', () => {
+            const unformattedCode = monacoEditorInstance.getValue();
 
-                monacoEditorInstance.setValue(formattedCode);
-            });
-		
-		 // Info Modal Logic
+            const options = {
+                indent_size: 4,
+                space_in_empty_paren: true
+            };
+
+            const formattedCode = html_beautify(unformattedCode, options);
+
+            monacoEditorInstance.setValue(formattedCode);
+        });
+    document.getElementById('cleanMsoBtn')
+        .addEventListener('click', () => {
+            const unformattedCode = monacoEditorInstance.getValue();
+
+            const options = {
+                indent_size: 4,
+                space_in_empty_paren: true
+            };
+
+            const formattedCode = html_beautify(unformattedCode, options);
+
+            monacoEditorInstance.setValue(formattedCode);
+        });
+
     if (infoBtn) {
         infoBtn.addEventListener('click', () => {
             if (infoModal) infoModal.classList.remove('hidden');
@@ -6143,7 +6077,6 @@ function showFootnoteAnchorModal(triggeringButton, originalButtonText) {
         });
     }
 
-    // How to Use Modal Logic
     if (howToUseBtn) {
         howToUseBtn.addEventListener('click', () => {
             if (howToUseModal) {
@@ -6167,8 +6100,7 @@ function showFootnoteAnchorModal(triggeringButton, originalButtonText) {
             }
         });
     }
-    
-    // Combined Escape key listener for all modals
+
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') {
             if (previewModal && !previewModal.classList.contains('hidden')) {
@@ -6182,196 +6114,194 @@ function showFootnoteAnchorModal(triggeringButton, originalButtonText) {
             }
         }
     });
-		
-        enSecToCBtn.addEventListener('click', () => insertSectionToc(3, 'en'));
-        frSecToCBtn.addEventListener('click', () => insertSectionToc(3, 'fr'));
-        enSecToCH4Btn.addEventListener('click', () => insertSectionToc(4, 'en'));
-        frSecToCH4Btn.addEventListener('click', () => insertSectionToc(4, 'fr'));
-        enSecToCH5Btn.addEventListener('click', () => insertSectionToc(5, 'en'));
-        frSecToCH5Btn.addEventListener('click', () => insertSectionToc(5, 'fr'));
-        enSecToCH6Btn.addEventListener('click', () => insertSectionToc(6, 'en'));
-        frSecToCH6Btn.addEventListener('click', () => insertSectionToc(6, 'fr'));
 
-        updateCleanMsoButtonState();
+    enSecToCBtn.addEventListener('click', () => insertSectionToc(3, 'en'));
+    frSecToCBtn.addEventListener('click', () => insertSectionToc(3, 'fr'));
+    enSecToCH4Btn.addEventListener('click', () => insertSectionToc(4, 'en'));
+    frSecToCH4Btn.addEventListener('click', () => insertSectionToc(4, 'fr'));
+    enSecToCH5Btn.addEventListener('click', () => insertSectionToc(5, 'en'));
+    frSecToCH5Btn.addEventListener('click', () => insertSectionToc(5, 'fr'));
+    enSecToCH6Btn.addEventListener('click', () => insertSectionToc(6, 'en'));
+    frSecToCH6Btn.addEventListener('click', () => insertSectionToc(6, 'fr'));
 
-        modalCustomizeHeader.addEventListener('click', () => {
-            modalIsCustomizeExpanded = !modalIsCustomizeExpanded;
-            modalCustomizeContent.classList.toggle('expanded', modalIsCustomizeExpanded);
-            modalCustomizeHeader.classList.toggle('expanded', modalIsCustomizeExpanded);
-        });
-        modalToggleContainerBtn.addEventListener('click', () => {
-            modalUseContainerDiv = !modalUseContainerDiv;
-            updateModalSettingsButtonStates();
-            updateModalPreview();
-        });
-        modalToggleTitleBtn.addEventListener('click', () => {
-            modalShowTitle = !modalShowTitle;
-            modalH1TitleInputContainer.style.display = modalShowTitle ? 'block' : 'none';
-            updateModalSettingsButtonStates();
-            updateModalPreview();
-        });
-        modalToggleCssBtn.addEventListener('click', () => {
-            modalEnableCss = !modalEnableCss;
-            updateModalSettingsButtonStates();
-            updateModalPreview();
-        });
-        modalH1TitleInput.addEventListener('input', () => {
-            if (modalCurrentLanguage === 'en') modalH1TitleEn = modalH1TitleInput.value;
-            else modalH1TitleFr = modalH1TitleInput.value;
-            updateModalPreview();
-        });
-        modalNoneBylineBtn.addEventListener('click', () => {
-            modalBylineMode = 'none';
-            updateModalBylineButtonStates();
-            updateModalPreview();
-        });
-        modalEnglishBylineBtn.addEventListener('click', () => {
-            modalBylineMode = 'english';
-            updateModalBylineButtonStates();
-            updateModalPreview();
-        });
-        modalFrenchBylineBtn.addEventListener('click', () => {
-            modalBylineMode = 'french';
-            updateModalBylineButtonStates();
-            updateModalPreview();
-        });
-        modalLocalImagesBtn.addEventListener('click', () => {
-            modalImageSourceMode = 'local';
-            updateModalImageSourceButtonStates();
-            updateModalPreview();
-        });
-        modalPreviewImagesBtn.addEventListener('click', () => {
-            modalImageSourceMode = 'preview';
-            updateModalImageSourceButtonStates();
-            updateModalPreview();
-        });
-        modalToggleLiveImagesBtn.addEventListener('click', () => {
-            modalImageSourceMode = 'live';
-            updateModalImageSourceButtonStates();
-            updateModalPreview();
-        });
-        modalLocalUrlsBtn.addEventListener('click', () => {
-            modalUrlSourceMode = 'local';
-            updateModalUrlSourceButtonStates();
-            updateModalPreview();
-        });
-        modalPreviewUrlsBtn.addEventListener('click', () => {
-            modalUrlSourceMode = 'preview';
-            updateModalUrlSourceButtonStates();
-            updateModalPreview();
-        });
-        modalToggleLiveUrlsBtn.addEventListener('click', () => {
-            modalUrlSourceMode = 'live';
-            updateModalUrlSourceButtonStates();
-            updateModalPreview();
-        });
-        modalToggleSectionsBtn.addEventListener('click', () => {
-            modalShowSections = !modalShowSections;
-            updateModalSectionHeadingButtonStates();
-            updateModalPreview();
-        });
-        modalToggleHeadingsBtn.addEventListener('click', () => {
-            modalShowHeadings = !modalShowHeadings;
-            updateModalSectionHeadingButtonStates();
-            updateModalPreview();
-        });
-        modalWetGcdsToggleBtn.addEventListener('click', () => {
-            const frameworks = ['wet', 'gcds', 'wet+'];
-            const currentIndex = frameworks.indexOf(modalCurrentFramework);
-            modalCurrentFramework = frameworks[(currentIndex + 1) % frameworks.length];
-            updateModalWetGcdsButtonState();
-            updateModalPreview();
-        });
-        modalLangEnBtn.addEventListener('click', () => {
-            if (modalBylineMode === 'french') modalBylineMode = 'english';
-            modalCurrentLanguage = 'en';
-            updateModalLanguageButtonStates();
-            updateModalPreview();
-        });
-        modalLangFrBtn.addEventListener('click', () => {
-            if (modalBylineMode === 'english') modalBylineMode = 'french';
-            modalCurrentLanguage = 'fr';
-            updateModalLanguageButtonStates();
-            updateModalPreview();
-        });
-        modalBreakpointXsBtn.addEventListener('click', () => {
-            modalCurrentBreakpoint = 'xs';
-            updateModalBreakpointButtonStates();
-            updateModalPreview();
-        });
-        modalBreakpointSmBtn.addEventListener('click', () => {
-            modalCurrentBreakpoint = 'sm';
-            updateModalBreakpointButtonStates();
-            updateModalPreview();
-        });
-        modalBreakpointMdBtn.addEventListener('click', () => {
-            modalCurrentBreakpoint = 'md';
-            updateModalBreakpointButtonStates();
-            updateModalPreview();
-        });
-        modalBreakpointFullBtn.addEventListener('click', () => {
-            modalCurrentBreakpoint = 'full';
-            updateModalBreakpointButtonStates();
-            updateModalPreview();
-        });
+    updateCleanMsoButtonState();
 
-        function performModalPreviewSearch(forward = true) {
-            const term = modalPreviewSearchInput.value;
-            if (!term || !modalPreviewFrame.contentWindow) return;
-            if (term !== modalLastSearchTerm) modalPreviewFrame.contentWindow.getSelection()
-                .removeAllRanges();
-            modalLastSearchTerm = term;
-            modalPreviewFrame.contentWindow.find(term, false, !forward, true, false, false, false);
+    modalCustomizeHeader.addEventListener('click', () => {
+        modalIsCustomizeExpanded = !modalIsCustomizeExpanded;
+        modalCustomizeContent.classList.toggle('expanded', modalIsCustomizeExpanded);
+        modalCustomizeHeader.classList.toggle('expanded', modalIsCustomizeExpanded);
+    });
+    modalToggleContainerBtn.addEventListener('click', () => {
+        modalUseContainerDiv = !modalUseContainerDiv;
+        updateModalSettingsButtonStates();
+        updateModalPreview();
+    });
+    modalToggleTitleBtn.addEventListener('click', () => {
+        modalShowTitle = !modalShowTitle;
+        modalH1TitleInputContainer.style.display = modalShowTitle ? 'block' : 'none';
+        updateModalSettingsButtonStates();
+        updateModalPreview();
+    });
+    modalToggleCssBtn.addEventListener('click', () => {
+        modalEnableCss = !modalEnableCss;
+        updateModalSettingsButtonStates();
+        updateModalPreview();
+    });
+    modalH1TitleInput.addEventListener('input', () => {
+        if (modalCurrentLanguage === 'en') modalH1TitleEn = modalH1TitleInput.value;
+        else modalH1TitleFr = modalH1TitleInput.value;
+        updateModalPreview();
+    });
+    modalNoneBylineBtn.addEventListener('click', () => {
+        modalBylineMode = 'none';
+        updateModalBylineButtonStates();
+        updateModalPreview();
+    });
+    modalEnglishBylineBtn.addEventListener('click', () => {
+        modalBylineMode = 'english';
+        updateModalBylineButtonStates();
+        updateModalPreview();
+    });
+    modalFrenchBylineBtn.addEventListener('click', () => {
+        modalBylineMode = 'french';
+        updateModalBylineButtonStates();
+        updateModalPreview();
+    });
+    modalLocalImagesBtn.addEventListener('click', () => {
+        modalImageSourceMode = 'local';
+        updateModalImageSourceButtonStates();
+        updateModalPreview();
+    });
+    modalPreviewImagesBtn.addEventListener('click', () => {
+        modalImageSourceMode = 'preview';
+        updateModalImageSourceButtonStates();
+        updateModalPreview();
+    });
+    modalToggleLiveImagesBtn.addEventListener('click', () => {
+        modalImageSourceMode = 'live';
+        updateModalImageSourceButtonStates();
+        updateModalPreview();
+    });
+    modalLocalUrlsBtn.addEventListener('click', () => {
+        modalUrlSourceMode = 'local';
+        updateModalUrlSourceButtonStates();
+        updateModalPreview();
+    });
+    modalPreviewUrlsBtn.addEventListener('click', () => {
+        modalUrlSourceMode = 'preview';
+        updateModalUrlSourceButtonStates();
+        updateModalPreview();
+    });
+    modalToggleLiveUrlsBtn.addEventListener('click', () => {
+        modalUrlSourceMode = 'live';
+        updateModalUrlSourceButtonStates();
+        updateModalPreview();
+    });
+    modalToggleSectionsBtn.addEventListener('click', () => {
+        modalShowSections = !modalShowSections;
+        updateModalSectionHeadingButtonStates();
+        updateModalPreview();
+    });
+    modalToggleHeadingsBtn.addEventListener('click', () => {
+        modalShowHeadings = !modalShowHeadings;
+        updateModalSectionHeadingButtonStates();
+        updateModalPreview();
+    });
+    modalWetGcdsToggleBtn.addEventListener('click', () => {
+        const frameworks = ['wet', 'gcds', 'wet+'];
+        const currentIndex = frameworks.indexOf(modalCurrentFramework);
+        modalCurrentFramework = frameworks[(currentIndex + 1) % frameworks.length];
+        updateModalWetGcdsButtonState();
+        updateModalPreview();
+    });
+    modalLangEnBtn.addEventListener('click', () => {
+        if (modalBylineMode === 'french') modalBylineMode = 'english';
+        modalCurrentLanguage = 'en';
+        updateModalLanguageButtonStates();
+        updateModalPreview();
+    });
+    modalLangFrBtn.addEventListener('click', () => {
+        if (modalBylineMode === 'english') modalBylineMode = 'french';
+        modalCurrentLanguage = 'fr';
+        updateModalLanguageButtonStates();
+        updateModalPreview();
+    });
+    modalBreakpointXsBtn.addEventListener('click', () => {
+        modalCurrentBreakpoint = 'xs';
+        updateModalBreakpointButtonStates();
+        updateModalPreview();
+    });
+    modalBreakpointSmBtn.addEventListener('click', () => {
+        modalCurrentBreakpoint = 'sm';
+        updateModalBreakpointButtonStates();
+        updateModalPreview();
+    });
+    modalBreakpointMdBtn.addEventListener('click', () => {
+        modalCurrentBreakpoint = 'md';
+        updateModalBreakpointButtonStates();
+        updateModalPreview();
+    });
+    modalBreakpointFullBtn.addEventListener('click', () => {
+        modalCurrentBreakpoint = 'full';
+        updateModalBreakpointButtonStates();
+        updateModalPreview();
+    });
+
+    function performModalPreviewSearch(forward = true) {
+        const term = modalPreviewSearchInput.value;
+        if (!term || !modalPreviewFrame.contentWindow) return;
+        if (term !== modalLastSearchTerm) modalPreviewFrame.contentWindow.getSelection()
+            .removeAllRanges();
+        modalLastSearchTerm = term;
+        modalPreviewFrame.contentWindow.find(term, false, !forward, true, false, false, false);
+    }
+    modalPreviewFindNextBtn.addEventListener('click', () => performModalPreviewSearch(true));
+    modalPreviewFindPrevBtn.addEventListener('click', () => performModalPreviewSearch(false));
+    modalPreviewSearchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            performModalPreviewSearch(true);
         }
-        modalPreviewFindNextBtn.addEventListener('click', () => performModalPreviewSearch(true));
-        modalPreviewFindPrevBtn.addEventListener('click', () => performModalPreviewSearch(false));
-        modalPreviewSearchInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                performModalPreviewSearch(true);
-            }
+    });
+
+    exportPrototypeBtn.addEventListener('click', () => {
+        const prototypeHtml = generateFullHtml({
+            showSections: false,
+            showHeadings: false,
+            useContainerDiv: modalUseContainerDiv,
+            showTitle: modalShowTitle,
+            imageSourceMode: modalImageSourceMode,
+            bylineMode: modalBylineMode,
+            enableCss: modalEnableCss,
+            urlSourceMode: modalUrlSourceMode,
+            currentLanguage: modalCurrentLanguage,
+            currentFramework: modalCurrentFramework,
+            h1TitleEn: modalH1TitleEn,
+            h1TitleFr: modalH1TitleFr
+        }, true);
+        const blob = new Blob([prototypeHtml], {
+            type: 'text/html'
         });
-
-        exportPrototypeBtn.addEventListener('click', () => {
-            const prototypeHtml = generateFullHtml({
-                showSections: false
-                , showHeadings: false
-                , useContainerDiv: modalUseContainerDiv
-                , showTitle: modalShowTitle
-                , imageSourceMode: modalImageSourceMode
-                , bylineMode: modalBylineMode
-                , enableCss: modalEnableCss
-                , urlSourceMode: modalUrlSourceMode
-                , currentLanguage: modalCurrentLanguage
-                , currentFramework: modalCurrentFramework
-                , h1TitleEn: modalH1TitleEn
-                , h1TitleFr: modalH1TitleFr
-            }, true);
-            const blob = new Blob([prototypeHtml], {
-                type: 'text/html'
-            });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = 'prototype.html';
-            a.click();
-            URL.revokeObjectURL(a.href);
-        });
-		
-				
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'prototype.html';
+        a.click();
+        URL.revokeObjectURL(a.href);
+    });
 
 
-        contentModeBtn.addEventListener('click', () => setEditorMode('content'));
+
+
+    contentModeBtn.addEventListener('click', () => setEditorMode('content'));
     tableModeBtn.addEventListener('click', () => setEditorMode('table'));
 
-    // Set the default mode on page load
     setEditorMode('content');
 
-        window.onbeforeunload = function () {
-            if (monacoEditorInstance && monacoEditorInstance.getValue()
-                .trim() !== '') {
-                return "You have unsaved changes. Are you sure you want to leave?";
-            }
-        };
-        
+    window.onbeforeunload = function() {
+        if (monacoEditorInstance && monacoEditorInstance.getValue()
+            .trim() !== '') {
+            return "You have unsaved changes. Are you sure you want to leave?";
+        }
+    };
+
 });
- 
