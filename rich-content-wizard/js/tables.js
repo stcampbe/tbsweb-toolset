@@ -673,23 +673,30 @@ function formatTableLogic(table, options) {
 
             if (isPlaceholderCaption) {
                 let extractedContent = '';
-                if (options.specificTableId) {
-                    const firstRow = table.querySelector('tr');
-                    if (firstRow) {
-                        const firstCell = firstRow.firstElementChild;
-                        if (firstCell && ['TH', 'TD'].includes(firstCell.tagName)) {
-                            const colspan = parseInt(firstCell.getAttribute('colspan') || '1', 10);
-                            const totalColumns = getEffectiveColumnCount(firstRow);
-                            if (colspan === totalColumns && firstCell.textContent.trim() !== '') {
-                                extractedContent = firstCell.textContent.trim();
-                            }
+                const firstRow = table.querySelector('tr');
+                let fullColspanHeaderFound = false;
+
+                // Priority 1: Check for a full-width header cell in the first row.
+                if (firstRow) {
+                    const firstCell = firstRow.firstElementChild;
+                    if (firstCell && ['TH', 'TD'].includes(firstCell.tagName)) {
+                        const colspan = parseInt(firstCell.getAttribute('colspan') || '1', 10);
+                        const totalColumns = getEffectiveColumnCount(firstRow);
+                        if (colspan >= totalColumns && firstCell.innerHTML.trim() !== '') {
+                            extractedContent = firstCell.innerHTML;
+                            fullColspanHeaderFound = true;
+                            // Remove the row that was used for the caption
+                            firstRow.remove();
                         }
                     }
-                } else {
+                }
+                
+                // Priority 2 (Fallback): Look for a preceding heading or paragraph.
+                if (!fullColspanHeaderFound) {
                     let prevSibling = (table.parentNode.classList.contains('table-responsive') ? table.parentNode : table).previousElementSibling;
                     while (prevSibling) {
                         if (['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'].includes(prevSibling.tagName)) {
-                            extractedContent = prevSibling.textContent.trim();
+                            extractedContent = prevSibling.innerHTML; // Use innerHTML to preserve child nodes
                             prevSibling.remove();
                             break;
                         }
@@ -697,10 +704,10 @@ function formatTableLogic(table, options) {
                         prevSibling = prevSibling.previousElementSibling;
                     }
                 }
-                existingCaptionElement.textContent = extractedContent || `[insert table caption]`;
+                existingCaptionElement.innerHTML = extractedContent.trim() || `[insert table caption]`;
             }
         } else if (!existingCaptionElement.textContent.trim() || existingCaptionElement.textContent.trim() === '[insert table caption]') {
-            existingCaptionElement.textContent = options.preservedCaptionText || `[insert table caption]`;
+            existingCaptionElement.innerHTML = options.preservedCaptionText || `[insert table caption]`;
         }
     } else {
         if (existingCaptionElement) existingCaptionElement.remove();
