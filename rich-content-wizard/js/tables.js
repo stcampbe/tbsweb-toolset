@@ -736,10 +736,13 @@ function formatTableLogic(table, options) {
     });
 
     if (options.applyHeader) { // Toggled ON
-        let headerRowCount = 0;
-        if (rowsForThead.length === 0) {
+        // If no thead exists, try to create one from the top rows of the tbody.
+        if (rowsForThead.length === 0 && rowsForTbody.length > 0) {
+            let headerRowCount = 0;
             const potentialHeaderRows = [...rowsForTbody];
             let maxRowSpanEnd = -1;
+
+            // Calculate how many rows constitute the header, accounting for rowspans.
             for (let i = 0; i < potentialHeaderRows.length; i++) {
                 headerRowCount = i + 1;
                 potentialHeaderRows[i].querySelectorAll('th, td').forEach(cell => {
@@ -748,21 +751,31 @@ function formatTableLogic(table, options) {
                 });
                 if (i >= maxRowSpanEnd) break;
             }
+
+            // Move the identified header rows from tbody to thead array.
+            if (headerRowCount > 0) {
+                const headerRowsToMove = rowsForTbody.splice(0, headerRowCount);
+                rowsForThead.push(...headerRowsToMove);
+            }
         }
 
-        if (headerRowCount > 0) {
-            const headerRowsToMove = rowsForTbody.splice(0, headerRowCount);
-            headerRowsToMove.forEach(row => {
-                const clonedRow = row.cloneNode(true);
-                Array.from(clonedRow.querySelectorAll('td')).forEach(td => {
-                    const newTh = document.createElement('th');
-                    Array.from(td.attributes).forEach(attr => newTh.setAttribute(attr.name, attr.value));
-                    newTh.innerHTML = td.innerHTML;
-                    td.parentNode.replaceChild(newTh, td);
-                });
-                rowsForThead.push(clonedRow);
+        // Now, for ALL rows destined for the thead, ensure their cells are <th>.
+        // This new logic handles both existing theads and newly created ones correctly.
+        rowsForThead.forEach(row => {
+            const clonedRow = row.cloneNode(true); // Work on a clone to avoid issues
+            Array.from(clonedRow.querySelectorAll('td')).forEach(td => {
+                const newTh = document.createElement('th');
+                Array.from(td.attributes).forEach(attr => newTh.setAttribute(attr.name, attr.value));
+                newTh.innerHTML = td.innerHTML;
+                td.parentNode.replaceChild(newTh, td);
             });
-        }
+            // Replace original row with the processed clone
+            const originalIndex = rowsForThead.indexOf(row);
+            if (originalIndex !== -1) {
+                rowsForThead[originalIndex] = clonedRow;
+            }
+        });
+
     } else { // Toggled OFF
         if (rowsForThead.length > 0) {
             const rowsToMove = [...rowsForThead];
