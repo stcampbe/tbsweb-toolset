@@ -5921,13 +5921,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
 
-                if (!items.length && (!details || !details.id || !details.id.startsWith('sec-nav-'))) {
-                    return;
-                }
-                if (!items.length && details) {
-                    details.remove();
-                    return;
-                }
+                if (items.length <= 1) {
+    // If a previous section TOC block (details) exists, remove it.
+    if (details) {
+        details.remove();
+    }
+    // Exit the function to prevent the block from being created.
+    return;
+}
 
 
                 if (details) {
@@ -5969,7 +5970,26 @@ document.addEventListener('DOMContentLoaded', function() {
                     const a = doc.createElement('a');
                     const hrefTargetId = el.id;
                     a.href = `#${hrefTargetId}`;
-                    a.innerHTML = el.innerHTML.trim();
+					
+                    // Create a temporary element to parse the heading's HTML
+					const tempDiv = doc.createElement('div');
+					tempDiv.innerHTML = el.innerHTML.trim();
+
+					// Find all descendant elements within the temporary element
+					const allDescendants = tempDiv.querySelectorAll('*');
+					allDescendants.forEach(desc => {
+						const tagName = desc.tagName.toLowerCase();
+						
+						// If the tag is NOT <i> and NOT <em>, remove it and its contents
+						if (tagName !== 'i' && tagName !== 'em') {
+							if (desc.parentNode) {
+								desc.parentNode.removeChild(desc);
+							}
+						}
+					});
+
+					// Use the cleaned HTML for the anchor link
+					a.innerHTML = tempDiv.innerHTML;
 
                     if (liClassMap.has(hrefTargetId)) {
                         li.setAttribute('class', liClassMap.get(hrefTargetId));
