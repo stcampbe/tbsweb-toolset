@@ -5687,6 +5687,99 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
     }
+	
+	
+function showTocIdModal(tocFunction, maxLevel, lang) {
+    const html = monacoEditorInstance.getValue();
+    const parser = new DOMParser().parseFromString(html, 'text/html');
+    
+    // Check h1-h6 for IDs, excluding the fixed page title ID 'wb-cont'
+    const headings = parser.body.querySelectorAll('h1, h2, h3, h4, h5, h6');
+
+    let missingIdCount = 0;
+    headings.forEach(h => {
+        if (!h.id || h.id.trim() === '' || h.id === 'wb-cont') {
+            missingIdCount++;
+        }
+    });
+
+    if (missingIdCount === 0) {
+        // No missing IDs, proceed directly
+        tocFunction(maxLevel, lang);
+        return;
+    }
+    
+    // --- Helper function for "Auto-set heading ID's" ---
+    function applySequentialHeadingIds(htmlString) {
+        const parser = new DOMParser().parseFromString(htmlString, 'text/html');
+        const doc = parser.body;
+        // Collect all existing IDs to ensure uniqueness
+        const existingIds = new Set();
+        parser.querySelectorAll('[id]').forEach(el => existingIds.add(el.id));
+        
+        const headings = doc.querySelectorAll('h1, h2, h3, h4, h5, h6');
+        let hCounter = 0; // Counter for the sequential ID
+
+        headings.forEach(heading => {
+            if (!heading.id || heading.id.trim() === '' || heading.id === 'wb-cont') {
+                let newId = '';
+                do {
+                    hCounter++;
+                    newId = `toc${hCounter}`; // Apply toc# ID scheme
+                } while (existingIds.has(newId));
+
+                heading.setAttribute('id', newId);
+                existingIds.add(newId);
+            }
+        });
+        return doc.innerHTML;
+    }
+    // ---------------------------------------------------
+
+    const modalContentHtml = `
+        <p class="mb-4"><strong>One or more headings do not have an ID to generate an anchor (<code>toc#</code>). Before continuing, choose one of the following to properly create the page/section ToC:</strong></p>
+    `;
+
+    // --- Modal Creation (Tailwind CSS classes are assumed to be available) ---
+    const modalOverlay = document.createElement('div');
+    modalOverlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    modalOverlay.innerHTML = `
+        <div class="bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-lg">
+            <h3 class="text-xl font-bold mb-4 text-white"><i class="fa-solid fa-triangle-exclamation text-yellow-500"></i> Caution: Missing Heading IDs</h3>
+            <div id="modalBody" class="text-gray-200">${modalContentHtml}</div>
+            <div class="flex flex-col space-y-2 mt-6">
+                <button id="modalAutoSetTocIdBtn" class="px-4 py-3 bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 transition duration-150">(Recommended) Auto-set "toc#" heading ID's</button>
+                <button id="modalContinueTocIdBtn" class="px-4 py-3 bg-yellow-600 text-white font-semibold rounded-md hover:bg-yellow-700 transition duration-150">(Not recommended) Generate from heading text</button>
+                <button id="modalCancelTocIdBtn" class="px-4 py-3 bg-gray-500 text-white font-semibold rounded-md hover:bg-gray-600 transition duration-150">Cancel</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modalOverlay);
+
+    const closeModal = () => modalOverlay.remove();
+
+    document.getElementById('modalCancelTocIdBtn').addEventListener('click', closeModal);
+
+    document.getElementById('modalContinueTocIdBtn').addEventListener('click', () => {
+        closeModal();
+        // The existing ToC functions have a fallback to generate temporary IDs.
+        tocFunction(maxLevel, lang); 
+    });
+
+    document.getElementById('modalAutoSetTocIdBtn').addEventListener('click', () => {
+        closeModal();
+        
+        let htmlContent = monacoEditorInstance.getValue();
+        htmlContent = applySequentialHeadingIds(htmlContent);
+        monacoEditorInstance.setValue(htmlContent);
+
+        // Run the original ToC function on the now-ID'd content
+        tocFunction(maxLevel, lang);
+
+        // Apply formatting as is done after ToC insertion in the existing code
+        autoFormatBtn.click(); 
+    });
+}
 
     function insertPageToc(maxLevel, lang) {
         const html = monacoEditorInstance.getValue();
@@ -5825,13 +5918,31 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     document.getElementById('enPageToCBtn')
-        .addEventListener('click', () => insertPageToc(2, 'en'));
-    document.getElementById('frPageToCBtn')
-        .addEventListener('click', () => insertPageToc(2, 'fr'));
-    document.getElementById('enPageToCH3Btn')
-        .addEventListener('click', () => insertPageToc(3, 'en'));
-    document.getElementById('frPageToCH3Btn')
-        .addEventListener('click', () => insertPageToc(3, 'fr'));
+    .addEventListener('click', () => showTocIdModal(insertPageToc, 2, 'en'));
+document.getElementById('frPageToCBtn')
+    .addEventListener('click', () => showTocIdModal(insertPageToc, 2, 'fr'));
+document.getElementById('enPageToCH3Btn')
+    .addEventListener('click', () => showTocIdModal(insertPageToc, 3, 'en'));
+document.getElementById('frPageToCH3Btn')
+    .addEventListener('click', () => showTocIdModal(insertPageToc, 3, 'fr'));
+
+// Section ToC Buttons
+document.getElementById('enSecToCBtn')
+    .addEventListener('click', () => showTocIdModal(insertSectionToc, 4, 'en'));
+document.getElementById('enSecToCH4Btn')
+    .addEventListener('click', () => showTocIdModal(insertSectionToc, 4, 'en'));
+document.getElementById('enSecToCH5Btn')
+    .addEventListener('click', () => showTocIdModal(insertSectionToc, 5, 'en'));
+document.getElementById('enSecToCH6Btn')
+    .addEventListener('click', () => showTocIdModal(insertSectionToc, 6, 'en'));
+document.getElementById('frSecToCBtn')
+    .addEventListener('click', () => showTocIdModal(insertSectionToc, 4, 'fr'));
+document.getElementById('frSecToCH4Btn')
+    .addEventListener('click', () => showTocIdModal(insertSectionToc, 4, 'fr'));
+document.getElementById('frSecToCH5Btn')
+    .addEventListener('click', () => showTocIdModal(insertSectionToc, 5, 'fr'));
+document.getElementById('frSecToCH6Btn')
+    .addEventListener('click', () => showTocIdModal(insertSectionToc, 6, 'fr'));
 
 
     function insertSectionToc(maxLevel, lang) {
