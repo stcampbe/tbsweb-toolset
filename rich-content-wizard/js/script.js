@@ -5692,9 +5692,16 @@ document.addEventListener('DOMContentLoaded', function() {
 function showTocIdModal(tocFunction, maxLevel, lang) {
     const html = monacoEditorInstance.getValue();
     const parser = new DOMParser().parseFromString(html, 'text/html');
+
+    // --- Fix: Only check headings up to the specified maxLevel ---
+    let headingSelector = 'h1';
+    for (let i = 2; i <= maxLevel; i++) {
+        headingSelector += `, h${i}`;
+    }
     
-    // Check h1-h6 for IDs, excluding the fixed page title ID 'wb-cont'
-    const headings = parser.body.querySelectorAll('h1, h2, h3, h4, h5, h6');
+    // Check relevant headings for IDs, excluding the fixed page title ID 'wb-cont'
+    const headings = parser.body.querySelectorAll(headingSelector);
+    // ---------------------------------------------------------------
 
     let missingIdCount = 0;
     headings.forEach(h => {
@@ -5710,30 +5717,133 @@ function showTocIdModal(tocFunction, maxLevel, lang) {
     }
     
     // --- Helper function for "Auto-set heading ID's" ---
-    function applySequentialHeadingIds(htmlString) {
-        const parser = new DOMParser().parseFromString(htmlString, 'text/html');
-        const doc = parser.body;
-        // Collect all existing IDs to ensure uniqueness
-        const existingIds = new Set();
-        parser.querySelectorAll('[id]').forEach(el => existingIds.add(el.id));
-        
-        const headings = doc.querySelectorAll('h1, h2, h3, h4, h5, h6');
-        let hCounter = 0; // Counter for the sequential ID
+    function applySequentialHeadingIds(htmlString, maxLevel) { // Accept maxLevel
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlString, 'text/html');
+    const body = doc.body;
 
-        headings.forEach(heading => {
-            if (!heading.id || heading.id.trim() === '' || heading.id === 'wb-cont') {
-                let newId = '';
-                do {
-                    hCounter++;
-                    newId = `toc${hCounter}`; // Apply toc# ID scheme
-                } while (existingIds.has(newId));
+    const idChangeMap = {};
 
-                heading.setAttribute('id', newId);
-                existingIds.add(newId);
-            }
-        });
-        return doc.innerHTML;
+    function toAlpha(num) {
+        let s = '';
+        while (num > 0) {
+            let t = (num - 1) % 26;
+            s = String.fromCharCode(65 + t) + s;
+            num = Math.floor((num - t) / 26);
+        }
+        return s || 'A';
     }
+
+    function getLetterFromAppendixText(text) {
+        const match = text.match(/^(?:Appendix|Annexe)\s*([A-Z])?/i);
+        return (match && match[1]) ? match[1].toUpperCase() : null;
+    }
+
+    const existingIds = new Set();
+    doc.querySelectorAll('[id]').forEach(el => existingIds.add(el.id));
+
+    let h2_num_counter = 0;
+    let h2_general_alpha_counter = 0;
+    let h2_appendix_alpha_counter = 0;
+    let sub_num_counters = new Map();
+    let sub_appendix_alpha_counters = new Map();
+
+    const lastSeenHeadingIds = { 1: '', 2: '', 3: '', 4: '', 5: '', 6: '' };
+
+    let hasAnyNumberedH2 = Array.from(body.querySelectorAll('h2')).some(h => h.textContent.trim().match(/^\s*(\d+)(?:\.|\s|\)|\-)?/));
+    
+    // Iterate over all headings to correctly track parent IDs for nesting
+    doc.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach(heading => {
+        const level = parseInt(heading.tagName.substring(1), 10);
+        const text = heading.textContent.trim();
+        const oldId = heading.id;
+        let newId = oldId;
+
+        if (level === 2) {
+            const lowerCaseText = text.toLowerCase();
+            if (oldId === 'toc' || lowerCaseText === 'on this page' || lowerCaseText === 'sur cette page') {
+                heading.setAttribute('id', 'toc');
+                lastSeenHeadingIds[level] = 'toc';
+                for (let resetLevel = level + 1; resetLevel <= 6; resetLevel++) {
+                    lastSeenHeadingIds[resetLevel] = '';
+                }
+                return;
+            }
+        }
+
+        const ignoredParents = ['aside', 'caption', 'figure', 'figcaption', 'table'];
+        if (heading.closest(ignoredParents.join(','))) {
+            if (oldId) lastSeenHeadingIds[level] = oldId;
+            return;
+        }
+
+        if (level === 1) {
+            if (oldId) lastSeenHeadingIds[level] = oldId;
+            return;
+        }
+
+        let id_segment = '';
+        const isNumericHeading = text.match(/^\s*(\d+)(?:\.|\s|\)|\-)?/);
+        const isAppendixHeading = text.match(/^(?:Appendix|Annexe)/i);
+
+        if (level === 2) {
+            if (isAppendixHeading) {
+                const letter = getLetterFromAppendixText(text) || toAlpha(++h2_appendix_alpha_counter);
+                id_segment = `app${letter}`;
+            } else if (hasAnyNumberedH2) {
+                id_segment = isNumericHeading ? `toc${++h2_num_counter}` : `toc${toAlpha(++h2_general_alpha_counter)}`;
+            } else {
+                id_segment = `toc${++h2_num_counter}`;
+            }
+            newId = id_segment;
+
+        } else {
+            const parent_id = lastSeenHeadingIds[level - 1];
+            if (!parent_id) {
+                 // Can't create a child ID without a parent ID, but still need to reset deeper levels
+                 lastSeenHeadingIds[level] = ''; // Ensure this level doesn't act as a parent
+                 for (let resetLevel = level + 1; resetLevel <= 6; resetLevel++) {
+                     lastSeenHeadingIds[resetLevel] = '';
+                 }
+                return;
+            }
+            if (isAppendixHeading) {
+                const currentAppCount = (sub_appendix_alpha_counters.get(parent_id) || 0) + 1;
+                sub_appendix_alpha_counters.set(parent_id, currentAppCount);
+                id_segment = `app${getLetterFromAppendixText(text) || toAlpha(currentAppCount)}`;
+            } else {
+                const currentNumCount = (sub_num_counters.get(parent_id) || 0) + 1;
+                sub_num_counters.set(parent_id, currentNumCount);
+                id_segment = String(currentNumCount);
+            }
+            newId = `${parent_id}-${id_segment}`;
+        }
+
+        lastSeenHeadingIds[level] = newId;
+
+        for (let resetLevel = level + 1; resetLevel <= 6; resetLevel++) {
+            lastSeenHeadingIds[resetLevel] = '';
+        }
+        
+        // *** FIX: Only apply the new ID if the heading is within the maxLevel ***
+        if (level <= maxLevel) {
+            if (oldId && oldId !== newId) {
+                idChangeMap[oldId] = newId;
+            }
+            heading.setAttribute('id', newId);
+            existingIds.add(newId);
+        }
+    });
+
+    doc.querySelectorAll('a[href^="#"]').forEach(link => {
+        const currentAnchor = link.getAttribute('href').substring(1);
+        if (idChangeMap[currentAnchor]) {
+            link.setAttribute('href', `#${idChangeMap[currentAnchor]}`);
+        }
+    });
+
+    return body.innerHTML;
+}
     // ---------------------------------------------------
 
     const modalContentHtml = `
@@ -5770,7 +5880,7 @@ function showTocIdModal(tocFunction, maxLevel, lang) {
         closeModal();
         
         let htmlContent = monacoEditorInstance.getValue();
-        htmlContent = applySequentialHeadingIds(htmlContent);
+        htmlContent = applySequentialHeadingIds(htmlContent, maxLevel);
         monacoEditorInstance.setValue(htmlContent);
 
         // Run the original ToC function on the now-ID'd content
@@ -5785,16 +5895,9 @@ function showTocIdModal(tocFunction, maxLevel, lang) {
         const html = monacoEditorInstance.getValue();
         const doc = new DOMParser()
             .parseFromString(html, 'text/html');
-        const existingIds = new Set();
-        doc.querySelectorAll('[id]')
-            .forEach(el => existingIds.add(el.id));
 
-        doc.querySelectorAll('h1, h2, h3, h4, h5, h6')
-            .forEach(heading => {
-                if (!heading.id) {
-                    heading.id = generateUniqueId(heading.textContent || `heading-${heading.tagName.toLowerCase()}`, existingIds);
-                }
-            });
+        // --- Fix: Removed proactive ID generation ---
+        // ID generation is now handled by the modal or as a fallback below.
 
         let pageTocSectionClass = '';
         let pageTocH2Class = '';
@@ -5856,10 +5959,24 @@ function showTocIdModal(tocFunction, maxLevel, lang) {
         }];
         let currentListDomElement = rootUl;
 
+        // --- Fix: Add fallback ID generation (for "Generate from text" option) ---
+        const existingIds = new Set(Array.from(doc.querySelectorAll('[id]')).map(el => el.id));
+        // -------------------------------------------------------------------
+
         relevantHeadings.forEach(h => {
             const hLevel = parseInt(h.tagName.substring(1), 10);
             const txt = h.innerHTML.trim();
-            const id = h.id;
+            
+            // --- Fix: Fallback ID logic ---
+            let id = h.id; // Get the ID
+            if (!id || id.trim() === '') {
+                // This is the fallback logic for "Generate from heading text"
+                id = generateUniqueId(h.textContent || `heading-${h.tagName.toLowerCase()}`, existingIds);
+                h.id = id; // Set it in the doc for this pass
+                existingIds.add(id); // Add to set to prevent future collisions
+            }
+            // -----------------------------
+            
             const liClass = pageTocLiClassMap.get(id) || '';
             const aClass = pageTocALinkClassMap.get(id) || '';
 
@@ -5949,16 +6066,9 @@ document.getElementById('frSecToCH6Btn')
         const html = monacoEditorInstance.getValue();
         const doc = new DOMParser()
             .parseFromString(html, 'text/html');
-        const existingIds = new Set();
-        doc.querySelectorAll('[id]')
-            .forEach(el => existingIds.add(el.id));
-
-        doc.querySelectorAll('h2, h3, h4, h5, h6')
-            .forEach(heading => {
-                if (!heading.id) {
-                    heading.id = generateUniqueId(heading.textContent || `heading-${heading.tagName.toLowerCase()}`, existingIds);
-                }
-            });
+        
+        // --- Fix: Removed proactive ID generation ---
+        // ID generation is now handled by the modal or as a fallback below.
 
         const liClassMap = new Map();
         const aClassMap = new Map();
@@ -5978,6 +6088,11 @@ document.getElementById('frSecToCH6Btn')
 
         Array.from(doc.querySelectorAll('h2'))
             .forEach(h2 => {
+                
+                // --- Fix: Add fallback ID collector (for "Generate from text" option) ---
+                const existingIds = new Set(Array.from(doc.querySelectorAll('[id]')).map(el => el.id));
+                // -------------------------------------------------------------------
+
                 const items = [];
                 let currentElement = h2.nextElementSibling;
                 while (currentElement && !['h1', 'h2'].includes(currentElement.tagName.toLowerCase())) {
@@ -5985,6 +6100,15 @@ document.getElementById('frSecToCH6Btn')
                         .forEach(subHeading => {
                             const subLevel = parseInt(subHeading.tagName.substring(1), 10);
                             if (subLevel <= maxLevel) {
+                                
+                                // --- Fix: Fallback ID logic ---
+                                if (!subHeading.id || subHeading.id.trim() === '') {
+                                    // This is the fallback logic for "Generate from heading text"
+                                    subHeading.id = generateUniqueId(subHeading.textContent || `heading-${subHeading.tagName.toLowerCase()}`, existingIds);
+                                    existingIds.add(subHeading.id); // Add to set
+                                }
+                                // -----------------------------
+                                
                                 items.push(subHeading);
                             }
                         });
