@@ -848,7 +848,54 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         return doc.body.innerHTML;
     }
+	
+	function unwrapStrongInHeadings(htmlString) {
+		const parser = new DOMParser();
+		const doc = parser.parseFromString(htmlString, 'text/html');
 
+		// Select all <strong> elements that are direct or indirect descendants of h1-h6 tags
+		const strongElements = Array.from(doc.body.querySelectorAll('h1 strong, h2 strong, h3 strong, h4 strong, h5 strong, h6 strong'));
+
+		strongElements.forEach(strong => {
+			const parent = strong.parentNode;
+			if (parent) {
+				// Move all children of <strong> directly under its parent (the heading tag)
+				while (strong.firstChild) {
+					parent.insertBefore(strong.firstChild, strong);
+				}
+				// Remove the now-empty <strong> tag
+				parent.removeChild(strong);
+			}
+		});
+
+		return doc.body.innerHTML;
+	}
+		
+	function applyCleanListTypes(htmlString) {
+		const parser = new DOMParser();
+		const doc = parser.parseFromString(htmlString, 'text/html');
+
+		// Select all ul and ol elements
+		const listElements = doc.querySelectorAll('ul, ol');
+
+		listElements.forEach(list => {
+			if (list.hasAttribute('type')) {
+				const tagName = list.tagName.toLowerCase();
+				const typeValue = list.getAttribute('type').toLowerCase();
+				
+				// Remove type attribute from OL for *any* type
+				if (tagName === 'ol') {
+					list.removeAttribute('type');
+				} 
+				// Retain original logic for UL (removing specific unwanted types)
+				else if (tagName === 'ul' && ['disc', 'circle', 'square'].includes(typeValue)) {
+					list.removeAttribute('type');
+				}
+			}
+		});
+
+		return doc.body.innerHTML;
+	}
 
     function removeEmptyParagraphsOutsideTablesAndLists(htmlString) {
         const parser = new DOMParser();
@@ -2456,6 +2503,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         console.log("Toggle Editor View triggered. Current view:", currentView);
+		
         if (currentView === 'richtext') {
             if (default_ifr.contentWindow && default_ifr.contentWindow.getRichEditorContent) {
                 richTextContent = default_ifr.contentWindow.getRichEditorContent();
@@ -2529,6 +2577,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 processedContent = applyCleanMsoCode(processedContent);
                 processedContent = applyAutoSpacing(processedContent);
             }
+			
+			processedContent = unwrapStrongInHeadings(processedContent);
 
             htmlOutputContent = processedContent;
             if (monacoEditorInstance) {
@@ -4874,7 +4924,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             formattedContent = restoreDataAttributes(formattedContent);
             formattedContent = convertAllEntitiesToNumeric(formattedContent);
-
+			formattedContent = applyCleanListTypes(formattedContent);
+			formattedContent = doAutoEncode(formattedContent);
             monacoEditorInstance.setValue(formattedContent);
             applyEntityHighlighting();
 
@@ -4994,14 +5045,11 @@ document.addEventListener('DOMContentLoaded', function() {
             currentContent = protectDataAttributes(currentContent);
             currentContent = unwrapSingleCellTables(currentContent);
             currentContent = applyCleanLists(currentContent);
-            console.log("Clean MSO Lists applied by Clean MSO button.");
+			currentContent = applyCleanListTypes(currentContent);
             currentContent = applyCleanTablesBasic(currentContent);
-            console.log("Clean MSO Tables applied by Clean MSO button.");
-
             currentContent = applyCleanMsoCode(currentContent);
-            console.log("Clean MSO Code (including IMGs) applied by Clean MSO button.");
             currentContent = applyAutoSpacing(currentContent);
-            console.log("Clean Spaces applied by Clean MSO button.");
+            console.log("Cleaned!");
             currentContent = restoreDataAttributes(currentContent);
             currentContent = convertAllEntitiesToNumeric(currentContent);
             monacoEditorInstance.setValue(currentContent);
@@ -6067,9 +6115,6 @@ document.getElementById('frSecToCH6Btn')
         const doc = new DOMParser()
             .parseFromString(html, 'text/html');
         
-        // --- Fix: Removed proactive ID generation ---
-        // ID generation is now handled by the modal or as a fallback below.
-
         const liClassMap = new Map();
         const aClassMap = new Map();
         const rootListTypeMap = new Map();
