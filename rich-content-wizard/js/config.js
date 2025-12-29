@@ -289,7 +289,7 @@ const APP_CONFIG = {
             'provisional', 'radio', 'relative', 'row', 'show', 'simple',
             'small', 'sr-only', 'static', 'sticky', 'success', 'tab-content', 'table',
             'tgl-tab', 'thumbnail', 'tooltip', 'top-0', 'visible', 'warning', 'well',
-            'zoom-in',
+            'zoom-in', "twitter", "linkedin", "facebook", "instagram",
 
             // Custom classes (exact matches)
 			// IMPORTANT: Add any classes if a custom CSS is required, otherwise the cleaning operation will remove it.
@@ -587,3 +587,4 @@ window.initializeEditor = function() {
     }
 	
 };
+
