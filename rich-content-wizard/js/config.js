@@ -289,7 +289,7 @@ const APP_CONFIG = {
             'provisional', 'radio', 'relative', 'row', 'show', 'simple',
             'small', 'sr-only', 'static', 'sticky', 'success', 'tab-content', 'table',
             'tgl-tab', 'thumbnail', 'tooltip', 'top-0', 'visible', 'warning', 'well',
-            'zoom-in', "twitter", "linkedin", "facebook", "instagram",
+            'zoom-in', 'twitter', 'linkedin', 'facebook', 'instagram',
 
             // Custom classes (exact matches)
 			// IMPORTANT: Add any classes if a custom CSS is required, otherwise the cleaning operation will remove it.
@@ -297,7 +297,7 @@ const APP_CONFIG = {
         ]),
         prefixes: [
             '--wb-', 'abbr-', 'alert-', 'bg-', 'brdr-', 'btn-', 'carousel-', 'checkbox-', 
-            'col-', 'container_', 'datepicker-', 'details-', 'dl-', 'dropdown-', 'embed-',
+            'col-', 'container_', 'cust-', 'datepicker-', 'details-', 'dl-', 'dropdown-', 'embed-',
             'feed-', 'figure-', 'flex-', 'fn-', 'fnt-', 'font-', 'form-', 'gc-', 'grid_',
             'h-', 'has-', 'hidden-', 'icon-', 'img-', 'inline-', 'input-', 'items-',
             'justify-', 'label-', 'left-', 'list-', 'lst-', 'm-', 'mb-',
@@ -587,4 +587,5 @@ window.initializeEditor = function() {
     }
 	
 };
+
 
