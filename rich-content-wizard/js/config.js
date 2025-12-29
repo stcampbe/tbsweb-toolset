@@ -301,8 +301,8 @@ const APP_CONFIG = {
             'feed-', 'figure-', 'flex-', 'fn-', 'fnt-', 'font-', 'form-', 'gc-', 'grid_',
             'h-', 'has-', 'hidden-', 'icon-', 'img-', 'inline-', 'input-', 'items-',
             'justify-', 'label-', 'left-', 'list-', 'lst-', 'm-', 'mb-',
-            'media-', 'ml-', 'modal-', 'mr-', 'mrgn-', 'mt-', 'mx-', 'my-', 'nav-',
-            'navbar-', 'nojs-', 'opacity-', 'p-', 'pagination-', 'panel-', 'pb-',
+            'media-', 'mfp-', 'ml-', 'modal-', 'mr-', 'mrgn-', 'mt-', 'mx-', 'my-', 'nav-',
+            'navbar-', 'nojs-', 'opacity-', 'overlay-', 'p-', 'pagination-', 'panel-', 'pb-',
             'pddng-', 'pl-', 'pr-', 'prefix_', 'progress-', 'pt-', 'pull-', 'push-',
             'px-', 'py-', 'radio-', 'right-', 'rounded', 'shadow', 'space-', 'suffix_', 'table-',
             'text-', 'tooltip-', 'visible-', 'w-', 'wb-', 'well-', 'wet-', 'z-',
@@ -587,5 +587,6 @@ window.initializeEditor = function() {
     }
 	
 };
+
 
 
