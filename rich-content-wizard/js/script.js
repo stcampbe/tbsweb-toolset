@@ -730,102 +730,140 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const elementsToCheckForEmptiness = Array.from(finalBody.querySelectorAll('p, ul, li, div, span, strong, em, u, b, i, section, article, code, h1, h2, h3, h4, h5, h6'));
 
-        for (let i = elementsToCheckForEmptiness.length - 1; i >= 0; i--) {
-            const element = elementsToCheckForEmptiness[i];
-            const tagName = element.tagName.toLowerCase();
-            const trimmedContent = element.innerHTML.trim();
-            const containsOnlyNBSP = (trimmedContent === '&#160;' || trimmedContent === '&nbsp;' || trimmedContent === '\u00A0');
-            const containsOnlySpace = (trimmedContent === ' ');
+for (let i = elementsToCheckForEmptiness.length - 1; i >= 0; i--) {
+    const element = elementsToCheckForEmptiness[i];
+    const tagName = element.tagName.toLowerCase();
+    const trimmedContent = element.innerHTML.trim();
+    const containsOnlyNBSP = (trimmedContent === '&#160;' || trimmedContent === '&nbsp;' || trimmedContent === '\u00A0');
+    const containsOnlySpace = (trimmedContent === ' ');
 
-            if (tagName === 'p') {
-                const isInsideTable = element.closest('table');
-                if (!isInsideTable && (trimmedContent === '' || containsOnlyNBSP)) {
-                    if (element.parentNode) {
-                        element.parentNode.removeChild(element);
-                    }
-                } else if (!isInsideTable && containsOnlySpace) {
-                    if (element.parentNode) {
-                        element.parentNode.replaceChild(doc.createTextNode(' '), element);
-                    }
+    if (tagName === 'li') {
+        const hasOnlyNestedList = element.children.length === 1 && (element.children[0].tagName === 'UL' || element.children[0].tagName === 'OL');
+        const isEffectivelyEmpty = trimmedContent === '' || containsOnlyNBSP || containsOnlySpace;
+
+        // ONLY add/retain NBSP if it's actually empty OR contains only a sub-list
+        if (isEffectivelyEmpty || hasOnlyNestedList) {
+            if (hasOnlyNestedList) {
+                // If it has a nested list, only add NBSP if there's no other text/content
+                // Using textContent check ensures we don't overwrite if text is present
+                const textWithoutNested = element.textContent.replace(element.children[0].textContent, '').trim();
+                if (textWithoutNested === '') {
+                    element.innerHTML = '&#160;' + element.children[0].outerHTML;
+                    element.setAttribute('data-keep-spacer', 'true');
                 }
             } else {
-                if (['div', 'span', 'section'].includes(tagName) && element.attributes.length > 0) {
-                    continue;
-                }
-                if (element.textContent === ' ' && ['strong', 'em', 'u', 'b', 'i'].includes(tagName)) {
-                    element.parentNode.replaceChild(
-                        doc.createTextNode(' '), element
-                    );
-                    continue;
-                }
-                if (trimmedContent === '' || containsOnlyNBSP) {
-                    if (element.parentNode) {
-                        element.parentNode.removeChild(element);
-                    }
-                } else if (containsOnlySpace) {
-                    if (element.parentNode) {
-                        element.parentNode.replaceChild(doc.createTextNode(' '), element);
-                    }
-                }
+                // Completely empty LI
+                element.innerHTML = '&#160;';
+                element.setAttribute('data-keep-spacer', 'true');
+            }
+            continue; 
+        }
+    } else if (tagName === 'p') {
+        const isInsideTable = element.closest('table');
+        if (!isInsideTable && (trimmedContent === '' || containsOnlyNBSP)) {
+            if (element.parentNode) {
+                element.parentNode.removeChild(element);
+            }
+        } else if (!isInsideTable && containsOnlySpace) {
+            if (element.parentNode) {
+                element.parentNode.replaceChild(doc.createTextNode(' '), element);
             }
         }
+    } else {
+        // ... existing logic for other tags ...
+        if (['div', 'span', 'section'].includes(tagName) && element.attributes.length > 0) {
+            continue;
+        }
+        if (element.textContent === ' ' && ['strong', 'em', 'u', 'b', 'i'].includes(tagName)) {
+            element.parentNode.replaceChild(doc.createTextNode(' '), element);
+            continue;
+        }
+        if (trimmedContent === '' || containsOnlyNBSP) {
+            if (element.parentNode) {
+                element.parentNode.removeChild(element);
+            }
+        } else if (containsOnlySpace) {
+            if (element.parentNode) {
+                element.parentNode.replaceChild(doc.createTextNode(' '), element);
+            }
+        }
+    }
+}
 
         const elementsToTrim = finalBody.querySelectorAll('p, h1, h2, h3, h4, h5, h6, li');
-        elementsToTrim.forEach(element => {
-            let currentHtml = element.innerHTML;
+elementsToTrim.forEach(element => {
+    // SKIP trimming if this is a special empty LI we just processed
+    if (element.hasAttribute('data-keep-spacer')) {
+        element.removeAttribute('data-keep-spacer');
+        return;
+    }
 
-            currentHtml = currentHtml.replace(/^(?:&nbsp;|\s|&#160;|\u00A0)+/, '');
-            currentHtml = currentHtml.replace(/(?:&nbsp;|\s|&#160;|\u00A0)+$/, '');
-
-            element.innerHTML = currentHtml;
-        });
+    let currentHtml = element.innerHTML;
+    currentHtml = currentHtml.replace(/^(?:&nbsp;|\s|&#160;|\u00A0)+/, '');
+    currentHtml = currentHtml.replace(/(?:&nbsp;|\s|&#160;|\u00A0)+$/, '');
+    element.innerHTML = currentHtml;
+});
 
         return finalBody.innerHTML;
     }
 
     function applyCleanSingleBreaks(htmlString) {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(htmlString, 'text/html');
-        const brElements = Array.from(doc.querySelectorAll('br'));
-
-        for (let i = brElements.length - 1; i >= 0; i--) {
-            const br = brElements[i];
-
-            if (!br || !br.parentNode) {
-                continue;
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlString, 'text/html');
+    
+    // We target LI elements specifically to handle internal paragraphing
+    const listItems = Array.from(doc.querySelectorAll('li'));
+    listItems.forEach(li => {
+        if (li.querySelector('br')) {
+            // Convert the LI content into paragraphs if it contains BRs
+            // This turns <li>A<br>B</li> into <li><p>A</p><p>B</p></li>
+            let content = li.innerHTML;
+            let parts = content.split(/<br\s*\/?>/i);
+            
+            // Only convert to paragraphs if there is actual content to split
+            if (parts.length > 1) {
+                li.innerHTML = parts
+                    .map(part => part.trim())
+                    .filter(part => part.length > 0 || part === '&#160;')
+                    .map(part => `<p>${part}</p>`)
+                    .join('');
             }
+        }
+    });
 
-            let currentParent = br.parentNode;
-            let isInsideTable = false;
-            while (currentParent && currentParent !== doc.body) {
-                if (currentParent.tagName && currentParent.tagName.toLowerCase() === 'table') {
-                    isInsideTable = true;
-                    break;
-                }
-                currentParent = currentParent.parentNode;
+    // Handle remaining BRs (those not inside LIs) using existing logic or standard removal
+    const remainingBrs = Array.from(doc.querySelectorAll('br'));
+    for (let i = remainingBrs.length - 1; i >= 0; i--) {
+        const br = remainingBrs[i];
+        if (!br || !br.parentNode) continue;
+
+        let currentParent = br.parentNode;
+        let isInsideTable = false;
+        while (currentParent && currentParent !== doc.body) {
+            if (currentParent.tagName && currentParent.tagName.toLowerCase() === 'table') {
+                isInsideTable = true;
+                break;
             }
-
-            if (isInsideTable) {
-                continue;
-            }
-
-            const newParagraph = doc.createElement('p');
-
-            while (br.nextSibling) {
-                newParagraph.appendChild(br.nextSibling);
-            }
-
-            if (br.parentNode.parentNode) {
-                br.parentNode.parentNode.insertBefore(newParagraph, br.parentNode.nextSibling);
-            } else {
-                doc.body.appendChild(newParagraph);
-            }
-
-            br.parentNode.removeChild(br);
+            currentParent = currentParent.parentNode;
         }
 
-        return doc.body.innerHTML;
+        if (isInsideTable) continue;
+
+        // Existing logic for BRs outside of LIs
+        const newParagraph = doc.createElement('p');
+        while (br.nextSibling) {
+            newParagraph.appendChild(br.nextSibling);
+        }
+        if (br.parentNode.parentNode) {
+            br.parentNode.parentNode.insertBefore(newParagraph, br.parentNode.nextSibling);
+        } else {
+            doc.body.appendChild(newParagraph);
+        }
+        br.parentNode.removeChild(br);
     }
+
+    return doc.body.innerHTML;
+}
 
     function applyCleanPTagsInTables(htmlString) {
         const parser = new DOMParser();
@@ -1040,6 +1078,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlString, 'text/html');
         const body = doc.body;
+
         doc.querySelectorAll('h1 [style*="mso-element: comment-list"], h1 [style*="mso-element: endnote-list"], ' +
                 'h2 [style*="mso-element: comment-list"], h2 [style*="mso-element: endnote-list"], ' +
                 'h3 [style*="mso-element: comment-list"], h3 [style*="mso-element: endnote-list"], ' +
@@ -1063,14 +1102,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     link.parentNode.removeChild(link);
                 }
             });
+
         doc.querySelectorAll(
                 'h1[style*="mso-list"],h2[style*="mso-list"],h3[style*="mso-list"],' +
                 'h4[style*="mso-list"],h5[style*="mso-list"],h6[style*="mso-list"]'
             )
             .forEach(h => {
                 const tag = h.tagName.toLowerCase();
-                const text = h.textContent.trim()
-                    .replace(/\s+/g, ' ');
+                const text = h.textContent.trim().replace(/\s+/g, ' ');
                 const cleanH = doc.createElement(tag);
                 cleanH.textContent = text;
                 h.replaceWith(cleanH);
@@ -1080,6 +1119,17 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!styleAttr) return null;
             const match = styleAttr.match(/level(\d+)/);
             return match ? parseInt(match[1], 10) : null;
+        }
+
+        function getLevelFromClass(classList) {
+            const msoClass = classList.find(cls => cls.startsWith('MsoList'));
+            if (!msoClass) return null;
+
+            const match = msoClass.match(/MsoList.*?(\d+)$/);
+            if (match) {
+                return parseInt(match[1], 10);
+            }
+            return 1;
         }
 
         function extractAllowedContentForLists(sourceNode) {
@@ -1137,20 +1187,28 @@ document.addEventListener('DOMContentLoaded', function() {
             const msoListIgnoreSpan = element.querySelector('span[style*="mso-list: Ignore"]');
             if (msoListIgnoreSpan) {
                 const bulletText = msoListIgnoreSpan.textContent.trim();
-                if (/^\d+(\.\d+)+[\.\)]*$/.test(bulletText)) {
-                    return 'complex-bullet';
+
+                if (/^\d+(\.\d+)+[\.\)]*$/.test(bulletText)) return 'complex-bullet';
+                if (/^[A-Za-z](\.\d+)+[\.\)]*$/.test(bulletText)) return 'complex-bullet';
+
+                if (/^\d+[\.\)]$/.test(bulletText)) return 'ordered-numeric';
+
+                if (/^[ivxlcdm]+[\.\)]$/i.test(bulletText)) {
+                    const romanText = bulletText.replace(/[\.\)]$/, '');
+                    if (isValidRomanNumeral(romanText.toLowerCase())) {
+                        return romanText === romanText.toLowerCase() ? 'ordered-roman-lower' : 'ordered-roman-upper';
+                    }
                 }
-                if (/^[A-Za-z](\.\d+)+[\.\)]*$/.test(bulletText)) {
-                    return 'complex-bullet';
-                }
-                if (/^\d+[\.\)]$/.test(bulletText)) {
-                    return 'ordered-numeric';
-                }
-                if (/^[a-z][\.\)]$/.test(bulletText)) {
-                    return 'ordered-alpha';
-                }
+
+                if (/^[a-z][\.\)]$/.test(bulletText)) return 'ordered-alpha-lower';
+                if (/^[A-Z][\.\)]$/.test(bulletText)) return 'ordered-alpha-upper';
             }
             return 'unordered';
+        }
+
+        function isValidRomanNumeral(str) {
+            const romanPattern = /^(i{1,3}|iv|v|vi{0,3}|ix|x)$/i;
+            return romanPattern.test(str);
         }
 
         const targetElements = Array.from(body.querySelectorAll('p, h1, h2, h3, h4, h5, h6'));
@@ -1168,20 +1226,23 @@ document.addEventListener('DOMContentLoaded', function() {
             const classList = Array.from(element.classList);
             const styleAttr = element.getAttribute('style') || '';
 
-            const isMsoListParagraphClass = classList.some(cls =>
-                cls === 'MsoListParagraphCxSpFirst' ||
-                cls === 'MsoListParagraphCxSpSpMiddle' ||
-                cls === 'MsoListParagraphCxSpLast' ||
-                cls === 'MsoListParagraph'
-            );
+            // UPDATED: Check for ANY class starting with MsoList
+            const isMsoListParagraphClass = classList.some(cls => cls.startsWith('MsoList'));
 
+            // Allow matching solely by style if the class isn't present
             const matchesNewRule =
                 (['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tagName)) &&
-                (!element.hasAttribute('class') || !element.className.includes('MsoList')) &&
+                (!isMsoListParagraphClass) &&
                 (styleAttr.includes('mso-list'));
 
             if (isMsoListParagraphClass || matchesNewRule) {
-                const level = getLevel(styleAttr);
+                // Try to get level from style first
+                let level = getLevel(styleAttr);
+
+                // UPDATED: If style level is missing, infer from class name (MsoList2 -> 2)
+                if (level === null && isMsoListParagraphClass) {
+                    level = getLevelFromClass(classList);
+                }
 
                 if (level === null) {
                     element.removeAttribute('class');
@@ -1203,9 +1264,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 let newRootListElement;
                 if (listType === 'ordered-numeric') {
                     newRootListElement = doc.createElement('ol');
-                } else if (listType === 'ordered-alpha') {
+                } else if (listType === 'ordered-alpha-lower') {
                     newRootListElement = doc.createElement('ol');
                     newRootListElement.classList.add('lst-lwr-alph');
+                } else if (listType === 'ordered-alpha-upper') {
+                    newRootListElement = doc.createElement('ol');
+                    newRootListElement.classList.add('lst-upr-alph');
+                } else if (listType === 'ordered-roman-lower') {
+                    newRootListElement = doc.createElement('ol');
+                    newRootListElement.classList.add('lst-lwr-rmn');
+                } else if (listType === 'ordered-roman-upper') {
+                    newRootListElement = doc.createElement('ol');
+                    newRootListElement.classList.add('lst-upr-rmn');
                 } else {
                     newRootListElement = doc.createElement('ul');
                 }
@@ -1230,7 +1300,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 element.removeAttribute('class');
                 element.removeAttribute('style');
 
-
                 let nextSibling = element.nextElementSibling;
                 let currentSequenceIndex = i + 1;
 
@@ -1244,23 +1313,28 @@ document.addEventListener('DOMContentLoaded', function() {
                     const nextClassList = Array.from(nextElement.classList);
                     const nextStyleAttr = nextElement.getAttribute('style') || '';
 
-                    const isNextMsoListParagraphClass = nextClassList.some(cls =>
-                        cls === 'MsoListParagraphCxSpFirst' ||
-                        cls === 'MsoListParagraphCxSpMiddle' ||
-                        cls === 'MsoListParagraphCxSpLast' ||
-                        cls === 'MsoListParagraph'
-                    );
+                    // UPDATED: Check next element for ANY MsoList class
+                    const isNextMsoListParagraphClass = nextClassList.some(cls => cls.startsWith('MsoList'));
+
                     const nextMatchesNewRule =
                         (['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(nextTagName)) &&
-                        (!nextElement.hasAttribute('class') || !nextElement.className.includes('MsoList')) &&
+                        (!isNextMsoListParagraphClass) &&
                         (nextStyleAttr.includes('mso-list'));
 
                     if (isNextMsoListParagraphClass || nextMatchesNewRule) {
                         let nextLevel = getLevel(nextStyleAttr);
+
+                        // UPDATED: If style level is missing, infer from class name
+                        if (nextLevel === null && isNextMsoListParagraphClass) {
+                            nextLevel = getLevelFromClass(nextClassList);
+                        }
+
+                        // Use current depth if we still can't find a level but it looks like a list item
                         if (nextLevel === null && isNextMsoListParagraphClass) {
                             const currentDepth = currentListStack[currentListStack.length - 1].level;
                             nextLevel = currentDepth;
                         }
+
                         if (nextLevel === null) {
                             nextElement.removeAttribute('class');
                             nextElement.removeAttribute('style');
@@ -1284,9 +1358,18 @@ document.addEventListener('DOMContentLoaded', function() {
                             let nestedListElement;
                             if (nextListType === 'ordered-numeric') {
                                 nestedListElement = doc.createElement('ol');
-                            } else if (nextListType === 'ordered-alpha') {
+                            } else if (nextListType === 'ordered-alpha-lower') {
                                 nestedListElement = doc.createElement('ol');
                                 nestedListElement.classList.add('lst-lwr-alph');
+                            } else if (nextListType === 'ordered-alpha-upper') {
+                                nestedListElement = doc.createElement('ol');
+                                nestedListElement.classList.add('lst-upr-alph');
+                            } else if (nextListType === 'ordered-roman-lower') {
+                                nestedListElement = doc.createElement('ol');
+                                nestedListElement.classList.add('lst-lwr-rmn');
+                            } else if (nextListType === 'ordered-roman-upper') {
+                                nestedListElement = doc.createElement('ol');
+                                nestedListElement.classList.add('lst-upr-rmn');
                             } else {
                                 nestedListElement = doc.createElement('ul');
                             }
@@ -1335,9 +1418,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 });
                                 currentParentList = newNestedList;
                             }
-
                         }
-
 
                         const nextLi = doc.createElement('li');
                         let nextListItemContent = extractAllowedContentForLists(nextElement);
@@ -1361,7 +1442,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 i = currentSequenceIndex - 1;
             }
         }
-
+		
         targetElements.forEach(element => {
             if (elementsToReplace.has(element)) {
                 if (element.parentNode) {
@@ -1376,7 +1457,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         return doc.body.innerHTML;
     }
-
+	
     function applyCleanTablesBasic(htmlString) {
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlString, 'text/html');
