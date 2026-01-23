@@ -361,8 +361,7 @@ const APP_CONFIG = {
                             box-sizing: border-box; 
                         }
                         .tox.tox-tinymce {
-
-resize: none; 
+							resize: none; 
                             box-sizing: border-box; 
                         }
                         .tox.tox-tinymce { 
@@ -398,10 +397,11 @@ resize: none;
                         
                         let richTextEditorInstance;
                         let isUpdatingFromCodeMirror = false;
+						
+						// Rich editor styling on top of custom css linked file. MUST BE KEPT ON ONE SINGLE LINE! DO NOT INDENT!
+						const defaultContentStyle = 'body { max-width: 1170px; margin-left: auto; margin-right: auto; padding: 15px; box-sizing: border-box; } h1, .h1 { color: #000000 !important; background-color: #FF6347; padding: 2px 5px; border-radius: 3px;} h2, .h2 { color: #000000 !important; background-color: #FE9900; padding: 2px 5px; border-radius: 3px;} h3, .h3 { color: #000000 !important; background-color: #FFDE59; padding: 2px 5px; border-radius: 3px;} h4, .h4 { color: #000000 !important; background-color: #7DDA58; padding: 2px 5px; border-radius: 3px;} h5, .h5 { color: #000000 !important; background-color: #5DE2E7; padding: 2px 5px; border-radius: 3px;} h6, .h6 { color: #000000 !important; background-color: #E7DDFF; padding: 2px 5px; border-radius: 3px;} section { margin-bottom: 5px; border: #060270 2px dashed;  padding: 7px;} figure { display: block !important; border: #1e81b0 2px solid;  padding: 7px;} div { border: #e28743 2px solid; padding: 7px;} aside { border: #8D6F64 2px solid;  padding: 7px;} details > *:not(summary) { display: block !important; } dl { border: #A270C5 2px solid; padding: 7px; } details { border: #42902C 2px solid !important; padding: 7px; } details summary { border-bottom: 0px !important; cursor: default !important; font-weight: bold; margin-bottom: 5px; color: #333; } time { color: #000000 !important; background-color: #ffd6f9; padding: 2px 5px; border-radius: 3px;} .text-center { text-align: center !important; } .text-right { text-align: right !important; } .text-left { text-align: left !important; } .row { margin: 0px !important; } div[data-is-gcds-wrapper="true"] { border: 2px dotted #4f46e5; padding: 8px; margin: 8px 0; } body.show-table-scopes table{cursor:crosshair}body.show-table-scopes th:not([scope]):not([id]):not([headers]){outline:3px dashed #f44336;background:rgba(244,67,54,0.05)}body.show-table-scopes th:not([scope]):not([id]):not([headers])::before{content:"⚠️ Fix Me";display:block;font-size:9px;color:#d32f2f;font-weight:bold}body.show-table-scopes .is-hovered[scope="col"]{outline:3px solid #2196f3;background:rgba(33,150,243,0.1)}body.show-table-scopes .is-hovered[scope="row"]{outline:3px solid #4caf50;background:rgba(76,175,80,0.1)}body.show-table-scopes .is-related{outline:2px dashed #9c27b0;background:rgba(156,39,176,0.1);color:#000000!important}body.show-table-scopes .is-hovered{color:#000000!important}body.show-table-scopes .is-hovered[id],body.show-table-scopes .is-hovered[headers]{outline:3px solid #9c27b0!important;background:rgba(156,39,176,0.05)}body.show-table-scopes .is-hovered[id]::after{content:"ID: " attr(id);position:absolute;top:-10px;right:0;background:#9c27b0;color:#fff;font-size:9px;padding:2px 4px;border-radius:3px;z-index:20; }';
 
-const defaultContentStyle = 'body { max-width: 1170px; margin-left: auto; margin-right: auto; padding: 15px; box-sizing: border-box; } h1, .h1 { background-color: #FF6347; padding: 2px 5px; border-radius: 3px;} h2, .h2 { background-color: #FE9900; padding: 2px 5px; border-radius: 3px;} h3, .h3 { background-color: #FFDE59; padding: 2px 5px; border-radius: 3px;} h4, .h4 { background-color: #7DDA58; padding: 2px 5px; border-radius: 3px;} h5, .h5 { background-color: #5DE2E7; padding: 2px 5px; border-radius: 3px;} h6, .h6 { background-color: #E7DDFF; padding: 2px 5px; border-radius: 3px;} section { border: #060270 2px dashed; margin: 5px; padding: 5px;} figure { display: block !important; border: #1e81b0 2px solid; margin: 5px; padding: 5px;} div { border: #e28743 2px solid; padding: 5px;} aside { border: #8D6F64 2px solid; margin: 5px; padding: 5px;} details > *:not(summary) { display: block !important; } dl { border: #A270C5 2px solid; margin: 5px; padding: 5px; } details { border: #42902C 2px solid; margin: 5px; padding: 5px; } details summary { cursor: default !important; font-weight: bold; margin-bottom: 5px; color: #333; } time { background-color: #ffd6f9; padding: 2px 5px; border-radius: 3px;} div.well { background-color: #dadada; } .text-center { text-align: center !important; } .text-right { text-align: right !important; } .text-left { text-align: left !important; } div[data-is-gcds-wrapper="true"] { border: 2px dotted #4f46e5; padding: 8px; margin: 8px 0; }';
-
-window.setRichEditorContent = function(content) {
+						window.setRichEditorContent = function(content) {
                             if (richTextEditorInstance && !isUpdatingFromCodeMirror) {
                                 isUpdatingFromCodeMirror = true;
                                 richTextEditorInstance.setContent(content);
@@ -454,7 +454,7 @@ window.setRichEditorContent = function(content) {
                             }
                         }
 
-window.initializeEditor = function() {
+						window.initializeEditor = function() {
                             if (typeof hugerte !== 'undefined') {
                                 console.log("Iframe: Parent commanded initialization. Initializing editor.");
 								const applyListStyle = (editor, listType, styleClass) => {
@@ -487,7 +487,7 @@ window.initializeEditor = function() {
 								};
                                 hugerte.init({
                                     selector: '#richEditor',
-                                    toolbar: 'undo redo styles bold italic alignleft aligncenter alignright | numlist bullist list_number list_lwr_alph list_upr_alph list_lwr_rmn list_upr_rmn list_bullet list_unstyle | link table',
+                                    toolbar: 'undo redo styles bold italic alignleft aligncenter alignright | numlist bullist list_number list_lwr_alph list_upr_alph list_lwr_rmn list_upr_rmn list_bullet list_unstyle | link table | toggle_scopes',
                                     plugins: ['table', 'lists', 'link'],
 									table_resize_bars: false,
 									object_resizing: false,
@@ -522,53 +522,159 @@ window.initializeEditor = function() {
 										});
 										
 										// 1. Default Numbering (#.) -> OL
-    editor.ui.registry.addButton('list_number', {
-        text: '#.',
-        tooltip: 'Default Numbering',
-        onAction: () => applyListStyle(editor, 'ol', null)
-    });
+										editor.ui.registry.addButton('list_number', {
+											text: '#.',
+											tooltip: 'Default Numbering',
+											onAction: () => applyListStyle(editor, 'ol', null)
+										});
 
-    // 2. Lower Alpha (a.) -> OL
-    editor.ui.registry.addButton('list_lwr_alph', {
-        text: 'a.',
-        tooltip: 'Lower Alpha',
-        onAction: () => applyListStyle(editor, 'ol', 'lst-lwr-alph')
-    });
+										// 2. Lower Alpha (a.) -> OL
+										editor.ui.registry.addButton('list_lwr_alph', {
+											text: 'a.',
+											tooltip: 'Lower Alpha',
+											onAction: () => applyListStyle(editor, 'ol', 'lst-lwr-alph')
+										});
 
-    // 3. Upper Alpha (A.) -> OL
-    editor.ui.registry.addButton('list_upr_alph', {
-        text: 'A.',
-        tooltip: 'Upper Alpha',
-        onAction: () => applyListStyle(editor, 'ol', 'lst-upr-alph')
-    });
+										// 3. Upper Alpha (A.) -> OL
+										editor.ui.registry.addButton('list_upr_alph', {
+											text: 'A.',
+											tooltip: 'Upper Alpha',
+											onAction: () => applyListStyle(editor, 'ol', 'lst-upr-alph')
+										});
 
-    // 4. Lower Roman (i.) -> OL
-    editor.ui.registry.addButton('list_lwr_rmn', {
-        text: 'i.',
-        tooltip: 'Lower Roman',
-        onAction: () => applyListStyle(editor, 'ol', 'lst-lwr-rmn')
-    });
+										// 4. Lower Roman (i.) -> OL
+										editor.ui.registry.addButton('list_lwr_rmn', {
+											text: 'i.',
+											tooltip: 'Lower Roman',
+											onAction: () => applyListStyle(editor, 'ol', 'lst-lwr-rmn')
+										});
 
-    // 5. Upper Roman (I.) -> OL
-    editor.ui.registry.addButton('list_upr_rmn', {
-        text: 'I.',
-        tooltip: 'Upper Roman',
-        onAction: () => applyListStyle(editor, 'ol', 'lst-upr-rmn')
-    });
+										// 5. Upper Roman (I.) -> OL
+										editor.ui.registry.addButton('list_upr_rmn', {
+											text: 'I.',
+											tooltip: 'Upper Roman',
+											onAction: () => applyListStyle(editor, 'ol', 'lst-upr-rmn')
+										});
 
-    // 6. Default Bulleting (·) -> UL
-    editor.ui.registry.addButton('list_bullet', {
-        text: '·',
-        tooltip: 'Default Bulleting',
-        onAction: () => applyListStyle(editor, 'ul', null)
-    });
+										// 6. Default Bulleting (·) -> UL
+										editor.ui.registry.addButton('list_bullet', {
+											text: '·',
+											tooltip: 'Default Bulleting',
+											onAction: () => applyListStyle(editor, 'ul', null)
+										});
 
-    // 7. Unstyled (x) -> UL
-    editor.ui.registry.addButton('list_unstyle', {
-        text: 'x',
-        tooltip: 'Unstyled',
-        onAction: () => applyListStyle(editor, 'ul', 'list-unstyled')
-    });
+										// 7. Unstyled (x) -> UL
+										editor.ui.registry.addButton('list_unstyle', {
+											text: 'x',
+											tooltip: 'Unstyled',
+											onAction: () => applyListStyle(editor, 'ul', 'list-unstyled')
+										});
+										editor.ui.registry.addToggleButton('toggle_scopes', {
+    text: 'Scope/ID Check',
+    tooltip: 'Check scope and IDs via HOVER',
+    icon: 'preview', // Uses standard 'eye' icon
+    onAction: function (api) {
+        // Toggle the class on the body
+        editor.dom.toggleClass(editor.getBody(), 'show-table-scopes');
+        // Toggle the visual state of the button
+        api.setActive(!api.isActive());
+    },
+    onSetup: function (api) {
+        // Ensure button state matches reality if editor reloads/changes
+        api.setActive(editor.dom.hasClass(editor.getBody(), 'show-table-scopes'));
+        return function() {};
+    }
+});
+// Hover Listener for Visualizing Relationships
+editor.on('mouseover', function(e) {
+    if (!editor.dom.hasClass(editor.getBody(), 'show-table-scopes')) return;
+
+    const target = editor.dom.getParent(e.target, 'td,th');
+    if (!target) return;
+
+    editor.dom.addClass(target, 'is-hovered');
+    const table = editor.dom.getParent(target, 'table');
+
+    // --- 1. HANDLE ID/HEADERS RELATIONSHIPS ---
+    
+    // If target has 'headers', highlight the source IDs
+    const headers = target.getAttribute('headers');
+    if (headers) {
+        headers.split(' ').forEach(id => {
+            const sourceEl = editor.dom.get(id);
+            if (sourceEl) editor.dom.addClass(sourceEl, 'is-related');
+        });
+    }
+
+    // If target has 'id', highlight cells referencing it
+    const id = target.getAttribute('id');
+    if (id) {
+        const linkedCells = editor.dom.select('td[headers], th[headers]', table);
+        linkedCells.forEach(cell => {
+            if ((cell.getAttribute('headers') || '').split(' ').includes(id)) {
+                editor.dom.addClass(cell, 'is-related');
+            }
+        });
+    }
+
+    // --- 2. HANDLE SCOPE RELATIONSHIPS ---
+
+    const scope = target.getAttribute('scope');
+    const isTh = target.tagName.toLowerCase() === 'th';
+    const cellIndex = target.cellIndex;
+    const parentTr = target.parentNode;
+
+    // A. User hovers a Header (TH) -> Show what it controls
+    if (isTh && scope) {
+        if (scope === 'row') {
+            // Highlight all siblings in this row
+            const siblings = parentTr.cells;
+            for (let i = 0; i < siblings.length; i++) {
+                if (siblings[i] !== target) editor.dom.addClass(siblings[i], 'is-related');
+            }
+        } else if (scope === 'col') {
+            // Highlight all cells in this column index across the table
+            const rows = table.rows;
+            for (let i = 0; i < rows.length; i++) {
+                const cellAtCol = rows[i].cells[cellIndex];
+                if (cellAtCol && cellAtCol !== target) {
+                    editor.dom.addClass(cellAtCol, 'is-related');
+                }
+            }
+        }
+    }
+
+    // B. User hovers a Data Cell (TD) -> Show which headers control it
+    if (!isTh) {
+        // Find ROW Header (look for sibling th with scope="row")
+        const rowSiblings = parentTr.cells;
+        for (let i = 0; i < rowSiblings.length; i++) {
+            const sib = rowSiblings[i];
+            if (sib.tagName === 'TH' && sib.getAttribute('scope') === 'row') {
+                editor.dom.addClass(sib, 'is-related');
+            }
+        }
+
+        // Find COLUMN Header (look for th with scope="col" at same index in any previous row)
+        const rows = table.rows;
+        for (let i = 0; i < rows.length; i++) {
+            const cellAtCol = rows[i].cells[cellIndex];
+            if (cellAtCol && cellAtCol.tagName === 'TH' && cellAtCol.getAttribute('scope') === 'col') {
+                editor.dom.addClass(cellAtCol, 'is-related');
+            }
+        }
+    }
+});
+
+editor.on('mouseout', function(e) {
+    const target = editor.dom.getParent(e.target, 'td,th');
+    if (target) {
+        const hovered = editor.dom.select('.is-hovered');
+        const related = editor.dom.select('.is-related');
+        editor.dom.removeClass(hovered, 'is-hovered');
+        editor.dom.removeClass(related, 'is-related');
+    }
+});
 										
                                     },
                                     init_instance_callback: function(editorInstance) {
@@ -685,4 +791,3 @@ window.initializeEditor = function() {
     }
 	
 };
-
