@@ -193,6 +193,12 @@ const APP_CONFIG = {
                         lineNumber: lineNumber
                     });
                 }
+				if (parentTag && (parentTag.tagName === 'ul' || parentTag.tagName === 'ol') && tagName !== 'li') {
+					errors.push({
+						message: `<strong>Invalid Child:</strong> The &lt;${parentTag.tagName}&gt; tag can only contain &lt;li&gt; elements as direct children. Found &lt;${tagName}&gt;.`,
+						lineNumber: lineNumber
+					});
+				}
 
                 if (this.deprecatedTags.has(tagName)) errors.push({
                     message: `<strong>Deprecated Tag:</strong> The &lt;${tagName}&gt; tag is deprecated.`,
@@ -289,7 +295,7 @@ const APP_CONFIG = {
             'provisional', 'radio', 'relative', 'row', 'show', 'simple',
             'small', 'sr-only', 'static', 'sticky', 'success', 'tab-content', 'table',
             'tgl-tab', 'thumbnail', 'tooltip', 'top-0', 'visible', 'warning', 'well',
-            'zoom-in', 'twitter', 'linkedin', 'facebook', 'instagram',
+            'zoom-in',
 
             // Custom classes (exact matches)
 			// IMPORTANT: Add any classes if a custom CSS is required, otherwise the cleaning operation will remove it.
@@ -297,12 +303,12 @@ const APP_CONFIG = {
         ]),
         prefixes: [
             '--wb-', 'abbr-', 'alert-', 'bg-', 'brdr-', 'btn-', 'carousel-', 'checkbox-', 
-            'col-', 'container_', 'cust-', 'datepicker-', 'details-', 'dl-', 'dropdown-', 'embed-',
+            'col-', 'container_', 'datepicker-', 'details-', 'dl-', 'dropdown-', 'embed-',
             'feed-', 'figure-', 'flex-', 'fn-', 'fnt-', 'font-', 'form-', 'gc-', 'grid_',
             'h-', 'has-', 'hidden-', 'icon-', 'img-', 'inline-', 'input-', 'items-',
             'justify-', 'label-', 'left-', 'list-', 'lst-', 'm-', 'mb-',
-            'media-', 'mfp-', 'ml-', 'modal-', 'mr-', 'mrgn-', 'mt-', 'mx-', 'my-', 'nav-',
-            'navbar-', 'nojs-', 'opacity-', 'overlay-', 'p-', 'pagination-', 'panel-', 'pb-',
+            'media-', 'ml-', 'modal-', 'mr-', 'mrgn-', 'mt-', 'mx-', 'my-', 'nav-',
+            'navbar-', 'nojs-', 'opacity-', 'p-', 'pagination-', 'panel-', 'pb-',
             'pddng-', 'pl-', 'pr-', 'prefix_', 'progress-', 'pt-', 'pull-', 'push-',
             'px-', 'py-', 'radio-', 'right-', 'rounded', 'shadow', 'space-', 'suffix_', 'table-',
             'text-', 'tooltip-', 'visible-', 'w-', 'wb-', 'well-', 'wet-', 'z-',
@@ -451,9 +457,37 @@ window.setRichEditorContent = function(content) {
 window.initializeEditor = function() {
                             if (typeof hugerte !== 'undefined') {
                                 console.log("Iframe: Parent commanded initialization. Initializing editor.");
+								const applyListStyle = (editor, listType, styleClass) => {
+									editor.undoManager.transact(() => {
+										// 1. Determine the command based on the desired list type
+										const command = listType === 'ul' ? 'InsertUnorderedList' : 'InsertOrderedList';
+
+										// 2. Check current selection and convert if necessary
+										const node = editor.selection.getNode();
+										const existingList = editor.dom.getParent(node, 'ul,ol');
+
+										// If not a list, or if the list type doesn't match what we want, switch it
+										if (!existingList || existingList.nodeName.toLowerCase() !== listType) {
+											editor.execCommand(command);
+										}
+
+										// 3. Get the active list element (it should match the listType now)
+										const currentList = editor.dom.getParent(editor.selection.getNode(), listType);
+
+										if (currentList) {
+											// 4. Clean ALL specific custom classes (including list-unstyled)
+											editor.dom.removeClass(currentList, 'lst-lwr-alph lst-upr-alph lst-lwr-rmn lst-upr-rmn list-unstyled');
+											
+											// 5. Apply new class only if one was provided
+											if (styleClass) {
+												editor.dom.addClass(currentList, styleClass);
+											}
+										}
+									});
+								};
                                 hugerte.init({
                                     selector: '#richEditor',
-                                    toolbar: 'undo redo styles bold italic alignleft aligncenter alignright numlist bullist link table',
+                                    toolbar: 'undo redo styles bold italic alignleft aligncenter alignright | numlist bullist list_number list_lwr_alph list_upr_alph list_lwr_rmn list_upr_rmn list_bullet list_unstyle | link table',
                                     plugins: ['table', 'lists', 'link'],
 									table_resize_bars: false,
 									object_resizing: false,
@@ -465,13 +499,77 @@ window.initializeEditor = function() {
                                         alignright: { selector: 'p,h1,h2,h3,h4,h5,h6,td,th,div,ul,ol,li,table,img', classes: 'text-right', exact: true },
                                     },
                                     content_style: defaultContentStyle,
+									content_css: 'https://www.canada.ca/etc/designs/canada/wet-boew/css/theme.min.css',
                                     extended_valid_elements: 'li[*],span[*],dl[class|id],dt[class|id],dd[class|id],details[open|class|id|data-*],summary[class|id|data-*],div[data-*|class|id|style|contenteditable],option[*],optgroup[*]',
 									valid_children: '+span[ul|div|p],+body[dl],+dl[dt|dd],+dt[a|abbr|acronym|b|bdo|big|br|button|cite|code|del|dfn|em|i|img|input|ins|kbd|label|map|q|samp|select|small|span|strike|strong|sub|sup|textarea|tt|var|p],+dd[a|abbr|acronym|b|bdo|big|br|button|cite|code|del|dfn|em|i|img|input|ins|kbd|label|map|q|samp|select|small|span|strike|strong|sub|sup|textarea|tt|var|p|ul|ol|dl],+details[summary|p|div|section|code|a|img|em|strong|ul|ol|table|h1|h2|h3|h4|h5|h6]',
                                     custom_elements: 'dl,dt,dd,details,summary,option,optgroup',
                                     setup: function(editor) {
+										
+
                                         editor.on('SetContent', function(e) {
                                             openAllDetailsInEditor(editor);
                                         });
+										
+										editor.on('ExecCommand', function(e) {
+											if (e.command === 'InsertUnorderedList') {
+												const node = editor.selection.getNode();
+												const list = editor.dom.getParent(node, 'ul');
+												if (list) {
+													// Remove all custom classes so they don't stick to the plain bullets
+													editor.dom.removeClass(list, 'lst-lwr-alph lst-upr-alph lst-lwr-rmn lst-upr-rmn list-unstyled');
+												}
+											}
+										});
+										
+										// 1. Default Numbering (#.) -> OL
+    editor.ui.registry.addButton('list_number', {
+        text: '#.',
+        tooltip: 'Default Numbering',
+        onAction: () => applyListStyle(editor, 'ol', null)
+    });
+
+    // 2. Lower Alpha (a.) -> OL
+    editor.ui.registry.addButton('list_lwr_alph', {
+        text: 'a.',
+        tooltip: 'Lower Alpha',
+        onAction: () => applyListStyle(editor, 'ol', 'lst-lwr-alph')
+    });
+
+    // 3. Upper Alpha (A.) -> OL
+    editor.ui.registry.addButton('list_upr_alph', {
+        text: 'A.',
+        tooltip: 'Upper Alpha',
+        onAction: () => applyListStyle(editor, 'ol', 'lst-upr-alph')
+    });
+
+    // 4. Lower Roman (i.) -> OL
+    editor.ui.registry.addButton('list_lwr_rmn', {
+        text: 'i.',
+        tooltip: 'Lower Roman',
+        onAction: () => applyListStyle(editor, 'ol', 'lst-lwr-rmn')
+    });
+
+    // 5. Upper Roman (I.) -> OL
+    editor.ui.registry.addButton('list_upr_rmn', {
+        text: 'I.',
+        tooltip: 'Upper Roman',
+        onAction: () => applyListStyle(editor, 'ol', 'lst-upr-rmn')
+    });
+
+    // 6. Default Bulleting (·) -> UL
+    editor.ui.registry.addButton('list_bullet', {
+        text: '·',
+        tooltip: 'Default Bulleting',
+        onAction: () => applyListStyle(editor, 'ul', null)
+    });
+
+    // 7. Unstyled (x) -> UL
+    editor.ui.registry.addButton('list_unstyle', {
+        text: 'x',
+        tooltip: 'Unstyled',
+        onAction: () => applyListStyle(editor, 'ul', 'list-unstyled')
+    });
+										
                                     },
                                     init_instance_callback: function(editorInstance) {
                                         console.log('Iframe: HugeRTE editor initialized inside iframe.');
@@ -587,6 +685,3 @@ window.initializeEditor = function() {
     }
 	
 };
-
-
-
