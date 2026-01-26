@@ -2361,8 +2361,19 @@ elementsToTrim.forEach(element => {
     };
     window.setRichEditorContent = function(content) {
         if (richTextEditorInstance) {
+            const editorWin = richTextEditorInstance.getWin();
+            const doc = richTextEditorInstance.getDoc();
+            const prevScrollY = (editorWin.pageYOffset !== undefined) 
+                ? editorWin.pageYOffset 
+                : (doc.documentElement || doc.body.parentNode || doc.body).scrollTop;
             richTextEditorInstance.setContent(cleanHtmlForRichTextDisplay(content));
-            richTextEditorInstance.focus();
+            setTimeout(function() {
+                if (editorWin) {
+                    editorWin.scrollTo(0, prevScrollY);
+                }
+                richTextEditorInstance.focus();
+            }, 10);
+
         } else {
             console.warn('Parent: HugeRTE editor not yet initialized. Content will be set once ready.');
         }
