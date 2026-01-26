@@ -302,16 +302,16 @@ const APP_CONFIG = {
             'dpp', 'tbs'
         ]),
         prefixes: [
-            '--wb-', 'abbr-', 'alert-', 'bg-', 'brdr-', 'btn-', 'carousel-', 'checkbox-', 
+            '--wb-', 'abbr-', 'acc-', 'alert-', 'bg-', 'brdr-', 'btn-', 'carousel-', 'checkbox-', 
             'col-', 'container_', 'datepicker-', 'details-', 'dl-', 'dropdown-', 'embed-',
             'feed-', 'figure-', 'flex-', 'fn-', 'fnt-', 'font-', 'form-', 'gc-', 'grid_',
             'h-', 'has-', 'hidden-', 'icon-', 'img-', 'inline-', 'input-', 'items-',
             'justify-', 'label-', 'left-', 'list-', 'lst-', 'm-', 'mb-',
             'media-', 'ml-', 'modal-', 'mr-', 'mrgn-', 'mt-', 'mx-', 'my-', 'nav-',
             'navbar-', 'nojs-', 'opacity-', 'p-', 'pagination-', 'panel-', 'pb-',
-            'pddng-', 'pl-', 'pr-', 'prefix_', 'progress-', 'pt-', 'pull-', 'push-',
+            'pddng-', 'pl-', 'pr-', 'prefix_', 'progress-', 'print-', 'pt-', 'pull-', 'push-',
             'px-', 'py-', 'radio-', 'right-', 'rounded', 'shadow', 'space-', 'suffix_', 'table-',
-            'text-', 'tooltip-', 'visible-', 'w-', 'wb-', 'well-', 'wet-', 'z-',
+            'text-', 'tgl-', 'tooltip-', 'visible-', 'w-', 'wb-', 'well-', 'wet-', 'z-',
 			
 			// Custom classes (prefix)
 			// IMPORTANT: Add any class prefixes if a custom CSS is required, otherwise the cleaning operation will remove it.
