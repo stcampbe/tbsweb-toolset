@@ -136,11 +136,17 @@
                         <input type="file" id="htmlFileInput" accept=".html" style="display: none;">
                     </div>
                     <button id="validateNowBtn" class="ml-4 px-4 py-2 text-base bg-blue-700 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold">
-                        <i class="fa-solid fa-check-double"></i> Validate
-                    </button>
-                    <button id="previewBtn" class="ml-4 px-4 py-2 text-base bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 font-bold">
-                        <i class="fa-solid fa-eye"></i> View Preview
-                    </button>
+    <i class="fa-solid fa-check-double"></i> Validate
+</button>
+
+<div class="inline-flex ml-4 rounded-md shadow-sm isolate" role="group">
+    <button id="previewBtn" class="px-4 py-2 text-base bg-green-600 text-white rounded-l-md hover:bg-green-700 focus:z-10 focus:outline-none focus:ring-2 focus:ring-green-500 font-bold border-r border-green-800">
+        <i class="fa-solid fa-eye mr-2"></i>View Preview
+    </button>
+    
+    <button id="openCustomCssModalBtn" class="px-3 py-2 text-base bg-slate-600 text-white rounded-r-md hover:bg-slate-700 focus:z-10 focus:outline-none focus:ring-2 focus:ring-slate-500 font-bold" title="Add Custom CSS">+ CSS
+    </button>
+</div>
 					
                 </div>
 
@@ -286,7 +292,7 @@
                         <button id="frSecToCH6Btn" class="flex-1 px-4 py-2 text-sm bg-slate-600 text-white hover:bg-slate-500 rounded-md mb-1">+H6</button>
                     </div>
                 </div>
-            </div> </div> </div> <div id="previewModal" class="preview-modal-overlay hidden">
+            </div> </div> </div> <div id="previewModal" class="preview-modal-overlay hidden z-[70]">
         <div class="preview-modal-content">
             <button id="closePreviewModalBtn" class="absolute top-4 right-4">&times;</button>
             <div class="preview-modal-header-controls">
@@ -296,6 +302,7 @@
                     <button id="modalLangEnBtn" class="px-2 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">EN</button>
                     <button id="modalLangFrBtn" class="px-2 py-1 text-sm bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold">FR</button>
                     <button id="exportPrototypeBtn" class="px-2 py-1 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 font-bold">Export Prototype</button>
+                    
                 </div>
             </div>
             <div class="customize-section">
@@ -979,6 +986,23 @@
             </div>
         </div>
         <p class="p-4 mt-2 text-sm text-red-800 rounded-lg bg-red-50 text-center" role="alert"><strong>This tool is in-browser only and does not manage or store any files</strong>. Keep local files and save your work often!</p>
+    </div>
+</div>
+<div id="customCssModal" class="fixed inset-0 z-[60] overflow-y-auto hidden bg-gray-900 bg-opacity-90 flex items-center justify-center">
+    <div class="bg-gray-800 p-6 rounded-lg shadow-xl w-11/12 max-w-4xl h-5/6 flex flex-col relative text-white">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold"><i class="fa-brands fa-css3-alt text-purple-400"></i> Inject Custom CSS</h3>
+            <button id="closeCustomCssModalBtn" class="text-gray-400 hover:text-white">
+                <i class="fas fa-times fa-lg"></i>
+            </button>
+        </div>
+        <p class="text-sm text-gray-400 mb-2">Enter CSS below. It will be injected into the <code>&lt;style&gt;</code> tag of the preview. <strong>NOTE: This is persistent until you manually delete any CSS code below or refresh the page/application</strong>. Pressing Cancel or closing this modal will not clear the inputted code!</p>
+
+<div id="customCssEditorContainer" class="flex-grow w-full border border-gray-700 rounded-md overflow-hidden relative"></div>
+        <div class="flex justify-end mt-4 space-x-2">
+            <button id="cancelCustomCssBtn" class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-500 font-bold">Cancel</button>
+            <button id="previewCustomCssBtn" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 font-bold"><i class="fa-solid fa-eye"></i> Preview w/ Custom CSS</button>
+        </div>
     </div>
 </div>
     <script src="js/config.js"></script>
