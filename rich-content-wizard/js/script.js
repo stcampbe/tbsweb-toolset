@@ -2,6 +2,9 @@ document.addEventListener('DOMContentLoaded', function() {
     window.handleRichTextEditorReady = function(editorInstance) {
         console.log("Parent: Received ready signal from iframe. HugeRTE instance captured.");
         richTextEditorInstance = editorInstance;
+        richTextEditorInstance.on('MouseDown KeyDown', () => {
+            hasUserInteractedWithRTE = true;
+        });
 
         if (richTextContent) {
             richTextEditorInstance.setContent(cleanHtmlForRichTextDisplay(richTextContent));
@@ -128,7 +131,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let richTextEditorInstance;
     let monacoEditorInstance;
+    let cssEditorInstance = null;
     let currentView = 'richtext';
+
+    let hasUserInteractedWithRTE = false;
 
     let richTextContent = '';
     let htmlOutputContent = '';
@@ -150,6 +156,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let modalH1TitleFr = '';
     let modalLastSearchTerm = '';
     let modalCurrentBreakpoint = 'full';
+    let customPreviewCss = '';
     const NBSP_PLACEHOLDER = '&#160;';
 
     let currentLineDecorations = [];
@@ -2489,6 +2496,8 @@ elementsToTrim.forEach(element => {
         ` : ''}
         .table tbody tr.active { background-color: #e0f2f7; }
         .nowrap { white-space: nowrap; }
+
+        ${customPreviewCss}
     </style>
 </head>
 <body class="${bodyClass}">
@@ -2579,19 +2588,34 @@ elementsToTrim.forEach(element => {
     function toggleEditorView() {
         const anyTempMessageActive = allInteractiveButtons.some(btn => btn.getAttribute('data-temp-active') === 'true');
         if (anyTempMessageActive) {
-            console.log("Toggle prevented: another button is active.");
             return;
         }
 
-        console.log("Toggle Editor View triggered. Current view:", currentView);
-		
         if (currentView === 'richtext') {
+            if (default_ifr.contentWindow && typeof default_ifr.contentWindow.resetScopeChecker === 'function') {
+                default_ifr.contentWindow.resetScopeChecker();
+            }
+
+            const CURSOR_MARKER = '|||CURSOR_MARKER|||';
+            let markerInserted = false;
+
+            if (richTextEditorInstance && hasUserInteractedWithRTE) {
+                try {
+                    // --- FIX: Collapse selection to end so content is not deleted ---
+                    richTextEditorInstance.selection.collapse(false);
+                    // ---------------------------------------------------------------
+                    richTextEditorInstance.insertContent(CURSOR_MARKER);
+                    markerInserted = true;
+                } catch (e) {
+                    console.warn(e);
+                }
+            }
+
             if (default_ifr.contentWindow && default_ifr.contentWindow.getRichEditorContent) {
                 richTextContent = default_ifr.contentWindow.getRichEditorContent();
             } else {
                 richTextContent = '';
             }
-
             richTextContent = stripStylesFromTables(richTextContent);
 
             try {
@@ -2608,42 +2632,41 @@ elementsToTrim.forEach(element => {
                     }
                 });
 
-                doc.querySelectorAll('a[href]')
-                    .forEach(a => {
-                        let href = a.getAttribute('href');
-                        const originalHref = href;
-                        if (href.startsWith('https://can01.safelinks.protection.outlook.com')) {
-                            try {
-                                const urlObj = new URL(href);
-                                const actualUrlParam = urlObj.searchParams.get('url');
-                                if (actualUrlParam) href = decodeURIComponent(actualUrlParam);
-                            } catch (e) {
-                                console.error("Error parsing Outlook Safelink URL:", e);
-                            }
+                doc.querySelectorAll('a[href]').forEach(a => {
+                    let href = a.getAttribute('href');
+                    const originalHref = href;
+                    if (href.startsWith('https://can01.safelinks.protection.outlook.com')) {
+                        try {
+                            const urlObj = new URL(href);
+                            const actualUrlParam = urlObj.searchParams.get('url');
+                            if (actualUrlParam) href = decodeURIComponent(actualUrlParam);
+                        } catch (e) {
+                            console.error(e);
                         }
-                        if (href.includes('/content/canadasite') || href.includes('/content/dam')) {
-                            const contentPath = href.includes('/content/canadasite') ? '/content/canadasite' : '/content/dam';
-                            const contentIndex = href.indexOf(contentPath);
-                            if (contentIndex > 0) href = href.substring(contentIndex);
+                    }
+                    if (href.includes('/content/canadasite') || href.includes('/content/dam')) {
+                        const contentPath = href.includes('/content/canadasite') ? '/content/canadasite' : '/content/dam';
+                        const contentIndex = href.indexOf(contentPath);
+                        if (contentIndex > 0) href = href.substring(contentIndex);
+                    }
+                    if (href !== originalHref) a.setAttribute('href', href);
+                });
+
+                doc.querySelectorAll('img[src]').forEach(img => {
+                    let src = img.getAttribute('src');
+                    if (src.includes('/content/dam')) {
+                        const contentIndex = src.indexOf('/content/dam');
+                        if (contentIndex > 0) {
+                            src = src.substring(contentIndex);
+                            img.setAttribute('src', src);
                         }
-                        if (href !== originalHref) a.setAttribute('href', href);
-                    });
-                doc.querySelectorAll('img[src]')
-                    .forEach(img => {
-                        let src = img.getAttribute('src');
-                        if (src.includes('/content/dam')) {
-                            const contentIndex = src.indexOf('/content/dam');
-                            if (contentIndex > 0) {
-                                src = src.substring(contentIndex);
-                                img.setAttribute('src', src);
-                            }
-                        }
-                    });
+                    }
+                });
 
                 richTextContent = doc.body.innerHTML;
 
             } catch (e) {
-                console.error("Failed to parse and clean HTML, proceeding with raw content.", e);
+                console.error(e);
             }
 
             richTextContent = restoreGcdsTags(richTextContent);
@@ -2658,8 +2681,8 @@ elementsToTrim.forEach(element => {
                 processedContent = applyCleanMsoCode(processedContent);
                 processedContent = applyAutoSpacing(processedContent);
             }
-			
-			processedContent = unwrapStrongInHeadings(processedContent);
+
+            processedContent = unwrapStrongInHeadings(processedContent);
 
             htmlOutputContent = processedContent;
             if (monacoEditorInstance) {
@@ -2667,7 +2690,38 @@ elementsToTrim.forEach(element => {
                 monacoEditorInstance.focus();
                 applyEntityHighlighting();
             }
+
             autoFormatBtn.click();
+
+            if (monacoEditorInstance && markerInserted) {
+                setTimeout(() => {
+                    const model = monacoEditorInstance.getModel();
+                    const matches = model.findMatches(CURSOR_MARKER, false, false, false, null, true);
+
+                    if (matches && matches.length > 0) {
+                        const match = matches[0];
+                        const position = match.range.getStartPosition();
+                        const lineNumber = position.lineNumber;
+
+                        monacoEditorInstance.executeEdits('cursor-tracker', [{
+                            range: match.range,
+                            text: ''
+                        }]);
+
+                        const lineContent = model.getLineContent(lineNumber).trim();
+                        if (lineContent === '<p></p>' || lineContent === '<p>  </p>') {
+                            const range = new monaco.Range(lineNumber, 1, lineNumber + 1, 1);
+                            monacoEditorInstance.executeEdits('cursor-tracker-cleanup', [{
+                                range: range,
+                                text: ''
+                            }]);
+                        }
+
+                        monacoEditorInstance.setPosition(position);
+                        monacoEditorInstance.revealPositionInCenter(position);
+                    }
+                }, 50);
+            }
 
             richtextOutputPanel.classList.remove('panel-visible');
             richtextOutputPanel.classList.add('panel-hidden');
@@ -2719,6 +2773,10 @@ elementsToTrim.forEach(element => {
             updateGoToHtmlButtonColor();
 
             currentView = 'richtext';
+            
+            // Reset flag
+            hasUserInteractedWithRTE = false;
+
             [contentModeBtn, tableModeBtn].forEach(btn => {
                 btn.disabled = true;
                 btn.classList.add('opacity-50', 'cursor-not-allowed');
@@ -4100,12 +4158,36 @@ elementsToTrim.forEach(element => {
         paths: APP_CONFIG.monacoLoaderPaths
     });
     require(['vs/editor/editor.main'], function() {
+        
+        monaco.editor.defineTheme('custom-vs-dark', {
+            base: 'vs-dark',
+            inherit: true,
+            rules: [],
+            colors: {
+                'editor.lineHighlightBorder': '#818132ff', // Yellow
+                'editor.lineHighlightBackground': '#00000000' // Transparent background to make border pop
+            }
+        });
+
+        monaco.editor.defineTheme('custom-vs-light', {
+            base: 'vs',
+            inherit: true,
+            rules: [],
+            colors: {
+                'editor.lineHighlightBorder': '#000000', // Pure Black
+                'editor.lineHighlightBackground': '#00000000' // Transparent background
+            }
+        });
+
         monaco.languages.html.htmlDefaults.setOptions({
             wrapLineLength: 500,
         });
+        const editorOptions = APP_CONFIG.getMonacoEditorOptions(htmlOutputContent);
+        editorOptions.theme = 'custom-vs-dark'; // Override config default
+
         monacoEditorInstance = monaco.editor.create(
             monacoEditorContainer,
-            APP_CONFIG.getMonacoEditorOptions(htmlOutputContent)
+            editorOptions
         );
         window.monacoEditorInstance = monacoEditorInstance;
         console.log("Monaco editor initialized.");
@@ -4115,12 +4197,16 @@ elementsToTrim.forEach(element => {
         toggleThemeBtn.addEventListener('click', () => {
             if (currentMonacoTheme === 'dark') {
                 currentMonacoTheme = 'light';
-                monaco.editor.setTheme(APP_CONFIG.monacoThemes.light);
+                // --- UPDATED: Switch to custom light theme ---
+                monaco.editor.setTheme('custom-vs-light');
+                // ---------------------------------------------
                 toggleThemeBtn.innerHTML = '<i class="fa-solid fa-moon"></i>';
                 toggleThemeBtn.title = "Switch to Dark Theme";
             } else {
                 currentMonacoTheme = 'dark';
-                monaco.editor.setTheme(APP_CONFIG.monacoThemes.dark);
+                // --- UPDATED: Switch to custom dark theme ---
+                monaco.editor.setTheme('custom-vs-dark');
+                // --------------------------------------------
                 toggleThemeBtn.innerHTML = '<i class="fa-solid fa-sun"></i>';
                 toggleThemeBtn.title = "Switch to Light Theme";
             }
@@ -6670,8 +6756,82 @@ document.getElementById('frSecToCH6Btn')
         URL.revokeObjectURL(a.href);
     });
 
+    const openCustomCssModalBtn = document.getElementById('openCustomCssModalBtn');
+    const customCssModal = document.getElementById('customCssModal');
+    const closeCustomCssModalBtn = document.getElementById('closeCustomCssModalBtn');
+    const cancelCustomCssBtn = document.getElementById('cancelCustomCssBtn');
+    const previewCustomCssBtn = document.getElementById('previewCustomCssBtn');
+    // Note: customCssInput is no longer used, we use the Monaco instance
 
+    function openCustomCssModal() {
+        customCssModal.classList.remove('hidden');
+        
+        // Initialize Monaco for CSS if it doesn't exist yet
+        if (!cssEditorInstance) {
+            // Ensure monaco is loaded
+            if (typeof monaco !== 'undefined') {
+                cssEditorInstance = monaco.editor.create(document.getElementById('customCssEditorContainer'), {
+                    value: customPreviewCss,
+                    language: 'css',
+                    theme: 'custom-vs-dark', // <--- CHANGED from 'vs-dark' to 'custom-vs-dark'
+                    automaticLayout: true,
+                    minimap: { enabled: false }, // Cleaner look for small modal
+                    scrollBeyondLastLine: false,
+                    fontSize: 14
+                });
+            }
+        } else {
+            // If already exists, just update value and layout
+            cssEditorInstance.setValue(customPreviewCss);
+            // Small timeout ensures the modal is fully visible before layout calculates
+            setTimeout(() => {
+                cssEditorInstance.layout();
+                cssEditorInstance.focus();
+            }, 50);
+        }
+    }
 
+    function closeCustomCssModal() {
+        // Save content from Editor to Variable
+        if (cssEditorInstance) {
+            customPreviewCss = cssEditorInstance.getValue();
+        }
+        customCssModal.classList.add('hidden');
+    }
+
+    if (openCustomCssModalBtn) {
+        openCustomCssModalBtn.addEventListener('click', openCustomCssModal);
+    }
+
+    if (closeCustomCssModalBtn) {
+        closeCustomCssModalBtn.addEventListener('click', closeCustomCssModal);
+    }
+
+    if (cancelCustomCssBtn) {
+        cancelCustomCssBtn.addEventListener('click', closeCustomCssModal);
+    }
+
+    // Logic for "Preview w/ Custom CSS"
+    if (previewCustomCssBtn) {
+        previewCustomCssBtn.addEventListener('click', () => {
+            // 1. Save the input value from Monaco
+            if (cssEditorInstance) {
+                customPreviewCss = cssEditorInstance.getValue();
+            }
+            
+            // 2. Open the Main Preview Modal
+            showPreviewModal();
+        });
+    }
+
+    // Close if clicking outside the modal content
+    if (customCssModal) {
+        customCssModal.addEventListener('click', (event) => {
+            if (event.target === customCssModal) {
+                closeCustomCssModal();
+            }
+        });
+    }
 
     contentModeBtn.addEventListener('click', () => setEditorMode('content'));
     tableModeBtn.addEventListener('click', () => setEditorMode('table'));
