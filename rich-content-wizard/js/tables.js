@@ -2204,6 +2204,7 @@ window.onload = function() {
     const customizeButton = document.getElementById('tbl-customize-button');
     const autoResponsiveBtn = document.getElementById('auto-responsive-btn');
     const autoScopeBtn = document.getElementById('auto-scope-btn');
+    const forceScopeButton = document.getElementById('force-scope-button');
     const forceIdButton = document.getElementById('force-id-button');
     const resetUniversalBtn = document.getElementById('reset-universal-btn');
     const resetResponsiveBtn = document.getElementById('reset-responsive-btn');
@@ -2393,6 +2394,36 @@ window.onload = function() {
 
             forceIdButton.addEventListener('click', () => {
                 const selectedValue = tableSearchDropdown.value;
+                if (forceScopeButton) {
+                forceScopeButton.addEventListener('click', () => {
+                    const selectedValue = tableSearchDropdown.value;
+                    if (!selectedValue) {
+                        showMessage('Please select a table.', 'info');
+                        return;
+                    }
+                    const tableInfo = tableDataMap.get(selectedValue);
+                    if (!tableInfo) return;
+
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = tableInfo.outerHTML;
+                    const tableToProcess = tempDiv.querySelector('table');
+                    
+                    // Force 'simple' mode ensures Scope attributes are used
+                    autoScopeTableIDs(tableToProcess, 0, 'simple');
+                    
+                    const modifiedTableHtml = cleanEmptyHeadersAttribute(convertAllEntitiesToNumeric(tableToProcess.outerHTML));
+                    window.monacoEditorInstance.executeEdits('table-formatter-force-scope', [{
+                        range: tableInfo.range,
+                        text: modifiedTableHtml,
+                        forceMoveMarkers: true
+                    }]);
+                    setTimeout(() => {
+                        applyEntityHighlighting();
+                        populateTableSearchDropdown(selectedValue);
+                        showMessage('Force Scope applied!', 'success');
+                    }, 100);
+                });
+            }
                 if (!selectedValue) {
                     showMessage('Please select a table.', 'info');
                     return;
