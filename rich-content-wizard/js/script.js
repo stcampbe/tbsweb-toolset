@@ -1587,7 +1587,9 @@ elementsToTrim.forEach(element => {
         if (!htmlString) return '';
 
         let cleanHtml = htmlString
-            .replace(/<!--[\s\S]*?-->/gi, '')
+            .replace(/<!--\s*\[\s*if[\s\S]*?-->/gi, '')
+            .replace(/\x3c!\[endif\]--\x3e/gi, '')
+            .replace(/\x3c!--\s*\[endif\]--\x3e/gi, '')
             .replace(/<xml>[\s\S]*?<\/xml>/gi, '')
             .replace(/<\/?o:p[^>]*>/gi, '');
 
@@ -2373,12 +2375,10 @@ elementsToTrim.forEach(element => {
             } catch (e) {
                 
             }
-
             setTimeout(function() {
                 if (win) win.scrollTo(0, prevScrollY);
                 if (doc.documentElement) doc.documentElement.scrollTop = prevScrollY;
                 if (doc.body) doc.body.scrollTop = prevScrollY;
-                
                 richTextEditorInstance.focus();
             }, 50);
 
@@ -2618,11 +2618,9 @@ elementsToTrim.forEach(element => {
             const CURSOR_MARKER = '|||CURSOR_MARKER|||';
             let markerInserted = false;
 
-            if (richTextEditorInstance && hasUserInteractedWithRTE) {
+            if (richTextEditorInstance) {
                 try {
-                    // --- FIX: Collapse selection to end so content is not deleted ---
                     richTextEditorInstance.selection.collapse(false);
-                    // ---------------------------------------------------------------
                     richTextEditorInstance.insertContent(CURSOR_MARKER);
                     markerInserted = true;
                 } catch (e) {
@@ -2759,14 +2757,135 @@ elementsToTrim.forEach(element => {
             });
             updateCleanMsoButtonState();
         } else {
+            
             if (monacoEditorInstance) {
-                htmlOutputContent = monacoEditorInstance.getValue();
+                const model = monacoEditorInstance.getModel();
+                const position = monacoEditorInstance.getPosition();
+                const rawContent = model.getValue();
+                let offset = model.getOffsetAt(position); 
+
+                // --- 1. Tag Escape Logic (Refined) ---
+                // If cursor is inside a tag definition (e.g. <div cl|ass="..."> or )
+                let textBeforeCursor = rawContent.substring(0, offset);
+                let lastOpen = textBeforeCursor.lastIndexOf('<');
+                let lastClose = textBeforeCursor.lastIndexOf('>');
+
+                if (lastOpen > lastClose) {
+                    // We are inside a tag structure
+                    const isClosingTag = rawContent[lastOpen + 1] === '/';
+                    
+                    if (isClosingTag) {
+                        // If inside a closing tag (</p|>) -> Rewind to BEFORE the tag starts (|<)
+                        offset = lastOpen;
+                    } else {
+                        // If inside an opening tag OR comment (<p cl|ass> or ) 
+                        // -> Fast-forward to AFTER the tag/comment (>)
+                        const remainingText = rawContent.substring(offset);
+                        const nextClose = remainingText.indexOf('>');
+                        if (nextClose !== -1) {
+                            offset = offset + nextClose + 1;
+                        }
+                    }
+                    // Update textBefore for the next step
+                    textBeforeCursor = rawContent.substring(0, offset);
+                }
+
+                // --- 1.5. Closing Tag & Comment Rewind (FIXED) ---
+                // If we are sitting immediately after a closing tag OR a comment,
+                // we rewind to get back "inside" the content block.
+                // New Regex matches: </div> OR at the end of the string
+                const rewindRegex = /(?:<\/([a-zA-Z0-9]+)>|)\s*$/;
+                
+                let match = rewindRegex.exec(textBeforeCursor);
+                let rewindLimit = 10; // Allow rewinding through multiple comments/tags
+                
+                while (match && rewindLimit > 0) {
+                    // Move offset back by the length of the matched tag/comment
+                    offset -= match[0].length;
+                    
+                    // Update textBefore for next iteration
+                    textBeforeCursor = rawContent.substring(0, offset);
+                    match = rewindRegex.exec(textBeforeCursor);
+                    rewindLimit--;
+                }
+
+                // --- 2. Entity Escape Logic ---
+                // If cursor is inside an entity (e.g. &nb|sp;), move to end
+                const lastAmpersand = textBeforeCursor.lastIndexOf('&');
+                const lastSemicolon = textBeforeCursor.lastIndexOf(';');
+
+                if (lastAmpersand > lastSemicolon) {
+                    const remainingText = rawContent.substring(offset);
+                    const nextSemicolon = remainingText.indexOf(';');
+                    if (nextSemicolon !== -1 && nextSemicolon < 12) { 
+                        offset = offset + nextSemicolon + 1;
+                        textBeforeCursor = rawContent.substring(0, offset);
+                    }
+                }
+
+                // --- 3. Structural Context Analysis (Smart Dive) ---
+                // Determine if we are in a "Structural" tag (like <ul>) and need to dive into a child
+                const structuralTags = new Set(['ul', 'ol', 'dl', 'table', 'thead', 'tbody', 'tfoot', 'tr', 'colgroup']);
+                const strictForbiddenTags = new Set(['style', 'script', 'head', 'iframe', 'select', 'textarea', 'option']);
+                const voidTags = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
+                
+                const tagRegex = /<\/?([a-zA-Z0-9]+)[^>]*>/g;
+                let tagMatch;
+                const stack = [];
+                
+                while ((tagMatch = tagRegex.exec(textBeforeCursor)) !== null) {
+                    const tagName = tagMatch[1].toLowerCase();
+                    const isClosing = tagMatch[0].startsWith('</');
+                    const isSelfClosing = tagMatch[0].endsWith('/>') || voidTags.has(tagName);
+                    
+                    if (isClosing) {
+                        const idx = stack.lastIndexOf(tagName);
+                        if (idx !== -1) stack.length = idx;
+                    } else if (!isSelfClosing) {
+                        stack.push(tagName);
+                    }
+                }
+
+                let currentParent = stack.length > 0 ? stack[stack.length - 1] : null;
+                let shouldTrack = true;
+
+                if (currentParent && strictForbiddenTags.has(currentParent)) {
+                    shouldTrack = false;
+                }
+                else if (currentParent && structuralTags.has(currentParent)) {
+                    // Dive logic: If we are in <ul>|, try to find next <li>
+                    const remainingText = rawContent.substring(offset);
+                    const nextTagMatch = /<([a-zA-Z0-9]+)[^>]*>/g.exec(remainingText);
+                    
+                    if (nextTagMatch) {
+                        const nextTagName = nextTagMatch[1].toLowerCase();
+                        if (!structuralTags.has(nextTagName) && !strictForbiddenTags.has(nextTagName)) {
+                            offset = offset + nextTagMatch.index + nextTagMatch[0].length;
+                        } else {
+                             shouldTrack = false;
+                        }
+                    } else {
+                        shouldTrack = false;
+                    }
+                }
+
+                // --- 4. Inject Marker ---
+                if (shouldTrack) {
+                    const MARKER_HTML = '<span id="rte-cursor-marker">&#xFEFF;</span>';
+                    htmlOutputContent = rawContent.slice(0, offset) + MARKER_HTML + rawContent.slice(offset);
+                } else {
+                    htmlOutputContent = rawContent;
+                }
+
             } else {
                 htmlOutputContent = '';
             }
 
             const parser = new DOMParser();
             const doc = parser.parseFromString(htmlOutputContent, 'text/html');
+            
+            // ... (Rest of existing logic for details, GCDs, cleanup, etc. remains unchanged) ...
+            
             doc.querySelectorAll('details').forEach(detail => {
                 if (detail.hasAttribute('open')) {
                     detail.setAttribute('data-was-open', 'true');
@@ -2778,6 +2897,7 @@ elementsToTrim.forEach(element => {
             contentToSendToRichText = protectGcdsTags(contentToSendToRichText);
 
             richTextContent = contentToSendToRichText;
+            
             if (default_ifr.contentWindow && default_ifr.contentWindow.setRichEditorContent) {
                 default_ifr.contentWindow.setRichEditorContent(cleanHtmlForRichTextDisplay(richTextContent));
             }
@@ -2793,7 +2913,6 @@ elementsToTrim.forEach(element => {
 
             currentView = 'richtext';
             
-            // Reset flag
             hasUserInteractedWithRTE = false;
 
             [contentModeBtn, tableModeBtn].forEach(btn => {
@@ -4183,8 +4302,8 @@ elementsToTrim.forEach(element => {
             inherit: true,
             rules: [],
             colors: {
-                'editor.lineHighlightBorder': '#818132ff', // Yellow
-                'editor.lineHighlightBackground': '#00000000' // Transparent background to make border pop
+                'editor.lineHighlightBorder': '#818132ff',
+                'editor.lineHighlightBackground': '#00000000'
             }
         });
 
@@ -4193,8 +4312,8 @@ elementsToTrim.forEach(element => {
             inherit: true,
             rules: [],
             colors: {
-                'editor.lineHighlightBorder': '#000000', // Pure Black
-                'editor.lineHighlightBackground': '#00000000' // Transparent background
+                'editor.lineHighlightBorder': '#000000',
+                'editor.lineHighlightBackground': '#00000000'
             }
         });
 
@@ -4202,7 +4321,7 @@ elementsToTrim.forEach(element => {
             wrapLineLength: 500,
         });
         const editorOptions = APP_CONFIG.getMonacoEditorOptions(htmlOutputContent);
-        editorOptions.theme = 'custom-vs-dark'; // Override config default
+        editorOptions.theme = 'custom-vs-dark';
 
         monacoEditorInstance = monaco.editor.create(
             monacoEditorContainer,
@@ -4216,16 +4335,12 @@ elementsToTrim.forEach(element => {
         toggleThemeBtn.addEventListener('click', () => {
             if (currentMonacoTheme === 'dark') {
                 currentMonacoTheme = 'light';
-                // --- UPDATED: Switch to custom light theme ---
                 monaco.editor.setTheme('custom-vs-light');
-                // ---------------------------------------------
                 toggleThemeBtn.innerHTML = '<i class="fa-solid fa-moon"></i>';
                 toggleThemeBtn.title = "Switch to Dark Theme";
             } else {
                 currentMonacoTheme = 'dark';
-                // --- UPDATED: Switch to custom dark theme ---
                 monaco.editor.setTheme('custom-vs-dark');
-                // --------------------------------------------
                 toggleThemeBtn.innerHTML = '<i class="fa-solid fa-sun"></i>';
                 toggleThemeBtn.title = "Switch to Light Theme";
             }
