@@ -399,14 +399,54 @@ const APP_CONFIG = {
                         let isUpdatingFromCodeMirror = false;
 						
 						// Rich editor styling on top of custom css linked file. MUST BE KEPT ON ONE SINGLE LINE! DO NOT INDENT!
-						const defaultContentStyle = 'body { max-width: 1170px; margin-left: auto; margin-right: auto; padding: 15px; box-sizing: border-box; } h1, .h1 { color: #000000 !important; background-color: #FF6347; padding: 2px 5px; border-radius: 3px;} h2, .h2 { color: #000000 !important; background-color: #FE9900; padding: 2px 5px; border-radius: 3px;} h3, .h3 { color: #000000 !important; background-color: #FFDE59; padding: 2px 5px; border-radius: 3px;} h4, .h4 { color: #000000 !important; background-color: #7DDA58; padding: 2px 5px; border-radius: 3px;} h5, .h5 { color: #000000 !important; background-color: #5DE2E7; padding: 2px 5px; border-radius: 3px;} h6, .h6 { color: #000000 !important; background-color: #E7DDFF; padding: 2px 5px; border-radius: 3px;} section { margin-bottom: 5px; border: #060270 2px dashed;  padding: 7px;} figure { display: block !important; border: #1e81b0 2px solid;  padding: 7px;} div { border: #e28743 2px solid; padding: 7px;} aside { border: #8D6F64 2px solid;  padding: 7px;} details > *:not(summary) { display: block !important; } dl { border: #A270C5 2px solid; padding: 7px; } details { border: #42902C 2px solid !important; padding: 7px; } details summary { border-bottom: 0px !important; cursor: default !important; font-weight: bold; margin-bottom: 5px; color: #333; } time { color: #000000 !important; background-color: #ffd6f9; padding: 2px 5px; border-radius: 3px;} .text-center { text-align: center !important; } .text-right { text-align: right !important; } .text-left { text-align: left !important; } .row { margin: 0px !important; } div[data-is-gcds-wrapper="true"] { border: 2px dotted #4f46e5; padding: 8px; margin: 8px 0; } body.show-table-scopes table{cursor:crosshair}body.show-table-scopes th:not([scope]):not([id]):not([headers]){outline:3px dashed #f44336;background:rgba(244,67,54,0.05)}body.show-table-scopes th:not([scope]):not([id]):not([headers])::before{content:"⚠️ Fix Me";display:block;font-size:9px;color:#d32f2f;font-weight:bold}body.show-table-scopes .is-hovered[scope="col"],body.show-table-scopes .is-locked[scope="col"]{outline:3px solid #2196f3!important;background:rgba(33,150,243,0.1)}body.show-table-scopes .is-hovered[scope="row"],body.show-table-scopes .is-locked[scope="row"]{outline:3px solid #4caf50!important;background:rgba(76,175,80,0.1)}body.show-table-scopes .is-related,body.show-table-scopes .is-locked-related{outline:2px dashed #9c27b0;background:rgba(156,39,176,0.1);color:#000000!important}body.show-table-scopes .is-hovered,body.show-table-scopes .is-locked{outline:3px solid #9c27b0!important;background:rgba(156,39,176,0.05);color:#000000!important} body.show-table-scopes table.scope-focus-active td, body.show-table-scopes table.scope-focus-active th { opacity: 0.25; filter: blur(1.5px); transition: opacity 0.2s ease-in-out, filter 0.2s ease-in-out; } body.show-table-scopes table.scope-focus-active td.is-hovered, body.show-table-scopes table.scope-focus-active th.is-hovered, body.show-table-scopes table.scope-focus-active td.is-locked, body.show-table-scopes table.scope-focus-active th.is-locked, body.show-table-scopes table.scope-focus-active td.is-related, body.show-table-scopes table.scope-focus-active th.is-related, body.show-table-scopes table.scope-focus-active td.is-locked-related, body.show-table-scopes table.scope-focus-active th.is-locked-related { opacity: 1 !important; filter: none !important; }';
+						const defaultContentStyle = 'body { max-width: 1170px; margin-left: auto; margin-right: auto; padding: 15px; box-sizing: border-box; } h1, .h1 { color: #000000 !important; background-color: #FF6347; padding: 2px 5px; border-radius: 3px;} h2, .h2 { color: #000000 !important; background-color: #FE9900; padding: 2px 5px; border-radius: 3px;} h3, .h3 { color: #000000 !important; background-color: #FFDE59; padding: 2px 5px; border-radius: 3px;} h4, .h4 { color: #000000 !important; background-color: #7DDA58; padding: 2px 5px; border-radius: 3px;} h5, .h5 { color: #000000 !important; background-color: #5DE2E7; padding: 2px 5px; border-radius: 3px;} h6, .h6 { color: #000000 !important; background-color: #E7DDFF; padding: 2px 5px; border-radius: 3px;} section { margin-bottom: 5px; border: #060270 2px dashed;  padding: 7px;} figure { display: block !important; border: #1e81b0 2px solid;  padding: 7px;} div { border: #e28743 2px solid; padding: 7px;} aside { border: #8D6F64 2px solid;  padding: 7px;} details > *:not(summary) { display: block !important; } dl { border: #A270C5 2px solid; padding: 7px; } details { border: #42902C 2px solid !important; padding: 7px; } details summary { border-bottom: 0px !important; cursor: default !important; font-weight: bold; margin-bottom: 5px; color: #333; } time { color: #000000 !important; background-color: #ffd6f9; padding: 2px 5px; border-radius: 3px;} .text-center { text-align: center !important; } .text-right { text-align: right !important; } .text-left { text-align: left !important; } .row { margin: 0px !important; } div[data-is-gcds-wrapper="true"] { border: 2px dotted #4f46e5; padding: 8px; margin: 8px 0; } body.show-table-scopes table{cursor:crosshair}body.show-table-scopes th:not([scope]):not([id]):not([headers]){outline:3px dashed #f44336;background:rgba(244,67,54,0.05)}body.show-table-scopes th:not([scope]):not([id]):not([headers])::before{content:"⚠️";display:block;font-size:9px;color:#d32f2f;font-weight:bold}body.show-table-scopes .is-hovered[scope="col"],body.show-table-scopes .is-locked[scope="col"]{outline:3px solid #2196f3!important;background:rgba(33,150,243,0.1)}body.show-table-scopes .is-hovered[scope="row"],body.show-table-scopes .is-locked[scope="row"]{outline:3px solid #4caf50!important;background:rgba(76,175,80,0.1)}body.show-table-scopes .is-related,body.show-table-scopes .is-locked-related{outline:2px dashed #9c27b0;background:rgba(156,39,176,0.1);color:#000000!important}body.show-table-scopes .is-hovered,body.show-table-scopes .is-locked{outline:3px solid #9c27b0!important;background:rgba(156,39,176,0.05);color:#000000!important} body.show-table-scopes table.scope-focus-active td, body.show-table-scopes table.scope-focus-active th { opacity: 0.25; filter: blur(1.5px); transition: opacity 0.2s ease-in-out, filter 0.2s ease-in-out; } body.show-table-scopes table.scope-focus-active td.is-hovered, body.show-table-scopes table.scope-focus-active th.is-hovered, body.show-table-scopes table.scope-focus-active td.is-locked, body.show-table-scopes table.scope-focus-active th.is-locked, body.show-table-scopes table.scope-focus-active td.is-related, body.show-table-scopes table.scope-focus-active th.is-related, body.show-table-scopes table.scope-focus-active td.is-locked-related, body.show-table-scopes table.scope-focus-active th.is-locked-related { opacity: 1 !important; filter: none !important; }';
 
 						window.setRichEditorContent = function(content) {
                             if (richTextEditorInstance && !isUpdatingFromCodeMirror) {
                                 isUpdatingFromCodeMirror = true;
                                 richTextEditorInstance.setContent(content);
-                                richTextEditorInstance.focus();
-                                isUpdatingFromCodeMirror = false;
+
+                                // --- CURSOR TRACKING & CLEANUP START ---
+                                setTimeout(() => {
+                                    const markerId = 'rte-cursor-marker';
+                                    const markerEl = richTextEditorInstance.dom.get(markerId);
+
+                                    if (markerEl) {
+                                        try {
+                                            richTextEditorInstance.focus();
+                                            markerEl.scrollIntoView({ block: 'center', inline: 'nearest' });
+                                            
+                                            // 1. Place cursor
+                                            const selection = richTextEditorInstance.selection;
+                                            selection.select(markerEl);
+                                            selection.collapse(true);
+
+                                            // 2. Identify Parent before removal
+                                            const parentNode = markerEl.parentNode;
+
+                                            // 3. Remove the marker
+                                            richTextEditorInstance.dom.remove(markerEl);
+
+                                            // 4. Garbage Collection
+                                            if (parentNode && !parentNode.hasAttribute('data-keep-spacer')) {
+                                                // Added \uFEFF to the regex to catch our specific marker character
+                                                const parentContent = parentNode.innerHTML.replace(/&nbsp;|&#160;|\u00A0|\uFEFF/g, '').trim();
+                                                const isBlockTag = ['P', 'DIV'].includes(parentNode.tagName);
+                                                
+                                                // If parent is a block tag and effectively empty, remove it
+                                                if (isBlockTag && parentContent === '') {
+                                                    richTextEditorInstance.dom.remove(parentNode);
+                                                }
+                                            }
+
+                                        } catch (e) {
+                                            console.warn('Cursor tracking error:', e);
+                                        }
+                                    }
+                                    isUpdatingFromCodeMirror = false;
+                                }, 10);
+                                // --- CURSOR TRACKING & CLEANUP END ---
+
                             } else {
                                 console.warn('Iframe: HugeRTE editor not yet initialized or isUpdatingFromCodeMirror is true.');
                             }
