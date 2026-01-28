@@ -2764,53 +2764,38 @@ elementsToTrim.forEach(element => {
                 const rawContent = model.getValue();
                 let offset = model.getOffsetAt(position); 
 
-                // --- 1. Tag Escape Logic (Refined) ---
-                // If cursor is inside a tag definition (e.g. <div cl|ass="..."> or )
                 let textBeforeCursor = rawContent.substring(0, offset);
                 let lastOpen = textBeforeCursor.lastIndexOf('<');
                 let lastClose = textBeforeCursor.lastIndexOf('>');
 
                 if (lastOpen > lastClose) {
-                    // We are inside a tag structure
                     const isClosingTag = rawContent[lastOpen + 1] === '/';
                     
                     if (isClosingTag) {
-                        // If inside a closing tag (</p|>) -> Rewind to BEFORE the tag starts (|<)
                         offset = lastOpen;
                     } else {
-                        // If inside an opening tag OR comment (<p cl|ass> or ) 
-                        // -> Fast-forward to AFTER the tag/comment (>)
                         const remainingText = rawContent.substring(offset);
                         const nextClose = remainingText.indexOf('>');
                         if (nextClose !== -1) {
                             offset = offset + nextClose + 1;
                         }
                     }
-                    // Update textBefore for the next step
                     textBeforeCursor = rawContent.substring(0, offset);
                 }
 
-                // --- 1.5. Closing Tag & Comment Rewind (FIXED) ---
-                // If we are sitting immediately after a closing tag OR a comment,
-                // we rewind to get back "inside" the content block.
-                // New Regex matches: </div> OR at the end of the string
                 const rewindRegex = /(?:<\/([a-zA-Z0-9]+)>|)\s*$/;
                 
                 let match = rewindRegex.exec(textBeforeCursor);
-                let rewindLimit = 10; // Allow rewinding through multiple comments/tags
+                let rewindLimit = 10;
                 
                 while (match && rewindLimit > 0) {
-                    // Move offset back by the length of the matched tag/comment
                     offset -= match[0].length;
                     
-                    // Update textBefore for next iteration
                     textBeforeCursor = rawContent.substring(0, offset);
                     match = rewindRegex.exec(textBeforeCursor);
                     rewindLimit--;
                 }
 
-                // --- 2. Entity Escape Logic ---
-                // If cursor is inside an entity (e.g. &nb|sp;), move to end
                 const lastAmpersand = textBeforeCursor.lastIndexOf('&');
                 const lastSemicolon = textBeforeCursor.lastIndexOf(';');
 
@@ -2823,8 +2808,6 @@ elementsToTrim.forEach(element => {
                     }
                 }
 
-                // --- 3. Structural Context Analysis (Smart Dive) ---
-                // Determine if we are in a "Structural" tag (like <ul>) and need to dive into a child
                 const structuralTags = new Set(['ul', 'ol', 'dl', 'table', 'thead', 'tbody', 'tfoot', 'tr', 'colgroup']);
                 const strictForbiddenTags = new Set(['style', 'script', 'head', 'iframe', 'select', 'textarea', 'option']);
                 const voidTags = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
@@ -2853,23 +2836,38 @@ elementsToTrim.forEach(element => {
                     shouldTrack = false;
                 }
                 else if (currentParent && structuralTags.has(currentParent)) {
-                    // Dive logic: If we are in <ul>|, try to find next <li>
-                    const remainingText = rawContent.substring(offset);
-                    const nextTagMatch = /<([a-zA-Z0-9]+)[^>]*>/g.exec(remainingText);
-                    
-                    if (nextTagMatch) {
+                    let remainingText = rawContent.substring(offset);
+                    let nextTagRegex = /<([a-zA-Z0-9]+)[^>]*>/g;
+                    let nextTagMatch = nextTagRegex.exec(remainingText);
+                    let diveLimit = 6;
+
+                    let foundValidContainer = false;
+
+                    while (nextTagMatch && diveLimit > 0) {
                         const nextTagName = nextTagMatch[1].toLowerCase();
-                        if (!structuralTags.has(nextTagName) && !strictForbiddenTags.has(nextTagName)) {
-                            offset = offset + nextTagMatch.index + nextTagMatch[0].length;
-                        } else {
-                             shouldTrack = false;
+
+                        if (strictForbiddenTags.has(nextTagName)) {
+                            shouldTrack = false;
+                            break;
                         }
-                    } else {
-                        shouldTrack = false;
+                        const advanceAmount = nextTagMatch.index + nextTagMatch[0].length;
+                        offset += advanceAmount;
+                        if (structuralTags.has(nextTagName)) {
+                            remainingText = rawContent.substring(offset);
+                            nextTagRegex.lastIndex = 0;
+                            nextTagMatch = nextTagRegex.exec(remainingText);
+                            diveLimit--;
+                        } else {
+                            foundValidContainer = true;
+                            break;
+                        }
+                    }
+
+                    if (!foundValidContainer && diveLimit === 0) {
+                         shouldTrack = false;
                     }
                 }
 
-                // --- 4. Inject Marker ---
                 if (shouldTrack) {
                     const MARKER_HTML = '<span id="rte-cursor-marker">&#xFEFF;</span>';
                     htmlOutputContent = rawContent.slice(0, offset) + MARKER_HTML + rawContent.slice(offset);
@@ -2883,8 +2881,7 @@ elementsToTrim.forEach(element => {
 
             const parser = new DOMParser();
             const doc = parser.parseFromString(htmlOutputContent, 'text/html');
-            
-            // ... (Rest of existing logic for details, GCDs, cleanup, etc. remains unchanged) ...
+           
             
             doc.querySelectorAll('details').forEach(detail => {
                 if (detail.hasAttribute('open')) {
