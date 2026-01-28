@@ -548,7 +548,8 @@ const APP_CONFIG = {
 								};
                                 hugerte.init({
                                     selector: '#richEditor',
-                                    toolbar: 'undo redo styles bold italic alignleft aligncenter alignright | numlist bullist list_number list_lwr_alph list_upr_alph list_lwr_rmn list_upr_rmn list_bullet list_unstyle | link table | toggle_scopes',
+									toolbar_mode: 'sliding',
+                                    toolbar: 'undo redo styles bold italic alignleft aligncenter alignright | btn_p btn_h1 btn_h2 btn_h3 btn_h4 btn_h5 btn_h6 | numlist bullist list_number list_lwr_alph list_upr_alph list_lwr_rmn list_upr_rmn list_bullet list_unstyle | link table | toggle_scopes',
                                     plugins: ['table', 'lists', 'link'],
 									table_resize_bars: false,
 									object_resizing: false,
@@ -566,193 +567,236 @@ const APP_CONFIG = {
                                     custom_elements: 'dl,dt,dd,details,summary,option,optgroup',
                                     setup: function(editor) {
 
-    editor.on('SetContent', function(e) {
-        openAllDetailsInEditor(editor);
-    });
+									editor.on('SetContent', function(e) {
+										openAllDetailsInEditor(editor);
+									});
+									
+									// --- HEADING AND PARAGRAPH BUTTONS START ---
 
-    editor.on('ExecCommand', function(e) {
-        if (e.command === 'InsertUnorderedList') {
-            const node = editor.selection.getNode();
-            const list = editor.dom.getParent(node, 'ul');
-            if (list) {
-                editor.dom.removeClass(list, 'lst-lwr-alph lst-upr-alph lst-lwr-rmn lst-upr-rmn list-unstyled');
-            }
-        }
-    });
+									const applyHeading = function(tag) {
+										const node = editor.selection.getNode();
+										const block = editor.dom.getParent(node, 'h1,h2,h3,h4,h5,h6,p');
+										
+										if (block) {
+											const currentTag = block.nodeName.toLowerCase();
+											const targetTag = tag.toLowerCase();
 
-    // List Style Buttons
-    editor.ui.registry.addButton('list_number', { text: '#.', tooltip: 'Default Numbering', onAction: () => applyListStyle(editor, 'ol', null) });
-    editor.ui.registry.addButton('list_lwr_alph', { text: 'a.', tooltip: 'Lower Alpha', onAction: () => applyListStyle(editor, 'ol', 'lst-lwr-alph') });
-    editor.ui.registry.addButton('list_upr_alph', { text: 'A.', tooltip: 'Upper Alpha', onAction: () => applyListStyle(editor, 'ol', 'lst-upr-alph') });
-    editor.ui.registry.addButton('list_lwr_rmn', { text: 'i.', tooltip: 'Lower Roman', onAction: () => applyListStyle(editor, 'ol', 'lst-lwr-rmn') });
-    editor.ui.registry.addButton('list_upr_rmn', { text: 'I.', tooltip: 'Upper Roman', onAction: () => applyListStyle(editor, 'ol', 'lst-upr-rmn') });
-    editor.ui.registry.addButton('list_bullet', { text: '·', tooltip: 'Default Bulleting', onAction: () => applyListStyle(editor, 'ul', null) });
-    editor.ui.registry.addButton('list_unstyle', { text: 'x', tooltip: 'Unstyled', onAction: () => applyListStyle(editor, 'ul', 'list-unstyled') });
+											if (currentTag === targetTag && targetTag !== 'p') {
+												editor.dom.setTag(block, 'p');
+											} 
+											else if (currentTag === 'p' && targetTag === 'p') {
+												return; 
+											}
+											else {
+												editor.execCommand('FormatBlock', false, targetTag);
+											}
+										} else {
+											editor.execCommand('FormatBlock', false, tag);
+										}
+									};
 
-    // --- SCOPE CHECKER LOGIC START ---
+									// Paragraph Button
+									editor.ui.registry.addButton('btn_p', {
+										text: 'P',
+										onAction: function() { applyHeading('p'); }
+									});
 
-    editor.ui.registry.addToggleButton('toggle_scopes', {
-        text: 'Scope/ID Check',
-        tooltip: 'Check scope and IDs via HOVER or CLICK. Typing disabled in tables.',
-        icon: 'preview',
-        onAction: function(api) {
-            const isActive = !api.isActive();
-            api.setActive(isActive);
-            editor.dom.toggleClass(editor.getBody(), 'show-table-scopes', isActive);
-            
-            // Clean up when turning off manually via click
-            if (!isActive) {
-                const locked = editor.dom.select('.is-locked, .is-locked-related, .is-hovered, .is-related');
-                editor.dom.removeClass(locked, 'is-locked is-locked-related is-hovered is-related');
-                const focusedTables = editor.dom.select('table.scope-focus-active');
-                editor.dom.removeClass(focusedTables, 'scope-focus-active');
-            }
-            editor.fire('ScopeStateChange');
-        },
-        onSetup: function(api) {
-            const updateState = () => {
-                api.setActive(editor.dom.hasClass(editor.getBody(), 'show-table-scopes'));
-            };
-            editor.on('ScopeStateChange', updateState);
-            updateState();
-            return function() {
-                editor.off('ScopeStateChange', updateState);
-            };
-        }
-    });
+									// Heading Buttons H1-H6
+									['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].forEach(function(tag) {
+										editor.ui.registry.addButton('btn_' + tag, {
+											text: tag.toUpperCase(),
+											onAction: function() { applyHeading(tag); }
+										});
+									});
 
-    // Helper: Logic to determine relationships and apply classes
-    const highlightRelationships = (target, primaryClass, relatedClass) => {
-        editor.dom.addClass(target, primaryClass);
-        const table = editor.dom.getParent(target, 'table');
+									// --- HEADING AND PARAGRAPH BUTTONS END ---
+									
+									// --- LIST BUTTONS START ---
+									
+									editor.on('ExecCommand', function(e) {
+										if (e.command === 'InsertUnorderedList') {
+											const node = editor.selection.getNode();
+											const list = editor.dom.getParent(node, 'ul');
+											if (list) {
+												editor.dom.removeClass(list, 'lst-lwr-alph lst-upr-alph lst-lwr-rmn lst-upr-rmn list-unstyled');
+											}
+										}
+									});
 
-        // 1. ID/Headers
-        const headers = target.getAttribute('headers');
-        if (headers) {
-            headers.split(' ').forEach(id => {
-                const sourceEl = editor.dom.get(id);
-                if (sourceEl) editor.dom.addClass(sourceEl, relatedClass);
-            });
-        }
-        const id = target.getAttribute('id');
-        if (id) {
-            const linkedCells = editor.dom.select('td[headers], th[headers]', table);
-            linkedCells.forEach(cell => {
-                if ((cell.getAttribute('headers') || '').split(' ').includes(id)) {
-                    editor.dom.addClass(cell, relatedClass);
-                }
-            });
-        }
+									editor.ui.registry.addButton('list_number', { text: '#.', tooltip: 'Default Numbering', onAction: () => applyListStyle(editor, 'ol', null) });
+									editor.ui.registry.addButton('list_lwr_alph', { text: 'a.', tooltip: 'Lower Alpha', onAction: () => applyListStyle(editor, 'ol', 'lst-lwr-alph') });
+									editor.ui.registry.addButton('list_upr_alph', { text: 'A.', tooltip: 'Upper Alpha', onAction: () => applyListStyle(editor, 'ol', 'lst-upr-alph') });
+									editor.ui.registry.addButton('list_lwr_rmn', { text: 'i.', tooltip: 'Lower Roman', onAction: () => applyListStyle(editor, 'ol', 'lst-lwr-rmn') });
+									editor.ui.registry.addButton('list_upr_rmn', { text: 'I.', tooltip: 'Upper Roman', onAction: () => applyListStyle(editor, 'ol', 'lst-upr-rmn') });
+									editor.ui.registry.addButton('list_bullet', { text: '·', tooltip: 'Default Bulleting', onAction: () => applyListStyle(editor, 'ul', null) });
+									editor.ui.registry.addButton('list_unstyle', { text: 'x', tooltip: 'Unstyled', onAction: () => applyListStyle(editor, 'ul', 'list-unstyled') });
+									
+									// --- LIST BUTTONS END ---
+									
+									// --- SCOPE CHECKER LOGIC START ---
 
-        // 2. Scope
-        const scope = target.getAttribute('scope');
-        const isTh = target.tagName.toLowerCase() === 'th';
-        const cellIndex = target.cellIndex;
-        const parentTr = target.parentNode;
+									editor.ui.registry.addToggleButton('toggle_scopes', {
+										text: 'Scope/ID Check',
+										tooltip: 'Check scope and IDs via HOVER or CLICK. Typing disabled in tables.',
+										icon: 'preview',
+										onAction: function(api) {
+											const isActive = !api.isActive();
+											api.setActive(isActive);
+											editor.dom.toggleClass(editor.getBody(), 'show-table-scopes', isActive);
+											
+											// Clean up when turning off manually via click
+											if (!isActive) {
+												const locked = editor.dom.select('.is-locked, .is-locked-related, .is-hovered, .is-related');
+												editor.dom.removeClass(locked, 'is-locked is-locked-related is-hovered is-related');
+												const focusedTables = editor.dom.select('table.scope-focus-active');
+												editor.dom.removeClass(focusedTables, 'scope-focus-active');
+											}
+											editor.fire('ScopeStateChange');
+										},
+										onSetup: function(api) {
+											const updateState = () => {
+												api.setActive(editor.dom.hasClass(editor.getBody(), 'show-table-scopes'));
+											};
+											editor.on('ScopeStateChange', updateState);
+											updateState();
+											return function() {
+												editor.off('ScopeStateChange', updateState);
+											};
+										}
+									});
 
-        if (isTh && scope) {
-            if (scope === 'row') {
-                const siblings = parentTr.cells;
-                for (let i = 0; i < siblings.length; i++) {
-                    if (siblings[i] !== target) editor.dom.addClass(siblings[i], relatedClass);
-                }
-            } else if (scope === 'col') {
-                const rows = table.rows;
-                for (let i = 0; i < rows.length; i++) {
-                    const cellAtCol = rows[i].cells[cellIndex];
-                    if (cellAtCol && cellAtCol !== target) {
-                        editor.dom.addClass(cellAtCol, relatedClass);
-                    }
-                }
-            }
-        }
+									// Helper: Logic to determine relationships and apply classes
+									const highlightRelationships = (target, primaryClass, relatedClass) => {
+										editor.dom.addClass(target, primaryClass);
+										const table = editor.dom.getParent(target, 'table');
 
-        if (!isTh) {
-            const rowSiblings = parentTr.cells;
-            for (let i = 0; i < rowSiblings.length; i++) {
-                const sib = rowSiblings[i];
-                if (sib.tagName === 'TH' && sib.getAttribute('scope') === 'row') {
-                    editor.dom.addClass(sib, relatedClass);
-                }
-            }
-            const rows = table.rows;
-            for (let i = 0; i < rows.length; i++) {
-                const cellAtCol = rows[i].cells[cellIndex];
-                if (cellAtCol && cellAtCol.tagName === 'TH' && cellAtCol.getAttribute('scope') === 'col') {
-                    editor.dom.addClass(cellAtCol, relatedClass);
-                }
-            }
-        }
-    };
+										// 1. ID/Headers
+										const headers = target.getAttribute('headers');
+										if (headers) {
+											headers.split(' ').forEach(id => {
+												const sourceEl = editor.dom.get(id);
+												if (sourceEl) editor.dom.addClass(sourceEl, relatedClass);
+											});
+										}
+										const id = target.getAttribute('id');
+										if (id) {
+											const linkedCells = editor.dom.select('td[headers], th[headers]', table);
+											linkedCells.forEach(cell => {
+												if ((cell.getAttribute('headers') || '').split(' ').includes(id)) {
+													editor.dom.addClass(cell, relatedClass);
+												}
+											});
+										}
 
-    // Hover Listener
-    editor.on('mouseover', function(e) {
-        if (!editor.dom.hasClass(editor.getBody(), 'show-table-scopes')) return;
-        
-        if (editor.dom.select('.is-locked').length > 0) return;
+										// 2. Scope
+										const scope = target.getAttribute('scope');
+										const isTh = target.tagName.toLowerCase() === 'th';
+										const cellIndex = target.cellIndex;
+										const parentTr = target.parentNode;
 
-        const target = editor.dom.getParent(e.target, 'td,th');
-        if (!target) return;
-        
-        const table = editor.dom.getParent(target, 'table');
-        if (table) editor.dom.addClass(table, 'scope-focus-active');
-        
-        highlightRelationships(target, 'is-hovered', 'is-related');
-    });
+										if (isTh && scope) {
+											if (scope === 'row') {
+												const siblings = parentTr.cells;
+												for (let i = 0; i < siblings.length; i++) {
+													if (siblings[i] !== target) editor.dom.addClass(siblings[i], relatedClass);
+												}
+											} else if (scope === 'col') {
+												const rows = table.rows;
+												for (let i = 0; i < rows.length; i++) {
+													const cellAtCol = rows[i].cells[cellIndex];
+													if (cellAtCol && cellAtCol !== target) {
+														editor.dom.addClass(cellAtCol, relatedClass);
+													}
+												}
+											}
+										}
 
-    editor.on('mouseout', function(e) {
-        if (editor.dom.select('.is-locked').length > 0) return;
+										if (!isTh) {
+											const rowSiblings = parentTr.cells;
+											for (let i = 0; i < rowSiblings.length; i++) {
+												const sib = rowSiblings[i];
+												if (sib.tagName === 'TH' && sib.getAttribute('scope') === 'row') {
+													editor.dom.addClass(sib, relatedClass);
+												}
+											}
+											const rows = table.rows;
+											for (let i = 0; i < rows.length; i++) {
+												const cellAtCol = rows[i].cells[cellIndex];
+												if (cellAtCol && cellAtCol.tagName === 'TH' && cellAtCol.getAttribute('scope') === 'col') {
+													editor.dom.addClass(cellAtCol, relatedClass);
+												}
+											}
+										}
+									};
 
-        const hovered = editor.dom.select('.is-hovered');
-        const related = editor.dom.select('.is-related');
-        const focusedTables = editor.dom.select('table.scope-focus-active');
-        
-        editor.dom.removeClass(hovered, 'is-hovered');
-        editor.dom.removeClass(related, 'is-related');
-        editor.dom.removeClass(focusedTables, 'scope-focus-active');
-    });
+									// Hover Listener
+									editor.on('mouseover', function(e) {
+										if (!editor.dom.hasClass(editor.getBody(), 'show-table-scopes')) return;
+										
+										if (editor.dom.select('.is-locked').length > 0) return;
 
-    // Click Listener (Locking)
-    editor.on('click', function(e) {
-        if (!editor.dom.hasClass(editor.getBody(), 'show-table-scopes')) return;
-        
-        const target = editor.dom.getParent(e.target, 'td,th');
-        if (target) {
-            const table = editor.dom.getParent(target, 'table');
-            const wasLocked = editor.dom.hasClass(target, 'is-locked');
-            
-            const locked = editor.dom.select('.is-locked, .is-locked-related');
-            editor.dom.removeClass(locked, 'is-locked is-locked-related');
-            editor.dom.removeClass(editor.dom.select('.is-hovered'), 'is-hovered');
-            editor.dom.removeClass(editor.dom.select('.is-related'), 'is-related');
-            editor.dom.removeClass(editor.dom.select('table'), 'scope-focus-active');
+										const target = editor.dom.getParent(e.target, 'td,th');
+										if (!target) return;
+										
+										const table = editor.dom.getParent(target, 'table');
+										if (table) editor.dom.addClass(table, 'scope-focus-active');
+										
+										highlightRelationships(target, 'is-hovered', 'is-related');
+									});
 
-            if (!wasLocked) {
-                if (table) editor.dom.addClass(table, 'scope-focus-active');
-                highlightRelationships(target, 'is-locked', 'is-locked-related');
-            }
-        } else {
-            editor.dom.removeClass(editor.dom.select('.is-locked'), 'is-locked');
-            editor.dom.removeClass(editor.dom.select('.is-locked-related'), 'is-locked-related');
-            editor.dom.removeClass(editor.dom.select('table'), 'scope-focus-active');
-        }
-    });
+									editor.on('mouseout', function(e) {
+										if (editor.dom.select('.is-locked').length > 0) return;
 
-    // Keydown Listener
-    editor.on('keydown', function(e) {
-        if (editor.dom.hasClass(editor.getBody(), 'show-table-scopes')) {
-            const node = editor.selection.getNode();
-            const inTable = editor.dom.getParent(node, 'table');
-            
-            if (inTable) {
-                const allowedKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End', 'PageUp', 'PageDown'];
-                if (!allowedKeys.includes(e.key) && !e.ctrlKey && !e.metaKey && !e.altKey) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                }
-            }
-        }
-    });
+										const hovered = editor.dom.select('.is-hovered');
+										const related = editor.dom.select('.is-related');
+										const focusedTables = editor.dom.select('table.scope-focus-active');
+										
+										editor.dom.removeClass(hovered, 'is-hovered');
+										editor.dom.removeClass(related, 'is-related');
+										editor.dom.removeClass(focusedTables, 'scope-focus-active');
+									});
+
+									// Click Listener (Locking)
+									editor.on('click', function(e) {
+										if (!editor.dom.hasClass(editor.getBody(), 'show-table-scopes')) return;
+										
+										const target = editor.dom.getParent(e.target, 'td,th');
+										if (target) {
+											const table = editor.dom.getParent(target, 'table');
+											const wasLocked = editor.dom.hasClass(target, 'is-locked');
+											
+											const locked = editor.dom.select('.is-locked, .is-locked-related');
+											editor.dom.removeClass(locked, 'is-locked is-locked-related');
+											editor.dom.removeClass(editor.dom.select('.is-hovered'), 'is-hovered');
+											editor.dom.removeClass(editor.dom.select('.is-related'), 'is-related');
+											editor.dom.removeClass(editor.dom.select('table'), 'scope-focus-active');
+
+											if (!wasLocked) {
+												if (table) editor.dom.addClass(table, 'scope-focus-active');
+												highlightRelationships(target, 'is-locked', 'is-locked-related');
+											}
+										} else {
+											editor.dom.removeClass(editor.dom.select('.is-locked'), 'is-locked');
+											editor.dom.removeClass(editor.dom.select('.is-locked-related'), 'is-locked-related');
+											editor.dom.removeClass(editor.dom.select('table'), 'scope-focus-active');
+										}
+									});
+
+									// Keydown Listener
+									editor.on('keydown', function(e) {
+										if (editor.dom.hasClass(editor.getBody(), 'show-table-scopes')) {
+											const node = editor.selection.getNode();
+											const inTable = editor.dom.getParent(node, 'table');
+											
+											if (inTable) {
+												const allowedKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End', 'PageUp', 'PageDown'];
+												if (!allowedKeys.includes(e.key) && !e.ctrlKey && !e.metaKey && !e.altKey) {
+													e.preventDefault();
+													e.stopPropagation();
+												}
+											}
+										}
+									});
 										
                                     },
                                     init_instance_callback: function(editorInstance) {
