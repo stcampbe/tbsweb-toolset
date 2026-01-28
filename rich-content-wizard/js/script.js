@@ -1051,15 +1051,25 @@ elementsToTrim.forEach(element => {
             let text = textNode.nodeValue;
             text = text.replace(/’/g, '&#8217;');
             text = text.replace(/&rsquo;/g, '&#8217;');
+			text = text.replace(/'/g, '&#8217;');
             text = text.replace(/“/g, '&#8220;');
             text = text.replace(/&ldquo;/g, '&#8220;');
             text = text.replace(/”/g, '&#8221;');
             text = text.replace(/&rdquo;/g, '&#8221;');
+			text = text.replace(/«[ \u00A0]?/g, '&#171;&#160;');
+			text = text.replace(/&laquo;[ \u00A0]?/g, '&#171;&#160;');
+			text = text.replace(/[ \u00A0]?»/g, '&#160;&#187;');
+			text = text.replace(/[ \u00A0]?&raquo;/g, '&#160;&#187;');
             text = text.replace(/«/g, '&#171;');
             text = text.replace(/&laquo;/g, '&#171;');
             text = text.replace(/»/g, '&#187;');
             text = text.replace(/&raquo;/g, '&#187;');
             text = text.replace(/\u00A0/g, '&#160;');
+			text = text.replace(/\u2007/g, '&#160;');
+			text = text.replace(/\u2009/g, '&#160;');
+			text = text.replace(/\u2060/g, '&#160;');
+			text = text.replace(/\u202F/g, '&#160;');
+			text = text.replace(/&numsp;/g, '&#160;');
             text = text.replace(/&nbsp;/g, '&#160;');
 
             textNode.nodeValue = text;
@@ -2623,8 +2633,9 @@ elementsToTrim.forEach(element => {
                     richTextEditorInstance.selection.collapse(false);
                     richTextEditorInstance.insertContent(CURSOR_MARKER);
                     markerInserted = true;
-                } catch (e) {
-                    console.warn(e);
+					setTimeout(() => richTextEditorInstance.undoManager.undo(), 0);
+				} catch (e) {
+					onsole.warn("Could not insert cursor marker in RTE:", e);
                 }
             }
 
