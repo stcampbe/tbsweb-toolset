@@ -722,94 +722,95 @@ document.addEventListener('DOMContentLoaded', function() {
         let cleanedHtml = body.innerHTML;
 
         cleanedHtml = cleanedHtml.replace(/(?:&#160;|\u00A0|&nbsp;){2,}/gi, '&#160;');
-
         cleanedHtml = cleanedHtml.replace(/\s+(&#160;|\u00A0|&nbsp;)/gi, '&#160;');
         cleanedHtml = cleanedHtml.replace(/(&#160;|\u00A0|&nbsp;)\s+/gi, '&#160;');
-
-
         cleanedHtml = cleanedHtml.replace(/(<br\s*\/?>\s*){2,}/gi, '</p><p>');
-
         cleanedHtml = cleanedHtml.replace(/<br\s+clear=["']?(all|ALL)["']?\s*\/?>/gi, '');
-
 
         doc.body.innerHTML = cleanedHtml;
         const finalBody = doc.body;
 
         const elementsToCheckForEmptiness = Array.from(finalBody.querySelectorAll('p, ul, li, div, span, strong, em, u, b, i, section, article, code, h1, h2, h3, h4, h5, h6'));
 
-for (let i = elementsToCheckForEmptiness.length - 1; i >= 0; i--) {
-    const element = elementsToCheckForEmptiness[i];
-    const tagName = element.tagName.toLowerCase();
-    const trimmedContent = element.innerHTML.trim();
-    const containsOnlyNBSP = (trimmedContent === '&#160;' || trimmedContent === '&nbsp;' || trimmedContent === '\u00A0');
-    const containsOnlySpace = (trimmedContent === ' ');
+        for (let i = elementsToCheckForEmptiness.length - 1; i >= 0; i--) {
+            const element = elementsToCheckForEmptiness[i];
+            const tagName = element.tagName.toLowerCase();
+            const trimmedContent = element.innerHTML.trim();
+            const containsOnlyNBSP = (trimmedContent === '&#160;' || trimmedContent === '&nbsp;' || trimmedContent === '\u00A0');
+            const containsOnlySpace = (trimmedContent === ' ');
 
-    if (tagName === 'li') {
-        const hasOnlyNestedList = element.children.length === 1 && (element.children[0].tagName === 'UL' || element.children[0].tagName === 'OL');
-        const isEffectivelyEmpty = trimmedContent === '' || containsOnlyNBSP || containsOnlySpace;
+            if (tagName === 'li') {
+                const nestedList = element.querySelector('ul, ol');
 
-        // ONLY add/retain NBSP if it's actually empty OR contains only a sub-list
-        if (isEffectivelyEmpty || hasOnlyNestedList) {
-            if (hasOnlyNestedList) {
-                // If it has a nested list, only add NBSP if there's no other text/content
-                // Using textContent check ensures we don't overwrite if text is present
-                const textWithoutNested = element.textContent.replace(element.children[0].textContent, '').trim();
-                if (textWithoutNested === '') {
-                    element.innerHTML = '&#160;' + element.children[0].outerHTML;
-                    element.setAttribute('data-keep-spacer', 'true');
+                if (nestedList) {
+                    const firstChild = element.firstChild;
+                    if (firstChild === nestedList) {
+                        element.insertBefore(doc.createTextNode('\u00A0'), nestedList);
+                    } else if (firstChild.nodeType === 3 && firstChild.nodeValue.trim() === '') {
+                        firstChild.nodeValue = '\u00A0';
+                    }
+                    continue;
+                }
+
+                if (trimmedContent === '' || containsOnlyNBSP || containsOnlySpace) {
+                    const parent = element.parentNode;
+                    if (parent) {
+                        parent.removeChild(element);
+                        if (parent.children.length === 0) {
+                            if (parent.parentNode) {
+                                parent.parentNode.removeChild(parent);
+                            }
+                        }
+                    }
+                }
+                continue;
+            } else if (tagName === 'p') {
+                const isInsideTable = element.closest('table');
+                if (!isInsideTable && (trimmedContent === '' || containsOnlyNBSP)) {
+                    if (element.parentNode) {
+                        element.parentNode.removeChild(element);
+                    }
+                } else if (!isInsideTable && containsOnlySpace) {
+                    if (element.parentNode) {
+                        element.parentNode.replaceChild(doc.createTextNode(' '), element);
+                    }
                 }
             } else {
-                // Completely empty LI
-                element.innerHTML = '&#160;';
-                element.setAttribute('data-keep-spacer', 'true');
-            }
-            continue; 
-        }
-    } else if (tagName === 'p') {
-        const isInsideTable = element.closest('table');
-        if (!isInsideTable && (trimmedContent === '' || containsOnlyNBSP)) {
-            if (element.parentNode) {
-                element.parentNode.removeChild(element);
-            }
-        } else if (!isInsideTable && containsOnlySpace) {
-            if (element.parentNode) {
-                element.parentNode.replaceChild(doc.createTextNode(' '), element);
-            }
-        }
-    } else {
-        // ... existing logic for other tags ...
-        if (['div', 'span', 'section'].includes(tagName) && element.attributes.length > 0) {
-            continue;
-        }
-        if (element.textContent === ' ' && ['strong', 'em', 'u', 'b', 'i'].includes(tagName)) {
-            element.parentNode.replaceChild(doc.createTextNode(' '), element);
-            continue;
-        }
-        if (trimmedContent === '' || containsOnlyNBSP) {
-            if (element.parentNode) {
-                element.parentNode.removeChild(element);
-            }
-        } else if (containsOnlySpace) {
-            if (element.parentNode) {
-                element.parentNode.replaceChild(doc.createTextNode(' '), element);
+                if (['div', 'span', 'section'].includes(tagName) && element.attributes.length > 0) {
+                    continue;
+                }
+                if (element.textContent === ' ' && ['strong', 'em', 'u', 'b', 'i'].includes(tagName)) {
+                    element.parentNode.replaceChild(doc.createTextNode(' '), element);
+                    continue;
+                }
+                if (trimmedContent === '' || containsOnlyNBSP) {
+                    if (element.parentNode) {
+                        element.parentNode.removeChild(element);
+                    }
+                } else if (containsOnlySpace) {
+                    if (element.parentNode) {
+                        element.parentNode.replaceChild(doc.createTextNode(' '), element);
+                    }
+                }
             }
         }
-    }
-}
 
         const elementsToTrim = finalBody.querySelectorAll('p, h1, h2, h3, h4, h5, h6, li');
-elementsToTrim.forEach(element => {
-    // SKIP trimming if this is a special empty LI we just processed
-    if (element.hasAttribute('data-keep-spacer')) {
-        element.removeAttribute('data-keep-spacer');
-        return;
-    }
+        elementsToTrim.forEach(element => {
+            if (element.hasAttribute('data-keep-spacer')) {
+                element.removeAttribute('data-keep-spacer');
+                return;
+            }
 
-    let currentHtml = element.innerHTML;
-    currentHtml = currentHtml.replace(/^(?:&nbsp;|\s|&#160;|\u00A0)+/, '');
-    currentHtml = currentHtml.replace(/(?:&nbsp;|\s|&#160;|\u00A0)+$/, '');
-    element.innerHTML = currentHtml;
-});
+            if (element.tagName.toLowerCase() === 'li' && element.querySelector('ul, ol')) {
+                return;
+            }
+
+            let currentHtml = element.innerHTML;
+            currentHtml = currentHtml.replace(/^(?:&nbsp;|\s|&#160;|\u00A0)+/, '');
+            currentHtml = currentHtml.replace(/(?:&nbsp;|\s|&#160;|\u00A0)+$/, '');
+            element.innerHTML = currentHtml;
+        });
 
         return finalBody.innerHTML;
     }
@@ -2409,6 +2410,7 @@ elementsToTrim.forEach(element => {
 
     function generateFullHtml(options, forExport = false) {
         const bodyContent = monacoEditorInstance.getValue();
+		const today = new Date().toISOString().split('T')[0];
         let customH1Title = (options.currentLanguage === 'en' ? options.h1TitleEn : options.h1TitleFr)
             .trim();
         if (customH1Title === '') {
@@ -2446,16 +2448,31 @@ elementsToTrim.forEach(element => {
             return url;
         }
 
-        tempDoc.querySelectorAll('img')
-            .forEach(img => {
-                let src = img.getAttribute('src');
-                if (src && !src.startsWith('http://') && !src.startsWith('https://') && !src.startsWith('//')) {
-                    let baseUrl = '';
-                    if (options.imageSourceMode === 'preview') baseUrl = 'https://canada-preview.adobecqms.net';
-                    else if (options.imageSourceMode === 'live') baseUrl = 'https://www.canada.ca';
-                    if (baseUrl) img.setAttribute('src', `${baseUrl}${src.startsWith('/') ? '' : '/'}${src}`);
+        let resourceBaseUrl = '';
+        if (options.imageSourceMode === 'preview') resourceBaseUrl = 'https://canada-preview.adobecqms.net';
+        else if (options.imageSourceMode === 'live') resourceBaseUrl = 'https://www.canada.ca';
+
+        tempDoc.querySelectorAll('img').forEach(img => {
+            let src = img.getAttribute('src');
+            if (src && !src.startsWith('http://') && !src.startsWith('https://') && !src.startsWith('//')) {
+                if (resourceBaseUrl) img.setAttribute('src', `${resourceBaseUrl}${src.startsWith('/') ? '' : '/'}${src}`);
+            }
+        });
+
+        if (resourceBaseUrl) {
+            const baseUrlClean = resourceBaseUrl.endsWith('/') ? resourceBaseUrl.slice(0, -1) : resourceBaseUrl;
+            
+            tempDoc.querySelectorAll('[data-bgimg-srcset]').forEach(el => {
+                let srcset = el.getAttribute('data-bgimg-srcset');
+                if (srcset) {
+                    const updatedSrcset = srcset.replace(
+                        /(\/content\/dam)/g, 
+                        `${baseUrlClean}$1`
+                    );
+                    el.setAttribute('data-bgimg-srcset', updatedSrcset);
                 }
             });
+        }
 
         tempDoc.querySelectorAll('a').forEach(link => {
             let href = link.getAttribute('href');
@@ -2489,9 +2506,9 @@ elementsToTrim.forEach(element => {
 
         let cssLinks = '';
         if (options.enableCss) {
-            if (options.currentFramework === 'wet') cssLinks = `<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css"><link rel="stylesheet" href="https://www.canada.ca/etc/designs/canada/wet-boew/css/theme.min.css">`;
+            if (options.currentFramework === 'wet') cssLinks = `<link rel="stylesheet" href="https://www.canada.ca/etc/designs/canada/wet-boew/css/theme.min.css">`;
             else if (options.currentFramework === 'gcds') cssLinks = `<link rel="stylesheet" href="https://cdn.design-system.alpha.canada.ca/@cdssnc/gcds-utility@latest/dist/gcds-utility.min.css"><link rel="stylesheet" href="https://cdn.design-system.alpha.canada.ca/@cdssnc/gcds-components@latest/dist/gcds/gcds.css">`;
-            else if (options.currentFramework === 'wet+') cssLinks = `<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css"><link rel="stylesheet" href="https://www.canada.ca/etc/designs/canada/wet-boew/css/theme.min.css"><link rel="stylesheet" href="https://cdn.design-system.alpha.canada.ca/@cdssnc/gcds-components@latest/dist/gcds/gcds.css">`;
+            else if (options.currentFramework === 'wet+') cssLinks = `<link rel="stylesheet" href="https://www.canada.ca/etc/designs/canada/wet-boew/css/theme.min.css"><link rel="stylesheet" href="https://cdn.design-system.alpha.canada.ca/@cdssnc/gcds-components@latest/dist/gcds/gcds.css">`;
         }
 
         let jsScripts = '';
@@ -2503,37 +2520,64 @@ elementsToTrim.forEach(element => {
         if (options.currentFramework === 'wet' || options.currentFramework === 'wet+') mainContentWrapper = `<main property="mainContentOfPage" resource="#wb-main" typeof="WebPageElement">${contentToInject}</main>`;
         else if (options.currentFramework === 'gcds') mainContentWrapper = `<gcds-container id="main-content" main-container size="xl" centered tag="main">${contentToInject}</gcds-container>`;
 
-        return `
-<!DOCTYPE html>
-<html class="no-js" lang="${options.currentLanguage}" dir="ltr">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${pageTitle}</title>
-    ${cssLinks}
-    <style>
-        body { text-align: left; font-family: 'Noto Sans', sans-serif; }
-        ${!forExport ? `
-        .show-sections-outline section { border: 2px dashed #007bff; padding: 10px; margin-bottom: 10px; }
-        .show-sections-outline section:hover { background-color: rgba(0, 123, 255, 0.1); }
-        .show-headings-outline h1, .show-headings-outline gcds-heading[tag="h1"] { border: 2px solid #FF0000; background-color: rgba(255,0,0,0.1); padding: 5px; }
-        .show-headings-outline h2, .show-headings-outline gcds-heading[tag="h2"] { border: 2px solid #FF7F00; background-color: rgba(255,127,0,0.1); padding: 5px; }
-        .show-headings-outline h3, .show-headings-outline gcds-heading[tag="h3"] { border: 2px solid #FFFF00; background-color: rgba(255,255,0,0.1); padding: 5px; }
-        .show-headings-outline h4, .show-headings-outline gcds-heading[tag="h4"] { border: 2px solid #00FF00; background-color: rgba(0,255,0,0.1); padding: 5px; }
-        .show-headings-outline h5, .show-headings-outline gcds-heading[tag="h5"] { border: 2px solid #0000FF; background-color: rgba(0,0,255,0.1); padding: 5px; }
-        .show-headings-outline h6, .show-headings-outline gcds-heading[tag="h6"] { border: 2px solid #4B0082; background-color: rgba(75,0,130,0.1); padding: 5px; }
-        ` : ''}
-        .table tbody tr.active { background-color: #e0f2f7; }
-        .nowrap { white-space: nowrap; }
+        let processedCss = customPreviewCss;
+        if (resourceBaseUrl && processedCss) {
+            processedCss = processedCss.replace(/url\(\s*(['"]?)\s*(\/content\/[^)]+?)\s*\1\s*\)/gi, (match, quote, path) => {
+                return `url(${quote || '"'}${resourceBaseUrl}${path}${quote || '"'})`;
+            });
+        }
 
-        ${customPreviewCss}
-    </style>
-</head>
-<body class="${bodyClass}">
-    ${mainContentWrapper}
-    ${jsScripts}
-</body>
-</html>`;
+        return `
+		<!DOCTYPE html>
+		<html class="no-js" lang="${options.currentLanguage}" dir="ltr">
+		<head>
+			<meta charset="utf-8">
+			<meta name="viewport" content="width=device-width, initial-scale=1.0">
+			<title>${pageTitle}</title>
+			
+			<link rel="stylesheet" href="${APP_CONFIG.fontAwesome}">
+			${cssLinks}
+			<style>
+				body { text-align: left; font-family: 'Noto Sans', sans-serif; }
+				${!forExport ? `
+				.show-sections-outline section { border: 2px dashed #007bff; padding: 10px; margin-bottom: 10px; }
+				.show-sections-outline section:hover { background-color: rgba(0, 123, 255, 0.1); }
+				.show-headings-outline h1, .show-headings-outline gcds-heading[tag="h1"] { border: 2px solid #FF0000; background-color: rgba(255,0,0,0.1); padding: 5px; }
+				.show-headings-outline h2, .show-headings-outline gcds-heading[tag="h2"] { border: 2px solid #FF7F00; background-color: rgba(255,127,0,0.1); padding: 5px; }
+				.show-headings-outline h3, .show-headings-outline gcds-heading[tag="h3"] { border: 2px solid #FFFF00; background-color: rgba(255,255,0,0.1); padding: 5px; }
+				.show-headings-outline h4, .show-headings-outline gcds-heading[tag="h4"] { border: 2px solid #00FF00; background-color: rgba(0,255,0,0.1); padding: 5px; }
+				.show-headings-outline h5, .show-headings-outline gcds-heading[tag="h5"] { border: 2px solid #0000FF; background-color: rgba(0,0,255,0.1); padding: 5px; }
+				.show-headings-outline h6, .show-headings-outline gcds-heading[tag="h6"] { border: 2px solid #4B0082; background-color: rgba(75,0,130,0.1); padding: 5px; }
+				` : ''}
+				.table tbody tr.active { background-color: #e0f2f7; }
+				.nowrap { white-space: nowrap; }
+
+				${processedCss}
+			</style>
+		</head>
+		<body class="${bodyClass}">
+			<gcds-header
+		  lang-href="#"
+		  skip-to-href="#wb-cont"
+		>
+		<div slot="breadcrumb"><gcds-breadcrumbs>
+
+		<gcds-breadcrumbs-item href="#">${pageTitle}</gcds-breadcrumbs-item>
+		</gcds-breadcrumbs></div>
+		</gcds-header>
+			${mainContentWrapper}
+			<gcds-container
+			  id="main-content"
+			  main-container
+			  size="xl"
+			  centered
+			  tag="main"
+			>
+			<gcds-date-modified>${today}</gcds-date-modified>
+			</gcds-container>
+			${jsScripts}
+		</body>
+		</html>`;
     }
 
 
