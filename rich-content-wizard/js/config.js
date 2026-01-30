@@ -38,6 +38,11 @@ const APP_CONFIG = {
             new: '/content/canadasite/fr/gouvernement'
         }
     ],
+	
+	/**
+     * @description URL path of FontAwesome for use in the preview window
+     */
+	fontAwesome:['https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css'],
 
     /**
      * @description An array of URL path beginnings that are often found in pasted content
@@ -59,6 +64,8 @@ const APP_CONFIG = {
     localPrefixes: ['/content/canadasite/en/treasury-board-secretariat', '/content/canadasite/fr/secretariat-conseil-tresor', '/content/canadasite/en/government', '/content/canadasite/fr/gouvernement'],
     previewPrefixes: ['https://canada-preview.adobecqms.net/en/treasury-board-secretariat', 'https://canada-preview.adobecqms.net/fr/secretariat-conseil-tresor', 'https://canada-preview.adobecqms.net/en/government', 'https://canada-preview.adobecqms.net/fr/gouvernement'],
     livePrefixes: ['https://www.canada.ca/en/treasury-board-secretariat', 'https://www.canada.ca/fr/secretariat-conseil-tresor', 'https://www.canada.ca/en/government', 'https://www.canada.ca/fr/gouvernement'],
+	
+	
 
     /**
      * @description A set of HTML tags that are "void" or "self-closing", meaning they
@@ -315,7 +322,7 @@ const APP_CONFIG = {
 			
 			// Custom classes (prefix)
 			// IMPORTANT: Add any class prefixes if a custom CSS is required, otherwise the cleaning operation will remove it.
-			'link-', 'bg-', 'dpp-', 'tbs-'
+			'link-', 'bg-', ,'custom-', 'dpp-', 'tbs-'
         ]
     },
     /**
