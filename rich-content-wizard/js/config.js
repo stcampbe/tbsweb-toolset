@@ -65,47 +65,158 @@ const APP_CONFIG = {
     previewPrefixes: ['https://canada-preview.adobecqms.net/en/treasury-board-secretariat', 'https://canada-preview.adobecqms.net/fr/secretariat-conseil-tresor', 'https://canada-preview.adobecqms.net/en/government', 'https://canada-preview.adobecqms.net/fr/gouvernement'],
     livePrefixes: ['https://www.canada.ca/en/treasury-board-secretariat', 'https://www.canada.ca/fr/secretariat-conseil-tresor', 'https://www.canada.ca/en/government', 'https://www.canada.ca/fr/gouvernement'],
 	
-	
-
     /**
      * @description A set of HTML tags that are "void" or "self-closing", meaning they
      * do not need a corresponding closing tag (e.g., <img>, <br>).
      * Used by the validation function to check for correct tag structure.
      */
+	 
     selfClosingTags: new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']),
+	
     /**
      * @description A set of HTML tags that are deprecated and should no longer be used.
      * The validation function will flag these tags as errors.
      */
+	 
     deprecatedTags: new Set(['acronym', 'applet', 'basefont', 'big', 'center', 'dir', 'font', 'frame', 'frameset', 'noframes', 'strike', 'tt', 'u']),
+	
     /**
      * @description A set of HTML elements that are considered "block-level" elements.
      * These elements typically start on a new line and take up the full width available.
      * Used by the validation function to check for invalid nesting (e.g., a <div> inside a <span>).
      */
+	 
     blockElements: new Set(['address', 'article', 'aside', 'blockquote', 'canvas', 'dd', 'div', 'dl', 'dt', 'fieldset', 'figcaption', 'figure', 'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'hr', 'li', 'main', 'nav', 'noscript', 'ol', 'p', 'pre', 'section', 'table', 'tfoot', 'ul', 'video']),
+	
     /**
      * @description A set of HTML elements that are considered "inline" elements.
      * These elements do not start on a new line and only take up as much width as necessary.
      * Used by the validation function to check for invalid nesting.
      */
+	 
     inlineElements: new Set(['a', 'abbr', 'b', 'bdo', 'br', 'button', 'cite', 'code', 'dfn', 'em', 'i', 'img', 'input', 'kbd', 'label', 'map', 'object', 'q', 'samp', 'script', 'select', 'small', 'span', 'strong', 'sub', 'sup', 'textarea', 'time', 'var']),
+	
     /**
      * @description A set of elements for which it is acceptable to have 'width' and 'height'
      * attributes directly on the tag (e.g., <img>, <video>). For other elements, CSS should be used.
      */
+	 
     mediaSizingElements: new Set(['img', 'iframe', 'video', 'canvas', 'object', 'embed']),
+	
     /**
      * @description A set of elements where using the 'target' attribute (e.g., target="_blank")
      * is considered valid. The validator will flag its use on other elements.
      */
+	 
     targetValidElements: new Set(['a', 'form']),
+	
     /**
      * @description A set of tags that the validation logic should completely ignore.
      * This is useful for custom elements that might not follow standard HTML rules.
      */
+	 
     ignoredTags: new Set(['doc']),
+	
+	/**
+     * @description Defines allowed CSS classes using a more efficient structure.
+     * 'exact' provides fast lookups for specific classes.
+     * 'prefixes' allows for pattern-based matching (e.g., 'col-', 'bg-').
+     */
+	 
+    allowedClassesConfig: {
+        exact: new Set([
+            'accordion', 'active', 'admin', 'alert', 'alpha', 'badge', 'block',
+            'blockquote-reverse', 'bottom-0', 'breadcrumb', 'btn', 'caption', 'carousel',
+            'center-block', 'checkbox', 'clear', 'clearfix', 'close', 'collapse',
+            'collapsing', 'complex', 'container', 'control-label', 'danger',
+            'dataTable', 'disabled', 'dropdown', 'equalize', 'fade',
+            'favicon', 'figure', 'fixed', 'flex',
+            'frmvld-wtt', 'glyphicon', 'grid', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+            'hidden', 'in', 'info', 'initial', 'inline', 'invisible', 'italic', 'item',
+            'jumbotron', 'label', 'lead', 'media', 'mfp-hide', 'modal',
+            'multimedia', 'nav', 'next', 'no-js', 'nojs-hide', 'nojs-show', 'not-italic',
+            'nowrap', 'omega', 'open', 'page-header', 'pager', 'pagination', 'panel', 'parbase',
+            'pause', 'play', 'pre-scrollable', 'prev', 'previous', 'progress',
+            'provisional', 'radio', 'relative', 'row', 'section', 'show', 'simple',
+            'small', 'sr-only', 'static', 'sticky', 'success', 'tab-content', 'table',
+            'tgl-tab', 'thumbnail', 'tooltip', 'top-0', 'visible', 'warning', 'well',
+            'zoom-in',
 
+            // Custom classes (exact matches)
+			// IMPORTANT: Add any classes if a custom CSS is required, otherwise the cleaning operation will remove it.
+            'custom', 'dpp', 'tbs'
+        ]),
+        prefixes: [
+            '--wb-', 'abbr-', 'acc-', 'alert-', 'bg-', 'brdr-', 'btn-', 'carousel-', 'checkbox-', 
+            'col-', 'container_', 'datepicker-', 'details-', 'dl-', 'dropdown-', 'embed-',
+            'feed-', 'figure-', 'flex-', 'fn-', 'fnt-', 'font-', 'form-', 'gc-', 'grid_',
+            'h-', 'has-', 'hidden-', 'icon-', 'img-', 'inline-', 'input-', 'items-',
+            'justify-', 'label-', 'left-', 'list-', 'lst-', 'm-', 'mb-',
+            'media-', 'ml-', 'modal-', 'mr-', 'mrgn-', 'mt-', 'mx-', 'my-', 'nav-',
+            'navbar-', 'nojs-', 'opacity-', 'p-', 'pagination-', 'panel-', 'pb-',
+            'pddng-', 'pl-', 'pr-', 'prefix_', 'progress-', 'print-', 'pt-', 'pull-', 'push-',
+            'px-', 'py-', 'radio-', 'right-', 'rounded', 'shadow', 'space-', 'suffix_', 'table-',
+            'text-', 'tgl-', 'tooltip-', 'visible-', 'w-', 'wb-', 'well-', 'wet-', 'z-',
+			
+			// Custom classes (prefix)
+			// IMPORTANT: Add any class prefixes if a custom CSS is required, otherwise the cleaning operation will remove it.
+			'link-', 'bg-', ,'custom-', 'dpp-', 'tbs-'
+        ]
+    },
+	
+	    /**
+     * @description A function that generates the standard "From" byline HTML snippet.
+     * It returns different markup depending on the selected framework (WET or GCDS) and language.
+     * This is used by the preview modal.
+     */
+    getBylineHtml: function(options) {
+        let bylineHtml = '';
+        if (options.bylineMode === 'english') {
+            if (options.currentFramework === 'wet' || options.currentFramework === 'wet+') {
+                bylineHtml = '<p class="gc-byline"><strong>From: <a href="/en/treasury-board-secretariat.html">Treasury Board of Canada Secretariat</a></strong></p>';
+            } else if (options.currentFramework === 'gcds') {
+                bylineHtml = `<gcds-text><strong>From: <gcds-link href="/en/treasury-board-secretariat.html">Treasury Board of Canada Secretariat</gcds-link></strong></gcds-text>`;
+            }
+        } else if (options.bylineMode === 'french') {
+            if (options.currentFramework === 'wet' || options.currentFramework === 'wet+') {
+                bylineHtml = '<p class="gc-byline"><strong>De : <a href="/fr/secretariat-conseil-tresor.html">Secrétariat du Conseil du Trésor du Canada</a></strong></p>';
+            } else if (options.currentFramework === 'gcds') {
+                bylineHtml = `<gcds-text><strong>De : <gcds-link href="/fr/secretariat-conseil-tresor.html">Secrétariat du Conseil du Trésor du Canada</gcds-link></strong></gcds-text>`;
+            }
+        }
+        return bylineHtml;
+    },
+
+    /**
+     * @description A function that generates the standard copyright/colophon HTML section.
+     * It takes options for language, monarch (King/Queen), year, and identifier (ISBN/ISSN)
+     * to construct the correct legal text.
+     */
+    getColophonHtml: function({
+        language,
+        monarch,
+        year,
+        identifier,
+        number
+    }) {
+        let content = `<section id="colophon">\n<p class="mrgn-tp-lg text-center small">© `;
+
+        if (language === 'English') {
+            if (monarch === 'King') {
+                content += `His Majesty the King in Right of Canada, represented by the President of the Treasury Board, ${year},<br>${identifier}:&#160;${number}</p>\n</section>`;
+            } else { // Queen
+                content += `Her Majesty the Queen in Right of Canada, represented by the President of the Treasury Board, ${year},<br>${identifier}:&#160;${number}</p>\n</section>`;
+            }
+        } else { // French
+            if (monarch === 'King') {
+                content += `Sa Majesté le Roi du chef du Canada, représenté par le président du Conseil du Trésor, ${year},<br>${identifier}&#160;:&#160;${number}</p>\n</section>`;
+            } else { // Queen
+                content += `Sa Majesté la Reine du chef du Canada, représentée par le président du Conseil du Trésor, ${year},<br>${identifier}&#160;:&#160;${number}</p>\n</section>`;
+            }
+        }
+        return content;
+    },
+	
     /**
      * @description This is the primary HTML validation function. It takes the full HTML code,
      * a DOM document representation, the Monaco editor instance, and an array to populate with errors.
@@ -281,51 +392,6 @@ const APP_CONFIG = {
     },
 
     /**
-     * @description Defines allowed CSS classes using a more efficient structure.
-     * 'exact' provides fast lookups for specific classes.
-     * 'prefixes' allows for pattern-based matching (e.g., 'col-', 'bg-').
-     */
-    allowedClassesConfig: {
-        exact: new Set([
-            'accordion', 'active', 'admin', 'alert', 'alpha', 'badge', 'block',
-            'blockquote-reverse', 'bottom-0', 'breadcrumb', 'btn', 'caption', 'carousel',
-            'center-block', 'checkbox', 'clear', 'clearfix', 'close', 'collapse',
-            'collapsing', 'complex', 'container', 'control-label', 'danger',
-            'dataTable', 'disabled', 'dropdown', 'equalize', 'fade',
-            'favicon', 'figure', 'fixed', 'flex',
-            'frmvld-wtt', 'glyphicon', 'grid', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-            'hidden', 'in', 'info', 'initial', 'inline', 'invisible', 'italic', 'item',
-            'jumbotron', 'label', 'lead', 'media', 'mfp-hide', 'modal',
-            'multimedia', 'nav', 'next', 'no-js', 'nojs-hide', 'nojs-show', 'not-italic',
-            'nowrap', 'omega', 'open', 'page-header', 'pager', 'pagination', 'panel', 'parbase',
-            'pause', 'play', 'pre-scrollable', 'prev', 'previous', 'progress',
-            'provisional', 'radio', 'relative', 'row', 'section', 'show', 'simple',
-            'small', 'sr-only', 'static', 'sticky', 'success', 'tab-content', 'table',
-            'tgl-tab', 'thumbnail', 'tooltip', 'top-0', 'visible', 'warning', 'well',
-            'zoom-in',
-
-            // Custom classes (exact matches)
-			// IMPORTANT: Add any classes if a custom CSS is required, otherwise the cleaning operation will remove it.
-            'dpp', 'tbs'
-        ]),
-        prefixes: [
-            '--wb-', 'abbr-', 'acc-', 'alert-', 'bg-', 'brdr-', 'btn-', 'carousel-', 'checkbox-', 
-            'col-', 'container_', 'datepicker-', 'details-', 'dl-', 'dropdown-', 'embed-',
-            'feed-', 'figure-', 'flex-', 'fn-', 'fnt-', 'font-', 'form-', 'gc-', 'grid_',
-            'h-', 'has-', 'hidden-', 'icon-', 'img-', 'inline-', 'input-', 'items-',
-            'justify-', 'label-', 'left-', 'list-', 'lst-', 'm-', 'mb-',
-            'media-', 'ml-', 'modal-', 'mr-', 'mrgn-', 'mt-', 'mx-', 'my-', 'nav-',
-            'navbar-', 'nojs-', 'opacity-', 'p-', 'pagination-', 'panel-', 'pb-',
-            'pddng-', 'pl-', 'pr-', 'prefix_', 'progress-', 'print-', 'pt-', 'pull-', 'push-',
-            'px-', 'py-', 'radio-', 'right-', 'rounded', 'shadow', 'space-', 'suffix_', 'table-',
-            'text-', 'tgl-', 'tooltip-', 'visible-', 'w-', 'wb-', 'well-', 'wet-', 'z-',
-			
-			// Custom classes (prefix)
-			// IMPORTANT: Add any class prefixes if a custom CSS is required, otherwise the cleaning operation will remove it.
-			'link-', 'bg-', ,'custom-', 'dpp-', 'tbs-'
-        ]
-    },
-    /**
      * @description This is the complete HTML document that gets loaded into the iframe
      * for the rich text editor (TinyMCE via the HugeRTE wrapper). It includes the necessary
      * scripts, styles, and initialization logic to run the editor and communicate with the parent window.
@@ -423,24 +489,18 @@ const APP_CONFIG = {
                                             richTextEditorInstance.focus();
                                             markerEl.scrollIntoView({ block: 'center', inline: 'nearest' });
                                             
-                                            // 1. Place cursor
                                             const selection = richTextEditorInstance.selection;
                                             selection.select(markerEl);
                                             selection.collapse(true);
 
-                                            // 2. Identify Parent before removal
                                             const parentNode = markerEl.parentNode;
 
-                                            // 3. Remove the marker
                                             richTextEditorInstance.dom.remove(markerEl);
 
-                                            // 4. Garbage Collection
                                             if (parentNode && !parentNode.hasAttribute('data-keep-spacer')) {
-                                                // Added \uFEFF to the regex to catch our specific marker character
                                                 const parentContent = parentNode.innerHTML.replace(/&nbsp;|&#160;|\u00A0|\uFEFF/g, '').trim();
                                                 const isBlockTag = ['P', 'DIV'].includes(parentNode.tagName);
                                                 
-                                                // If parent is a block tag and effectively empty, remove it
                                                 if (isBlockTag && parentContent === '') {
                                                     richTextEditorInstance.dom.remove(parentNode);
                                                 }
@@ -470,19 +530,15 @@ const APP_CONFIG = {
                         window.resetScopeChecker = function() {
                             if (richTextEditorInstance) {
                                 const body = richTextEditorInstance.getBody();
-                                // Only reset if currently active
                                 if (richTextEditorInstance.dom.hasClass(body, 'show-table-scopes')) {
                                     richTextEditorInstance.dom.removeClass(body, 'show-table-scopes');
 
-                                    // Clear locks and highlights
                                     const locked = richTextEditorInstance.dom.select('.is-locked, .is-locked-related, .is-hovered, .is-related');
                                     richTextEditorInstance.dom.removeClass(locked, 'is-locked is-locked-related is-hovered is-related');
                                     
-                                    // Clear table focus
                                     const focusedTables = richTextEditorInstance.dom.select('table.scope-focus-active');
                                     richTextEditorInstance.dom.removeClass(focusedTables, 'scope-focus-active');
 
-                                    // Fire event to update the toolbar button state
                                     richTextEditorInstance.fire('ScopeStateChange');
                                 }
                             }
@@ -527,26 +583,20 @@ const APP_CONFIG = {
                                 console.log("Iframe: Parent commanded initialization. Initializing editor.");
 								const applyListStyle = (editor, listType, styleClass) => {
 									editor.undoManager.transact(() => {
-										// 1. Determine the command based on the desired list type
 										const command = listType === 'ul' ? 'InsertUnorderedList' : 'InsertOrderedList';
 
-										// 2. Check current selection and convert if necessary
 										const node = editor.selection.getNode();
 										const existingList = editor.dom.getParent(node, 'ul,ol');
 
-										// If not a list, or if the list type doesn't match what we want, switch it
 										if (!existingList || existingList.nodeName.toLowerCase() !== listType) {
 											editor.execCommand(command);
 										}
 
-										// 3. Get the active list element (it should match the listType now)
 										const currentList = editor.dom.getParent(editor.selection.getNode(), listType);
 
 										if (currentList) {
-											// 4. Clean ALL specific custom classes (including list-unstyled)
 											editor.dom.removeClass(currentList, 'lst-lwr-alph lst-upr-alph lst-lwr-rmn lst-upr-rmn list-unstyled');
 											
-											// 5. Apply new class only if one was provided
 											if (styleClass) {
 												editor.dom.addClass(currentList, styleClass);
 											}
@@ -602,13 +652,11 @@ const APP_CONFIG = {
 										}
 									};
 
-									// Paragraph Button
 									editor.ui.registry.addButton('btn_p', {
 										text: 'P',
 										onAction: function() { applyHeading('p'); }
 									});
 
-									// Heading Buttons H1-H6
 									['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].forEach(function(tag) {
 										editor.ui.registry.addButton('btn_' + tag, {
 											text: tag.toUpperCase(),
@@ -651,7 +699,6 @@ const APP_CONFIG = {
 											api.setActive(isActive);
 											editor.dom.toggleClass(editor.getBody(), 'show-table-scopes', isActive);
 											
-											// Clean up when turning off manually via click
 											if (!isActive) {
 												const locked = editor.dom.select('.is-locked, .is-locked-related, .is-hovered, .is-related');
 												editor.dom.removeClass(locked, 'is-locked is-locked-related is-hovered is-related');
@@ -672,12 +719,10 @@ const APP_CONFIG = {
 										}
 									});
 
-									// Helper: Logic to determine relationships and apply classes
 									const highlightRelationships = (target, primaryClass, relatedClass) => {
 										editor.dom.addClass(target, primaryClass);
 										const table = editor.dom.getParent(target, 'table');
 
-										// 1. ID/Headers
 										const headers = target.getAttribute('headers');
 										if (headers) {
 											headers.split(' ').forEach(id => {
@@ -695,7 +740,6 @@ const APP_CONFIG = {
 											});
 										}
 
-										// 2. Scope
 										const scope = target.getAttribute('scope');
 										const isTh = target.tagName.toLowerCase() === 'th';
 										const cellIndex = target.cellIndex;
@@ -736,7 +780,6 @@ const APP_CONFIG = {
 										}
 									};
 
-									// Hover Listener
 									editor.on('mouseover', function(e) {
 										if (!editor.dom.hasClass(editor.getBody(), 'show-table-scopes')) return;
 										
@@ -763,7 +806,6 @@ const APP_CONFIG = {
 										editor.dom.removeClass(focusedTables, 'scope-focus-active');
 									});
 
-									// Click Listener (Locking)
 									editor.on('click', function(e) {
 										if (!editor.dom.hasClass(editor.getBody(), 'show-table-scopes')) return;
 										
@@ -789,7 +831,6 @@ const APP_CONFIG = {
 										}
 									});
 
-									// Keydown Listener
 									editor.on('keydown', function(e) {
 										if (editor.dom.hasClass(editor.getBody(), 'show-table-scopes')) {
 											const node = editor.selection.getNode();
@@ -828,58 +869,7 @@ const APP_CONFIG = {
                     <\/script>
                 </body>
                 </html>`,
-    /**
-     * @description A function that generates the standard "From" byline HTML snippet.
-     * It returns different markup depending on the selected framework (WET or GCDS) and language.
-     * This is used by the preview modal.
-     */
-    getBylineHtml: function(options) {
-        let bylineHtml = '';
-        if (options.bylineMode === 'english') {
-            if (options.currentFramework === 'wet' || options.currentFramework === 'wet+') {
-                bylineHtml = '<p class="gc-byline"><strong>From: <a href="/en/treasury-board-secretariat.html">Treasury Board of Canada Secretariat</a></strong></p>';
-            } else if (options.currentFramework === 'gcds') {
-                bylineHtml = `<gcds-text><strong>From: <gcds-link href="/en/treasury-board-secretariat.html">Treasury Board of Canada Secretariat</gcds-link></strong></gcds-text>`;
-            }
-        } else if (options.bylineMode === 'french') {
-            if (options.currentFramework === 'wet' || options.currentFramework === 'wet+') {
-                bylineHtml = '<p class="gc-byline"><strong>De : <a href="/fr/secretariat-conseil-tresor.html">Secrétariat du Conseil du Trésor du Canada</a></strong></p>';
-            } else if (options.currentFramework === 'gcds') {
-                bylineHtml = `<gcds-text><strong>De : <gcds-link href="/fr/secretariat-conseil-tresor.html">Secrétariat du Conseil du Trésor du Canada</gcds-link></strong></gcds-text>`;
-            }
-        }
-        return bylineHtml;
-    },
 
-    /**
-     * @description A function that generates the standard copyright/colophon HTML section.
-     * It takes options for language, monarch (King/Queen), year, and identifier (ISBN/ISSN)
-     * to construct the correct legal text.
-     */
-    getColophonHtml: function({
-        language,
-        monarch,
-        year,
-        identifier,
-        number
-    }) {
-        let content = `<section id="colophon">\n<p class="mrgn-tp-lg text-center small">© `;
-
-        if (language === 'English') {
-            if (monarch === 'King') {
-                content += `His Majesty the King in Right of Canada, represented by the President of the Treasury Board, ${year},<br>${identifier}:&#160;${number}</p>\n</section>`;
-            } else { // Queen
-                content += `Her Majesty the Queen in Right of Canada, represented by the President of the Treasury Board, ${year},<br>${identifier}:&#160;${number}</p>\n</section>`;
-            }
-        } else { // French
-            if (monarch === 'King') {
-                content += `Sa Majesté le Roi du chef du Canada, représenté par le président du Conseil du Trésor, ${year},<br>${identifier}&#160;:&#160;${number}</p>\n</section>`;
-            } else { // Queen
-                content += `Sa Majesté la Reine du chef du Canada, représentée par le président du Conseil du Trésor, ${year},<br>${identifier}&#160;:&#160;${number}</p>\n</section>`;
-            }
-        }
-        return content;
-    },
 
     /**
      * @description Configures the path for the RequireJS loader to find the Monaco Editor
