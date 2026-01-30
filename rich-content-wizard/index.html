@@ -996,9 +996,12 @@
                 <i class="fas fa-times fa-lg"></i>
             </button>
         </div>
-        <p class="text-sm text-gray-400 mb-2">Enter CSS below. It will be injected into the <code>&lt;style&gt;</code> tag of the preview. <strong>NOTE: This is persistent until you manually delete any CSS code below or refresh the page/application</strong>. Pressing Cancel or closing this modal will not clear the inputted code!</p>
-
+        <p class="text-sm text-gray-400 mb-2">Enter custom CSS below. It will be injected into the preview and within the "Export Prototype" function. <strong><a href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">Font Awesome 7.0.1</a></strong> is automatically being applied.</p>
+		<section class="p-4 mt-2 text-sm text-red-800 rounded-lg bg-red-50 text-left mb-2" role="alert"><p><strong>IMPORTANT:</strong></p> <ul class="list-disc list-inside"><li>Keep a local copy and save your work often!</li> <li>To avoid custom classes being cleaned and removed, <strong>use the "custom-" OR "tbs-" prefix to <u>ALL</u> class names!</strong><ul class="list-disc list-inside ml-5"><li>Example: "<strong>tbs</strong>-bluebox"</li></ul> </li></ul></section>
+		<p class="text-sm text-gray-100 mb-2"><code>&lt;style&gt;</code></p>
 <div id="customCssEditorContainer" class="flex-grow w-full border border-gray-700 rounded-md overflow-hidden relative"></div>
+<p class="text-sm text-gray-100 mb-2"><code>&lt;/style&gt;</code></p>
+<p class="text-sm text-gray-400 mb-2"><strong>NOTE: This is persistent until you manually delete any CSS code below or refresh the page/application</strong>. Pressing Cancel or closing this modal will not clear the inputted code!</p>
         <div class="flex justify-end mt-4 space-x-2">
             <button id="cancelCustomCssBtn" class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-500 font-bold">Cancel</button>
             <button id="previewCustomCssBtn" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 font-bold"><i class="fa-solid fa-eye"></i> Preview w/ Custom CSS</button>
