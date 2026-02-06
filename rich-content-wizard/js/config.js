@@ -38,11 +38,6 @@ const APP_CONFIG = {
             new: '/content/canadasite/fr/gouvernement'
         }
     ],
-	
-	/**
-     * @description URL path of FontAwesome for use in the preview window
-     */
-	fontAwesome:['https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css'],
 
     /**
      * @description An array of URL path beginnings that are often found in pasted content
@@ -50,10 +45,14 @@ const APP_CONFIG = {
      * to any URL that starts with one of these patterns.
      */
     prependPatterns: [
-        '/en/treasury-board-secretariat', 'en/treasury-board-secretariat',
-        '/fr/secretariat-conseil-tresor', 'fr/secretariat-conseil-tresor',
-        '/en/government', 'en/government',
-        '/fr/gouvernement', 'fr/gouvernement'
+        '/en/treasury-board-secretariat', 
+		'en/treasury-board-secretariat',
+        '/fr/secretariat-conseil-tresor', 
+		'fr/secretariat-conseil-tresor',
+        '/en/government', 
+		'en/government',
+        '/fr/gouvernement', 
+		'fr/gouvernement'
     ],
 
     /**
@@ -61,9 +60,23 @@ const APP_CONFIG = {
      * They are used by the preview modal to swap link and image source prefixes, allowing
      * the user to see how the page would look with local, preview, or live URLs.
      */
-    localPrefixes: ['/content/canadasite/en/treasury-board-secretariat', '/content/canadasite/fr/secretariat-conseil-tresor', '/content/canadasite/en/government', '/content/canadasite/fr/gouvernement'],
-    previewPrefixes: ['https://canada-preview.adobecqms.net/en/treasury-board-secretariat', 'https://canada-preview.adobecqms.net/fr/secretariat-conseil-tresor', 'https://canada-preview.adobecqms.net/en/government', 'https://canada-preview.adobecqms.net/fr/gouvernement'],
-    livePrefixes: ['https://www.canada.ca/en/treasury-board-secretariat', 'https://www.canada.ca/fr/secretariat-conseil-tresor', 'https://www.canada.ca/en/government', 'https://www.canada.ca/fr/gouvernement'],
+    localPrefixes: ['/content/canadasite/en/treasury-board-secretariat', 
+	'/content/canadasite/fr/secretariat-conseil-tresor', 
+	'/content/canadasite/en/government', 
+	'/content/canadasite/fr/gouvernement'],
+    previewPrefixes: ['https://canada-preview.adobecqms.net/en/treasury-board-secretariat', 
+	'https://canada-preview.adobecqms.net/fr/secretariat-conseil-tresor', 
+	'https://canada-preview.adobecqms.net/en/government', 
+	'https://canada-preview.adobecqms.net/fr/gouvernement'],
+    livePrefixes: ['https://www.canada.ca/en/treasury-board-secretariat', 
+	'https://www.canada.ca/fr/secretariat-conseil-tresor', 
+	'https://www.canada.ca/en/government', 
+	'https://www.canada.ca/fr/gouvernement'],
+	
+	/**
+     * @description URL path of FontAwesome for use in the preview window
+     */
+	fontAwesome:['https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css'],
 	
     /**
      * @description A set of HTML tags that are "void" or "self-closing", meaning they
@@ -164,29 +177,6 @@ const APP_CONFIG = {
         ]
     },
 	
-	    /**
-     * @description A function that generates the standard "From" byline HTML snippet.
-     * It returns different markup depending on the selected framework (WET or GCDS) and language.
-     * This is used by the preview modal.
-     */
-    getBylineHtml: function(options) {
-        let bylineHtml = '';
-        if (options.bylineMode === 'english') {
-            if (options.currentFramework === 'wet' || options.currentFramework === 'wet+') {
-                bylineHtml = '<p class="gc-byline"><strong>From: <a href="/en/treasury-board-secretariat.html">Treasury Board of Canada Secretariat</a></strong></p>';
-            } else if (options.currentFramework === 'gcds') {
-                bylineHtml = `<gcds-text><strong>From: <gcds-link href="/en/treasury-board-secretariat.html">Treasury Board of Canada Secretariat</gcds-link></strong></gcds-text>`;
-            }
-        } else if (options.bylineMode === 'french') {
-            if (options.currentFramework === 'wet' || options.currentFramework === 'wet+') {
-                bylineHtml = '<p class="gc-byline"><strong>De : <a href="/fr/secretariat-conseil-tresor.html">Secrétariat du Conseil du Trésor du Canada</a></strong></p>';
-            } else if (options.currentFramework === 'gcds') {
-                bylineHtml = `<gcds-text><strong>De : <gcds-link href="/fr/secretariat-conseil-tresor.html">Secrétariat du Conseil du Trésor du Canada</gcds-link></strong></gcds-text>`;
-            }
-        }
-        return bylineHtml;
-    },
-
     /**
      * @description A function that generates the standard copyright/colophon HTML section.
      * It takes options for language, monarch (King/Queen), year, and identifier (ISBN/ISSN)
@@ -722,7 +712,9 @@ const APP_CONFIG = {
 									const highlightRelationships = (target, primaryClass, relatedClass) => {
 										editor.dom.addClass(target, primaryClass);
 										const table = editor.dom.getParent(target, 'table');
+										if (!table) return;
 
+										// --- 1. ID/HEADERS Attribute Check (Existing Logic) ---
 										const headers = target.getAttribute('headers');
 										if (headers) {
 											headers.split(' ').forEach(id => {
@@ -740,41 +732,135 @@ const APP_CONFIG = {
 											});
 										}
 
-										const scope = target.getAttribute('scope');
-										const isTh = target.tagName.toLowerCase() === 'th';
-										const cellIndex = target.cellIndex;
-										const parentTr = target.parentNode;
+										// --- 2. Calculate Visual Column Index of the Target (for Data Cells) ---
+										let visualColIndex = 0;
+										if (target.tagName === 'TD' || (target.tagName === 'TH' && target.getAttribute('scope') !== 'col' && target.getAttribute('scope') !== 'colgroup')) {
+											let prev = target.previousElementSibling;
+											while (prev) {
+												visualColIndex += parseInt(prev.getAttribute('colspan') || '1', 10);
+												prev = prev.previousElementSibling;
+											}
+										}
 
-										if (isTh && scope) {
-											if (scope === 'row') {
-												const siblings = parentTr.cells;
-												for (let i = 0; i < siblings.length; i++) {
-													if (siblings[i] !== target) editor.dom.addClass(siblings[i], relatedClass);
-												}
-											} else if (scope === 'col') {
-												const rows = table.rows;
-												for (let i = 0; i < rows.length; i++) {
-													const cellAtCol = rows[i].cells[cellIndex];
-													if (cellAtCol && cellAtCol !== target) {
-														editor.dom.addClass(cellAtCol, relatedClass);
+										// --- 3. Row Scope Logic ---
+										const parentTr = target.parentNode;
+										if (parentTr) {
+											const rowSiblings = parentTr.cells;
+											// If highlighting a TD, find the row headers
+											if (target.tagName === 'TD') {
+												for (let i = 0; i < rowSiblings.length; i++) {
+													const sib = rowSiblings[i];
+													if (sib !== target && sib.tagName === 'TH' && sib.getAttribute('scope') === 'row') {
+														editor.dom.addClass(sib, relatedClass);
 													}
+												}
+											}
+											// If highlighting a Row Header, find the siblings
+											if (target.tagName === 'TH' && target.getAttribute('scope') === 'row') {
+												for (let i = 0; i < rowSiblings.length; i++) {
+													if (rowSiblings[i] !== target) editor.dom.addClass(rowSiblings[i], relatedClass);
 												}
 											}
 										}
 
-										if (!isTh) {
-											const rowSiblings = parentTr.cells;
-											for (let i = 0; i < rowSiblings.length; i++) {
-												const sib = rowSiblings[i];
-												if (sib.tagName === 'TH' && sib.getAttribute('scope') === 'row') {
-													editor.dom.addClass(sib, relatedClass);
+										// --- 4. Column Scope Logic (Advanced Matrix) ---
+										const thead = table.querySelector('thead');
+										if (thead) {
+											// Build a grid of the THEAD to handle rowspan/colspan complexities
+											const matrix = []; 
+											const rows = Array.from(thead.rows);
+
+											rows.forEach((tr, rIdx) => {
+												if (!matrix[rIdx]) matrix[rIdx] = [];
+												let cIdx = 0;
+												Array.from(tr.children).forEach(cell => {
+													// Find next open slot
+													while (matrix[rIdx][cIdx]) cIdx++;
+
+													const colspan = parseInt(cell.getAttribute('colspan') || '1', 10);
+													const rowspan = parseInt(cell.getAttribute('rowspan') || '1', 10);
+
+													for (let r = 0; r < rowspan; r++) {
+														for (let c = 0; c < colspan; c++) {
+															if (!matrix[rIdx + r]) matrix[rIdx + r] = [];
+															matrix[rIdx + r][cIdx + c] = cell;
+														}
+													}
+													cIdx++; 
+												});
+											});
+
+											// Scenario A: Target is a Data Cell. Look UP the matrix at visualColIndex.
+											if (target.tagName === 'TD' || (target.tagName === 'TH' && target.getAttribute('scope') === 'row')) {
+												const uniqueHeaders = new Set();
+												for (let r = 0; r < matrix.length; r++) {
+													if (matrix[r] && matrix[r][visualColIndex]) {
+														const headerCell = matrix[r][visualColIndex];
+														// Add distinct headers found in this column stack (handles stacked col/colgroup)
+														if (headerCell && !uniqueHeaders.has(headerCell)) {
+															const scope = headerCell.getAttribute('scope');
+															if (scope === 'col' || scope === 'colgroup') {
+																editor.dom.addClass(headerCell, relatedClass);
+																uniqueHeaders.add(headerCell);
+															}
+														}
+													}
 												}
 											}
-											const rows = table.rows;
-											for (let i = 0; i < rows.length; i++) {
-												const cellAtCol = rows[i].cells[cellIndex];
-												if (cellAtCol && cellAtCol.tagName === 'TH' && cellAtCol.getAttribute('scope') === 'col') {
-													editor.dom.addClass(cellAtCol, relatedClass);
+
+											// Scenario B: Target is a Column Header (col or colgroup).
+											const scope = target.getAttribute('scope');
+											if (target.tagName === 'TH' && (scope === 'col' || scope === 'colgroup')) {
+												
+												// 1. Determine the visual column range of this header
+												let startCol = -1;
+												let endCol = -1;
+												
+												rows.forEach((_, rIdx) => {
+													if(matrix[rIdx]) {
+														matrix[rIdx].forEach((cell, cIdx) => {
+															if(cell === target) {
+																if(startCol === -1) startCol = cIdx;
+																endCol = cIdx;
+															}
+														});
+													}
+												});
+
+												if (startCol !== -1) {
+													// 2. Highlight RELATED HEADERS (Parent <-> Child relationship)
+													// We scan the matrix within our column range to find overlapping headers
+													const uniquePeers = new Set();
+													rows.forEach((_, rIdx) => {
+														if (matrix[rIdx]) {
+															for(let c = startCol; c <= endCol; c++) {
+																const peer = matrix[rIdx][c];
+																if (peer && peer !== target && !uniquePeers.has(peer)) {
+																	editor.dom.addClass(peer, relatedClass);
+																	uniquePeers.add(peer);
+																}
+															}
+														}
+													});
+
+													// 3. Highlight BODY CELLS
+													const tbody = table.querySelector('tbody');
+													if (tbody) {
+														Array.from(tbody.rows).forEach(row => {
+															let currentVisIdx = 0;
+															Array.from(row.cells).forEach(cell => {
+																let cSpan = parseInt(cell.getAttribute('colspan') || '1', 10);
+																const cellStart = currentVisIdx;
+																const cellEnd = currentVisIdx + cSpan - 1;
+																
+																// Check for overlap between header range and cell range
+																if (Math.max(startCol, cellStart) <= Math.min(endCol, cellEnd)) {
+																	editor.dom.addClass(cell, relatedClass);
+																}
+																currentVisIdx += cSpan;
+															});
+														});
+													}
 												}
 											}
 										}
