@@ -327,14 +327,7 @@
                     </div>
                     <div class="flex flex-col space-y-2 w-full">
                         <div class="flex flex-row flex-wrap justify-center sm:justify-start w-full mt-2 space-x-4">
-                            <div class="flex flex-col items-start mt-2 sm:mt-0">
-                                <span class="text-sm font-medium text-gray-200 mb-1">Byline:</span>
-                                <div class="button-group individual-rounded-buttons flex-wrap justify-center sm:justify-start">
-                                    <button id="modalNoneBylineBtn" class="bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">None</button>
-                                    <button id="modalEnglishBylineBtn" class="bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">English</button>
-                                    <button id="modalFrenchBylineBtn" class="bg-gray-700 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">French</button>
-                                </div>
-                            </div>
+                            
                             <div class="flex flex-col items-start">
                                 <span class="text-sm font-medium text-gray-200 mb-1">Image source:</span>
                                 <div class="button-group individual-rounded-buttons flex-wrap justify-center sm:justify-start">
@@ -996,9 +989,9 @@
                 <i class="fas fa-times fa-lg"></i>
             </button>
         </div>
-        <p class="text-sm text-gray-400 mb-2">Enter custom CSS below. It will be injected into the preview and within the "Export Prototype" function. <strong><a href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">Font Awesome 7.0.1</a></strong> is automatically being applied.</p>
+        <p class="text-sm text-gray-400 mb-2">Enter custom CSS below. It will be injected into the preview and the exported prototype file. <strong><a href="https://fontawesome.com/search">Font Awesome</a></strong> is automatically being applied.</p>
 		<section class="p-4 mt-2 text-sm text-red-800 rounded-lg bg-red-50 text-left mb-2" role="alert"><p><strong>IMPORTANT:</strong></p> <ul class="list-disc list-inside"><li>Keep a local copy and save your work often!</li> <li>To avoid custom classes being cleaned and removed, <strong>use the "custom-" OR "tbs-" prefix to <u>ALL</u> class names!</strong><ul class="list-disc list-inside ml-5"><li>Example: "<strong>tbs</strong>-bluebox"</li></ul> </li></ul></section>
-		<p class="text-sm text-gray-100 mb-2"><code>&lt;style&gt;</code></p>
+		<p class="text-sm text-gray-100"><code>&lt;style&gt;</code></p>
 <div id="customCssEditorContainer" class="flex-grow w-full border border-gray-700 rounded-md overflow-hidden relative"></div>
 <p class="text-sm text-gray-100 mb-2"><code>&lt;/style&gt;</code></p>
 <p class="text-sm text-gray-400 mb-2"><strong>NOTE: This is persistent until you manually delete any CSS code below or refresh the page/application</strong>. Pressing Cancel or closing this modal will not clear the inputted code!</p>
