@@ -27,9 +27,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const htmlFileInput = document.getElementById('htmlFileInput');
     const clearAllBtn = document.getElementById('clearAllBtn');
     const cleanMsoBtn = document.getElementById('cleanMsoBtn');
+	const removeTblModalBtn = document.getElementById('removeTblModalBtn');
     const debouncedModalUpdate = debounce(updateModalPreview, 500);
     const validateNowBtn = document.getElementById('validateNowBtn');
     const previewBtn = document.getElementById('previewBtn');
+	const openCustomCssModalBtn = document.getElementById('openCustomCssModalBtn');
     const toggleThemeBtn = document.getElementById('toggleThemeBtn');
     const previewModal = document.getElementById('previewModal');
     const modalPreviewFrame = document.getElementById('modalPreviewFrame');
@@ -43,9 +45,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const modalToggleCssBtn = document.getElementById('modalToggleCssBtn');
     const modalH1TitleInput = document.getElementById('modalH1TitleInput');
     const modalH1TitleInputContainer = document.getElementById('modalH1TitleInputContainer');
-    const modalNoneBylineBtn = document.getElementById('modalNoneBylineBtn');
-    const modalEnglishBylineBtn = document.getElementById('modalEnglishBylineBtn');
-    const modalFrenchBylineBtn = document.getElementById('modalFrenchBylineBtn');
     const modalLocalImagesBtn = document.getElementById('modalLocalImagesBtn');
     const modalPreviewImagesBtn = document.getElementById('modalPreviewImagesBtn');
     const modalToggleLiveImagesBtn = document.getElementById('modalToggleLiveImagesBtn');
@@ -120,9 +119,36 @@ document.addEventListener('DOMContentLoaded', function() {
     const toggleAutoCleanMsoOnSwitchRichText = document.getElementById('toggleAutoCleanMsoOnSwitchRichText');
     const toggleAutoCleanMsoOnSwitchCode = document.getElementById('toggleAutoCleanMsoOnSwitchCode');
 
-    const allInteractiveButtons = [
-        toggleEditorViewBtnRichText, toggleEditorViewBtnCode, cleanMsoBtn, importHtmlBtn, exportHtmlBtn, formatSelectedBtn, autoIdBtn, figDescBtn, defListBtn, footnoteAncBtn, footnoteListBtn, colophonBtn, clearAllBtn, autoEncodeBtn, autoFormatBtn, copyCodeBtn, undoBtn, redoBtn, enPageToCBtn, enPageToCH3Btn, frPageToCBtn, frPageToCH3Btn, enSecToCBtn, enSecToCH4Btn, enSecToCH5Btn, enSecToCH6Btn, frSecToCBtn, frSecToCH4Btn, frSecToCH5Btn, frSecToCH6Btn,
-    ];
+      const allInteractiveButtons = [
+        // View Mode Toggles
+        toggleEditorViewBtnRichText, toggleEditorViewBtnCode,
+        contentModeBtn, tableModeBtn,
+
+        // Main Toolbar Actions
+        cleanMsoBtn, importHtmlBtn, exportHtmlBtn, clearAllBtn, 
+        copyCodeBtn, undoBtn, redoBtn, toggleThemeBtn, exportPrototypeBtn, removeTblModalBtn,
+
+        // Sidebar / Formatting Tools
+        formatSelectedBtn,      // "Format"
+		footnoteAncBtn,         // "Process Footnotes"
+        autoIdBtn,              // "Set Element ID's"
+        autoEncodeBtn,          // "Auto-Encode"
+        autoFormatBtn,          // "Auto-Indent"
+        
+        // Semantic & Footnotes
+        figDescBtn, 
+        defListBtn,
+        footnoteListBtn,
+		colophonBtn, 
+
+        // Table of Contents Buttons
+        enPageToCBtn, enPageToCH3Btn, frPageToCBtn, frPageToCH3Btn, 
+        enSecToCBtn, enSecToCH4Btn, enSecToCH5Btn, enSecToCH6Btn, 
+        frSecToCBtn, frSecToCH4Btn, frSecToCH5Btn, frSecToCH6Btn,
+
+        // Panel Toggles
+        validateNowBtn, previewBtn, openCustomCssModalBtn, bottomPanelToggleBtn
+    ].filter(btn => btn !== null); // Prevents crash if an element isn't found
 
     const undoStack = [];
     const redoStack = [];
@@ -146,7 +172,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let modalUseContainerDiv = true;
     let modalShowTitle = true;
     let modalImageSourceMode = 'preview';
-    let modalBylineMode = 'none';
     let modalIsCustomizeExpanded = false;
     let modalEnableCss = true;
     let modalUrlSourceMode = 'preview';
@@ -256,7 +281,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         return false;
     }
-    const removeTblModalBtn = document.getElementById('removeTblModalBtn');
+    
 
     removeTblModalBtn.addEventListener('click', () => {
         const originalText = removeTblModalBtn.textContent;
@@ -2426,15 +2451,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 dynamicTitleHtml = `<gcds-heading tag="h1">${customH1Title}</gcds-heading>`;
             }
         }
+		
+		 let headerSection = dynamicTitleHtml;
 
-        const bylineHtml = APP_CONFIG.getBylineHtml(options);
+    // 2. Apply GCDS wrapping if necessary
+    if (options.currentFramework === 'gcds' && headerSection) {
+        headerSection = `<section>${headerSection}</section>`;
+    }
 
-        let h1AndBylineSection = `${dynamicTitleHtml}${bylineHtml}`;
-        if ((options.currentFramework === 'gcds') && (dynamicTitleHtml || bylineHtml)) {
-            h1AndBylineSection = `<section>${h1AndBylineSection}</section>`;
-        }
-
-        let contentToInject = options.useContainerDiv ? `<div class="container">${h1AndBylineSection}${bodyContent}</div>` : `${h1AndBylineSection}${bodyContent}`;
+    // 3. Inject the content (Note: we use 'headerSection' here, not 'h1AndBylineSection')
+    let contentToInject = options.useContainerDiv 
+        ? `<div class="container">${headerSection}${bodyContent}</div>` 
+        : `${headerSection}${bodyContent}`;
 
         const parser = new DOMParser();
         const tempDoc = parser.parseFromString(contentToInject, 'text/html');
@@ -2520,11 +2548,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (options.currentFramework === 'wet' || options.currentFramework === 'wet+') mainContentWrapper = `<main property="mainContentOfPage" resource="#wb-main" typeof="WebPageElement">${contentToInject}</main>`;
         else if (options.currentFramework === 'gcds') mainContentWrapper = `<gcds-container id="main-content" main-container size="xl" centered tag="main">${contentToInject}</gcds-container>`;
 
-        let processedCss = customPreviewCss;
-        if (resourceBaseUrl && processedCss) {
-            processedCss = processedCss.replace(/url\(\s*(['"]?)\s*(\/content\/[^)]+?)\s*\1\s*\)/gi, (match, quote, path) => {
-                return `url(${quote || '"'}${resourceBaseUrl}${path}${quote || '"'})`;
-            });
+        let processedCss = '';
+        if (options.enableCss) {
+            processedCss = customPreviewCss;
+            if (resourceBaseUrl && processedCss) {
+                processedCss = processedCss.replace(/url\(\s*(['"]?)\s*(\/content\/[^)]+?)\s*\1\s*\)/gi, (match, quote, path) => {
+                    return `url(${quote || '"'}${resourceBaseUrl}${path}${quote || '"'})`;
+                });
+            }
         }
 
         return `
@@ -2588,7 +2619,6 @@ document.addEventListener('DOMContentLoaded', function() {
             useContainerDiv: modalUseContainerDiv,
             showTitle: modalShowTitle,
             imageSourceMode: modalImageSourceMode,
-            bylineMode: modalBylineMode,
             enableCss: modalEnableCss,
             urlSourceMode: modalUrlSourceMode,
             currentLanguage: modalCurrentLanguage,
@@ -2624,7 +2654,6 @@ document.addEventListener('DOMContentLoaded', function() {
     function showPreviewModal() {
         previewModal.classList.remove('hidden');
         updateModalSettingsButtonStates();
-        updateModalBylineButtonStates();
         updateModalImageSourceButtonStates();
         updateModalUrlSourceButtonStates();
         updateModalSectionHeadingButtonStates();
@@ -2640,7 +2669,37 @@ document.addEventListener('DOMContentLoaded', function() {
         const anyTempMessageActive = allInteractiveButtons.some(btn => btn.getAttribute('data-temp-active') === 'true');
 
         allInteractiveButtons.forEach(btn => {
-            btn.disabled = btn.getAttribute('data-temp-active') === 'true' || anyTempMessageActive;
+            let shouldDisable = btn.getAttribute('data-temp-active') === 'true' || anyTempMessageActive;
+            if (btn === cleanMsoBtn) {
+                if (toggleAutoCleanMsoOnSwitchRichText.checked) {
+                    shouldDisable = true;
+                }
+            }
+            if (btn === contentModeBtn || btn === tableModeBtn) {
+                if (currentView === 'richtext') {
+                    shouldDisable = true;
+                }
+            }
+            if (btn === formatSelectedBtn && !shouldDisable) {
+                const anyFormatOptionSelected = quickFormattingToggles.some(toggle => toggle.checked);
+                if (!anyFormatOptionSelected) {
+                    shouldDisable = true;
+                }
+            }
+            btn.disabled = shouldDisable;
+            if (shouldDisable) {
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+                if (btn === cleanMsoBtn && toggleAutoCleanMsoOnSwitchRichText.checked) {
+                    btn.classList.remove('bg-blue-700', 'hover:bg-blue-800');
+                    btn.classList.add('bg-gray-400');
+                }
+            } else {
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                if (btn === cleanMsoBtn) {
+                    btn.classList.remove('bg-gray-400');
+                    btn.classList.add('bg-blue-700', 'hover:bg-blue-800');
+                }
+            }
         });
     }
 
@@ -3018,13 +3077,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function updateCleanMsoButtonState() {
         const isAutoCleanEnabled = toggleAutoCleanMsoOnSwitchRichText.checked;
+        const anyTempMessageActive = allInteractiveButtons.some(btn => btn.getAttribute('data-temp-active') === 'true');
+
         if (isAutoCleanEnabled) {
             cleanMsoBtn.disabled = true;
             cleanMsoBtn.classList.remove('bg-blue-700', 'hover:bg-blue-800');
             cleanMsoBtn.classList.add('bg-gray-400', 'cursor-not-allowed', 'opacity-60');
         } else {
-            cleanMsoBtn.disabled = false;
-            cleanMsoBtn.classList.remove('bg-gray-400', 'cursor-not-allowed', 'opacity-60');
+            if (!anyTempMessageActive) {
+                cleanMsoBtn.disabled = false;
+                cleanMsoBtn.classList.remove('cursor-not-allowed', 'opacity-60');
+            }
+            cleanMsoBtn.classList.remove('bg-gray-400');
             cleanMsoBtn.classList.add('bg-blue-700', 'hover:bg-blue-800');
         }
     }
@@ -4151,14 +4215,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function updateFormatButtonState() {
         const anySelected = quickFormattingToggles.some(toggle => toggle.checked);
-        if (anySelected) {
+        const anyTempMessageActive = allInteractiveButtons.some(btn => btn.getAttribute('data-temp-active') === 'true');
+
+        if (anySelected && !anyTempMessageActive) {
             formatSelectedBtn.disabled = false;
-            formatSelectedBtn.classList.remove('bg-gray-400', 'cursor-not-allowed', 'opacity-60');
+            formatSelectedBtn.classList.remove('bg-gray-400', 'cursor-not-allowed', 'opacity-50', 'opacity-60');
             formatSelectedBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
         } else {
             formatSelectedBtn.disabled = true;
             formatSelectedBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
-            formatSelectedBtn.classList.add('bg-gray-400', 'cursor-not-allowed', 'opacity-60');
+            formatSelectedBtn.classList.add('bg-gray-400', 'cursor-not-allowed', 'opacity-50'); 
         }
     }
 
@@ -4177,15 +4243,6 @@ document.addEventListener('DOMContentLoaded', function() {
         modalToggleContainerBtn.textContent = modalUseContainerDiv ? 'Custom Width' : 'Default Width';
         modalToggleTitleBtn.textContent = modalShowTitle ? 'Hide Title' : 'Show Title';
         modalToggleCssBtn.textContent = modalEnableCss ? 'Disable CSS' : 'Enable CSS';
-    }
-
-    function updateModalBylineButtonStates() {
-        [modalNoneBylineBtn, modalEnglishBylineBtn, modalFrenchBylineBtn].forEach(btn => btn.classList.remove('active', 'bg-indigo-600'));
-        if (modalBylineMode === 'none') modalNoneBylineBtn.classList.add('active', 'bg-indigo-600');
-        else if (modalBylineMode === 'english') modalEnglishBylineBtn.classList.add('active', 'bg-indigo-600');
-        else if (modalBylineMode === 'french') modalFrenchBylineBtn.classList.add('active', 'bg-indigo-600');
-        modalEnglishBylineBtn.style.display = (modalCurrentLanguage === 'en') ? 'inline-block' : 'none';
-        modalFrenchBylineBtn.style.display = (modalCurrentLanguage === 'fr') ? 'inline-block' : 'none';
     }
 
     function updateModalImageSourceButtonStates() {
@@ -4234,7 +4291,6 @@ document.addEventListener('DOMContentLoaded', function() {
             modalH1TitleInput.placeholder = 'e.g., Mon titre FRA personnalisé';
             modalH1TitleInput.value = modalH1TitleFr;
         }
-        updateModalBylineButtonStates();
     }
 
     function updateModalBreakpointButtonStates() {
@@ -4452,7 +4508,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const matchCountSpan = document.getElementById('match-count');
         const regexGuideButton = document.getElementById('regex-guide-button');
         const searchRegex = document.getElementById('searchRegex');
-        allInteractiveButtons.push(regexGuideButton);
+        allInteractiveButtons.push(
+            regexGuideButton, findNextButton, findPreviousButton, 
+            replaceOneButton, replaceAllButton, searchReset, 
+            openSearchControlsBtn, openValidationBtn
+        );
 
         let allDecorations = [];
         let allMatches = [];
@@ -4465,7 +4525,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-        let searchControlsVisible = true;
+        let searchControlsVisible = false;
 
         function toggleSearchControls() {
             searchControlsVisible = !searchControlsVisible;
@@ -4482,15 +4542,18 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 searchRegex.classList.remove('search-controls-visible');
                 searchRegex.classList.add('search-controls-hidden');
-
-                toggleBottomPanel.textContent = 'Show Panel';
+				searchAndValidatePanel.classList.add('hidden'); 
+                toggleBottomPanel.textContent = 'Search+ Panel';
             }
         }
 
         toggleBottomPanel.addEventListener('click', toggleSearchControls);
 
-        searchAndValidatePanel.classList.remove('hidden');
-        searchRegex.classList.add('search-controls-visible');
+        searchAndValidatePanel.classList.add('hidden');
+        if(searchValidateToggle) searchValidateToggle.classList.add('hidden'); // Hide the toggle switch too
+        searchRegex.classList.remove('search-controls-visible');
+        searchRegex.classList.add('search-controls-hidden');
+        toggleBottomPanel.textContent = 'Search+ Panel';
 
         function populateTagDropdown() {
             const currentSelection = tagDropdown.value;
@@ -6805,21 +6868,6 @@ document.getElementById('frSecToCH6Btn')
         else modalH1TitleFr = modalH1TitleInput.value;
         updateModalPreview();
     });
-    modalNoneBylineBtn.addEventListener('click', () => {
-        modalBylineMode = 'none';
-        updateModalBylineButtonStates();
-        updateModalPreview();
-    });
-    modalEnglishBylineBtn.addEventListener('click', () => {
-        modalBylineMode = 'english';
-        updateModalBylineButtonStates();
-        updateModalPreview();
-    });
-    modalFrenchBylineBtn.addEventListener('click', () => {
-        modalBylineMode = 'french';
-        updateModalBylineButtonStates();
-        updateModalPreview();
-    });
     modalLocalImagesBtn.addEventListener('click', () => {
         modalImageSourceMode = 'local';
         updateModalImageSourceButtonStates();
@@ -6868,13 +6916,11 @@ document.getElementById('frSecToCH6Btn')
         updateModalPreview();
     });
     modalLangEnBtn.addEventListener('click', () => {
-        if (modalBylineMode === 'french') modalBylineMode = 'english';
         modalCurrentLanguage = 'en';
         updateModalLanguageButtonStates();
         updateModalPreview();
     });
     modalLangFrBtn.addEventListener('click', () => {
-        if (modalBylineMode === 'english') modalBylineMode = 'french';
         modalCurrentLanguage = 'fr';
         updateModalLanguageButtonStates();
         updateModalPreview();
@@ -6924,7 +6970,6 @@ document.getElementById('frSecToCH6Btn')
             useContainerDiv: modalUseContainerDiv,
             showTitle: modalShowTitle,
             imageSourceMode: modalImageSourceMode,
-            bylineMode: modalBylineMode,
             enableCss: modalEnableCss,
             urlSourceMode: modalUrlSourceMode,
             currentLanguage: modalCurrentLanguage,
@@ -6942,7 +6987,6 @@ document.getElementById('frSecToCH6Btn')
         URL.revokeObjectURL(a.href);
     });
 
-    const openCustomCssModalBtn = document.getElementById('openCustomCssModalBtn');
     const customCssModal = document.getElementById('customCssModal');
     const closeCustomCssModalBtn = document.getElementById('closeCustomCssModalBtn');
     const cancelCustomCssBtn = document.getElementById('cancelCustomCssBtn');
