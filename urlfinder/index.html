@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Canada.ca Content Viewer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f5f5;
+      color: #000;
+      height: 100vh;
+      overflow: hidden;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      body {
+        background-color: #1a1a1a;
+        color: #ffffff;
+      }
+    }
+    
+    .main-container {
+      display: flex;
+      height: 100vh;
+      gap: 0;
+    }
+    
+    .left-panel {
+      width: 25%;
+      min-width: 200px;
+      max-width: 50%;
+      background-color: #ffffff;
+      padding: 20px;
+      overflow-y: auto;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      .left-panel {
+        background-color: #2d2d2d;
+        box-shadow: 2px 0 5px rgba(0,0,0,0.3);
+      }
+    }
+    
+    .resizer {
+      width: 5px;
+      background-color: #ddd;
+      cursor: col-resize;
+      position: relative;
+      flex-shrink: 0;
+    }
+    
+    .resizer:hover {
+      background-color: #0066cc;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      .resizer {
+        background-color: #555;
+      }
+      
+      .resizer:hover {
+        background-color: #0066cc;
+      }
+    }
+    
+    .right-panel {
+      flex: 1;
+      background-color: #ffffff;
+      padding: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      .right-panel {
+        background-color: #2d2d2d;
+      }
+    }
+    
+    h1 {
+      margin-top: 0;
+      color: #000;
+      font-size: 24px;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      h1 {
+        color: #ffffff;
+      }
+    }
+    
+    h2 {
+      color: #000;
+      font-size: 18px;
+      margin-top: 30px;
+      margin-bottom: 15px;
+      padding-top: 20px;
+      border-top: 2px solid #ddd;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      h2 {
+        color: #ffffff;
+        border-top-color: #555;
+      }
+    }
+    
+    .input-group {
+      margin-bottom: 15px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: #000;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      label {
+        color: #ffffff;
+      }
+    }
+    
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #333;
+      border-radius: 4px;
+      font-size: 14px;
+      box-sizing: border-box;
+      background-color: #fff;
+      color: #000;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      input[type="text"] {
+        background-color: #1a1a1a;
+        color: #ffffff;
+        border-color: #555;
+      }
+    }
+    
+    button {
+      background-color: #0066cc;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-right: 10px;
+      margin-bottom: 10px;
+      font-weight: bold;
+      width: 100%;
+    }
+    
+    button:hover {
+      background-color: #0052a3;
+    }
+    
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      button:disabled {
+        background-color: #555555;
+      }
+    }
+    
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    
+    .button-group button {
+      flex: 1;
+      margin: 0;
+    }
+    
+    .highlight {
+      background-color: #ffff00 !important;
+      color: #000000 !important;
+      padding: 2px 4px;
+      border-radius: 2px;
+      font-weight: bold;
+      outline: 3px solid #ff6600;
+    }
+    
+    .highlight.current-match {
+      background-color: #ff6600 !important;
+      color: #ffffff !important;
+      outline: 3px solid #cc0000;
+    }
+    
+    .error {
+      color: #cc0000;
+      padding: 10px;
+      background-color: #ffe6e6;
+      border-radius: 4px;
+      margin-top: 10px;
+      border: 2px solid #cc0000;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      .error {
+        background-color: #4d1a1a;
+        color: #ff6666;
+        border-color: #cc0000;
+      }
+    }
+    
+    .info {
+      color: #666;
+      font-style: italic;
+      margin-top: 10px;
+      font-size: 12px;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      .info {
+        color: #aaa;
+      }
+    }
+    
+    .success {
+      color: #006600;
+      padding: 10px;
+      background-color: #e6ffe6;
+      border-radius: 4px;
+      margin-top: 10px;
+      border: 2px solid #006600;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      .success {
+        background-color: #1a4d1a;
+        color: #66ff66;
+        border-color: #00cc00;
+      }
+    }
+    
+    .match-counter {
+      color: #0066cc;
+      font-weight: bold;
+      padding: 10px;
+      background-color: #e6f2ff;
+      border-radius: 4px;
+      margin-top: 10px;
+      text-align: center;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      .match-counter {
+        background-color: #1a3d5c;
+        color: #66b3ff;
+      }
+    }
+    
+    .preview-header {
+      padding: 20px;
+      border-bottom: 2px solid #333;
+      background-color: #ffffff;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      .preview-header {
+        border-bottom-color: #555;
+        background-color: #2d2d2d;
+      }
+    }
+    
+    .preview-header h1 {
+      margin: 0;
+      font-size: 20px;
+    }
+    
+    #previewFrame {
+      flex: 1;
+      border: none;
+      width: 100%;
+      background-color: white;
+    }
+  </style>
+</head>
+<body>
+  <div class="main-container">
+    <div class="left-panel" id="leftPanel">
+      <h1>Canada.ca Link Finder</h1>
+      
+      <div class="input-group">
+        <label for="urlInput">Enter Canada.ca page to search:</label>
+        <input type="text" id="urlInput" placeholder="https://www.canada.ca/...">
+      </div>
+      
+      <button onclick="fetchContent()">Load Page Content</button>
+      
+      <h2>Search & Highlight</h2>
+      
+      <div class="input-group">
+        <label for="searchInput">Search for URLs (whole URL or partial):</label>
+        <input type="text" id="searchInput" placeholder="e.g., tbs-sct.gc.ca">
+      </div>
+      
+      <button onclick="highlightURLs()">Highlight URLs</button>
+      
+      <div class="button-group">
+        <button id="prevBtn" onclick="navigateMatches('prev')" disabled>← Previous</button>
+        <button id="nextBtn" onclick="navigateMatches('next')" disabled>Next →</button>
+      </div>
+      
+      <button onclick="clearHighlights()">Clear Highlights</button>
+      
+      <div id="matchCounter"></div>
+      <div id="error"></div>
+    </div>
+    
+    <div class="resizer" id="resizer"></div>
+    
+    <div class="right-panel">
+      <iframe id="previewFrame"></iframe>
+    </div>
+  </div>
+  
+  <script>
+    let originalContent = '';
+    let currentPageTitle = 'Canada.ca Page';
+    let currentBaseUrl = '';
+    const NBSP_PLACEHOLDER = '&#160;';
+    let allMatches = [];
+    let currentMatchIndex = -1;
+    
+    // Resizer functionality
+    const resizer = document.getElementById('resizer');
+    const leftPanel = document.getElementById('leftPanel');
+    const mainContainer = document.querySelector('.main-container');
+    
+    let isResizing = false;
+    
+    resizer.addEventListener('mousedown', function(e) {
+      isResizing = true;
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    });
+    
+    document.addEventListener('mousemove', function(e) {
+      if (!isResizing) return;
+      
+      const containerRect = mainContainer.getBoundingClientRect();
+      const newWidth = e.clientX - containerRect.left;
+      const minWidth = 200;
+      const maxWidth = containerRect.width * 0.5;
+      
+      if (newWidth >= minWidth && newWidth <= maxWidth) {
+        leftPanel.style.width = newWidth + 'px';
+      }
+    });
+    
+    document.addEventListener('mouseup', function() {
+      isResizing = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    });
+    
+    function fixPaths(html, baseUrl) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      
+      // Fix all <a> href attributes and add target="_blank" for non-anchor links
+      doc.querySelectorAll('a[href]').forEach(link => {
+        const href = link.getAttribute('href');
+        
+        // Add target="_blank" for non-anchor links
+        if (href && !href.startsWith('#')) {
+          link.setAttribute('target', '_blank');
+          link.setAttribute('rel', 'noopener noreferrer');
+        }
+        
+        // Fix relative URLs
+        if (href && !href.startsWith('http') && !href.startsWith('//') && !href.startsWith('#') && !href.startsWith('mailto:') && !href.startsWith('tel:')) {
+          try {
+            const absoluteUrl = new URL(href, baseUrl).href;
+            link.setAttribute('href', absoluteUrl);
+          } catch (e) {
+            console.warn('Could not resolve URL:', href);
+          }
+        }
+      });
+      
+      // Fix all <img> src attributes
+      doc.querySelectorAll('img[src]').forEach(img => {
+        const src = img.getAttribute('src');
+        if (src && !src.startsWith('http') && !src.startsWith('//') && !src.startsWith('data:')) {
+          try {
+            const absoluteUrl = new URL(src, baseUrl).href;
+            img.setAttribute('src', absoluteUrl);
+          } catch (e) {
+            console.warn('Could not resolve image URL:', src);
+          }
+        }
+      });
+      
+      // Fix srcset attributes
+      doc.querySelectorAll('img[srcset]').forEach(img => {
+        const srcset = img.getAttribute('srcset');
+        if (srcset) {
+          const fixedSrcset = srcset.split(',').map(src => {
+            const parts = src.trim().split(/\s+/);
+            const url = parts[0];
+            if (url && !url.startsWith('http') && !url.startsWith('//') && !url.startsWith('data:')) {
+              try {
+                const absoluteUrl = new URL(url, baseUrl).href;
+                parts[0] = absoluteUrl;
+              } catch (e) {
+                console.warn('Could not resolve srcset URL:', url);
+              }
+            }
+            return parts.join(' ');
+          }).join(', ');
+          img.setAttribute('srcset', fixedSrcset);
+        }
+      });
+      
+      // Fix source elements in picture tags
+      doc.querySelectorAll('source[srcset]').forEach(source => {
+        const srcset = source.getAttribute('srcset');
+        if (srcset && !srcset.startsWith('http') && !srcset.startsWith('//')) {
+          try {
+            const absoluteUrl = new URL(srcset, baseUrl).href;
+            source.setAttribute('srcset', absoluteUrl);
+          } catch (e) {
+            console.warn('Could not resolve source srcset:', srcset);
+          }
+        }
+      });
+      
+      return doc.body.innerHTML;
+    }
+    
+    function generateFullHtml(bodyContent, pageTitle) {
+      const today = new Date().toISOString().split('T')[0];
+      
+      return `
+<!DOCTYPE html>
+<html class="no-js" lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${pageTitle}</title>
+  
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.7.2/css/all.css">
+  <link rel="stylesheet" href="https://www.canada.ca/etc/designs/canada/wet-boew/css/theme.min.css">
+  <link rel="stylesheet" href="https://cdn.design-system.alpha.canada.ca/@cdssnc/gcds-components@latest/dist/gcds/gcds.css">
+  <style>
+    body { text-align: left; font-family: 'Noto Sans', sans-serif; }
+    .table tbody tr.active { background-color: #e0f2f7; }
+    .nowrap { white-space: nowrap; }
+    .highlight {
+      background-color: #ffff00 !important;
+      color: #000000 !important;
+      padding: 2px 4px;
+      border-radius: 2px;
+      font-weight: bold;
+      outline: 3px solid #ff6600;
+      scroll-margin-top: 100px;
+    }
+    .highlight.current-match {
+      background-color: #ff6600 !important;
+      color: #ffffff !important;
+      outline: 3px solid #cc0000;
+    }
+  </style>
+</head>
+<body>
+  
+  <main property="mainContentOfPage" resource="#wb-main" typeof="WebPageElement">
+    <div class="container">
+      ${bodyContent}
+    </div>
+  </main>
+  
+  <script type="module" src="https://cdn.design-system.alpha.canada.ca/@cdssnc/gcds-components@latest/dist/gcds/gcds.esm.js"><\/script>
+  <script nomodule src="https://cdn.design-system.alpha.canada.ca/@cdssnc/gcds-components@latest/dist/gcds/gcds.js"><\/script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"><\/script>
+  <script src="https://www.canada.ca/etc/designs/canada/wet-boew/js/wet-boew.min.js"><\/script>
+  <script src="https://www.canada.ca/etc/designs/canada/wet-boew/js/theme.min.js"><\/script>
+</body>
+</html>`;
+    }
+    
+    async function fetchContent() {
+      const url = document.getElementById('urlInput').value.trim();
+      const previewFrame = document.getElementById('previewFrame');
+      const errorDiv = document.getElementById('error');
+      
+      errorDiv.innerHTML = '';
+      
+      if (!url) {
+        errorDiv.innerHTML = '<div class="error">Please enter a URL</div>';
+        return;
+      }
+      
+      if (!url.includes('canada.ca')) {
+        errorDiv.innerHTML = '<div class="error">Please enter a valid canada.ca URL</div>';
+        return;
+      }
+      
+      try {
+        errorDiv.innerHTML = '<div class="info">Loading content...</div>';
+        
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error('Failed to fetch content');
+        }
+        
+        const html = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const mainContent = doc.querySelector('main');
+        
+        if (mainContent) {
+          // Store the base URL for resolving relative paths
+          currentBaseUrl = url;
+          
+          // Get the raw content
+          let rawContent = mainContent.innerHTML;
+          
+          // Fix all relative paths and add target="_blank"
+          originalContent = fixPaths(rawContent, currentBaseUrl);
+          
+          // Try to get page title
+          const h1 = doc.querySelector('h1');
+          currentPageTitle = h1 ? h1.textContent.trim() : 'Canada.ca Page';
+          
+          // Generate and display full HTML with WET+
+          const fullHtml = generateFullHtml(originalContent, currentPageTitle);
+          const iframeDoc = previewFrame.contentDocument || previewFrame.contentWindow.document;
+          iframeDoc.open();
+          iframeDoc.write(fullHtml);
+          iframeDoc.close();
+          
+          errorDiv.innerHTML = '<div class="success">Content loaded successfully! You can now search for URLs.</div>';
+        } else {
+          errorDiv.innerHTML = '<div class="error">No &lt;main&gt; tag found in the page</div>';
+        }
+      } catch (error) {
+        errorDiv.innerHTML = '<div class="error">Error loading content: ' + error.message + '. This may be due to CORS restrictions.</div>';
+      }
+    }
+    
+    function openParentDetails(element) {
+      let parent = element.parentElement;
+      while (parent) {
+        if (parent.tagName === 'DETAILS') {
+          parent.setAttribute('open', '');
+        }
+        parent = parent.parentElement;
+      }
+    }
+    
+    function highlightURLs() {
+      const searchTerm = document.getElementById('searchInput').value.trim();
+      const errorDiv = document.getElementById('error');
+      const matchCounterDiv = document.getElementById('matchCounter');
+      const previewFrame = document.getElementById('previewFrame');
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      
+      if (!originalContent) {
+        errorDiv.innerHTML = '<div class="error">Please load content first</div>';
+        return;
+      }
+      
+      if (!searchTerm) {
+        errorDiv.innerHTML = '<div class="error">Please enter a search term</div>';
+        return;
+      }
+      
+      try {
+        const iframeDoc = previewFrame.contentDocument || previewFrame.contentWindow.document;
+        const contentDiv = iframeDoc.querySelector('main .container');
+        
+        if (!contentDiv) {
+          errorDiv.innerHTML = '<div class="error">Content not found in preview</div>';
+          return;
+        }
+        
+        // Clear previous highlights
+        contentDiv.querySelectorAll('.highlight').forEach(el => {
+          el.classList.remove('highlight', 'current-match');
+        });
+        
+        allMatches = [];
+        let foundMatches = 0;
+        const searchLower = searchTerm.toLowerCase();
+        
+        // Search in href attributes of <a> tags
+        const links = contentDiv.querySelectorAll('a[href]');
+        links.forEach(link => {
+          const href = link.getAttribute('href');
+          if (href && href.toLowerCase().includes(searchLower)) {
+            link.classList.add('highlight');
+            link.setAttribute('data-match-id', foundMatches);
+            allMatches.push(link);
+            openParentDetails(link);
+            foundMatches++;
+          }
+        });
+        
+        // Search in visible text for URLs
+        const urlPattern = /https?:\/\/[^\s<>"{}|\\^`\[\]]+/gi;
+        const walker = iframeDoc.createTreeWalker(
+          contentDiv,
+          NodeFilter.SHOW_TEXT,
+          {
+            acceptNode: function(node) {
+              if (node.parentElement.tagName === 'SCRIPT' || 
+                  node.parentElement.tagName === 'STYLE') {
+                return NodeFilter.FILTER_REJECT;
+              }
+              return NodeFilter.FILTER_ACCEPT;
+            }
+          },
+          false
+        );
+        
+        const textNodes = [];
+        let node;
+        while (node = walker.nextNode()) {
+          const text = node.textContent;
+          const urls = text.match(urlPattern);
+          
+          if (urls) {
+            urls.forEach(url => {
+              if (url.toLowerCase().includes(searchLower)) {
+                textNodes.push(node);
+              }
+            });
+          }
+        }
+        
+        textNodes.forEach(textNode => {
+          const text = textNode.textContent;
+          const urls = text.match(urlPattern);
+          
+          if (urls) {
+            let newHTML = text;
+            urls.forEach(url => {
+              if (url.toLowerCase().includes(searchLower)) {
+                const regex = new RegExp(url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+                newHTML = newHTML.replace(regex, `<span class="highlight" data-match-id="${foundMatches}">${url}</span>`);
+                foundMatches++;
+              }
+            });
+            
+            if (newHTML !== text) {
+              const span = iframeDoc.createElement('span');
+              span.innerHTML = newHTML;
+              textNode.parentNode.replaceChild(span, textNode);
+              
+              // Collect the newly created highlight spans
+              const newHighlights = span.querySelectorAll('.highlight');
+              newHighlights.forEach(highlight => {
+                allMatches.push(highlight);
+                openParentDetails(highlight);
+              });
+            }
+          }
+        });
+        
+        if (foundMatches > 0) {
+          errorDiv.innerHTML = `<div class="success">Found and highlighted ${foundMatches} matching URL(s)!</div>`;
+          matchCounterDiv.innerHTML = `<div class="match-counter">Match 0 of ${foundMatches}</div>`;
+          currentMatchIndex = -1;
+          prevBtn.disabled = false;
+          nextBtn.disabled = false;
+        } else {
+          errorDiv.innerHTML = '<div class="error">No matching URLs found</div>';
+          matchCounterDiv.innerHTML = '';
+          prevBtn.disabled = true;
+          nextBtn.disabled = true;
+        }
+      } catch (error) {
+        errorDiv.innerHTML = '<div class="error">Error highlighting: ' + error.message + '</div>';
+      }
+    }
+    
+    function navigateMatches(direction) {
+      if (allMatches.length === 0) return;
+      
+      const previewFrame = document.getElementById('previewFrame');
+      const matchCounterDiv = document.getElementById('matchCounter');
+      
+      // Remove current-match class from previous match
+      if (currentMatchIndex >= 0 && currentMatchIndex < allMatches.length) {
+        allMatches[currentMatchIndex].classList.remove('current-match');
+      }
+      
+      // Calculate new index
+      if (direction === 'next') {
+        currentMatchIndex = (currentMatchIndex + 1) % allMatches.length;
+      } else {
+        currentMatchIndex = (currentMatchIndex - 1 + allMatches.length) % allMatches.length;
+      }
+      
+      // Highlight current match
+      const currentMatch = allMatches[currentMatchIndex];
+      currentMatch.classList.add('current-match');
+      
+      // Scroll to match with smooth behavior
+      currentMatch.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center',
+        inline: 'nearest'
+      });
+      
+      // Update counter
+      matchCounterDiv.innerHTML = `<div class="match-counter">Match ${currentMatchIndex + 1} of ${allMatches.length}</div>`;
+    }
+    
+    function clearHighlights() {
+      const previewFrame = document.getElementById('previewFrame');
+      const errorDiv = document.getElementById('error');
+      const matchCounterDiv = document.getElementById('matchCounter');
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      
+      if (originalContent) {
+        const fullHtml = generateFullHtml(originalContent, currentPageTitle);
+        const iframeDoc = previewFrame.contentDocument || previewFrame.contentWindow.document;
+        iframeDoc.open();
+        iframeDoc.write(fullHtml);
+        iframeDoc.close();
+        errorDiv.innerHTML = '';
+        matchCounterDiv.innerHTML = '';
+        allMatches = [];
+        currentMatchIndex = -1;
+        prevBtn.disabled = true;
+        nextBtn.disabled = true;
+      }
+    }
+  </script>
+</body>
+</html>
