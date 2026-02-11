@@ -13,7 +13,6 @@ body {
     flex-direction: column;
     background-color: #0F172A;
 }
-
 /* --- Heading Highlights --- */
 
 .highlight-h1 {
@@ -113,10 +112,10 @@ body {
 .code-panel,
 .richtext-output-panel,
 .sidebar-panel {
-    background-color: #1E293B;
+    /*background-color: #1E293B;
     border-radius: 0.75rem;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-    padding: 1rem;
+    padding: 1rem; */
     display: flex;
     flex-direction: column;
     flex-grow: 1;
@@ -480,10 +479,6 @@ input[type="number"]::placeholder {
     font-weight: bold;
     margin-bottom: 1rem;
     text-align: left;
-}
-
-.modal-content p {
-    margin-bottom: 1.5rem;
 }
 
 .modal-content button {
