@@ -110,9 +110,7 @@ document.addEventListener('DOMContentLoaded', function() {
         btn.disabled = true;
         btn.classList.add('opacity-50', 'cursor-not-allowed');
     });
-
-
-
+	
     const monacoEditorContainer = document.getElementById('monacoEditorContainer');
     const sidebarPanel = document.getElementById('sidebarPanel');
 
@@ -438,7 +436,23 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function cleanHtmlForRichTextDisplay(content) {
-        return decodeHtmlEntities(content);
+        let decodedContent = decodeHtmlEntities(content);
+
+        // Parse into DOM to manipulate IMG tags
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(decodedContent, 'text/html');
+        const previewBaseUrl = 'https://canada-preview.adobecqms.net';
+
+        doc.querySelectorAll('img').forEach(img => {
+            let src = img.getAttribute('src');
+            // Check if it's a relative path intended for AEM (starts with /content)
+            if (src && (src.startsWith('/content/dam') || src.startsWith('/content/canadasite'))) {
+                // Prepend the preview domain
+                img.setAttribute('src', `${previewBaseUrl}${src}`);
+            }
+        });
+
+        return doc.body.innerHTML;
     }
 
     function protectGcdsTags(htmlString) {
@@ -2783,13 +2797,23 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (href !== originalHref) a.setAttribute('href', href);
                 });
 
-                doc.querySelectorAll('img[src]').forEach(img => {
+                 doc.querySelectorAll('img[src]').forEach(img => {
                     let src = img.getAttribute('src');
-                    if (src.includes('/content/dam')) {
-                        const contentIndex = src.indexOf('/content/dam');
-                        if (contentIndex > 0) {
-                            src = src.substring(contentIndex);
-                            img.setAttribute('src', src);
+                    
+                    // Define the paths we want to clean back to relative
+                    const contentPaths = ['/content/dam', '/content/canadasite'];
+                    
+                    for (const path of contentPaths) {
+                        if (src.includes(path)) {
+                            // Find where the relative path starts
+                            const contentIndex = src.indexOf(path);
+                            
+                            // If the path isn't at index 0 (meaning it has a domain prefix like the preview URL)
+                            if (contentIndex > 0) {
+                                src = src.substring(contentIndex);
+                                img.setAttribute('src', src);
+                            }
+                            break; // Stop checking other paths if found
                         }
                     }
                 });
@@ -3429,6 +3453,8 @@ document.addEventListener('DOMContentLoaded', function() {
         modalOverlay.innerHTML = `
         <div class="modal-content">
             <h3>Process All Footnotes</h3>
+			<p class="text-sm text-gray-400">Converts all unformatted footnotes imported from Word to WET4 specifications. "Fake" footnotes that weren't fully formatted in Word will be ignored.</p>
+			<section class="p-4 mt-2 mb-4 text-sm text-red-800 rounded-lg bg-red-50 text-left" role="alert"><p class="mb-0"><strong>This is experimental!</strong> This feature may not process all footnotes correctly. <strong>Double-check and QA after processing!</strong></p></section>
             <div id="modalBody">${modalContentHtml}</div>
             <div class="flex justify-end mt-4 space-x-2">
                 <button id="modalCancelFnAncBtn" class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600">Cancel</button>
