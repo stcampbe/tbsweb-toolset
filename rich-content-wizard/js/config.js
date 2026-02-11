@@ -295,12 +295,16 @@ const APP_CONFIG = {
                     });
                 }
 
-                if (parentTag && !parentTag.ignored && this.inlineElements.has(parentTag.tagName) && this.blockElements.has(tagName)) {
-                    errors.push({
-                        message: `<strong>Invalid Nesting:</strong> Block element &lt;${tagName}&gt; cannot be inside inline element &lt;${parentTag.tagName}&gt; (from line ${parentTag.lineNumber}).`,
-                        lineNumber: lineNumber
-                    });
-                }
+                if (parentTag && !parentTag.ignored && 
+					this.inlineElements.has(parentTag.tagName) && 
+					this.blockElements.has(tagName) && 
+					parentTag.tagName !== 'a') {
+					
+					errors.push({
+						message: `<strong>Invalid Nesting:</strong> Block element &lt;${tagName}&gt; cannot be inside inline element &lt;${parentTag.tagName}&gt; (from line ${parentTag.lineNumber}).`,
+						lineNumber: lineNumber
+					});
+				}
 				if (parentTag && (parentTag.tagName === 'ul' || parentTag.tagName === 'ol') && tagName !== 'li') {
 					errors.push({
 						message: `<strong>Invalid Child:</strong> The &lt;${parentTag.tagName}&gt; tag can only contain &lt;li&gt; elements as direct children. Found &lt;${tagName}&gt;.`,
@@ -406,7 +410,6 @@ const APP_CONFIG = {
                             color: #333;
                             display: flex; 
                             flex-direction: column;
-                            padding: 1rem; 
                         }
                         form {
                             height: 100%;
@@ -541,6 +544,7 @@ const APP_CONFIG = {
 
                                 let customStyleSheet = editorDoc.getElementById('tinymce-custom-content-css');
 
+                                // Locate the style sheet created by defaultContentStyle
                                 if (!customStyleSheet) {
                                     const styleSheets = editorDoc.head.querySelectorAll('style');
                                     for (let i = 0; i < styleSheets.length; i++) {
@@ -552,8 +556,27 @@ const APP_CONFIG = {
                                     }
                                 }
 
+                                // Toggle the stylesheet (colors/borders)
                                 if (customStyleSheet) {
                                     customStyleSheet.disabled = !enableCustomStyles;
+                                }
+
+                                // Toggle Structural Layout (keep 1170px width regardless of visual style)
+                                const body = editorDoc.body;
+                                if (!enableCustomStyles) {
+                                    // Visuals OFF: Apply inline styles to maintain layout
+                                    body.style.maxWidth = '1170px';
+                                    body.style.marginLeft = 'auto';
+                                    body.style.marginRight = 'auto';
+                                    body.style.padding = '15px';
+                                    body.style.boxSizing = 'border-box';
+                                } else {
+                                    // Visuals ON: Remove inline styles (let the CSS file handle it)
+                                    body.style.maxWidth = '';
+                                    body.style.marginLeft = '';
+                                    body.style.marginRight = '';
+                                    body.style.padding = '';
+                                    body.style.boxSizing = '';
                                 }
                             }
                         };
