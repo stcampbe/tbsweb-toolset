@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Canada.ca Page URL Finder</title>
+  <title>Canada.ca Link Finder</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -175,6 +175,38 @@
       }
     }
     
+    /* Green button for Generate Manifest */
+    #generateManifestBtn {
+      background-color: #cccccc;
+    }
+    
+    #generateManifestBtn:not(:disabled) {
+      background-color: #28a745;
+    }
+    
+    #generateManifestBtn:not(:disabled):hover {
+      background-color: #218838;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      #generateManifestBtn:not(:disabled) {
+        background-color: #28a745;
+      }
+      
+      #generateManifestBtn:not(:disabled):hover {
+        background-color: #218838;
+      }
+    }
+    
+    /* Red button for Clear Highlights */
+    #clearHighlightsBtn {
+      background-color: #dc3545;
+    }
+    
+    #clearHighlightsBtn:hover {
+      background-color: #c82333;
+    }
+    
     .button-group {
       display: flex;
       gap: 10px;
@@ -303,6 +335,8 @@
       
       <button onclick="fetchContent()">Load Page Content</button>
       
+      <button id="generateManifestBtn" onclick="generateLinkManifest()" disabled>Generate Link Manifest (.csv)</button>
+      
       <h2>Search & Highlight</h2>
       
       <div class="input-group">
@@ -317,7 +351,7 @@
         <button id="nextBtn" onclick="navigateMatches('next')" disabled>Next →</button>
       </div>
       
-      <button onclick="clearHighlights()">Clear Highlights</button>
+      <button id="clearHighlightsBtn" onclick="clearHighlights()">Clear Highlights</button>
       
       <div id="matchCounter"></div>
       <div id="error"></div>
@@ -500,6 +534,7 @@
       const url = document.getElementById('urlInput').value.trim();
       const previewFrame = document.getElementById('previewFrame');
       const errorDiv = document.getElementById('error');
+      const generateManifestBtn = document.getElementById('generateManifestBtn');
       
       errorDiv.innerHTML = '';
       
@@ -547,12 +582,88 @@
           iframeDoc.write(fullHtml);
           iframeDoc.close();
           
-          errorDiv.innerHTML = '<div class="success">Content loaded successfully! You can now search for URLs.</div>';
+          // Enable the Generate Manifest button
+          generateManifestBtn.disabled = false;
+          
+          errorDiv.innerHTML = '<div class="success">Content loaded successfully! You can now search for URLs or generate a link manifest.</div>';
         } else {
           errorDiv.innerHTML = '<div class="error">No &lt;main&gt; tag found in the page</div>';
         }
       } catch (error) {
         errorDiv.innerHTML = '<div class="error">Error loading content: ' + error.message + '. This may be due to CORS restrictions.</div>';
+      }
+    }
+    
+    function generateLinkManifest() {
+      const previewFrame = document.getElementById('previewFrame');
+      const errorDiv = document.getElementById('error');
+      
+      if (!originalContent) {
+        errorDiv.innerHTML = '<div class="error">Please load content first</div>';
+        return;
+      }
+      
+      try {
+        const iframeDoc = previewFrame.contentDocument || previewFrame.contentWindow.document;
+        const contentDiv = iframeDoc.querySelector('main .container');
+        
+        if (!contentDiv) {
+          errorDiv.innerHTML = '<div class="error">Content not found in preview</div>';
+          return;
+        }
+        
+        // Get all links that are not local anchors
+        const links = contentDiv.querySelectorAll('a[href]');
+        const linkData = [];
+        let linkNumber = 1;
+        
+        links.forEach(link => {
+          const href = link.getAttribute('href');
+          
+          // Skip local anchors (links starting with #)
+          if (href && !href.startsWith('#')) {
+            const linkTitle = link.textContent.trim() || '(No title)';
+            linkData.push({
+              number: linkNumber,
+              title: linkTitle,
+              url: href
+            });
+            linkNumber++;
+          }
+        });
+        
+        if (linkData.length === 0) {
+          errorDiv.innerHTML = '<div class="error">No non-anchor links found on the page</div>';
+          return;
+        }
+        
+        // Create CSV content
+        let csvContent = '#,Link Title,URL\n';
+        linkData.forEach(link => {
+          // Escape double quotes in title and URL, and wrap in quotes if they contain commas
+          const escapedTitle = link.title.replace(/"/g, '""');
+          const escapedUrl = link.url.replace(/"/g, '""');
+          csvContent += `${link.number},"${escapedTitle}","${escapedUrl}"\n`;
+        });
+        
+        // Create blob and download
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const downloadLink = document.createElement('a');
+        downloadLink.href = url;
+        
+        // Generate filename from page title
+        const sanitizedTitle = currentPageTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        downloadLink.download = `link_manifest_${sanitizedTitle}.csv`;
+        
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        URL.revokeObjectURL(url);
+        
+        errorDiv.innerHTML = `<div class="success">Link manifest generated successfully! Downloaded ${linkData.length} links.</div>`;
+      } catch (error) {
+        errorDiv.innerHTML = '<div class="error">Error generating manifest: ' + error.message + '</div>';
       }
     }
     
