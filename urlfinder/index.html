@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Canada.ca Link Finder</title>
+  <title>LinkBuddy</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -50,11 +51,9 @@
   <script>
     (function() {
         // --- 1. CLEANUP PHASE ---
-        // Aggressively remove ANY existing instances of the app to prevent stacking
         const existingApps = document.querySelectorAll('#app-root');
         existingApps.forEach(el => el.remove());
 
-        // Remove old global event listeners
         if (window.appResizeMoveHandler) {
             document.removeEventListener('mousemove', window.appResizeMoveHandler);
         }
@@ -63,14 +62,13 @@
         }
 
         // --- 2. HTML GENERATION PHASE ---
-        // We define the HTML here so we can control exactly when it enters the DOM
         const appTemplate = `
         <div id="app-root" class="main-container flex h-screen w-full gap-0">
             <div class="left-panel w-1/4 min-w-[250px] max-w-[50%] p-5 overflow-y-auto shadow-md flex flex-col z-10" id="leftPanel">
-            <h1 class="text-2xl mt-0 mb-4 font-bold text-white">Canada.ca Link Finder</h1>
+            <h1 class="text-2xl mt-0 mb-4 font-bold text-white"><i class="fa-solid fa-link"></i> LinkBuddy</h1>
             
             <div class="input-group mb-4">
-                <label for="urlInput" class="block mb-1.5 text-white">Enter Canada.ca page to search:</label>
+                <label for="urlInput" class="block mb-1.5 text-white text-sm">Enter a Canada.ca page to search:</label>
                 <div class="relative w-full">
                     <input type="text" id="urlInput" placeholder="https://www.canada.ca/..." 
                         class="w-full p-2.5 pr-10 border-2 border-zinc-600 rounded text-sm bg-[#1a1a1a] text-white box-border focus:ring-2 focus:ring-blue-500 outline-none placeholder-gray-500" autocomplete="off">
@@ -92,6 +90,13 @@
                     class="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:text-gray-400 disabled:cursor-not-allowed text-white font-bold py-2.5 px-5 rounded text-sm mb-3 transition-colors duration-200">
                 Generate Link Manifest (.csv)
             </button>
+
+            <!-- Check Broken Links Button -->
+            <button type="button" id="checkBrokenBtn" onclick="toggleBrokenLinkCheck()" disabled 
+                    class="w-full bg-orange-600 hover:bg-orange-700 disabled:bg-gray-600 disabled:text-gray-400 disabled:cursor-not-allowed text-white font-bold py-2.5 px-5 rounded text-sm mb-3 transition-colors duration-200">
+                Check Broken Links
+            </button>
+            <div id="error"></div>
             
             <h2 class="text-lg font-bold text-white mt-8 mb-4 pt-5 border-t-2 border-gray-600">Search & Highlight</h2>
             
@@ -122,8 +127,9 @@
                 Clear Highlights
             </button>
             
+            <div id="searchMessage"></div>
             <div id="matchCounter"></div>
-            <div id="error"></div>
+            
             </div>
             
             <div class="resizer w-2 bg-gray-300 hover:bg-blue-600 cursor-col-resize relative flex-shrink-0 transition-colors duration-200 z-20" id="resizer"></div>
@@ -146,6 +152,10 @@
         let allMatches = [];
         let currentMatchIndex = -1;
         let lastSearchTerm = '';
+        let isCheckingLinks = false;
+        let stopCheckFlag = false;
+        let currentAbortController = null;
+        let lastBrokenLinksData = [];
         
         // Resizer Logic
         const resizer = document.getElementById('resizer');
@@ -223,15 +233,30 @@
             currentMatchIndex = -1;
             lastSearchTerm = '';
             
+            // Stop checks if they are running
+            stopCheckFlag = true;
+            isCheckingLinks = false;
+            if (currentAbortController) {
+                currentAbortController.abort();
+            }
+            const checkBtn = document.getElementById('checkBrokenBtn');
+            if (checkBtn) {
+                checkBtn.innerText = "Check Broken Links";
+                checkBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                checkBtn.classList.add('bg-orange-600', 'hover:bg-orange-700');
+            }
+            
             const iframeDoc = previewFrame.contentDocument || previewFrame.contentWindow.document;
             iframeDoc.open();
             iframeDoc.write('');
             iframeDoc.close();
             
             document.getElementById('error').innerHTML = '';
+            document.getElementById('searchMessage').innerHTML = '';
             document.getElementById('matchCounter').innerHTML = '';
             
             document.getElementById('generateManifestBtn').disabled = true;
+            document.getElementById('checkBrokenBtn').disabled = true;
             document.getElementById('highlightBtn').disabled = true;
             document.getElementById('clearHighlightsBtn').disabled = true;
             document.getElementById('prevBtn').disabled = true;
@@ -270,7 +295,6 @@
             }
           });
           
-          // Fix other attributes omitted for brevity but same logic applies
           return doc.body.innerHTML;
         }
         
@@ -290,6 +314,8 @@
         body { text-align: left; font-family: 'Noto Sans', sans-serif; }
         .table tbody tr.active { background-color: #e0f2f7; }
         .nowrap { white-space: nowrap; }
+        
+        /* Standard Highlight */
         .highlight {
           background-color: #ffff00 !important;
           color: #000000 !important;
@@ -299,10 +325,35 @@
           outline: 3px solid #ff6600;
           scroll-margin-top: 100px;
         }
-        .highlight.current-match {
+        
+        /* Broken Link (404/500) Highlight */
+        .highlight-broken {
+          background-color: #ffcccc !important;
+          color: #cc0000 !important;
+          padding: 2px 4px;
+          border-radius: 2px;
+          font-weight: bold;
+          outline: 3px solid #cc0000;
+          scroll-margin-top: 100px;
+        }
+
+        /* Unverifiable (CORS/Network error) Highlight */
+        .highlight-warning {
+          background-color: #ffeebf !important;
+          color: #b07000 !important;
+          padding: 2px 4px;
+          border-radius: 2px;
+          font-weight: bold;
+          outline: 3px dashed #ff9900;
+          scroll-margin-top: 100px;
+        }
+
+        .highlight.current-match, 
+        .highlight-broken.current-match, 
+        .highlight-warning.current-match {
           background-color: #ff6600 !important;
           color: #ffffff !important;
-          outline: 3px solid #cc0000;
+          outline: 4px solid #cc0000;
         }
       </style>
     </head>
@@ -316,10 +367,11 @@
         }
         
         window.fetchContent = async function() {
-          const url = document.getElementById('urlInput').value.trim();
+          let url = document.getElementById('urlInput').value.trim();
           const previewFrame = document.getElementById('previewFrame');
           const errorDiv = document.getElementById('error');
           const generateManifestBtn = document.getElementById('generateManifestBtn');
+          const checkBrokenBtn = document.getElementById('checkBrokenBtn');
           
           errorDiv.innerHTML = '';
           
@@ -327,24 +379,67 @@
             errorDiv.innerHTML = '<div class="text-red-700 bg-red-100 p-3 rounded border border-red-700 mt-3 font-bold">Please enter a URL</div>';
             return;
           }
+
+          // Quality of life: Prepend https:// if not present
+          if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            url = 'https://' + url;
+            document.getElementById('urlInput').value = url;
+          }
           
-          if (!url.includes('canada.ca')) {
-            errorDiv.innerHTML = '<div class="text-red-700 bg-red-100 p-3 rounded border border-red-700 mt-3 font-bold">Please enter a valid canada.ca URL</div>';
+          // Enhanced Validation for *.canada.ca, *.gc.ca, and adobecqms.net
+          let isValidUrl = false;
+          try {
+            const urlObj = new URL(url);
+            const host = urlObj.hostname.toLowerCase();
+            
+            if (host === 'canada.ca' || host.endsWith('.canada.ca') ||
+                host === 'gc.ca' || host.endsWith('.gc.ca') ||
+                host === 'canada-preview.adobecqms.net') {
+              isValidUrl = true;
+            }
+          } catch(e) {
+            isValidUrl = false;
+          }
+
+          if (!isValidUrl) {
+            errorDiv.innerHTML = '<div class="text-red-700 bg-red-100 p-3 rounded border border-red-700 mt-3 font-bold text-sm">Please enter a valid canada.ca URL</div>';
             return;
           }
           
           try {
             errorDiv.innerHTML = '<div class="text-gray-300 italic text-sm mt-3">Loading content...</div>';
             
-            const response = await fetch(url);
-            if (!response.ok) {
-              throw new Error('Failed to fetch content');
+            let html = '';
+            try {
+                // 1. First attempt to fetch directly
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Direct fetch HTTP error');
+                html = await response.text();
+            } catch (directError) {
+                // 2. If blocked by strict CORS policies (like on parks.canada.ca), 
+                //    route it through a public proxy API as a fallback.
+                console.warn('Direct fetch failed due to CORS, attempting via proxy...');
+                errorDiv.innerHTML = '<div class="text-yellow-600 italic text-sm mt-3">CORS blocked direct request, trying proxy...</div>';
+                
+                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+                const proxyResponse = await fetch(proxyUrl);
+                
+                if (!proxyResponse.ok) {
+                    throw new Error(`Failed to fetch content. Status: ${proxyResponse.status}`);
+                }
+                html = await proxyResponse.text();
             }
             
-            const html = await response.text();
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
-            const mainContent = doc.querySelector('main');
+            
+            // Be much more forgiving with finding the main content.
+            // Some WET iterations use different containers.
+            const mainContent = doc.querySelector('main') || 
+                                doc.querySelector('[role="main"]') || 
+                                doc.querySelector('#wb-cont') || 
+                                doc.querySelector('#mainContent') || 
+                                doc.body; // Fallback to entire body if nothing else exists
             
             if (mainContent) {
               currentBaseUrl = url;
@@ -361,9 +456,18 @@
               iframeDoc.close();
               
               generateManifestBtn.disabled = false;
+              
+              // Reset check button cleanly before enabling it
+              stopCheckFlag = true;
+              isCheckingLinks = false;
+              checkBrokenBtn.innerText = "Check Broken Links";
+              checkBrokenBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+              checkBrokenBtn.classList.add('bg-orange-600', 'hover:bg-orange-700');
+              checkBrokenBtn.disabled = false;
+
               errorDiv.innerHTML = '<div class="text-green-800 bg-green-100 p-3 rounded border border-green-800 mt-3 font-bold">Content loaded successfully!</div>';
             } else {
-              errorDiv.innerHTML = '<div class="text-red-700 bg-red-100 p-3 rounded border border-red-700 mt-3 font-bold">No &lt;main&gt; tag found in the page</div>';
+              errorDiv.innerHTML = '<div class="text-red-700 bg-red-100 p-3 rounded border border-red-700 mt-3 font-bold">Could not find recognizable page content.</div>';
             }
           } catch (error) {
             errorDiv.innerHTML = '<div class="text-red-700 bg-red-100 p-3 rounded border border-red-700 mt-3 font-bold">Error loading content: ' + error.message + '</div>';
@@ -378,7 +482,7 @@
           
           try {
             const iframeDoc = previewFrame.contentDocument || previewFrame.contentWindow.document;
-            const contentDiv = iframeDoc.querySelector('main') || iframeDoc.body;
+            const contentDiv = iframeDoc.querySelector('main') || iframeDoc.querySelector('[role="main"]') || iframeDoc.body;
             
             if (!contentDiv) return;
             
@@ -429,6 +533,43 @@
             errorDiv.innerHTML = '<div class="text-red-700 bg-red-100 p-3 rounded border border-red-700 mt-3 font-bold">Error generating manifest: ' + error.message + '</div>';
           }
         }
+
+        window.exportBrokenLinks = function() {
+            if (!lastBrokenLinksData || lastBrokenLinksData.length === 0) {
+                alert("No broken link data available to export.");
+                return;
+            }
+
+            try {
+                let csvContent = '#,Link Title,URL,Status\n';
+                
+                lastBrokenLinksData.forEach((link, index) => {
+                    // Escape double quotes by doubling them (CSV standard)
+                    const title = (link.title || '').replace(/"/g, '""');
+                    const url = (link.url || '').replace(/"/g, '""');
+                    const status = (link.status || '').replace(/"/g, '""');
+                    
+                    csvContent += `${index + 1},"${title}","${url}","${status}"\n`;
+                });
+                
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const downloadLink = document.createElement('a');
+                downloadLink.href = url;
+                
+                const sanitizedTitle = currentPageTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+                downloadLink.download = `broken_links_${sanitizedTitle}.csv`;
+                
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+                URL.revokeObjectURL(url);
+                
+            } catch (error) {
+                console.error(error);
+                alert("Error exporting CSV: " + error.message);
+            }
+        }
         
         function openParentDetails(element) {
           let parent = element.parentElement;
@@ -439,10 +580,185 @@
             parent = parent.parentElement;
           }
         }
+
+        window.toggleBrokenLinkCheck = function() {
+            if (isCheckingLinks) {
+                stopCheckFlag = true;
+                if (currentAbortController) {
+                    currentAbortController.abort();
+                }
+            } else {
+                window.checkBrokenLinks();
+            }
+        }
+
+        // --- NEW: BROKEN LINK CHECKER ---
+        window.checkBrokenLinks = async function() {
+            const previewFrame = document.getElementById('previewFrame');
+            const errorDiv = document.getElementById('error');
+            const matchCounterDiv = document.getElementById('matchCounter');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const clearHighlightsBtn = document.getElementById('clearHighlightsBtn');
+            const checkBtn = document.getElementById('checkBrokenBtn');
+
+            if (!originalContent) return;
+
+            // Turn the button into a Stop button
+            isCheckingLinks = true;
+            stopCheckFlag = false;
+            currentAbortController = new AbortController();
+            
+            checkBtn.innerText = "STOP CHECK";
+            checkBtn.classList.remove('bg-orange-600', 'hover:bg-orange-700');
+            checkBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+            
+            // Clear previous data
+            lastBrokenLinksData = [];
+
+            try {
+                const iframeDoc = previewFrame.contentDocument || previewFrame.contentWindow.document;
+                const contentDiv = iframeDoc.querySelector('main') || iframeDoc.querySelector('[role="main"]') || iframeDoc.body;
+                
+                // Clear any previous highlights quickly
+                contentDiv.querySelectorAll('.highlight, .highlight-broken, .highlight-warning, .current-match').forEach(el => {
+                    el.classList.remove('highlight', 'highlight-broken', 'highlight-warning', 'current-match');
+                    el.removeAttribute('data-match-id');
+                });
+
+                allMatches = [];
+                currentMatchIndex = -1;
+                lastSearchTerm = 'BROKEN_LINKS_CHECK';
+
+                // Get all absolute HTTP/HTTPS links
+                const links = Array.from(contentDiv.querySelectorAll('a[href]')).filter(link => {
+                    const href = link.getAttribute('href');
+                    return href && href.startsWith('http');
+                });
+
+                if (links.length === 0) {
+                    errorDiv.innerHTML = '<div class="text-yellow-700 bg-yellow-100 p-3 rounded mt-3 font-bold">No external links found to check.</div>';
+                    return; 
+                }
+
+                errorDiv.innerHTML = `<div class="text-blue-800 bg-blue-100 p-3 rounded border border-blue-800 mt-3 font-bold">Checking 0 of ${links.length} links...</div>`;
+
+                let checkedCount = 0;
+                let brokenCount = 0;
+                let warningCount = 0;
+                
+                // Process in small batches
+                const batchSize = 5;
+                for (let i = 0; i < links.length; i += batchSize) {
+                    if (stopCheckFlag) break; 
+                    
+                    const batch = links.slice(i, i + batchSize);
+                    
+                    const promises = batch.map(async (link) => {
+                        if (stopCheckFlag) return; 
+                        
+                        const href = link.getAttribute('href');
+                        let statusText = '';
+                        let isIssue = false;
+
+                        try {
+                            // Attempt HEAD first
+                            let response = await fetch(href, { method: 'HEAD', cache: 'no-store', signal: currentAbortController.signal });
+                            
+                            // Fallback to GET if HEAD is blocked
+                            if (response.status === 405 || response.status === 403) {
+                                response = await fetch(href, { method: 'GET', cache: 'no-store', signal: currentAbortController.signal });
+                            }
+
+                            if (!response.ok) {
+                                // Broken
+                                statusText = `Broken (${response.status} ${response.statusText})`;
+                                link.classList.add('highlight-broken');
+                                brokenCount++;
+                                isIssue = true;
+                            }
+                        } catch (err) {
+                            if (err.name === 'AbortError') return; 
+                            
+                            // Network/CORS error
+                            statusText = 'Unverified (Security issue, check manually)';
+                            link.classList.add('highlight-warning');
+                            warningCount++;
+                            isIssue = true;
+                        } finally {
+                            checkedCount++;
+                            if (isIssue) {
+                                link.setAttribute('title', statusText);
+                                link.setAttribute('data-match-id', allMatches.length);
+                                allMatches.push(link);
+                                openParentDetails(link);
+                                
+                                // Add to export data
+                                lastBrokenLinksData.push({
+                                    title: link.textContent.trim(),
+                                    url: href,
+                                    status: statusText
+                                });
+                            }
+                        }
+                    });
+
+                    await Promise.all(promises);
+                    if (!stopCheckFlag) {
+                        errorDiv.innerHTML = `<div class="text-blue-800 bg-blue-100 p-3 rounded border border-blue-800 mt-3 font-bold">Checking ${checkedCount} of ${links.length} links...</div>`;
+                    }
+                }
+
+                // --- GENERATE REPORT HTML ---
+                let reportHtml = '';
+                const exportBtnHtml = `
+                    <button onclick="exportBrokenLinks()" class="mt-2 bg-gray-700 hover:bg-gray-600 text-white font-bold py-1.5 px-4 rounded text-xs transition-colors duration-200">
+                        <i class="fa-solid fa-file-csv mr-1"></i> Export .csv
+                    </button>`;
+
+                if (stopCheckFlag) {
+                    reportHtml = `
+                        <div class="text-red-800 bg-red-100 p-3 rounded border border-red-800 mt-3 text-sm">
+                            <strong>Check stopped by user.</strong> Checked ${checkedCount} of ${links.length}.<br/>
+                            <span class="text-red-600 font-bold">${brokenCount} broken</span> | 
+                            <span class="text-orange-600 font-bold">${warningCount} unverified</span>
+                            ${(brokenCount + warningCount > 0) ? '<br/>' + exportBtnHtml : ''}
+                        </div>`;
+                } else if (allMatches.length > 0) {
+                    reportHtml = `
+                        <div class="text-orange-800 bg-orange-100 p-3 rounded border border-orange-800 mt-3 text-sm">
+                            <strong>Check Complete!</strong><br/>
+                            <span class="text-red-600 font-bold">${brokenCount} broken</span> (404) | 
+                            <span class="text-orange-600 font-bold">${warningCount} unverified</span> (Security issue, check manually)
+                            <br/>${exportBtnHtml}
+                        </div>`;
+                } else {
+                    reportHtml = '<div class="text-green-800 bg-green-100 p-3 rounded border border-green-800 mt-3 font-bold">All links returned a success status!</div>';
+                }
+                
+                errorDiv.innerHTML = reportHtml;
+
+                // Enable navigation if matches found
+                if (allMatches.length > 0) {
+                    matchCounterDiv.innerHTML = `<div class="text-blue-400 bg-blue-900/30 p-2.5 rounded text-center font-bold mt-2.5">Match 0 of ${allMatches.length}</div>`;
+                    prevBtn.disabled = false;
+                    nextBtn.disabled = false;
+                    clearHighlightsBtn.disabled = false;
+                }
+
+            } catch (error) {
+                errorDiv.innerHTML = '<div class="text-red-700 bg-red-100 p-3 rounded border border-red-700 mt-3 font-bold">Error checking links: ' + error.message + '</div>';
+            } finally {
+                isCheckingLinks = false;
+                checkBtn.innerText = "Check Broken Links";
+                checkBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                checkBtn.classList.add('bg-orange-600', 'hover:bg-orange-700');
+            }
+        }
         
         window.highlightURLs = function() {
           const searchTerm = document.getElementById('searchInput').value.trim();
-          const errorDiv = document.getElementById('error');
+          const searchMessageDiv = document.getElementById('searchMessage');
           const matchCounterDiv = document.getElementById('matchCounter');
           const previewFrame = document.getElementById('previewFrame');
           const prevBtn = document.getElementById('prevBtn');
@@ -455,10 +771,11 @@
           
           try {
             const iframeDoc = previewFrame.contentDocument || previewFrame.contentWindow.document;
-            const contentDiv = iframeDoc.querySelector('main') || iframeDoc.body;
+            const contentDiv = iframeDoc.querySelector('main') || iframeDoc.querySelector('[role="main"]') || iframeDoc.body;
             
-            contentDiv.querySelectorAll('.highlight').forEach(el => {
-              el.classList.remove('highlight', 'current-match');
+            // Clear all types of highlights
+            contentDiv.querySelectorAll('.highlight, .highlight-broken, .highlight-warning, .current-match').forEach(el => {
+              el.classList.remove('highlight', 'highlight-broken', 'highlight-warning', 'current-match');
             });
             
             allMatches = [];
@@ -532,21 +849,21 @@
             });
             
             if (foundMatches > 0) {
-              errorDiv.innerHTML = `<div class="text-green-800 bg-green-100 p-3 rounded border border-green-800 mt-3 font-bold">Found ${foundMatches} matches!</div>`;
+              searchMessageDiv.innerHTML = `<div class="text-green-800 bg-green-100 p-3 rounded border border-green-800 mt-3 font-bold">Found ${foundMatches} matches!</div>`;
               matchCounterDiv.innerHTML = `<div class="text-blue-400 bg-blue-900/30 p-2.5 rounded text-center font-bold mt-2.5">Match 0 of ${foundMatches}</div>`;
               currentMatchIndex = -1;
               prevBtn.disabled = false;
               nextBtn.disabled = false;
               clearHighlightsBtn.disabled = false;
             } else {
-              errorDiv.innerHTML = '<div class="text-red-700 bg-red-100 p-3 rounded border border-red-700 mt-3 font-bold">No matching URLs found</div>';
+              searchMessageDiv.innerHTML = '<div class="text-red-700 bg-red-100 p-3 rounded border border-red-700 mt-3 font-bold">No matching URLs found</div>';
               matchCounterDiv.innerHTML = '';
               prevBtn.disabled = true;
               nextBtn.disabled = true;
               clearHighlightsBtn.disabled = true;
             }
           } catch (error) {
-            errorDiv.innerHTML = '<div class="text-red-700 bg-red-100 p-3 rounded border border-red-700 mt-3 font-bold">Error highlighting: ' + error.message + '</div>';
+            searchMessageDiv.innerHTML = '<div class="text-red-700 bg-red-100 p-3 rounded border border-red-700 mt-3 font-bold">Error highlighting: ' + error.message + '</div>';
           }
         }
         
@@ -576,6 +893,7 @@
             iframeDoc.write(fullHtml);
             iframeDoc.close();
             document.getElementById('error').innerHTML = '';
+            document.getElementById('searchMessage').innerHTML = '';
             document.getElementById('matchCounter').innerHTML = '';
             allMatches = [];
             currentMatchIndex = -1;
