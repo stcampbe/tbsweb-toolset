@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LinkBuddy</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/html-docx-js@0.3.1/dist/html-docx.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -39,11 +40,6 @@
         background-color: #0F172A;
     }
     
-    /* Ensure no double scrolling */
-    body {
-        margin: 0;
-        padding: 0;
-    }
   </style>
 </head>
 <body class="h-screen w-screen overflow-hidden bg-gray-100 text-black font-sans">
@@ -64,7 +60,7 @@
         // --- 2. HTML GENERATION PHASE ---
         const appTemplate = `
         <div id="app-root" class="main-container flex h-screen w-full gap-0">
-            <div class="left-panel w-1/4 min-w-[250px] max-w-[50%] p-5 overflow-y-auto shadow-md flex flex-col z-10" id="leftPanel">
+            <div class="left-panel w-1/4 min-w-[300px] max-w-[50%] p-5 overflow-y-auto shadow-md flex flex-col z-10" id="leftPanel">
             <h1 class="text-2xl mt-0 mb-4 font-bold text-white"><i class="fa-solid fa-link"></i> LinkBuddy</h1>
             
             <div class="input-group mb-4">
@@ -81,27 +77,60 @@
                 </div>
             </div>
             
-            <button type="button" onclick="fetchContent()" 
-                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-5 rounded text-sm mb-3 transition-colors duration-200">
-                Load Page Content
-            </button>
+            <div class="flex gap-2 mb-3">
+                <button type="button" onclick="fetchContent()" 
+                        class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-5 rounded text-sm transition-colors duration-200">
+                    Load Page Content
+                </button>
+                <button type="button" id="toggleStyleBtn" onclick="toggleViewMode()" 
+                        class="hidden w-12 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded text-sm flex items-center justify-center transition-colors duration-200" 
+                        title="Disable CSS/JS (Raw View)">
+                    <i class="fa-solid fa-ban"></i>
+                </button>
+            </div>
             
-            <button type="button" id="generateManifestBtn" onclick="generateLinkManifest()" disabled 
-                    class="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:text-gray-400 disabled:cursor-not-allowed text-white font-bold py-2.5 px-5 rounded text-sm mb-3 transition-colors duration-200">
-                Generate Link Manifest (.csv)
-            </button>
+            <div class="flex gap-2 mb-3">
+                <button type="button" id="generateManifestBtn" onclick="generateLinkManifest()" disabled 
+                        class="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:text-gray-400 disabled:cursor-not-allowed text-white font-bold py-2.5 px-2 rounded text-sm transition-colors duration-200 truncate">
+                    <i class="fa-solid fa-file-csv"></i> Link Manifest
+                </button>
+                <button type="button" id="exportWordBtn" onclick="exportToWord()" disabled 
+                        class="flex-1 bg-blue-800 hover:bg-blue-900 disabled:bg-gray-600 disabled:text-gray-400 disabled:cursor-not-allowed text-white font-bold py-2.5 px-2 rounded text-sm transition-colors duration-200 truncate">
+                    <i class="fa-solid fa-file-word"></i> Export .docx
+                </button>
+            </div>
 
-            <!-- Check Broken Links Button -->
-            <button type="button" id="checkBrokenBtn" onclick="toggleBrokenLinkCheck()" disabled 
-                    class="w-full bg-orange-600 hover:bg-orange-700 disabled:bg-gray-600 disabled:text-gray-400 disabled:cursor-not-allowed text-white font-bold py-2.5 px-5 rounded text-sm mb-3 transition-colors duration-200">
-                Check Broken Links
-            </button>
+            <div class="border border-yellow-600/50 bg-yellow-900/10 rounded-lg p-3 mb-4 mt-2 relative">
+                <div class="absolute -top-3 left-3 bg-[#0F172A] px-2 text-[10px] font-bold text-yellow-500 uppercase tracking-widest border border-yellow-600/50 rounded">
+                    <i class="fa-solid fa-flask"></i> Experimental Feature
+                </div>
+
+                <button type="button" id="checkBrokenBtn" onclick="toggleBrokenLinkCheck()" disabled 
+                        class="w-full mt-2 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-600 disabled:text-gray-400 disabled:cursor-not-allowed text-white font-bold py-2.5 px-5 rounded text-sm mb-3 transition-colors duration-200">
+                    Check Broken Links
+                </button>
+                
+                <div id="auditResultsArea" class="hidden flex flex-col gap-2 mb-1 p-3 bg-gray-800 rounded border border-gray-600">
+                    <div id="auditStatus" class="text-sm text-white font-bold"></div>
+                    
+                    <div id="auditUnverifiedMsg" class="hidden text-xs text-yellow-400 mt-1"><i class="fa-solid fa-triangle-exclamation"></i> Unverified = Security or access error. Check manually.</div>
+                    
+                    <div id="auditNavButtons" class="hidden flex gap-2 mt-2">
+                        <button onclick="navigateIssues('prev')" id="prevIssueBtn" disabled class="flex-1 bg-gray-600 hover:bg-gray-500 disabled:opacity-50 text-white text-xs font-bold py-2 rounded">← Prev Issue</button>
+                        <button onclick="navigateIssues('next')" id="nextIssueBtn" disabled class="flex-1 bg-gray-600 hover:bg-gray-500 disabled:opacity-50 text-white text-xs font-bold py-2 rounded">Next Issue →</button>
+                    </div>
+                    <div id="auditActionButtons" class="hidden flex gap-2 mt-1">
+                        <button onclick="exportBrokenLinks()" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white text-xs font-bold py-1.5 rounded"><i class="fa-solid fa-download"></i> Export CSV</button>
+                        <button onclick="clearAuditResults()" class="flex-1 bg-red-900 hover:bg-red-800 text-white text-xs font-bold py-1.5 rounded">Clear Results</button>
+                    </div>
+                </div>
+            </div>
             <div id="error"></div>
             
-            <h2 class="text-lg font-bold text-white mt-8 mb-4 pt-5 border-t-2 border-gray-600">Search & Highlight</h2>
+            <h2 class="text-lg font-bold text-white mt-4 mb-4 pt-5 border-t-2 border-gray-600">Search & Highlight</h2>
             
             <div class="input-group mb-4">
-                <label for="searchInput" class="block mb-1.5 text-white">Search for URLs (whole URL or partial):</label>
+                <label for="searchInput" class="block mb-1.5 text-white text-sm">Search for URLs (whole URL or partial):</label>
                 <input type="text" id="searchInput" placeholder="e.g., tbs-sct.gc.ca" 
                     class="w-full p-2.5 border-2 border-zinc-600 rounded text-sm bg-[#1a1a1a] text-white box-border focus:ring-2 focus:ring-blue-500 outline-none placeholder-gray-500" autocomplete="off">
             </div>
@@ -128,7 +157,7 @@
             </button>
             
             <div id="searchMessage"></div>
-            <div id="matchCounter"></div>
+            <div id="matchCounter" class="text-white text-center font-bold text-sm mt-2"></div>
             
             </div>
             
@@ -140,7 +169,6 @@
         </div>
         `;
 
-        // Inject the fresh HTML
         document.body.insertAdjacentHTML('beforeend', appTemplate);
 
 
@@ -148,14 +176,21 @@
         let originalContent = '';
         let currentPageTitle = 'Canada.ca Page';
         let currentBaseUrl = '';
-        const NBSP_PLACEHOLDER = '&#160;';
+        
+        // Search & Highlight State
         let allMatches = [];
         let currentMatchIndex = -1;
         let lastSearchTerm = '';
+        
+        // Broken Link Checker State (Separate)
         let isCheckingLinks = false;
         let stopCheckFlag = false;
         let currentAbortController = null;
         let lastBrokenLinksData = [];
+        let allIssues = []; // DOM elements of broken/warning links
+        let currentIssueIndex = -1;
+
+        let isPlainView = false;
         
         // Resizer Logic
         const resizer = document.getElementById('resizer');
@@ -177,7 +212,7 @@
           const containerRect = mainContainer.getBoundingClientRect();
           const newWidth = e.clientX - containerRect.left;
           const minWidth = 200;
-          const maxWidth = containerRect.width * 0.5;
+          const maxWidth = containerRect.width * 0.7;
           if (newWidth >= minWidth && newWidth <= maxWidth) {
             leftPanel.style.width = newWidth + 'px';
           }
@@ -200,11 +235,7 @@
         const highlightBtn = document.getElementById('highlightBtn');
 
         searchInput.addEventListener('input', function() {
-            if (this.value.trim().length > 0) {
-                highlightBtn.disabled = false;
-            } else {
-                highlightBtn.disabled = true;
-            }
+            highlightBtn.disabled = this.value.trim().length <= 0;
         });
 
         searchInput.addEventListener('keydown', function(e) {
@@ -222,45 +253,145 @@
         });
         
         // --- 4. GLOBAL FUNCTIONS ---
+        
+        window.showPlaceholder = function() {
+            const previewFrame = document.getElementById('previewFrame');
+            const iframeDoc = previewFrame.contentDocument || previewFrame.contentWindow.document;
+            iframeDoc.open();
+            iframeDoc.write(`
+                <!DOCTYPE html>
+                <html lang="en">
+                <body style="display:flex; justify-content:center; align-items:center; height:100vh; margin:0; background-color:#f9fafb; font-family:'Segoe UI', sans-serif; color:#9ca3af;">
+                    <div style="text-align:center;">
+                        <div style="margin-bottom:1rem;">
+                            <i class="fa-solid fa-link-slash" style="font-size:80px; color:#d1d5db;"></i>
+                        </div>
+                        <h2 style="margin:0 0 0.5rem 0; font-size:1.5rem; font-weight:600; color:#4b5563;">Ready to Analyze</h2>
+                        <p style="margin:0; font-size:0.875rem;">Enter a Canada.ca URL on the left to begin.</p>
+                    </div>
+                </body>
+                </html>
+            `);
+            iframeDoc.close();
+        }
+
         window.resetApp = function() {
             document.getElementById('urlInput').value = '';
             document.getElementById('searchInput').value = '';
             
+            const toggleBtn = document.getElementById('toggleStyleBtn');
+            toggleBtn.classList.add('hidden');
+            toggleBtn.classList.remove('bg-gray-600', 'hover:bg-gray-700');
+            toggleBtn.classList.add('bg-purple-600', 'hover:bg-purple-700');
+            toggleBtn.innerHTML = '<i class="fa-solid fa-ban"></i>';
+            toggleBtn.title = "Disable CSS/JS (Raw View)";
+            
             originalContent = '';
             currentPageTitle = 'Canada.ca Page';
             currentBaseUrl = '';
+            
+            // Reset Search
             allMatches = [];
             currentMatchIndex = -1;
             lastSearchTerm = '';
             
-            // Stop checks if they are running
+            // Reset Checker
+            window.clearAuditResults();
             stopCheckFlag = true;
             isCheckingLinks = false;
-            if (currentAbortController) {
-                currentAbortController.abort();
-            }
-            const checkBtn = document.getElementById('checkBrokenBtn');
-            if (checkBtn) {
-                checkBtn.innerText = "Check Broken Links";
-                checkBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
-                checkBtn.classList.add('bg-orange-600', 'hover:bg-orange-700');
-            }
+            if (currentAbortController) currentAbortController.abort();
             
-            const iframeDoc = previewFrame.contentDocument || previewFrame.contentWindow.document;
-            iframeDoc.open();
-            iframeDoc.write('');
-            iframeDoc.close();
+            const checkBtn = document.getElementById('checkBrokenBtn');
+            checkBtn.innerText = "Check Broken Links";
+            checkBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+            checkBtn.classList.add('bg-orange-600', 'hover:bg-orange-700');
+            checkBtn.disabled = true;
+
+            isPlainView = false;
+            window.showPlaceholder();
             
             document.getElementById('error').innerHTML = '';
             document.getElementById('searchMessage').innerHTML = '';
             document.getElementById('matchCounter').innerHTML = '';
             
             document.getElementById('generateManifestBtn').disabled = true;
-            document.getElementById('checkBrokenBtn').disabled = true;
+            document.getElementById('exportWordBtn').disabled = true;
             document.getElementById('highlightBtn').disabled = true;
             document.getElementById('clearHighlightsBtn').disabled = true;
             document.getElementById('prevBtn').disabled = true;
             document.getElementById('nextBtn').disabled = true;
+        }
+
+        window.toggleViewMode = function() {
+            const previewFrame = document.getElementById('previewFrame');
+            const iframeDoc = previewFrame.contentDocument || previewFrame.contentWindow.document;
+            const btn = document.getElementById('toggleStyleBtn');
+            
+            if (!originalContent) return;
+
+            if (!isPlainView) {
+                // Switch to Plain
+                const plainHtml = generateRawHtml(originalContent);
+                iframeDoc.open();
+                iframeDoc.write(plainHtml);
+                iframeDoc.close();
+                isPlainView = true;
+                btn.innerHTML = '<i class="fa-solid fa-eye"></i>';
+                btn.title = "Enable CSS/JS (Standard View)";
+                btn.classList.remove('bg-purple-600', 'hover:bg-purple-700');
+                btn.classList.add('bg-gray-600', 'hover:bg-gray-700');
+            } else {
+                // Switch to Standard
+                const fullHtml = generateFullHtml(originalContent, currentPageTitle);
+                iframeDoc.open();
+                iframeDoc.write(fullHtml);
+                iframeDoc.close();
+                isPlainView = false;
+                btn.innerHTML = '<i class="fa-solid fa-ban"></i>';
+                btn.title = "Disable CSS/JS (Raw View)";
+                btn.classList.remove('bg-gray-600', 'hover:bg-gray-700');
+                btn.classList.add('bg-purple-600', 'hover:bg-purple-700');
+            }
+            
+            // Re-apply highlights if they exist
+            // (Both Audit and Search highlights need to be preserved across view toggles)
+            setTimeout(() => {
+                if(allIssues.length > 0) reapplyAuditHighlights(iframeDoc);
+                if(allMatches.length > 0) window.highlightURLs(); 
+            }, 100);
+        }
+
+        // Helper to generate the Raw HTML wrapper
+        function generateRawHtml(content) {
+            return `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <title>Raw View - ${currentPageTitle}</title>
+                <style>
+                    body { font-family: sans-serif; }
+                    img { max-width: 100%; height: auto; border: 1px solid #ccc; }
+                    a { color: blue; text-decoration: underline; }
+                    
+                    /* HIGHLIGHT STYLES */
+                    .highlight { background-color: #ffff00; color: #000; padding: 2px 4px; border-radius: 2px; font-weight: bold; outline: 3px solid #ff6600; }
+                    .highlight-broken { background-color: #ffcccc; color: #cc0000; padding: 2px 4px; border-radius: 2px; font-weight: bold; outline: 3px solid #cc0000; }
+                    .highlight-warning { background-color: #ffeebf; color: #b07000; padding: 2px 4px; border-radius: 2px; font-weight: bold; outline: 3px dashed #ff9900; }
+                    
+                    .highlight.current-match, 
+                    .highlight-broken.current-match, 
+                    .highlight-warning.current-match { 
+                        background-color: #ff6600 !important; color: #fff !important; outline: 4px solid #cc0000; 
+                    }
+                </style>
+            </head>
+            <body>
+                <div style="background:#eee; padding:10px; margin-bottom:20px; border-bottom:1px solid #ccc;">
+                    <strong>Note:</strong> Canada.ca theme disabled. Some elements that are meant to be invisible may be visible.
+                </div>
+                ${content}
+            </body>
+            </html>`;
         }
 
         function fixPaths(html, baseUrl) {
@@ -273,13 +404,12 @@
               link.setAttribute('target', '_blank');
               link.setAttribute('rel', 'noopener noreferrer');
             }
+            // Absolute URL resolution
             if (href && !href.startsWith('http') && !href.startsWith('//') && !href.startsWith('#') && !href.startsWith('mailto:') && !href.startsWith('tel:')) {
               try {
                 const absoluteUrl = new URL(href, baseUrl).href;
                 link.setAttribute('href', absoluteUrl);
-              } catch (e) {
-                console.warn('Could not resolve URL:', href);
-              }
+              } catch (e) { }
             }
           });
           
@@ -289,9 +419,7 @@
               try {
                 const absoluteUrl = new URL(src, baseUrl).href;
                 img.setAttribute('src', absoluteUrl);
-              } catch (e) {
-                console.warn('Could not resolve image URL:', src);
-              }
+              } catch (e) { }
             }
           });
           
@@ -300,78 +428,70 @@
         
         function generateFullHtml(bodyContent, pageTitle) {
           return `
-    <!DOCTYPE html>
-    <html class="no-js" lang="en" dir="ltr">
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>${pageTitle}</title>
-      
-      <link rel="stylesheet" href="https://use.fontawesome.com/releases/v7.0.1/css/all.css">
-      <link rel="stylesheet" href="https://www.canada.ca/etc/designs/canada/wet-boew/css/theme.min.css">
-      <link rel="stylesheet" href="https://cdn.design-system.alpha.canada.ca/@cdssnc/gcds-components@latest/dist/gcds/gcds.css">
-      <style>
-        body { text-align: left; font-family: 'Noto Sans', sans-serif; }
-        .table tbody tr.active { background-color: #e0f2f7; }
-        .nowrap { white-space: nowrap; }
-        
-        /* Standard Highlight */
-        .highlight {
-          background-color: #ffff00 !important;
-          color: #000000 !important;
-          padding: 2px 4px;
-          border-radius: 2px;
-          font-weight: bold;
-          outline: 3px solid #ff6600;
-          scroll-margin-top: 100px;
-        }
-        
-        /* Broken Link (404/500) Highlight */
-        .highlight-broken {
-          background-color: #ffcccc !important;
-          color: #cc0000 !important;
-          padding: 2px 4px;
-          border-radius: 2px;
-          font-weight: bold;
-          outline: 3px solid #cc0000;
-          scroll-margin-top: 100px;
-        }
-
-        /* Unverifiable (CORS/Network error) Highlight */
-        .highlight-warning {
-          background-color: #ffeebf !important;
-          color: #b07000 !important;
-          padding: 2px 4px;
-          border-radius: 2px;
-          font-weight: bold;
-          outline: 3px dashed #ff9900;
-          scroll-margin-top: 100px;
-        }
-
-        .highlight.current-match, 
-        .highlight-broken.current-match, 
-        .highlight-warning.current-match {
-          background-color: #ff6600 !important;
-          color: #ffffff !important;
-          outline: 4px solid #cc0000;
-        }
-      </style>
-    </head>
-    <body>
-      ${bodyContent}
-      <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"><\/script>
-      <script src="https://www.canada.ca/etc/designs/canada/wet-boew/js/wet-boew.min.js"><\/script>
-      <script src="https://www.canada.ca/etc/designs/canada/wet-boew/js/theme.min.js"><\/script>
-    </body>
-    </html>`;
+            <!DOCTYPE html>
+            <html class="no-js" lang="en" dir="ltr">
+            <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>${pageTitle}</title>
+            
+            <link rel="stylesheet" href="https://use.fontawesome.com/releases/v7.0.1/css/all.css">
+            <link rel="stylesheet" href="https://www.canada.ca/etc/designs/canada/wet-boew/css/theme.min.css">
+            <link rel="stylesheet" href="https://cdn.design-system.alpha.canada.ca/@cdssnc/gcds-components@latest/dist/gcds/gcds.css">
+            <style>
+                body { text-align: left; font-family: 'Noto Sans', sans-serif;}
+                
+                /* HIGHLIGHTS */
+                .highlight {
+                background-color: #ffff00 !important;
+                color: #000000 !important;
+                padding: 2px 4px;
+                border-radius: 2px;
+                font-weight: bold;
+                outline: 3px solid #ff6600;
+                scroll-margin-top: 100px;
+                }
+                .highlight-broken {
+                background-color: #ffcccc !important;
+                color: #cc0000 !important;
+                padding: 2px 4px;
+                border-radius: 2px;
+                font-weight: bold;
+                outline: 3px solid #cc0000;
+                scroll-margin-top: 100px;
+                }
+                .highlight-warning {
+                background-color: #ffeebf !important;
+                color: #b07000 !important;
+                padding: 2px 4px;
+                border-radius: 2px;
+                font-weight: bold;
+                outline: 3px dashed #ff9900;
+                scroll-margin-top: 100px;
+                }
+                .current-match {
+                background-color: #ff6600 !important;
+                color: #ffffff !important;
+                outline: 4px solid #cc0000;
+                }
+            </style>
+            </head>
+            <body>
+                <div style="background:#eee; padding:10px; margin:8px; border-bottom:1px solid #ccc;">
+                    <strong>Note:</strong> This content preview window may not always display the Canada.ca theme properly.
+                </div>
+            ${bodyContent}
+            <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"><\/script>
+            <script src="https://www.canada.ca/etc/designs/canada/wet-boew/js/wet-boew.min.js"><\/script>
+            <script src="https://www.canada.ca/etc/designs/canada/wet-boew/js/theme.min.js"><\/script>
+            </body>
+            </html>`;
         }
         
         window.fetchContent = async function() {
           let url = document.getElementById('urlInput').value.trim();
           const previewFrame = document.getElementById('previewFrame');
           const errorDiv = document.getElementById('error');
-          const generateManifestBtn = document.getElementById('generateManifestBtn');
-          const checkBrokenBtn = document.getElementById('checkBrokenBtn');
           
           errorDiv.innerHTML = '';
           
@@ -380,30 +500,21 @@
             return;
           }
 
-          // Quality of life: Prepend https:// if not present
           if (!url.startsWith('http://') && !url.startsWith('https://')) {
             url = 'https://' + url;
             document.getElementById('urlInput').value = url;
           }
           
-          // Enhanced Validation for *.canada.ca, *.gc.ca, and adobecqms.net
-          let isValidUrl = false;
           try {
             const urlObj = new URL(url);
             const host = urlObj.hostname.toLowerCase();
-            
-            if (host === 'canada.ca' || host.endsWith('.canada.ca') ||
-                host === 'gc.ca' || host.endsWith('.gc.ca') ||
-                host === 'canada-preview.adobecqms.net') {
-              isValidUrl = true;
+            if (!(host === 'canada.ca' || host.endsWith('.canada.ca') || host === 'gc.ca' || host.endsWith('.gc.ca') || host === 'canada-preview.adobecqms.net')) {
+                errorDiv.innerHTML = '<div class="text-red-700 bg-red-100 p-3 rounded border border-red-700 mt-3 font-bold text-sm">Please enter a valid canada.ca URL</div>';
+                return;
             }
           } catch(e) {
-            isValidUrl = false;
-          }
-
-          if (!isValidUrl) {
-            errorDiv.innerHTML = '<div class="text-red-700 bg-red-100 p-3 rounded border border-red-700 mt-3 font-bold text-sm">Please enter a valid canada.ca URL</div>';
-            return;
+             errorDiv.innerHTML = '<div class="text-red-700 bg-red-100 p-3 rounded border border-red-700 mt-3 font-bold">Invalid URL format</div>';
+             return;
           }
           
           try {
@@ -411,41 +522,24 @@
             
             let html = '';
             try {
-                // 1. First attempt to fetch directly
                 const response = await fetch(url);
                 if (!response.ok) throw new Error('Direct fetch HTTP error');
                 html = await response.text();
             } catch (directError) {
-                // 2. If blocked by strict CORS policies (like on parks.canada.ca), 
-                //    route it through a public proxy API as a fallback.
-                console.warn('Direct fetch failed due to CORS, attempting via proxy...');
-                errorDiv.innerHTML = '<div class="text-yellow-600 italic text-sm mt-3">CORS blocked direct request, trying proxy...</div>';
-                
+                console.warn('Direct fetch failed, trying proxy...');
                 const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
                 const proxyResponse = await fetch(proxyUrl);
-                
-                if (!proxyResponse.ok) {
-                    throw new Error(`Failed to fetch content. Status: ${proxyResponse.status}`);
-                }
+                if (!proxyResponse.ok) throw new Error(`Failed to fetch content.`);
                 html = await proxyResponse.text();
             }
             
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
-            
-            // Be much more forgiving with finding the main content.
-            // Some WET iterations use different containers.
-            const mainContent = doc.querySelector('main') || 
-                                doc.querySelector('[role="main"]') || 
-                                doc.querySelector('#wb-cont') || 
-                                doc.querySelector('#mainContent') || 
-                                doc.body; // Fallback to entire body if nothing else exists
+            const mainContent = doc.querySelector('main') || doc.querySelector('[role="main"]') || doc.querySelector('#wb-cont') || doc.body; 
             
             if (mainContent) {
               currentBaseUrl = url;
-              let rawContent = mainContent.outerHTML; 
-              originalContent = fixPaths(rawContent, currentBaseUrl);
-              
+              originalContent = fixPaths(mainContent.outerHTML, currentBaseUrl);
               const h1 = doc.querySelector('h1');
               currentPageTitle = h1 ? h1.textContent.trim() : 'Canada.ca Page';
               
@@ -455,156 +549,165 @@
               iframeDoc.write(fullHtml);
               iframeDoc.close();
               
-              generateManifestBtn.disabled = false;
+              document.getElementById('generateManifestBtn').disabled = false;
+              document.getElementById('exportWordBtn').disabled = false;
               
-              // Reset check button cleanly before enabling it
-              stopCheckFlag = true;
-              isCheckingLinks = false;
+              const toggleStyleBtn = document.getElementById('toggleStyleBtn');
+              toggleStyleBtn.classList.remove('hidden');
+              isPlainView = false;
+              toggleStyleBtn.innerHTML = '<i class="fa-solid fa-ban"></i>';
+              
+              const checkBrokenBtn = document.getElementById('checkBrokenBtn');
               checkBrokenBtn.innerText = "Check Broken Links";
-              checkBrokenBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
-              checkBrokenBtn.classList.add('bg-orange-600', 'hover:bg-orange-700');
               checkBrokenBtn.disabled = false;
 
               errorDiv.innerHTML = '<div class="text-green-800 bg-green-100 p-3 rounded border border-green-800 mt-3 font-bold">Content loaded successfully!</div>';
-            } else {
-              errorDiv.innerHTML = '<div class="text-red-700 bg-red-100 p-3 rounded border border-red-700 mt-3 font-bold">Could not find recognizable page content.</div>';
             }
           } catch (error) {
             errorDiv.innerHTML = '<div class="text-red-700 bg-red-100 p-3 rounded border border-red-700 mt-3 font-bold">Error loading content: ' + error.message + '</div>';
           }
         }
         
-        window.generateLinkManifest = function() {
-          const previewFrame = document.getElementById('previewFrame');
-          const errorDiv = document.getElementById('error');
-          
-          if (!originalContent) return;
-          
-          try {
-            const iframeDoc = previewFrame.contentDocument || previewFrame.contentWindow.document;
-            const contentDiv = iframeDoc.querySelector('main') || iframeDoc.querySelector('[role="main"]') || iframeDoc.body;
-            
-            if (!contentDiv) return;
-            
-            const links = contentDiv.querySelectorAll('a[href]');
-            const linkData = [];
-            let linkNumber = 1;
-            
-            links.forEach(link => {
-              const href = link.getAttribute('href');
-              if (href && !href.startsWith('#')) {
-                const linkTitle = link.textContent.trim() || '(No title)';
-                linkData.push({
-                  number: linkNumber,
-                  title: linkTitle,
-                  url: href
+        async function toBase64(url) {
+            try {
+                let response;
+                try { response = await fetch(url, { cache: 'no-cache' }); } catch(e) { response = { ok: false }; }
+                if (!response.ok) {
+                    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+                    response = await fetch(proxyUrl);
+                }
+                if (!response.ok) throw new Error('Failed to fetch');
+                const blob = await response.blob();
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
                 });
-                linkNumber++;
-              }
-            });
-            
-            if (linkData.length === 0) {
-              errorDiv.innerHTML = '<div class="text-red-700 bg-red-100 p-3 rounded border border-red-700 mt-3 font-bold">No non-anchor links found on the page</div>';
-              return;
-            }
-            
-            let csvContent = '#,Link Title,URL\n';
-            linkData.forEach(link => {
-              const escapedTitle = link.title.replace(/"/g, '""');
-              const escapedUrl = link.url.replace(/"/g, '""');
-              csvContent += `${link.number},"${escapedTitle}","${escapedUrl}"\n`;
-            });
-            
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const downloadLink = document.createElement('a');
-            downloadLink.href = url;
-            
-            const sanitizedTitle = currentPageTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-            downloadLink.download = `link_manifest_${sanitizedTitle}.csv`;
-            
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-            document.body.removeChild(downloadLink);
-            URL.revokeObjectURL(url);
-            
-            errorDiv.innerHTML = `<div class="text-green-800 bg-green-100 p-3 rounded border border-green-800 mt-3 font-bold">Link manifest generated successfully! Downloaded ${linkData.length} links.</div>`;
-          } catch (error) {
-            errorDiv.innerHTML = '<div class="text-red-700 bg-red-100 p-3 rounded border border-red-700 mt-3 font-bold">Error generating manifest: ' + error.message + '</div>';
-          }
+            } catch (e) { return null; }
         }
 
-        window.exportBrokenLinks = function() {
-            if (!lastBrokenLinksData || lastBrokenLinksData.length === 0) {
-                alert("No broken link data available to export.");
-                return;
-            }
+        window.exportToWord = async function() {
+            const errorDiv = document.getElementById('error');
+            const exportBtn = document.getElementById('exportWordBtn');
+            if (!originalContent) return;
+
+            const originalBtnText = exportBtn.innerHTML;
+            exportBtn.disabled = true;
+            exportBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
 
             try {
-                let csvContent = '#,Link Title,URL,Status\n';
+                if (typeof htmlDocx === 'undefined') throw new Error('Library missing.');
+
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(originalContent, 'text/html');
+
+                const tagsToRemove = ['script', 'style', 'link', 'meta', 'iframe', 'button', 'input', 'form', 'svg'];
+                tagsToRemove.forEach(tag => doc.querySelectorAll(tag).forEach(el => el.remove()));
                 
-                lastBrokenLinksData.forEach((link, index) => {
-                    // Escape double quotes by doubling them (CSV standard)
-                    const title = (link.title || '').replace(/"/g, '""');
-                    const url = (link.url || '').replace(/"/g, '""');
-                    const status = (link.status || '').replace(/"/g, '""');
-                    
-                    csvContent += `${index + 1},"${title}","${url}","${status}"\n`;
+                doc.querySelectorAll('*').forEach(el => {
+                    el.removeAttribute('class');
+                    el.removeAttribute('id');
+                    el.removeAttribute('onclick');
+                    el.removeAttribute('style');
+                });
+
+                const images = doc.querySelectorAll('img');
+                const imagePromises = Array.from(images).map(async (img) => {
+                    const src = img.getAttribute('src');
+                    if (src && !src.startsWith('data:')) {
+                        const base64 = await toBase64(src);
+                        if (base64) img.setAttribute('src', base64);
+                    }
                 });
                 
-                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                if (imagePromises.length > 0) await Promise.all(imagePromises);
+
+                const cleanHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${currentPageTitle}</title></head><body>${doc.body.innerHTML}</body></html>`;
+                const blob = htmlDocx.asBlob(cleanHtml);
                 const url = URL.createObjectURL(blob);
                 const downloadLink = document.createElement('a');
                 downloadLink.href = url;
-                
-                const sanitizedTitle = currentPageTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-                downloadLink.download = `broken_links_${sanitizedTitle}.csv`;
-                
+                downloadLink.download = `${currentPageTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.docx`;
                 document.body.appendChild(downloadLink);
                 downloadLink.click();
                 document.body.removeChild(downloadLink);
                 URL.revokeObjectURL(url);
                 
-            } catch (error) {
-                console.error(error);
-                alert("Error exporting CSV: " + error.message);
+                errorDiv.innerHTML = `<div class="text-green-800 bg-green-100 p-3 rounded border border-green-800 mt-3 font-bold">Word document generated!</div>`;
+            } catch (e) {
+                errorDiv.innerHTML = `<div class="text-red-700 bg-red-100 p-3 rounded border border-red-700 mt-3 font-bold">Error: ${e.message}</div>`;
+            } finally {
+                exportBtn.disabled = false;
+                exportBtn.innerHTML = originalBtnText;
             }
         }
-        
-        function openParentDetails(element) {
-          let parent = element.parentElement;
-          while (parent) {
-            if (parent.tagName === 'DETAILS') {
-              parent.setAttribute('open', '');
+
+        window.generateLinkManifest = function() {
+          const previewFrame = document.getElementById('previewFrame');
+          const errorDiv = document.getElementById('error');
+          if (!originalContent) return;
+          
+          try {
+            // Using a background parser for accuracy if needed, but iframe doc is fine for this
+            const iframeDoc = previewFrame.contentDocument || previewFrame.contentWindow.document;
+            const contentDiv = iframeDoc.body;
+            
+            const links = contentDiv.querySelectorAll('a[href]');
+            let csvContent = '#,Link Title,URL\n';
+            let count = 0;
+            
+            links.forEach((link, i) => {
+              const href = link.getAttribute('href');
+              if (href && !href.startsWith('#')) {
+                const title = (link.textContent.trim() || '(No title)').replace(/"/g, '""');
+                const cleanHref = href.replace(/"/g, '""');
+                csvContent += `${i+1},"${title}","${cleanHref}"\n`;
+                count++;
+              }
+            });
+            
+            if (count === 0) {
+               errorDiv.innerHTML = '<div class="text-red-700 bg-red-100 p-3 rounded border border-red-700 mt-3 font-bold">No valid links found</div>';
+               return;
             }
-            parent = parent.parentElement;
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const downloadLink = document.createElement('a');
+            downloadLink.href = url;
+            downloadLink.download = `link_manifest_${currentPageTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.csv`;
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+            URL.revokeObjectURL(url);
+            
+            errorDiv.innerHTML = `<div class="text-green-800 bg-green-100 p-3 rounded border border-green-800 mt-3 font-bold">Manifest downloaded (${count} links).</div>`;
+          } catch (error) {
+            errorDiv.innerHTML = '<div class="text-red-700 bg-red-100 p-3 rounded border border-red-700 mt-3 font-bold">Error: ' + error.message + '</div>';
           }
         }
 
+        // --- DEDICATED BROKEN LINK CHECKER ---
         window.toggleBrokenLinkCheck = function() {
             if (isCheckingLinks) {
                 stopCheckFlag = true;
-                if (currentAbortController) {
-                    currentAbortController.abort();
-                }
+                if (currentAbortController) currentAbortController.abort();
             } else {
                 window.checkBrokenLinks();
             }
         }
 
-        // --- NEW: BROKEN LINK CHECKER ---
         window.checkBrokenLinks = async function() {
-            const previewFrame = document.getElementById('previewFrame');
-            const errorDiv = document.getElementById('error');
-            const matchCounterDiv = document.getElementById('matchCounter');
-            const prevBtn = document.getElementById('prevBtn');
-            const nextBtn = document.getElementById('nextBtn');
-            const clearHighlightsBtn = document.getElementById('clearHighlightsBtn');
             const checkBtn = document.getElementById('checkBrokenBtn');
-
+            const auditArea = document.getElementById('auditResultsArea');
+            const auditStatus = document.getElementById('auditStatus');
+            const errorDiv = document.getElementById('error');
+            const previewFrame = document.getElementById('previewFrame');
+            
             if (!originalContent) return;
 
-            // Turn the button into a Stop button
+            // Setup UI
             isCheckingLinks = true;
             stopCheckFlag = false;
             currentAbortController = new AbortController();
@@ -613,141 +716,124 @@
             checkBtn.classList.remove('bg-orange-600', 'hover:bg-orange-700');
             checkBtn.classList.add('bg-red-600', 'hover:bg-red-700');
             
-            // Clear previous data
+            auditArea.classList.remove('hidden');
+            auditStatus.innerText = "Initializing scan, please wait...";
+            
+            // Hide conditional elements initially
+            document.getElementById('auditUnverifiedMsg').classList.add('hidden');
+            document.getElementById('auditNavButtons').classList.add('hidden');
+            document.getElementById('auditActionButtons').classList.add('hidden');
+
             lastBrokenLinksData = [];
+            allIssues = [];
+            currentIssueIndex = -1;
+            
+            // Clean old issues from UI
+            document.getElementById('prevIssueBtn').disabled = true;
+            document.getElementById('nextIssueBtn').disabled = true;
 
             try {
-                const iframeDoc = previewFrame.contentDocument || previewFrame.contentWindow.document;
-                const contentDiv = iframeDoc.querySelector('main') || iframeDoc.querySelector('[role="main"]') || iframeDoc.body;
+                // 1. Parse RAW content silently
+                const parser = new DOMParser();
+                // This simulates the "Non CSS/JS" view without showing it
+                const rawDoc = parser.parseFromString(originalContent, 'text/html');
                 
-                // Clear any previous highlights quickly
-                contentDiv.querySelectorAll('.highlight, .highlight-broken, .highlight-warning, .current-match').forEach(el => {
-                    el.classList.remove('highlight', 'highlight-broken', 'highlight-warning', 'current-match');
-                    el.removeAttribute('data-match-id');
-                });
-
-                allMatches = [];
-                currentMatchIndex = -1;
-                lastSearchTerm = 'BROKEN_LINKS_CHECK';
-
-                // Get all absolute HTTP/HTTPS links
-                const links = Array.from(contentDiv.querySelectorAll('a[href]')).filter(link => {
+                // 2. Identify all absolute links in the raw doc
+                const rawLinks = Array.from(rawDoc.querySelectorAll('a[href]')).filter(link => {
                     const href = link.getAttribute('href');
                     return href && href.startsWith('http');
                 });
 
-                if (links.length === 0) {
-                    errorDiv.innerHTML = '<div class="text-yellow-700 bg-yellow-100 p-3 rounded mt-3 font-bold">No external links found to check.</div>';
-                    return; 
+                if (rawLinks.length === 0) {
+                    auditStatus.innerText = "No external links found to check.";
+                    isCheckingLinks = false;
+                    checkBtn.innerText = "Check Broken Links";
+                    checkBtn.classList.add('bg-orange-600'); 
+                    checkBtn.classList.remove('bg-red-600');
+                    return;
                 }
-
-                errorDiv.innerHTML = `<div class="text-blue-800 bg-blue-100 p-3 rounded border border-blue-800 mt-3 font-bold">Checking 0 of ${links.length} links...</div>`;
 
                 let checkedCount = 0;
                 let brokenCount = 0;
                 let warningCount = 0;
                 
-                // Process in small batches
+                // 3. Check loop
                 const batchSize = 5;
-                for (let i = 0; i < links.length; i += batchSize) {
-                    if (stopCheckFlag) break; 
-                    
-                    const batch = links.slice(i, i + batchSize);
+                for (let i = 0; i < rawLinks.length; i += batchSize) {
+                    if (stopCheckFlag) break;
+                    const batch = rawLinks.slice(i, i + batchSize);
                     
                     const promises = batch.map(async (link) => {
-                        if (stopCheckFlag) return; 
-                        
+                        if (stopCheckFlag) return;
                         const href = link.getAttribute('href');
                         let statusText = '';
                         let isIssue = false;
+                        let issueType = '';
 
                         try {
-                            // Attempt HEAD first
                             let response = await fetch(href, { method: 'HEAD', cache: 'no-store', signal: currentAbortController.signal });
-                            
-                            // Fallback to GET if HEAD is blocked
                             if (response.status === 405 || response.status === 403) {
                                 response = await fetch(href, { method: 'GET', cache: 'no-store', signal: currentAbortController.signal });
                             }
-
                             if (!response.ok) {
-                                // Broken
-                                statusText = `Broken (${response.status} ${response.statusText})`;
-                                link.classList.add('highlight-broken');
-                                brokenCount++;
+                                statusText = `Broken (${response.status})`;
                                 isIssue = true;
+                                issueType = 'broken';
+                                brokenCount++;
                             }
                         } catch (err) {
-                            if (err.name === 'AbortError') return; 
-                            
-                            // Network/CORS error
-                            statusText = 'Unverified (Security issue, check manually)';
-                            link.classList.add('highlight-warning');
-                            warningCount++;
+                            if (err.name === 'AbortError') return;
+                            statusText = 'Unverified (Security/CORS)';
                             isIssue = true;
-                        } finally {
-                            checkedCount++;
-                            if (isIssue) {
-                                link.setAttribute('title', statusText);
-                                link.setAttribute('data-match-id', allMatches.length);
-                                allMatches.push(link);
-                                openParentDetails(link);
-                                
-                                // Add to export data
-                                lastBrokenLinksData.push({
-                                    title: link.textContent.trim(),
-                                    url: href,
-                                    status: statusText
-                                });
-                            }
+                            issueType = 'warning';
+                            warningCount++;
                         }
+
+                        if (isIssue) {
+                            // Record Data
+                            lastBrokenLinksData.push({
+                                title: link.textContent.trim(),
+                                url: href,
+                                status: statusText
+                            });
+                            
+                            // Highlight in VISIBLE FRAME (Standard or Raw)
+                            highlightVisibleLink(href, issueType, statusText);
+                        }
+                        checkedCount++;
                     });
 
                     await Promise.all(promises);
                     if (!stopCheckFlag) {
-                        errorDiv.innerHTML = `<div class="text-blue-800 bg-blue-100 p-3 rounded border border-blue-800 mt-3 font-bold">Checking ${checkedCount} of ${links.length} links...</div>`;
+                        auditStatus.innerText = `Checking ${checkedCount}/${rawLinks.length}... (${brokenCount} broken)`;
                     }
                 }
-
-                // --- GENERATE REPORT HTML ---
-                let reportHtml = '';
-                const exportBtnHtml = `
-                    <button onclick="exportBrokenLinks()" class="mt-2 bg-gray-700 hover:bg-gray-600 text-white font-bold py-1.5 px-4 rounded text-xs transition-colors duration-200">
-                        <i class="fa-solid fa-file-csv mr-1"></i> Export .csv
-                    </button>`;
-
+                
+                // 4. Final Status
                 if (stopCheckFlag) {
-                    reportHtml = `
-                        <div class="text-red-800 bg-red-100 p-3 rounded border border-red-800 mt-3 text-sm">
-                            <strong>Check stopped by user.</strong> Checked ${checkedCount} of ${links.length}.<br/>
-                            <span class="text-red-600 font-bold">${brokenCount} broken</span> | 
-                            <span class="text-orange-600 font-bold">${warningCount} unverified</span>
-                            ${(brokenCount + warningCount > 0) ? '<br/>' + exportBtnHtml : ''}
-                        </div>`;
-                } else if (allMatches.length > 0) {
-                    reportHtml = `
-                        <div class="text-orange-800 bg-orange-100 p-3 rounded border border-orange-800 mt-3 text-sm">
-                            <strong>Check Complete!</strong><br/>
-                            <span class="text-red-600 font-bold">${brokenCount} broken</span> (404) | 
-                            <span class="text-orange-600 font-bold">${warningCount} unverified</span> (Security issue, check manually)
-                            <br/>${exportBtnHtml}
-                        </div>`;
+                    auditStatus.innerHTML = `Stopped. Checked ${checkedCount}.<br><span class="text-red-400">${brokenCount} broken</span>, <span class="text-yellow-400">${warningCount} unverified</span>.`;
                 } else {
-                    reportHtml = '<div class="text-green-800 bg-green-100 p-3 rounded border border-green-800 mt-3 font-bold">All links returned a success status!</div>';
+                    if (brokenCount + warningCount === 0) {
+                        auditStatus.innerHTML = `<span class="text-green-400">Success! No broken links found.</span>`;
+                    } else {
+                        auditStatus.innerHTML = `Scan Complete.<br><span class="text-red-400">${brokenCount} broken</span>, <span class="text-yellow-400">${warningCount} unverified</span>.`;
+                    }
                 }
                 
-                errorDiv.innerHTML = reportHtml;
-
-                // Enable navigation if matches found
-                if (allMatches.length > 0) {
-                    matchCounterDiv.innerHTML = `<div class="text-blue-400 bg-blue-900/30 p-2.5 rounded text-center font-bold mt-2.5">Match 0 of ${allMatches.length}</div>`;
-                    prevBtn.disabled = false;
-                    nextBtn.disabled = false;
-                    clearHighlightsBtn.disabled = false;
+                // Update visibility based on results
+                if (allIssues.length > 0) {
+                    document.getElementById('prevIssueBtn').disabled = false;
+                    document.getElementById('nextIssueBtn').disabled = false;
+                    document.getElementById('auditNavButtons').classList.remove('hidden');
+                    document.getElementById('auditActionButtons').classList.remove('hidden');
+                }
+                
+                if (warningCount > 0) {
+                    document.getElementById('auditUnverifiedMsg').classList.remove('hidden');
                 }
 
-            } catch (error) {
-                errorDiv.innerHTML = '<div class="text-red-700 bg-red-100 p-3 rounded border border-red-700 mt-3 font-bold">Error checking links: ' + error.message + '</div>';
+            } catch (e) {
+                errorDiv.innerText = "Error: " + e.message;
             } finally {
                 isCheckingLinks = false;
                 checkBtn.innerText = "Check Broken Links";
@@ -756,153 +842,195 @@
             }
         }
         
+        // Find links in the visible iframe that match the checked URL and highlight them
+        function highlightVisibleLink(url, type, status) {
+            const iframeDoc = document.getElementById('previewFrame').contentDocument;
+            if(!iframeDoc) return;
+            
+            const visibleLinks = iframeDoc.querySelectorAll(`a[href="${url}"]`);
+            visibleLinks.forEach(link => {
+                const className = type === 'broken' ? 'highlight-broken' : 'highlight-warning';
+                link.classList.add(className);
+                link.title = status;
+                
+                // Add to navigation array if not already present (prevent duplicates if same link appears twice)
+                if (!allIssues.includes(link)) {
+                    allIssues.push(link);
+                    
+                    // Open details if hidden
+                    let parent = link.parentElement;
+                    while (parent) {
+                        if (parent.tagName === 'DETAILS') parent.setAttribute('open', '');
+                        parent = parent.parentElement;
+                    }
+                }
+            });
+        }
+        
+        window.navigateIssues = function(direction) {
+            if (allIssues.length === 0) return;
+            
+            // Remove current-match from old
+            if (currentIssueIndex >= 0 && currentIssueIndex < allIssues.length) {
+                allIssues[currentIssueIndex].classList.remove('current-match');
+            }
+            
+            if (direction === 'next') {
+                currentIssueIndex = (currentIssueIndex + 1) % allIssues.length;
+            } else {
+                currentIssueIndex = (currentIssueIndex - 1 + allIssues.length) % allIssues.length;
+            }
+            
+            const el = allIssues[currentIssueIndex];
+            el.classList.add('current-match');
+            el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+        }
+
+        window.exportBrokenLinks = function() {
+            if (!lastBrokenLinksData.length) { alert("No data"); return; }
+            let csv = '#,Link Title,URL,Status\n';
+            lastBrokenLinksData.forEach((l, i) => {
+                csv += `${i+1},"${l.title.replace(/"/g,'""')}","${l.url}","${l.status}"\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `broken_links_${Date.now()}.csv`;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        }
+        
+        window.clearAuditResults = function() {
+            document.getElementById('auditResultsArea').classList.add('hidden');
+            lastBrokenLinksData = [];
+            allIssues = [];
+            currentIssueIndex = -1;
+            
+            const iframeDoc = document.getElementById('previewFrame').contentDocument;
+            if (iframeDoc) {
+                iframeDoc.querySelectorAll('.highlight-broken, .highlight-warning').forEach(el => {
+                    el.classList.remove('highlight-broken', 'highlight-warning', 'current-match');
+                    el.removeAttribute('title');
+                });
+            }
+        }
+        
+        // Helper to re-apply audit highlights when view toggles
+        function reapplyAuditHighlights(doc) {
+            // Re-find elements based on the data we have
+            // Since elements are destroyed on view toggle, we need to re-scan content
+            // However, the cleanest way is to just keep the `lastBrokenLinksData` and re-highlight by URL
+            lastBrokenLinksData.forEach(item => {
+                const links = doc.querySelectorAll(`a[href="${item.url}"]`);
+                const className = item.status.includes('Broken') ? 'highlight-broken' : 'highlight-warning';
+                links.forEach(l => {
+                    l.classList.add(className);
+                    l.title = item.status;
+                    if(!allIssues.includes(l)) allIssues.push(l);
+                });
+            });
+        }
+
+        // --- SEARCH FUNCTIONS (UPDATED) ---
         window.highlightURLs = function() {
           const searchTerm = document.getElementById('searchInput').value.trim();
-          const searchMessageDiv = document.getElementById('searchMessage');
-          const matchCounterDiv = document.getElementById('matchCounter');
-          const previewFrame = document.getElementById('previewFrame');
-          const prevBtn = document.getElementById('prevBtn');
-          const nextBtn = document.getElementById('nextBtn');
-          const clearHighlightsBtn = document.getElementById('clearHighlightsBtn');
-          
           if (!originalContent || !searchTerm) return;
-
           lastSearchTerm = searchTerm;
           
-          try {
-            const iframeDoc = previewFrame.contentDocument || previewFrame.contentWindow.document;
-            const contentDiv = iframeDoc.querySelector('main') || iframeDoc.querySelector('[role="main"]') || iframeDoc.body;
-            
-            // Clear all types of highlights
-            contentDiv.querySelectorAll('.highlight, .highlight-broken, .highlight-warning, .current-match').forEach(el => {
-              el.classList.remove('highlight', 'highlight-broken', 'highlight-warning', 'current-match');
-            });
-            
-            allMatches = [];
-            let foundMatches = 0;
-            const searchLower = searchTerm.toLowerCase();
-            
-            const links = contentDiv.querySelectorAll('a[href]');
-            links.forEach(link => {
-              const href = link.getAttribute('href');
-              if (href && href.toLowerCase().includes(searchLower)) {
-                link.classList.add('highlight');
-                link.setAttribute('data-match-id', foundMatches);
-                allMatches.push(link);
-                openParentDetails(link);
-                foundMatches++;
-              }
-            });
-            
-            const urlPattern = /https?:\/\/[^\s<>"{}|\\^`\[\]]+/gi;
-            const walker = iframeDoc.createTreeWalker(
-              contentDiv,
-              NodeFilter.SHOW_TEXT,
-              {
-                acceptNode: function(node) {
-                  if (node.parentElement.tagName === 'SCRIPT' || 
-                      node.parentElement.tagName === 'STYLE') {
-                    return NodeFilter.FILTER_REJECT;
-                  }
-                  return NodeFilter.FILTER_ACCEPT;
-                }
-              },
-              false
-            );
-            
-            const textNodes = [];
-            let node;
-            while (node = walker.nextNode()) {
-              const text = node.textContent;
-              const urls = text.match(urlPattern);
-              if (urls && urls.some(u => u.toLowerCase().includes(searchLower))) {
-                  textNodes.push(node);
-              }
-            }
-            
-            textNodes.forEach(textNode => {
-              const text = textNode.textContent;
-              const urls = text.match(urlPattern);
-              if (urls) {
-                let newHTML = text;
-                let changed = false;
-                urls.forEach(url => {
-                  if (url.toLowerCase().includes(searchLower)) {
-                    const regex = new RegExp(url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
-                    newHTML = newHTML.replace(regex, `<span class="highlight" data-match-id="${foundMatches}">${url}</span>`);
-                    foundMatches++;
-                    changed = true;
-                  }
-                });
-                
-                if (changed) {
-                  const span = iframeDoc.createElement('span');
-                  span.innerHTML = newHTML;
-                  textNode.parentNode.replaceChild(span, textNode);
-                  const newHighlights = span.querySelectorAll('.highlight');
-                  newHighlights.forEach(highlight => {
-                    allMatches.push(highlight);
-                    openParentDetails(highlight);
-                  });
-                }
-              }
-            });
-            
-            if (foundMatches > 0) {
-              searchMessageDiv.innerHTML = `<div class="text-green-800 bg-green-100 p-3 rounded border border-green-800 mt-3 font-bold">Found ${foundMatches} matches!</div>`;
-              matchCounterDiv.innerHTML = `<div class="text-blue-400 bg-blue-900/30 p-2.5 rounded text-center font-bold mt-2.5">Match 0 of ${foundMatches}</div>`;
-              currentMatchIndex = -1;
+          // Clear existing before new search
+          window.clearHighlights();
+          
+          const iframeDoc = document.getElementById('previewFrame').contentDocument;
+          allMatches = [];
+          const searchLower = searchTerm.toLowerCase();
+          
+          // STRICT REQUIREMENT: Only search <a> tags, check href and content
+          iframeDoc.querySelectorAll('a').forEach(link => {
+             const href = link.getAttribute('href') || '';
+             const text = link.textContent || '';
+             
+             if (href.toLowerCase().includes(searchLower) || text.toLowerCase().includes(searchLower)) {
+                 link.classList.add('highlight');
+                 allMatches.push(link);
+                 
+                 // Open parent details if hidden
+                 let p = link.parentElement;
+                 while(p) { 
+                     if(p.tagName === 'DETAILS') p.setAttribute('open',''); 
+                     p = p.parentElement; 
+                 }
+             }
+          });
+
+          const searchMsg = document.getElementById('searchMessage');
+          const prevBtn = document.getElementById('prevBtn');
+          const nextBtn = document.getElementById('nextBtn');
+          const clearBtn = document.getElementById('clearHighlightsBtn');
+
+          if (allMatches.length > 0) {
+              searchMsg.innerHTML = `<div class="text-green-800 bg-green-100 p-3 rounded border border-green-800 mt-3 font-bold">Found ${allMatches.length} matches</div>`;
               prevBtn.disabled = false;
               nextBtn.disabled = false;
-              clearHighlightsBtn.disabled = false;
-            } else {
-              searchMessageDiv.innerHTML = '<div class="text-red-700 bg-red-100 p-3 rounded border border-red-700 mt-3 font-bold">No matching URLs found</div>';
-              matchCounterDiv.innerHTML = '';
+              clearBtn.disabled = false;
+              
+              // Select first match immediately
+              window.navigateMatches('next');
+          } else {
+              searchMsg.innerHTML = '<div class="text-red-700 bg-red-100 p-3 rounded border border-red-700 mt-3 font-bold">No matches found</div>';
               prevBtn.disabled = true;
               nextBtn.disabled = true;
-              clearHighlightsBtn.disabled = true;
-            }
-          } catch (error) {
-            searchMessageDiv.innerHTML = '<div class="text-red-700 bg-red-100 p-3 rounded border border-red-700 mt-3 font-bold">Error highlighting: ' + error.message + '</div>';
+              clearBtn.disabled = false; 
           }
         }
         
         window.navigateMatches = function(direction) {
-          if (allMatches.length === 0) return;
-          const matchCounterDiv = document.getElementById('matchCounter');
-          if (currentMatchIndex >= 0 && currentMatchIndex < allMatches.length) {
-            allMatches[currentMatchIndex].classList.remove('current-match');
-          }
-          if (direction === 'next') {
-            currentMatchIndex = (currentMatchIndex + 1) % allMatches.length;
-          } else {
-            currentMatchIndex = (currentMatchIndex - 1 + allMatches.length) % allMatches.length;
-          }
-          const currentMatch = allMatches[currentMatchIndex];
-          currentMatch.classList.add('current-match');
-          currentMatch.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
-          matchCounterDiv.innerHTML = `<div class="text-blue-400 bg-blue-900/30 p-2.5 rounded text-center font-bold mt-2.5">Match ${currentMatchIndex + 1} of ${allMatches.length}</div>`;
+            if (!allMatches.length) return;
+            
+            // Remove styling from current match if valid
+            if (currentMatchIndex > -1 && allMatches[currentMatchIndex]) {
+                allMatches[currentMatchIndex].classList.remove('current-match');
+            }
+            
+            if (direction === 'next') {
+                currentMatchIndex++;
+                if (currentMatchIndex >= allMatches.length) {
+                    currentMatchIndex = 0; // Wrap to start
+                }
+            } else {
+                // Prev
+                currentMatchIndex--;
+                if (currentMatchIndex < 0) {
+                    currentMatchIndex = allMatches.length - 1; // Wrap to end
+                }
+            }
+            
+            const el = allMatches[currentMatchIndex];
+            if (el) {
+                el.classList.add('current-match');
+                el.scrollIntoView({behavior: 'smooth', block: 'center', inline: 'center'});
+                document.getElementById('matchCounter').innerText = `Match ${currentMatchIndex+1} of ${allMatches.length}`;
+            }
         }
         
         window.clearHighlights = function() {
-          const previewFrame = document.getElementById('previewFrame');
-          if (originalContent) {
-            const fullHtml = generateFullHtml(originalContent, currentPageTitle);
-            const iframeDoc = previewFrame.contentDocument || previewFrame.contentWindow.document;
-            iframeDoc.open();
-            iframeDoc.write(fullHtml);
-            iframeDoc.close();
-            document.getElementById('error').innerHTML = '';
-            document.getElementById('searchMessage').innerHTML = '';
-            document.getElementById('matchCounter').innerHTML = '';
-            allMatches = [];
-            currentMatchIndex = -1;
-            lastSearchTerm = '';
-            document.getElementById('prevBtn').disabled = true;
-            document.getElementById('nextBtn').disabled = true;
-            document.getElementById('clearHighlightsBtn').disabled = true;
-          }
+             const iframeDoc = document.getElementById('previewFrame').contentDocument;
+             // Just remove classes, no unwrapping needed for <a> tags
+             if(iframeDoc) {
+                 iframeDoc.querySelectorAll('.highlight').forEach(el => {
+                     el.classList.remove('highlight', 'current-match');
+                 });
+             }
+             allMatches = [];
+             currentMatchIndex = -1;
+             document.getElementById('searchMessage').innerHTML = '';
+             document.getElementById('matchCounter').innerText = '';
+             document.getElementById('prevBtn').disabled = true;
+             document.getElementById('nextBtn').disabled = true;
+             document.getElementById('clearHighlightsBtn').disabled = true;
         }
+
+        window.showPlaceholder();
+
     })();
   </script>
 </body>
