@@ -699,148 +699,237 @@
         }
 
         window.checkBrokenLinks = async function() {
-            const checkBtn = document.getElementById('checkBrokenBtn');
-            const auditArea = document.getElementById('auditResultsArea');
-            const auditStatus = document.getElementById('auditStatus');
-            const errorDiv = document.getElementById('error');
-            const previewFrame = document.getElementById('previewFrame');
-            
-            if (!originalContent) return;
+    const checkBtn = document.getElementById('checkBrokenBtn');
+    const auditArea = document.getElementById('auditResultsArea');
+    const auditStatus = document.getElementById('auditStatus');
+    const errorDiv = document.getElementById('error');
+    
+    if (!originalContent) return;
 
-            // Setup UI
-            isCheckingLinks = true;
-            stopCheckFlag = false;
-            currentAbortController = new AbortController();
-            
-            checkBtn.innerText = "STOP CHECK";
-            checkBtn.classList.remove('bg-orange-600', 'hover:bg-orange-700');
-            checkBtn.classList.add('bg-red-600', 'hover:bg-red-700');
-            
-            auditArea.classList.remove('hidden');
-            auditStatus.innerText = "Initializing scan, please wait...";
-            
-            // Hide conditional elements initially
-            document.getElementById('auditUnverifiedMsg').classList.add('hidden');
-            document.getElementById('auditNavButtons').classList.add('hidden');
-            document.getElementById('auditActionButtons').classList.add('hidden');
+    isCheckingLinks = true;
+    stopCheckFlag = false;
+    currentAbortController = new AbortController();
+    
+    checkBtn.innerText = "STOP CHECK";
+    checkBtn.classList.remove('bg-orange-600', 'hover:bg-orange-700');
+    checkBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+    
+    auditArea.classList.remove('hidden');
+    auditStatus.innerText = "Initializing scan, please wait...";
+    
+    document.getElementById('auditUnverifiedMsg').classList.add('hidden');
+    document.getElementById('auditNavButtons').classList.add('hidden');
+    document.getElementById('auditActionButtons').classList.add('hidden');
 
-            lastBrokenLinksData = [];
-            allIssues = [];
-            currentIssueIndex = -1;
-            
-            // Clean old issues from UI
-            document.getElementById('prevIssueBtn').disabled = true;
-            document.getElementById('nextIssueBtn').disabled = true;
+    lastBrokenLinksData = [];
+    allIssues = [];
+    currentIssueIndex = -1;
+    
+    document.getElementById('prevIssueBtn').disabled = true;
+    document.getElementById('nextIssueBtn').disabled = true;
 
+    async function checkLink(url) {
+        try {
+            const urlObj = new URL(url);
+            const hostname = urlObj.hostname.toLowerCase();
+            
+            // Only check www.canada.ca links - everything else is unverified
+            if (hostname !== 'www.canada.ca') {
+                return { broken: false, unverified: true, status: 'Unverified (subdomain)' };
+            }
+            
+            // For www.canada.ca, try direct fetch first
             try {
-                // 1. Parse RAW content silently
-                const parser = new DOMParser();
-                // This simulates the "Non CSS/JS" view without showing it
-                const rawDoc = parser.parseFromString(originalContent, 'text/html');
-                
-                // 2. Identify all absolute links in the raw doc
-                const rawLinks = Array.from(rawDoc.querySelectorAll('a[href]')).filter(link => {
-                    const href = link.getAttribute('href');
-                    return href && href.startsWith('http');
+                const response = await fetch(url, {
+                    method: 'GET',
+                    cache: 'no-store',
+                    signal: currentAbortController.signal,
+                    redirect: 'follow'
                 });
-
-                if (rawLinks.length === 0) {
-                    auditStatus.innerText = "No external links found to check.";
-                    isCheckingLinks = false;
-                    checkBtn.innerText = "Check Broken Links";
-                    checkBtn.classList.add('bg-orange-600'); 
-                    checkBtn.classList.remove('bg-red-600');
-                    return;
-                }
-
-                let checkedCount = 0;
-                let brokenCount = 0;
-                let warningCount = 0;
                 
-                // 3. Check loop
-                const batchSize = 5;
-                for (let i = 0; i < rawLinks.length; i += batchSize) {
-                    if (stopCheckFlag) break;
-                    const batch = rawLinks.slice(i, i + batchSize);
+                // Check the status code directly
+                if (response.status === 404) {
+                    return { broken: true, status: 'Broken (404)' };
+                }
+                if (response.status === 410) {
+                    return { broken: true, status: 'Broken (410 Gone)' };
+                }
+                if (response.status >= 500 && response.status < 600) {
+                    return { broken: true, status: `Broken (${response.status})` };
+                }
+                if (response.status >= 200 && response.status < 400) {
+                    // Also check the content for 404 indicators
+                    try {
+                        const text = await response.text();
+                        const lowerText = text.toLowerCase();
+                        
+                        // Check for 404 indicators in the page content
+                        if (lowerText.includes('<title>404') || 
+                            lowerText.includes('404 - page not found') ||
+                            lowerText.includes('404 not found') ||
+                            lowerText.includes('page cannot be found') ||
+                            lowerText.includes('we could not find the page')) {
+                            return { broken: true, status: 'Broken (404 page content)' };
+                        }
+                    } catch (e) {
+                        // If we can't read the text, just go with the status code
+                    }
                     
-                    const promises = batch.map(async (link) => {
-                        if (stopCheckFlag) return;
-                        const href = link.getAttribute('href');
-                        let statusText = '';
-                        let isIssue = false;
-                        let issueType = '';
-
-                        try {
-                            let response = await fetch(href, { method: 'HEAD', cache: 'no-store', signal: currentAbortController.signal });
-                            if (response.status === 405 || response.status === 403) {
-                                response = await fetch(href, { method: 'GET', cache: 'no-store', signal: currentAbortController.signal });
-                            }
-                            if (!response.ok) {
-                                statusText = `Broken (${response.status})`;
-                                isIssue = true;
-                                issueType = 'broken';
-                                brokenCount++;
-                            }
-                        } catch (err) {
-                            if (err.name === 'AbortError') return;
-                            statusText = 'Unverified (Security/CORS)';
-                            isIssue = true;
-                            issueType = 'warning';
-                            warningCount++;
-                        }
-
-                        if (isIssue) {
-                            // Record Data
-                            lastBrokenLinksData.push({
-                                title: link.textContent.trim(),
-                                url: href,
-                                status: statusText
-                            });
-                            
-                            // Highlight in VISIBLE FRAME (Standard or Raw)
-                            highlightVisibleLink(href, issueType, statusText);
-                        }
-                        checkedCount++;
+                    return { broken: false, status: 'OK' };
+                }
+                
+                // Other status codes, mark as unverified
+                return { broken: false, unverified: true, status: `Unverified (Status ${response.status})` };
+                
+            } catch (directError) {
+                if (directError.name === 'AbortError') throw directError;
+                
+                // Direct fetch failed (CORS), try proxy
+                try {
+                    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+                    const proxyResponse = await fetch(proxyUrl, {
+                        signal: currentAbortController.signal,
+                        cache: 'no-store'
                     });
-
-                    await Promise.all(promises);
-                    if (!stopCheckFlag) {
-                        auditStatus.innerText = `Checking ${checkedCount}/${rawLinks.length}... (${brokenCount} broken)`;
+                    
+                    if (proxyResponse.status === 404 || proxyResponse.status === 410) {
+                        return { broken: true, status: `Broken (${proxyResponse.status})` };
                     }
-                }
-                
-                // 4. Final Status
-                if (stopCheckFlag) {
-                    auditStatus.innerHTML = `Stopped. Checked ${checkedCount}.<br><span class="text-red-400">${brokenCount} broken</span>, <span class="text-yellow-400">${warningCount} unverified</span>.`;
-                } else {
-                    if (brokenCount + warningCount === 0) {
-                        auditStatus.innerHTML = `<span class="text-green-400">Success! No broken links found.</span>`;
-                    } else {
-                        auditStatus.innerHTML = `Scan Complete.<br><span class="text-red-400">${brokenCount} broken</span>, <span class="text-yellow-400">${warningCount} unverified</span>.`;
+                    if (proxyResponse.status >= 500 && proxyResponse.status < 600) {
+                        return { broken: true, status: `Broken (${proxyResponse.status})` };
                     }
+                    if (proxyResponse.ok) {
+                        // Check the actual content returned by the proxy for 404 indicators
+                        try {
+                            const text = await proxyResponse.text();
+                            const lowerText = text.toLowerCase();
+                            
+                            // Check for 404 indicators in the page content
+                            if (lowerText.includes('<title>404') || 
+                                lowerText.includes('404 - page not found') ||
+                                lowerText.includes('404 not found') ||
+                                lowerText.includes('page cannot be found') ||
+                                lowerText.includes('we could not find the page')) {
+                                return { broken: true, status: 'Broken (404 page content)' };
+                            }
+                        } catch (e) {
+                            // If we can't read the text, just go with the status
+                        }
+                        
+                        return { broken: false, status: 'OK' };
+                    }
+                    
+                    // Proxy returned non-OK status
+                    return { broken: false, unverified: true, status: `Unverified (Proxy ${proxyResponse.status})` };
+                    
+                } catch (proxyError) {
+                    if (proxyError.name === 'AbortError') throw proxyError;
+                    // Both methods failed - mark as unverified
+                    return { broken: false, unverified: true, status: 'Unverified (Connection error)' };
                 }
-                
-                // Update visibility based on results
-                if (allIssues.length > 0) {
-                    document.getElementById('prevIssueBtn').disabled = false;
-                    document.getElementById('nextIssueBtn').disabled = false;
-                    document.getElementById('auditNavButtons').classList.remove('hidden');
-                    document.getElementById('auditActionButtons').classList.remove('hidden');
-                }
-                
-                if (warningCount > 0) {
-                    document.getElementById('auditUnverifiedMsg').classList.remove('hidden');
-                }
+            }
+            
+        } catch (err) {
+            if (err.name === 'AbortError') throw err;
+            return { broken: false, unverified: true, status: 'Unverified (Parse error)' };
+        }
+    }
 
-            } catch (e) {
-                errorDiv.innerText = "Error: " + e.message;
-            } finally {
-                isCheckingLinks = false;
-                checkBtn.innerText = "Check Broken Links";
-                checkBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
-                checkBtn.classList.add('bg-orange-600', 'hover:bg-orange-700');
+    try {
+        const parser = new DOMParser();
+        const rawDoc = parser.parseFromString(originalContent, 'text/html');
+        
+        const rawLinks = Array.from(rawDoc.querySelectorAll('a[href]')).filter(link => {
+            const href = link.getAttribute('href');
+            return href && href.startsWith('http');
+        });
+
+        if (rawLinks.length === 0) {
+            auditStatus.innerText = "No external links found to check.";
+            isCheckingLinks = false;
+            checkBtn.innerText = "Check Broken Links";
+            checkBtn.classList.add('bg-orange-600'); 
+            checkBtn.classList.remove('bg-red-600');
+            return;
+        }
+
+        let checkedCount = 0;
+        let brokenCount = 0;
+        let warningCount = 0;
+        
+        for (let i = 0; i < rawLinks.length; i++) {
+            if (stopCheckFlag) break;
+            
+            const link = rawLinks[i];
+            const href = link.getAttribute('href');
+            
+            try {
+                const result = await checkLink(href);
+                
+                if (result.broken) {
+                    lastBrokenLinksData.push({
+                        title: link.textContent.trim() || '(No text)',
+                        url: href,
+                        status: result.status
+                    });
+                    highlightVisibleLink(href, 'broken', result.status);
+                    brokenCount++;
+                } else if (result.unverified) {
+                    lastBrokenLinksData.push({
+                        title: link.textContent.trim() || '(No text)',
+                        url: href,
+                        status: result.status
+                    });
+                    highlightVisibleLink(href, 'warning', result.status);
+                    warningCount++;
+                }
+                
+            } catch (err) {
+                if (err.name === 'AbortError') continue;
+            }
+            
+            checkedCount++;
+            if (!stopCheckFlag) {
+                auditStatus.innerText = `Checking ${checkedCount}/${rawLinks.length}... (${brokenCount} broken, ${warningCount} unverified)`;
+            }
+            
+            // Only delay for www.canada.ca checks
+            const urlObj = new URL(href);
+            if (urlObj.hostname.toLowerCase() === 'www.canada.ca') {
+                await new Promise(resolve => setTimeout(resolve, 300));
             }
         }
+        
+        if (stopCheckFlag) {
+            auditStatus.innerHTML = `Stopped. Checked ${checkedCount}.<br><span class="text-red-400">${brokenCount} broken</span>, <span class="text-yellow-400">${warningCount} unverified</span>.`;
+        } else {
+            if (brokenCount + warningCount === 0) {
+                auditStatus.innerHTML = `<span class="text-green-400">Success! No broken links found.</span>`;
+            } else {
+                auditStatus.innerHTML = `Scan Complete.<br><span class="text-red-400">${brokenCount} broken</span>, <span class="text-yellow-400">${warningCount} unverified</span>.`;
+            }
+        }
+        
+        if (allIssues.length > 0) {
+            document.getElementById('prevIssueBtn').disabled = false;
+            document.getElementById('nextIssueBtn').disabled = false;
+            document.getElementById('auditNavButtons').classList.remove('hidden');
+            document.getElementById('auditActionButtons').classList.remove('hidden');
+        }
+        
+        if (warningCount > 0) {
+            document.getElementById('auditUnverifiedMsg').classList.remove('hidden');
+        }
+
+    } catch (e) {
+        errorDiv.innerHTML = `<div class="text-red-700 bg-red-100 p-3 rounded border border-red-700 mt-3 font-bold">Error: ${e.message}</div>`;
+    } finally {
+        isCheckingLinks = false;
+        checkBtn.innerText = "Check Broken Links";
+        checkBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+        checkBtn.classList.add('bg-orange-600', 'hover:bg-orange-700');
+    }
+}
         
         // Find links in the visible iframe that match the checked URL and highlight them
         function highlightVisibleLink(url, type, status) {
