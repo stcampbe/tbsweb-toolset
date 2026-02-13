@@ -92,11 +92,11 @@
             <div class="flex gap-2 mb-3">
                 <button type="button" id="generateManifestBtn" onclick="generateLinkManifest()" disabled 
                         class="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:text-gray-400 disabled:cursor-not-allowed text-white font-bold py-2.5 px-2 rounded text-sm transition-colors duration-200 truncate">
-                    <i class="fa-solid fa-file-csv"></i> Link Manifest
+                    <i class="fa-solid fa-download"></i> Link Manifest (.csv <i class="fa-solid fa-file-csv"></i>)
                 </button>
                 <button type="button" id="exportWordBtn" onclick="exportToWord()" disabled 
                         class="flex-1 bg-blue-800 hover:bg-blue-900 disabled:bg-gray-600 disabled:text-gray-400 disabled:cursor-not-allowed text-white font-bold py-2.5 px-2 rounded text-sm transition-colors duration-200 truncate">
-                    <i class="fa-solid fa-file-word"></i> Export .docx
+                    <i class="fa-solid fa-download"></i> Word Version (.docx <i class="fa-solid fa-file-word"></i>)
                 </button>
             </div>
 
@@ -120,7 +120,7 @@
                         <button onclick="navigateIssues('next')" id="nextIssueBtn" disabled class="flex-1 bg-gray-600 hover:bg-gray-500 disabled:opacity-50 text-white text-xs font-bold py-2 rounded">Next Issue →</button>
                     </div>
                     <div id="auditActionButtons" class="hidden flex gap-2 mt-1">
-                        <button onclick="exportBrokenLinks()" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white text-xs font-bold py-1.5 rounded"><i class="fa-solid fa-download"></i> Export CSV</button>
+                        <button onclick="exportBrokenLinks()" class="flex-1 bg-green-700 hover:bg-green-600 text-white text-xs font-bold py-1.5 rounded"><i class="fa-solid fa-download"></i> Error Manifest (.csv <i class="fa-solid fa-file-csv"></i>)</button>
                         <button onclick="clearAuditResults()" class="flex-1 bg-red-900 hover:bg-red-800 text-white text-xs font-bold py-1.5 rounded">Clear Results</button>
                     </div>
                 </div>
