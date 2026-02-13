@@ -383,6 +383,21 @@
                     .highlight-warning.current-match { 
                         background-color: #ff6600 !important; color: #fff !important; outline: 4px solid #cc0000; 
                     }
+					.highlight-redirect { 
+    background-color: #cce5ff; 
+    color: #004085; 
+    padding: 2px 4px; 
+    border-radius: 2px; 
+    font-weight: bold; 
+    outline: 3px solid #0066cc; 
+    scroll-margin-top: 100px;
+}
+
+.highlight-redirect.current-match { 
+    background-color: #0066cc !important; 
+    color: #fff !important; 
+    outline: 4px solid #004085; 
+}
                 </style>
             </head>
             <body>
@@ -469,6 +484,21 @@
                 outline: 3px dashed #ff9900;
                 scroll-margin-top: 100px;
                 }
+				.highlight-redirect { 
+    background-color: #cce5ff; 
+    color: #004085; 
+    padding: 2px 4px; 
+    border-radius: 2px; 
+    font-weight: bold; 
+    outline: 3px solid #0066cc; 
+    scroll-margin-top: 100px;
+}
+
+.highlight-redirect.current-match { 
+    background-color: #0066cc !important; 
+    color: #fff !important; 
+    outline: 4px solid #004085; 
+}
                 .current-match {
                 background-color: #ff6600 !important;
                 color: #ffffff !important;
@@ -699,10 +729,15 @@
         }
 
         window.checkBrokenLinks = async function() {
+		let checkedCount = 0;
+let brokenCount = 0;
+let redirectCount = 0;  // Add this line
+let warningCount = 0;
     const checkBtn = document.getElementById('checkBrokenBtn');
     const auditArea = document.getElementById('auditResultsArea');
     const auditStatus = document.getElementById('auditStatus');
     const errorDiv = document.getElementById('error');
+	
     
     if (!originalContent) return;
 
@@ -729,38 +764,92 @@
     document.getElementById('nextIssueBtn').disabled = true;
 
     async function checkLink(url) {
+    try {
+        const urlObj = new URL(url);
+        const hostname = urlObj.hostname.toLowerCase();
+        
+        // Only check www.canada.ca links - everything else is unverified
+        if (hostname !== 'www.canada.ca') {
+            return { broken: false, unverified: true, status: 'Unverified (subdomain)' };
+        }
+        
+        // For www.canada.ca, try direct fetch first
         try {
-            const urlObj = new URL(url);
-            const hostname = urlObj.hostname.toLowerCase();
+            const response = await fetch(url, {
+                method: 'GET',
+                cache: 'no-store',
+                signal: currentAbortController.signal,
+                redirect: 'follow' // Follow redirects
+            });
             
-            // Only check www.canada.ca links - everything else is unverified
-            if (hostname !== 'www.canada.ca') {
-                return { broken: false, unverified: true, status: 'Unverified (subdomain)' };
+            // Check if we were redirected by comparing URLs
+            const finalUrl = response.url;
+            const wasRedirected = finalUrl !== url;
+            
+            // Check the status code directly
+            if (response.status === 404) {
+                return { broken: true, status: 'Broken (404)' };
+            }
+            if (response.status === 410) {
+                return { broken: true, status: 'Broken (410 Gone)' };
+            }
+            if (response.status >= 500 && response.status < 600) {
+                return { broken: true, status: `Broken (${response.status})` };
+            }
+            if (response.status >= 200 && response.status < 400) {
+                // Check if redirected
+                if (wasRedirected) {
+                    return { 
+                        redirect: true, 
+                        status: 'Redirect',
+                        redirectUrl: finalUrl 
+                    };
+                }
+                
+                // Also check the content for 404 indicators
+                try {
+                    const text = await response.text();
+                    const lowerText = text.toLowerCase();
+                    
+                    // Check for 404 indicators in the page content
+                    if (lowerText.includes('<title>404') || 
+                        lowerText.includes('404 - page not found') ||
+                        lowerText.includes('404 not found') ||
+                        lowerText.includes('page cannot be found') ||
+                        lowerText.includes('we could not find the page')) {
+                        return { broken: true, status: 'Broken (404 page content)' };
+                    }
+                } catch (e) {
+                    // If we can't read the text, just go with the status code
+                }
+                
+                return { broken: false, status: 'OK' };
             }
             
-            // For www.canada.ca, try direct fetch first
+            // Other status codes, mark as unverified
+            return { broken: false, unverified: true, status: `Unverified (Status ${response.status})` };
+            
+        } catch (directError) {
+            if (directError.name === 'AbortError') throw directError;
+            
+            // Direct fetch failed (CORS), try proxy
             try {
-                const response = await fetch(url, {
-                    method: 'GET',
-                    cache: 'no-store',
+                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+                const proxyResponse = await fetch(proxyUrl, {
                     signal: currentAbortController.signal,
-                    redirect: 'follow'
+                    cache: 'no-store'
                 });
                 
-                // Check the status code directly
-                if (response.status === 404) {
-                    return { broken: true, status: 'Broken (404)' };
+                if (proxyResponse.status === 404 || proxyResponse.status === 410) {
+                    return { broken: true, status: `Broken (${proxyResponse.status})` };
                 }
-                if (response.status === 410) {
-                    return { broken: true, status: 'Broken (410 Gone)' };
+                if (proxyResponse.status >= 500 && proxyResponse.status < 600) {
+                    return { broken: true, status: `Broken (${proxyResponse.status})` };
                 }
-                if (response.status >= 500 && response.status < 600) {
-                    return { broken: true, status: `Broken (${response.status})` };
-                }
-                if (response.status >= 200 && response.status < 400) {
-                    // Also check the content for 404 indicators
+                if (proxyResponse.ok) {
+                    // Check the actual content returned by the proxy for 404 indicators
                     try {
-                        const text = await response.text();
+                        const text = await proxyResponse.text();
                         const lowerText = text.toLowerCase();
                         
                         // Check for 404 indicators in the page content
@@ -772,68 +861,27 @@
                             return { broken: true, status: 'Broken (404 page content)' };
                         }
                     } catch (e) {
-                        // If we can't read the text, just go with the status code
+                        // If we can't read the text, just go with the status
                     }
                     
                     return { broken: false, status: 'OK' };
                 }
                 
-                // Other status codes, mark as unverified
-                return { broken: false, unverified: true, status: `Unverified (Status ${response.status})` };
+                // Proxy returned non-OK status
+                return { broken: false, unverified: true, status: `Unverified (Proxy ${proxyResponse.status})` };
                 
-            } catch (directError) {
-                if (directError.name === 'AbortError') throw directError;
-                
-                // Direct fetch failed (CORS), try proxy
-                try {
-                    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-                    const proxyResponse = await fetch(proxyUrl, {
-                        signal: currentAbortController.signal,
-                        cache: 'no-store'
-                    });
-                    
-                    if (proxyResponse.status === 404 || proxyResponse.status === 410) {
-                        return { broken: true, status: `Broken (${proxyResponse.status})` };
-                    }
-                    if (proxyResponse.status >= 500 && proxyResponse.status < 600) {
-                        return { broken: true, status: `Broken (${proxyResponse.status})` };
-                    }
-                    if (proxyResponse.ok) {
-                        // Check the actual content returned by the proxy for 404 indicators
-                        try {
-                            const text = await proxyResponse.text();
-                            const lowerText = text.toLowerCase();
-                            
-                            // Check for 404 indicators in the page content
-                            if (lowerText.includes('<title>404') || 
-                                lowerText.includes('404 - page not found') ||
-                                lowerText.includes('404 not found') ||
-                                lowerText.includes('page cannot be found') ||
-                                lowerText.includes('we could not find the page')) {
-                                return { broken: true, status: 'Broken (404 page content)' };
-                            }
-                        } catch (e) {
-                            // If we can't read the text, just go with the status
-                        }
-                        
-                        return { broken: false, status: 'OK' };
-                    }
-                    
-                    // Proxy returned non-OK status
-                    return { broken: false, unverified: true, status: `Unverified (Proxy ${proxyResponse.status})` };
-                    
-                } catch (proxyError) {
-                    if (proxyError.name === 'AbortError') throw proxyError;
-                    // Both methods failed - mark as unverified
-                    return { broken: false, unverified: true, status: 'Unverified (Connection error)' };
-                }
+            } catch (proxyError) {
+                if (proxyError.name === 'AbortError') throw proxyError;
+                // Both methods failed - mark as unverified
+                return { broken: false, unverified: true, status: 'Unverified (Connection error)' };
             }
-            
-        } catch (err) {
-            if (err.name === 'AbortError') throw err;
-            return { broken: false, unverified: true, status: 'Unverified (Parse error)' };
         }
+        
+    } catch (err) {
+        if (err.name === 'AbortError') throw err;
+        return { broken: false, unverified: true, status: 'Unverified (Parse error)' };
     }
+}
 
     try {
         const parser = new DOMParser();
@@ -867,22 +915,30 @@
                 const result = await checkLink(href);
                 
                 if (result.broken) {
-                    lastBrokenLinksData.push({
-                        title: link.textContent.trim() || '(No text)',
-                        url: href,
-                        status: result.status
-                    });
-                    highlightVisibleLink(href, 'broken', result.status);
-                    brokenCount++;
-                } else if (result.unverified) {
-                    lastBrokenLinksData.push({
-                        title: link.textContent.trim() || '(No text)',
-                        url: href,
-                        status: result.status
-                    });
-                    highlightVisibleLink(href, 'warning', result.status);
-                    warningCount++;
-                }
+    lastBrokenLinksData.push({
+        title: link.textContent.trim() || '(No text)',
+        url: href,
+        status: result.status
+    });
+    highlightVisibleLink(href, 'broken', result.status);
+    brokenCount++;
+} else if (result.redirect) {
+    lastBrokenLinksData.push({
+        title: link.textContent.trim() || '(No text)',
+        url: href,
+        status: result.status + (result.redirectUrl ? ` → ${result.redirectUrl}` : '')
+    });
+    highlightVisibleLink(href, 'redirect', result.status);
+    redirectCount++;
+} else if (result.unverified) {
+    lastBrokenLinksData.push({
+        title: link.textContent.trim() || '(No text)',
+        url: href,
+        status: result.status
+    });
+    highlightVisibleLink(href, 'warning', result.status);
+    warningCount++;
+}
                 
             } catch (err) {
                 if (err.name === 'AbortError') continue;
@@ -890,7 +946,7 @@
             
             checkedCount++;
             if (!stopCheckFlag) {
-                auditStatus.innerText = `Checking ${checkedCount}/${rawLinks.length}... (${brokenCount} broken, ${warningCount} unverified)`;
+                auditStatus.innerText = `Checking ${checkedCount}/${rawLinks.length}... (${brokenCount} broken, ${redirectCount} redirects, ${warningCount} unverified)`;
             }
             
             // Only delay for www.canada.ca checks
@@ -901,14 +957,14 @@
         }
         
         if (stopCheckFlag) {
-            auditStatus.innerHTML = `Stopped. Checked ${checkedCount}.<br><span class="text-red-400">${brokenCount} broken</span>, <span class="text-yellow-400">${warningCount} unverified</span>.`;
-        } else {
-            if (brokenCount + warningCount === 0) {
-                auditStatus.innerHTML = `<span class="text-green-400">Success! No broken links found.</span>`;
-            } else {
-                auditStatus.innerHTML = `Scan Complete.<br><span class="text-red-400">${brokenCount} broken</span>, <span class="text-yellow-400">${warningCount} unverified</span>.`;
-            }
-        }
+    auditStatus.innerHTML = `Stopped. Checked ${checkedCount}.<br><span class="text-red-400">${brokenCount} broken</span>, <span class="text-blue-400">${redirectCount} redirects</span>, <span class="text-yellow-400">${warningCount} unverified</span>.`;
+} else {
+    if (brokenCount + redirectCount + warningCount === 0) {
+        auditStatus.innerHTML = `<span class="text-green-400">Success! No broken links found.</span>`;
+    } else {
+        auditStatus.innerHTML = `Scan Complete.<br><span class="text-red-400">${brokenCount} broken</span>, <span class="text-blue-400">${redirectCount} redirects</span>, <span class="text-yellow-400">${warningCount} unverified</span>.`;
+    }
+}
         
         if (allIssues.length > 0) {
             document.getElementById('prevIssueBtn').disabled = false;
@@ -933,28 +989,36 @@
         
         // Find links in the visible iframe that match the checked URL and highlight them
         function highlightVisibleLink(url, type, status) {
-            const iframeDoc = document.getElementById('previewFrame').contentDocument;
-            if(!iframeDoc) return;
-            
-            const visibleLinks = iframeDoc.querySelectorAll(`a[href="${url}"]`);
-            visibleLinks.forEach(link => {
-                const className = type === 'broken' ? 'highlight-broken' : 'highlight-warning';
-                link.classList.add(className);
-                link.title = status;
-                
-                // Add to navigation array if not already present (prevent duplicates if same link appears twice)
-                if (!allIssues.includes(link)) {
-                    allIssues.push(link);
-                    
-                    // Open details if hidden
-                    let parent = link.parentElement;
-                    while (parent) {
-                        if (parent.tagName === 'DETAILS') parent.setAttribute('open', '');
-                        parent = parent.parentElement;
-                    }
-                }
-            });
+    const iframeDoc = document.getElementById('previewFrame').contentDocument;
+    if(!iframeDoc) return;
+    
+    const visibleLinks = iframeDoc.querySelectorAll(`a[href="${url}"]`);
+    visibleLinks.forEach(link => {
+        let className;
+        if (type === 'broken') {
+            className = 'highlight-broken';
+        } else if (type === 'redirect') {
+            className = 'highlight-redirect';
+        } else {
+            className = 'highlight-warning';
         }
+        
+        link.classList.add(className);
+        link.title = status;
+        
+        // Add to navigation array if not already present (prevent duplicates if same link appears twice)
+        if (!allIssues.includes(link)) {
+            allIssues.push(link);
+            
+            // Open details if hidden
+            let parent = link.parentElement;
+            while (parent) {
+                if (parent.tagName === 'DETAILS') parent.setAttribute('open', '');
+                parent = parent.parentElement;
+            }
+        }
+    });
+}
         
         window.navigateIssues = function(direction) {
             if (allIssues.length === 0) return;
@@ -990,35 +1054,40 @@
         }
         
         window.clearAuditResults = function() {
-            document.getElementById('auditResultsArea').classList.add('hidden');
-            lastBrokenLinksData = [];
-            allIssues = [];
-            currentIssueIndex = -1;
-            
-            const iframeDoc = document.getElementById('previewFrame').contentDocument;
-            if (iframeDoc) {
-                iframeDoc.querySelectorAll('.highlight-broken, .highlight-warning').forEach(el => {
-                    el.classList.remove('highlight-broken', 'highlight-warning', 'current-match');
-                    el.removeAttribute('title');
-                });
-            }
-        }
+    document.getElementById('auditResultsArea').classList.add('hidden');
+    lastBrokenLinksData = [];
+    allIssues = [];
+    currentIssueIndex = -1;
+    
+    const iframeDoc = document.getElementById('previewFrame').contentDocument;
+    if (iframeDoc) {
+        iframeDoc.querySelectorAll('.highlight-broken, .highlight-warning, .highlight-redirect').forEach(el => {
+            el.classList.remove('highlight-broken', 'highlight-warning', 'highlight-redirect', 'current-match');
+            el.removeAttribute('title');
+        });
+    }
+}
         
         // Helper to re-apply audit highlights when view toggles
         function reapplyAuditHighlights(doc) {
-            // Re-find elements based on the data we have
-            // Since elements are destroyed on view toggle, we need to re-scan content
-            // However, the cleanest way is to just keep the `lastBrokenLinksData` and re-highlight by URL
-            lastBrokenLinksData.forEach(item => {
-                const links = doc.querySelectorAll(`a[href="${item.url}"]`);
-                const className = item.status.includes('Broken') ? 'highlight-broken' : 'highlight-warning';
-                links.forEach(l => {
-                    l.classList.add(className);
-                    l.title = item.status;
-                    if(!allIssues.includes(l)) allIssues.push(l);
-                });
-            });
+    lastBrokenLinksData.forEach(item => {
+        const links = doc.querySelectorAll(`a[href="${item.url}"]`);
+        let className;
+        if (item.status.includes('Broken')) {
+            className = 'highlight-broken';
+        } else if (item.status.includes('Redirect')) {
+            className = 'highlight-redirect';
+        } else {
+            className = 'highlight-warning';
         }
+        
+        links.forEach(l => {
+            l.classList.add(className);
+            l.title = item.status;
+            if(!allIssues.includes(l)) allIssues.push(l);
+        });
+    });
+}
 
         // --- SEARCH FUNCTIONS (UPDATED) ---
         window.highlightURLs = function() {
