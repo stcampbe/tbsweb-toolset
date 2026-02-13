@@ -744,6 +744,8 @@ let warningCount = 0;
     isCheckingLinks = true;
     stopCheckFlag = false;
     currentAbortController = new AbortController();
+	document.getElementById('searchInput').value = '';
+    window.clearHighlights();
     
     checkBtn.innerText = "STOP CHECK";
     checkBtn.classList.remove('bg-orange-600', 'hover:bg-orange-700');
@@ -770,7 +772,7 @@ let warningCount = 0;
         
         // Only check www.canada.ca links - everything else is unverified
         if (hostname !== 'www.canada.ca') {
-            return { broken: false, unverified: true, status: 'Unverified (subdomain)' };
+            return { broken: false, unverified: true, status: 'Unverified (access limitation)' };
         }
         
         // For www.canada.ca, try direct fetch first
@@ -1066,6 +1068,10 @@ let warningCount = 0;
             el.removeAttribute('title');
         });
     }
+    
+    // NEW: Also disable navigation buttons
+    document.getElementById('prevIssueBtn').disabled = true;
+    document.getElementById('nextIssueBtn').disabled = true;
 }
         
         // Helper to re-apply audit highlights when view toggles
@@ -1095,8 +1101,11 @@ let warningCount = 0;
           if (!originalContent || !searchTerm) return;
           lastSearchTerm = searchTerm;
           
-          // Clear existing before new search
-          window.clearHighlights();
+            // NEW: Clear broken link checker results when starting new search
+  window.clearAuditResults();
+  
+  // Clear existing before new search
+  window.clearHighlights();
           
           const iframeDoc = document.getElementById('previewFrame').contentDocument;
           allMatches = [];
