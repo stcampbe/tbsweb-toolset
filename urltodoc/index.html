@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocBuddy</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/html-docx-js@0.3.1/dist/html-docx.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent; 
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #ccc; 
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #aaa; 
+    }
+  </style>
+</head>
+<body class="h-screen w-screen overflow-hidden bg-gray-100 text-black font-sans">
+  
+  <div id="app-root" class="flex flex-col h-screen w-full">
+    <!-- Top Control Bar -->
+    <div class="bg-slate-900 p-4 shadow-lg">
+      <div class="flex items-center gap-4">
+        <h1 class="text-2xl mt-0 mb-4 font-bold text-white">
+          <i class="fa-solid fa-file-word"></i> DocBuddy
+        </h1>
+        
+        <div class="flex-1 flex gap-3 items-center">
+          <div class="flex-1 relative">
+            <input type="text" id="urlInput" placeholder="Enter Canada.ca URL (English or French)" 
+              class="w-full p-2.5 pr-10 border-2 border-zinc-600 rounded text-sm bg-slate-900 text-white outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-500" autocomplete="off">
+            <button type="button" onclick="clearInput()" title="Clear" 
+              class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+              </svg>
+            </button>
+          </div>
+          
+          <button type="button" onclick="fetchBothPages()" 
+            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded text-sm transition-colors whitespace-nowrap">
+            Load Content
+          </button>
+        </div>
+      </div>
+      
+      <div id="error" class="mt-2"></div>
+    </div>
+    
+    <!-- Split Preview -->
+    <div class="flex-1 flex gap-0 overflow-hidden">
+      <div class="flex-1 flex flex-col bg-white border-r-2 border-gray-300">
+        <div class="bg-blue-100 p-3 border-b-2 border-blue-300">
+          <div class="font-bold text-blue-900 text-center mb-2">English</div>
+          <button type="button" id="exportEnBtn" onclick="exportWord('en')" disabled 
+            class="w-full bg-blue-800 hover:bg-blue-900 disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded text-sm transition-colors">
+            <i class="fa-solid fa-download"></i> Export ENG Document (.docx <i class="fa-solid fa-file-word"></i>)
+          </button>
+        </div>
+        <iframe id="previewFrameEn" class="flex-1 border-none w-full bg-white"></iframe>
+      </div>
+      
+      <div class="flex-1 flex flex-col bg-white">
+        <div class="bg-red-100 p-3 border-b-2 border-red-300">
+          <div class="font-bold text-red-900 text-center mb-2">Français</div>
+          <button type="button" id="exportFrBtn" onclick="exportWord('fr')" disabled 
+            class="w-full bg-blue-800 hover:bg-blue-900 disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded text-sm transition-colors">
+            <i class="fa-solid fa-download"></i> Export FRA Document (.docx <i class="fa-solid fa-file-word"></i>)
+          </button>
+        </div>
+        <iframe id="previewFrameFr" class="flex-1 border-none w-full bg-white"></iframe>
+      </div>
+    </div>
+  </div>
+
+<script>
+    let contentEn = '';
+    let contentFr = '';
+    let titleEn = 'Canada.ca Page';
+    let titleFr = 'Page Canada.ca';
+    let urlEn = '';
+    let urlFr = '';
+    
+    window.clearInput = function() {
+      document.getElementById('urlInput').value = '';
+      contentEn = '';
+      contentFr = '';
+      titleEn = 'Canada.ca Page';
+      titleFr = 'Page Canada.ca';
+      urlEn = '';
+      urlFr = '';
+      showPlaceholder('en');
+      showPlaceholder('fr');
+      updateExportButtons();
+    }
+    
+    function updateExportButtons() {
+      document.getElementById('exportEnBtn').disabled = !contentEn;
+      document.getElementById('exportFrBtn').disabled = !contentFr;
+    }
+    
+    function showPlaceholder(lang) {
+      const frameId = lang === 'en' ? 'previewFrameEn' : 'previewFrameFr';
+      const frame = document.getElementById(frameId);
+      const iframeDoc = frame.contentDocument || frame.contentWindow.document;
+      const langText = lang === 'en' ? 'English' : 'Français';
+      
+      iframeDoc.open();
+      iframeDoc.write(`
+        <!DOCTYPE html>
+        <html lang="${lang}">
+        <head>
+          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        </head>
+        <body style="display:flex; justify-content:center; align-items:center; height:100vh; margin:0; background-color:#f9fafb; font-family:'Segoe UI', sans-serif; color:#9ca3af;">
+          <div style="text-align:center;">
+            <div style="margin-bottom:1rem;">
+              <i class="fa-solid fa-link-slash" style="font-size:60px; color:#d1d5db;"></i>
+            </div>
+            <h2 style="margin:0 0 0.5rem 0; font-size:1.25rem; font-weight:600; color:#4b5563;">Ready to Load</h2>
+            <p style="margin:0; font-size:0.875rem;">Enter a Canada.ca URL above</p>
+          </div>
+        </body>
+        </html>
+      `);
+      iframeDoc.close();
+    }
+    
+    function findLanguageToggleLink(doc) {
+      // Look for the language toggle link in the header
+      const langLinks = doc.querySelectorAll('a[lang], a[href*="/fr/"], a[href*="/en/"]');
+      
+      for (let link of langLinks) {
+        const lang = link.getAttribute('lang');
+        const href = link.getAttribute('href');
+        
+        // Check if it's the language toggle (usually has lang attribute and text like "Français" or "English")
+        if (lang && href) {
+          const text = link.textContent.trim().toLowerCase();
+          if (text === 'français' || text === 'english' || text === 'francais') {
+            return href;
+          }
+        }
+      }
+      
+      // Fallback: look for specific class names used in WET theme
+      const wetLangToggle = doc.querySelector('.wb-sl a, #wb-lng a, [id*="lang"] a');
+      if (wetLangToggle) {
+        return wetLangToggle.getAttribute('href');
+      }
+      
+      return null;
+    }
+    
+    function fixPaths(html, baseUrl) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      
+      doc.querySelectorAll('a[href]').forEach(link => {
+        const href = link.getAttribute('href');
+        if (href && !href.startsWith('#')) {
+          link.setAttribute('target', '_blank');
+          link.setAttribute('rel', 'noopener noreferrer');
+        }
+        if (href && !href.startsWith('http') && !href.startsWith('//') && !href.startsWith('#') && !href.startsWith('mailto:') && !href.startsWith('tel:')) {
+          try {
+            const absoluteUrl = new URL(href, baseUrl).href;
+            link.setAttribute('href', absoluteUrl);
+          } catch (e) { }
+        }
+      });
+      
+      doc.querySelectorAll('img[src]').forEach(img => {
+        const src = img.getAttribute('src');
+        if (src && !src.startsWith('http') && !src.startsWith('//') && !src.startsWith('data:')) {
+          try {
+            const absoluteUrl = new URL(src, baseUrl).href;
+            img.setAttribute('src', absoluteUrl);
+          } catch (e) { }
+        }
+      });
+      
+      return doc.body.innerHTML;
+    }
+    
+    function generateFullHtml(bodyContent, pageTitle) {
+      return `
+      <!DOCTYPE html>
+      <html class="no-js" lang="en" dir="ltr">
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>${pageTitle}</title>
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v7.0.1/css/all.css">
+        <link rel="stylesheet" href="https://www.canada.ca/etc/designs/canada/wet-boew/css/theme.min.css">
+        <style>
+          body { text-align: left; font-family: 'Noto Sans', sans-serif;}
+        </style>
+      </head>
+      <body>
+        <div style="background:#eee; padding:10px; margin:8px; border-bottom:1px solid #ccc;">
+          <strong>Note:</strong> This content preview window may not always display the Canada.ca theme properly.
+        </div>
+        ${bodyContent}
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"><\/script>
+        <script src="https://www.canada.ca/etc/designs/canada/wet-boew/js/wet-boew.min.js"><\/script>
+        <script src="https://www.canada.ca/etc/designs/canada/wet-boew/js/theme.min.js"><\/script>
+      </body>
+      </html>`;
+    }
+    
+    async function fetchPage(url, lang) {
+      const frameId = lang === 'en' ? 'previewFrameEn' : 'previewFrameFr';
+      const frame = document.getElementById(frameId);
+      
+      try {
+        const urlObj = new URL(url);
+        const host = urlObj.hostname.toLowerCase();
+        if (!(host === 'canada.ca' || host.endsWith('.canada.ca') || host === 'gc.ca' || host.endsWith('.gc.ca') || host === 'canada-preview.adobecqms.net')) {
+          throw new Error('Please enter a valid canada.ca URL');
+        }
+      } catch(e) {
+        throw new Error('Invalid URL format');
+      }
+      
+      let html = '';
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Direct fetch failed');
+        html = await response.text();
+      } catch (directError) {
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+        const proxyResponse = await fetch(proxyUrl);
+        if (!proxyResponse.ok) throw new Error('Failed to fetch content');
+        html = await proxyResponse.text();
+      }
+      
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      const mainContent = doc.querySelector('main') || doc.querySelector('[role="main"]') || doc.querySelector('#wb-cont') || doc.body;
+      
+      if (mainContent) {
+        const content = fixPaths(mainContent.outerHTML, url);
+        const h1 = doc.querySelector('h1');
+        const title = h1 ? h1.textContent.trim() : 'Canada.ca Page';
+        
+        const fullHtml = generateFullHtml(content, title);
+        const iframeDoc = frame.contentDocument || frame.contentWindow.document;
+        iframeDoc.open();
+        iframeDoc.write(fullHtml);
+        iframeDoc.close();
+        
+        setTimeout(() => {
+          const allDetails = iframeDoc.querySelectorAll('details');
+          allDetails.forEach(detail => detail.setAttribute('open', ''));
+        }, 100);
+        
+        // Find the alternate language link
+        const altLangLink = findLanguageToggleLink(doc);
+        
+        return { content, title, altLangLink, url };
+      }
+      throw new Error('Could not find main content');
+    }
+    
+    window.fetchBothPages = async function() {
+      const url = document.getElementById('urlInput').value.trim();
+      const errorDiv = document.getElementById('error');
+      
+      errorDiv.innerHTML = '';
+      
+      if (!url) {
+        errorDiv.innerHTML = '<div class="text-red-700 bg-red-100 p-2 rounded border border-red-700 font-bold text-sm">Please enter a URL</div>';
+        return;
+      }
+      
+      const fullUrl = url.startsWith('http') ? url : 'https://' + url;
+      
+      errorDiv.innerHTML = '<div class="text-gray-300 italic text-sm">Loading content...</div>';
+      
+      try {
+        // Fetch the first page
+        const result = await fetchPage(fullUrl, 'en'); // We'll determine actual lang later
+        
+        // Detect which language we loaded based on URL
+        const isEnglish = !fullUrl.includes('/fr/');
+        
+        if (isEnglish) {
+          contentEn = result.content;
+          titleEn = result.title;
+          urlEn = result.url;
+        } else {
+          contentFr = result.content;
+          titleFr = result.title;
+          urlFr = result.url;
+        }
+        
+        // Try to load the other language
+        if (result.altLangLink) {
+          try {
+            // Make the alternate language URL absolute
+            const altUrl = result.altLangLink.startsWith('http') 
+              ? result.altLangLink 
+              : new URL(result.altLangLink, fullUrl).href;
+            
+            const altResult = await fetchPage(altUrl, isEnglish ? 'fr' : 'en');
+            
+            if (isEnglish) {
+              contentFr = altResult.content;
+              titleFr = altResult.title;
+              urlFr = altResult.url;
+            } else {
+              contentEn = altResult.content;
+              titleEn = altResult.title;
+              urlEn = altResult.url;
+            }
+            
+            errorDiv.innerHTML = '<div class="text-green-800 bg-green-100 p-2 rounded border border-green-800 font-bold text-sm">Both languages loaded successfully!</div>';
+          } catch (altError) {
+            errorDiv.innerHTML = '<div class="text-yellow-800 bg-yellow-100 p-2 rounded border border-yellow-800 font-bold text-sm">Loaded one language. Could not find alternate language version.</div>';
+            if (!isEnglish) {
+              showPlaceholder('en');
+            } else {
+              showPlaceholder('fr');
+            }
+          }
+        } else {
+          errorDiv.innerHTML = '<div class="text-yellow-800 bg-yellow-100 p-2 rounded border border-yellow-800 font-bold text-sm">Loaded one language. Could not find language toggle link.</div>';
+          if (!isEnglish) {
+            showPlaceholder('en');
+          } else {
+            showPlaceholder('fr');
+          }
+        }
+        
+        updateExportButtons();
+        
+      } catch (error) {
+        errorDiv.innerHTML = '<div class="text-red-700 bg-red-100 p-2 rounded border border-red-700 font-bold text-sm">Error loading content: ' + error.message + '</div>';
+      }
+    }
+    
+    async function toBase64(url) {
+      try {
+        let response;
+        try { response = await fetch(url, { cache: 'no-cache' }); } catch(e) { response = { ok: false }; }
+        if (!response.ok) {
+          const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+          response = await fetch(proxyUrl);
+        }
+        if (!response.ok) throw new Error('Failed to fetch');
+        const blob = await response.blob();
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+      } catch (e) { return null; }
+    }
+    
+    window.exportWord = async function(lang) {
+      const errorDiv = document.getElementById('error');
+      const exportBtn = document.getElementById(lang === 'en' ? 'exportEnBtn' : 'exportFrBtn');
+      
+      const content = lang === 'en' ? contentEn : contentFr;
+      const title = lang === 'en' ? titleEn : titleFr;
+      const sourceUrl = lang === 'en' ? urlEn : urlFr;
+      
+      if (!content) return;
+      
+      const originalBtnText = exportBtn.innerHTML;
+      exportBtn.disabled = true;
+      exportBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
+      
+      try {
+        if (typeof htmlDocx === 'undefined') throw new Error('Library missing.');
+        
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(content, 'text/html');
+        
+        // Remove unwanted tags
+        const tagsToRemove = ['script', 'style', 'link', 'meta', 'iframe', 'button', 'input', 'form', 'svg'];
+        tagsToRemove.forEach(tag => doc.querySelectorAll(tag).forEach(el => el.remove()));
+        
+        // Enhanced list processing - preserve WET list types
+        doc.querySelectorAll('ol, ul').forEach(list => {
+          const classes = list.className || '';
+          
+          // Detect WET list types and add inline styles for Word
+          if (classes.includes('lst-lwr-alph')) {
+            list.setAttribute('style', 'list-style-type: lower-alpha;');
+          } else if (classes.includes('lst-upr-alph')) {
+            list.setAttribute('style', 'list-style-type: upper-alpha;');
+          } else if (classes.includes('lst-lwr-rmn')) {
+            list.setAttribute('style', 'list-style-type: lower-roman;');
+          } else if (classes.includes('lst-upr-rmn')) {
+            list.setAttribute('style', 'list-style-type: upper-roman;');
+          } else if (list.tagName === 'OL') {
+            list.setAttribute('style', 'list-style-type: decimal;');
+          } else {
+            list.setAttribute('style', 'list-style-type: disc;');
+          }
+          
+          // Remove classes but keep the style
+          list.removeAttribute('class');
+        });
+        
+        // Enhanced table processing with WET4 styling
+        doc.querySelectorAll('table').forEach(table => {
+          // Base table styling - always add borders
+          table.setAttribute('style', 'border-collapse: collapse; width: 100%; border: 1px solid #000;');
+          
+          // Process all cells (th and td)
+          table.querySelectorAll('th, td').forEach(cell => {
+            let styles = ['border: 1px solid #000', 'padding: 8px'];
+            const classes = cell.className || '';
+            
+            // Preserve WET4 background colors
+            if (classes.includes('bg-primary')) {
+              styles.push('background-color: #269abc', 'color: #fff');
+            } else if (classes.includes('bg-success')) {
+              styles.push('background-color: #278400', 'color: #fff');
+            } else if (classes.includes('bg-info')) {
+              styles.push('background-color: #269abc', 'color: #fff');
+            } else if (classes.includes('bg-warning')) {
+              styles.push('background-color: #f90', 'color: #000');
+            } else if (classes.includes('bg-danger')) {
+              styles.push('background-color: #d3080c', 'color: #fff');
+            } else if (classes.includes('active')) {
+              styles.push('background-color: #d9edf7');
+            } else if (classes.includes('success')) {
+              styles.push('background-color: #dff0d8');
+            } else if (classes.includes('warning')) {
+              styles.push('background-color: #fcf8e3');
+            } else if (classes.includes('danger')) {
+              styles.push('background-color: #f2dede');
+            } else if (classes.includes('info')) {
+              styles.push('background-color: #d9edf7');
+            }
+            
+            // Header cells get bold and grey background by default if no other bg color
+            if (cell.tagName === 'TH' && !classes.match(/bg-|active|success|warning|danger|info/)) {
+              styles.push('background-color: #f5f5f5', 'font-weight: bold');
+            }
+            
+            // Text alignment
+            if (classes.includes('text-center')) {
+              styles.push('text-align: center');
+            } else if (classes.includes('text-right')) {
+              styles.push('text-align: right');
+            }
+            
+            cell.setAttribute('style', styles.join('; ') + ';');
+            cell.removeAttribute('class');
+          });
+          
+          table.removeAttribute('class');
+        });
+        
+        // Clean up other attributes
+        doc.querySelectorAll('*').forEach(el => {
+          if (el.tagName !== 'OL' && el.tagName !== 'UL' && el.tagName !== 'TABLE') {
+            el.removeAttribute('class');
+          }
+          el.removeAttribute('id');
+          el.removeAttribute('onclick');
+          // Don't remove style from lists and tables
+          if (el.tagName !== 'OL' && el.tagName !== 'UL' && el.tagName !== 'TABLE' && el.tagName !== 'TH' && el.tagName !== 'TD') {
+            el.removeAttribute('style');
+          }
+        });
+        
+        // Process images
+        const images = doc.querySelectorAll('img');
+        const imagePromises = Array.from(images).map(async (img) => {
+          const src = img.getAttribute('src');
+          if (src && !src.startsWith('data:')) {
+            const base64 = await toBase64(src);
+            if (base64) img.setAttribute('src', base64);
+          }
+        });
+        
+        if (imagePromises.length > 0) await Promise.all(imagePromises);
+        
+        // Create URL header section
+        const urlHeader = sourceUrl ? `
+          <div style="margin-bottom: 20px; padding: 15px; background-color: #f0f0f0; border-left: 4px solid #269abc;">
+            <p style="margin: 0; font-size: 12px; color: #666;"><strong>Source URL:</strong></p>
+            <p style="margin: 5px 0 0 0; font-size: 14px; word-break: break-all;"><a href="${sourceUrl}">${sourceUrl}</a></p>
+          </div>
+        ` : '';
+        
+        const cleanHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title></head><body>${urlHeader}${doc.body.innerHTML}</body></html>`;
+        const blob = htmlDocx.asBlob(cleanHtml);
+        const url = URL.createObjectURL(blob);
+        const downloadLink = document.createElement('a');
+        downloadLink.href = url;
+        downloadLink.download = `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.docx`;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        URL.revokeObjectURL(url);
+        
+        errorDiv.innerHTML = `<div class="text-green-800 bg-green-100 p-2 rounded border border-green-800 font-bold text-sm">Word document generated with URL header and preserved formatting!</div>`;
+      } catch (e) {
+        errorDiv.innerHTML = `<div class="text-red-700 bg-red-100 p-2 rounded border border-red-700 font-bold text-sm">Error: ${e.message}</div>`;
+      } finally {
+        exportBtn.disabled = false;
+        exportBtn.innerHTML = originalBtnText;
+      }
+    }
+    
+    // Initialize placeholders on load
+    showPlaceholder('en');
+    showPlaceholder('fr');
+  </script>
+</body>
+</html>
