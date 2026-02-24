@@ -628,60 +628,142 @@
         }
 
         window.exportToWord = async function() {
-            const errorDiv = document.getElementById('error');
-            const exportBtn = document.getElementById('exportWordBtn');
-            if (!originalContent) return;
+    const errorDiv = document.getElementById('error');
+    const exportBtn = document.getElementById('exportWordBtn');
+    if (!originalContent) return;
 
-            const originalBtnText = exportBtn.innerHTML;
-            exportBtn.disabled = true;
-            exportBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
+    const originalBtnText = exportBtn.innerHTML;
+    exportBtn.disabled = true;
+    exportBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
 
-            try {
-                if (typeof htmlDocx === 'undefined') throw new Error('Library missing.');
+    try {
+        if (typeof htmlDocx === 'undefined') throw new Error('Library missing.');
 
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(originalContent, 'text/html');
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(originalContent, 'text/html');
 
-                const tagsToRemove = ['script', 'style', 'link', 'meta', 'iframe', 'button', 'input', 'form', 'svg'];
-                tagsToRemove.forEach(tag => doc.querySelectorAll(tag).forEach(el => el.remove()));
-                
-                doc.querySelectorAll('*').forEach(el => {
-                    el.removeAttribute('class');
-                    el.removeAttribute('id');
-                    el.removeAttribute('onclick');
-                    el.removeAttribute('style');
-                });
+        // Remove unwanted tags
+        const tagsToRemove = ['script', 'style', 'link', 'meta', 'iframe', 'button', 'input', 'form', 'svg'];
+        tagsToRemove.forEach(tag => doc.querySelectorAll(tag).forEach(el => el.remove()));
 
-                const images = doc.querySelectorAll('img');
-                const imagePromises = Array.from(images).map(async (img) => {
-                    const src = img.getAttribute('src');
-                    if (src && !src.startsWith('data:')) {
-                        const base64 = await toBase64(src);
-                        if (base64) img.setAttribute('src', base64);
-                    }
-                });
-                
-                if (imagePromises.length > 0) await Promise.all(imagePromises);
-
-                const cleanHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${currentPageTitle}</title></head><body>${doc.body.innerHTML}</body></html>`;
-                const blob = htmlDocx.asBlob(cleanHtml);
-                const url = URL.createObjectURL(blob);
-                const downloadLink = document.createElement('a');
-                downloadLink.href = url;
-                downloadLink.download = `${currentPageTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.docx`;
-                document.body.appendChild(downloadLink);
-                downloadLink.click();
-                document.body.removeChild(downloadLink);
-                URL.revokeObjectURL(url);
-                
-                errorDiv.innerHTML = `<div class="text-green-800 bg-green-100 p-3 rounded border border-green-800 mt-3 font-bold">Word document generated!</div>`;
-            } catch (e) {
-                errorDiv.innerHTML = `<div class="text-red-700 bg-red-100 p-3 rounded border border-red-700 mt-3 font-bold">Error: ${e.message}</div>`;
-            } finally {
-                exportBtn.disabled = false;
-                exportBtn.innerHTML = originalBtnText;
+        // Enhanced list processing - preserve WET list types
+        doc.querySelectorAll('ol, ul').forEach(list => {
+            const classes = list.className || '';
+            
+            // Detect WET list types and add inline styles for Word
+            if (classes.includes('lst-lwr-alph')) {
+                list.setAttribute('style', 'list-style-type: lower-alpha;');
+            } else if (classes.includes('lst-upr-alph')) {
+                list.setAttribute('style', 'list-style-type: upper-alpha;');
+            } else if (classes.includes('lst-lwr-rmn')) {
+                list.setAttribute('style', 'list-style-type: lower-roman;');
+            } else if (classes.includes('lst-upr-rmn')) {
+                list.setAttribute('style', 'list-style-type: upper-roman;');
+            } else if (list.tagName === 'OL') {
+                list.setAttribute('style', 'list-style-type: decimal;');
+            } else {
+                list.setAttribute('style', 'list-style-type: disc;');
             }
+            
+            // Remove classes but keep the style
+            list.removeAttribute('class');
+        });
+
+        // Clean up other attributes
+        doc.querySelectorAll('*').forEach(el => {
+            if (el.tagName !== 'OL' && el.tagName !== 'UL') {
+                el.removeAttribute('class');
+            }
+            el.removeAttribute('id');
+            el.removeAttribute('onclick');
+            // Don't remove style from lists
+            if (el.tagName !== 'OL' && el.tagName !== 'UL') {
+                el.removeAttribute('style');
+            }
+        });
+		
+		doc.querySelectorAll('table').forEach(table => {
+    // Base table styling - always add borders
+    table.setAttribute('style', 'border-collapse: collapse; width: 100%; border: 1px solid #000;');
+    
+    // Process all cells (th and td)
+    table.querySelectorAll('th, td').forEach(cell => {
+        let styles = ['border: 1px solid #000', 'padding: 8px'];
+        const classes = cell.className || '';
+        
+        // Preserve WET4 background colors
+        if (classes.includes('bg-primary')) {
+            styles.push('background-color: #269abc', 'color: #fff');
+        } else if (classes.includes('bg-success')) {
+            styles.push('background-color: #278400', 'color: #fff');
+        } else if (classes.includes('bg-info')) {
+            styles.push('background-color: #269abc', 'color: #fff');
+        } else if (classes.includes('bg-warning')) {
+            styles.push('background-color: #f90', 'color: #000');
+        } else if (classes.includes('bg-danger')) {
+            styles.push('background-color: #d3080c', 'color: #fff');
+        } else if (classes.includes('active')) {
+            styles.push('background-color: #d9edf7');
+        } else if (classes.includes('success')) {
+            styles.push('background-color: #dff0d8');
+        } else if (classes.includes('warning')) {
+            styles.push('background-color: #fcf8e3');
+        } else if (classes.includes('danger')) {
+            styles.push('background-color: #f2dede');
+        } else if (classes.includes('info')) {
+            styles.push('background-color: #d9edf7');
         }
+        
+        // Header cells get bold and grey background by default if no other bg color
+        if (cell.tagName === 'TH' && !classes.match(/bg-|active|success|warning|danger|info/)) {
+            styles.push('background-color: #f5f5f5', 'font-weight: bold');
+        }
+        
+        // Text alignment
+        if (classes.includes('text-center')) {
+            styles.push('text-align: center');
+        } else if (classes.includes('text-right')) {
+            styles.push('text-align: right');
+        }
+        
+        cell.setAttribute('style', styles.join('; ') + ';');
+        cell.removeAttribute('class');
+    });
+    
+    table.removeAttribute('class');
+});
+
+        // Process images
+        const images = doc.querySelectorAll('img');
+        const imagePromises = Array.from(images).map(async (img) => {
+            const src = img.getAttribute('src');
+            if (src && !src.startsWith('data:')) {
+                const base64 = await toBase64(src);
+                if (base64) img.setAttribute('src', base64);
+            }
+        });
+        
+        if (imagePromises.length > 0) await Promise.all(imagePromises);
+
+        const cleanHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${currentPageTitle}</title></head><body>${doc.body.innerHTML}</body></html>`;
+        const blob = htmlDocx.asBlob(cleanHtml);
+        const url = URL.createObjectURL(blob);
+        const downloadLink = document.createElement('a');
+        downloadLink.href = url;
+        downloadLink.download = `${currentPageTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.docx`;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        URL.revokeObjectURL(url);
+        
+        errorDiv.innerHTML = `<div class="text-green-800 bg-green-100 p-3 rounded border border-green-800 mt-3 font-bold">Word document generated with preserved list formatting!</div>`;
+    } catch (e) {
+        errorDiv.innerHTML = `<div class="text-red-700 bg-red-100 p-3 rounded border border-red-700 mt-3 font-bold">Error: ${e.message}</div>`;
+    } finally {
+        exportBtn.disabled = false;
+        exportBtn.innerHTML = originalBtnText;
+    }
+}
 
         window.generateLinkManifest = function() {
           const previewFrame = document.getElementById('previewFrame');
