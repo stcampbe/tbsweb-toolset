@@ -321,6 +321,81 @@
             document.getElementById('prevBtn').disabled = true;
             document.getElementById('nextBtn').disabled = true;
         }
+		
+		window.resolveAjaxElements = async function(doc, baseUrl) {
+            // WET supports several injection methods
+            const ajaxTypes = ['data-ajax-replace', 'data-ajax-before', 'data-ajax-after', 'data-ajax-append', 'data-ajax-prepend'];
+            let depth = 0;
+            const maxDepth = 3; // Prevent infinite loops in case of nested ajax calls
+
+            while (depth < maxDepth) {
+                let foundAny = false;
+                for (const type of ajaxTypes) {
+                    const elements = Array.from(doc.querySelectorAll(`[${type}]`));
+                    for (const el of elements) {
+                        foundAny = true;
+                        const fragmentUrl = el.getAttribute(type);
+                        
+                        // Remove the attribute immediately so we don't re-process it
+                        el.removeAttribute(type);
+                        
+                        if (!fragmentUrl) continue;
+                        
+                        try {
+                            // Resolve relative URLs (like /content/canadasite/...)
+                            const absoluteUrl = new URL(fragmentUrl, baseUrl).href;
+                            const [urlPart, hashPart] = absoluteUrl.split('#');
+                            
+                            // Fetch the fragment HTML
+                            let fragmentHtml = '';
+                            try {
+                                const response = await fetch(urlPart);
+                                if (!response.ok) throw new Error('Direct fetch failed');
+                                fragmentHtml = await response.text();
+                            } catch (e) {
+                                // Fallback to proxy just like the main fetch
+                                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(urlPart)}`;
+                                const proxyResponse = await fetch(proxyUrl);
+                                if (!proxyResponse.ok) throw new Error('Proxy fetch failed');
+                                fragmentHtml = await proxyResponse.text();
+                            }
+                            
+                            const fragmentDoc = new DOMParser().parseFromString(fragmentHtml, 'text/html');
+                            let contentToInject = '';
+                            
+                            // If a hash is provided, only grab that specific element. Otherwise, grab the whole body.
+                            if (hashPart) {
+                                const targetEl = fragmentDoc.getElementById(hashPart);
+                                if (targetEl) {
+                                    contentToInject = targetEl.outerHTML;
+                                }
+                            } else {
+                                contentToInject = fragmentDoc.body.innerHTML;
+                            }
+                            
+                            // Inject the content based on the WET attribute type
+                            if (contentToInject) {
+                                if (type === 'data-ajax-replace') {
+                                    el.outerHTML = contentToInject;
+                                } else if (type === 'data-ajax-before') {
+                                    el.insertAdjacentHTML('beforebegin', contentToInject);
+                                } else if (type === 'data-ajax-after') {
+                                    el.insertAdjacentHTML('afterend', contentToInject);
+                                } else if (type === 'data-ajax-append') {
+                                    el.insertAdjacentHTML('beforeend', contentToInject);
+                                } else if (type === 'data-ajax-prepend') {
+                                    el.insertAdjacentHTML('afterbegin', contentToInject);
+                                }
+                            }
+                        } catch (err) {
+                            console.warn(`LinkBuddy: Failed to resolve WET ajax content for ${fragmentUrl}`, err);
+                        }
+                    }
+                }
+                if (!foundAny) break;
+                depth++;
+            }
+        };
 
         window.toggleViewMode = function() {
             const previewFrame = document.getElementById('previewFrame');
@@ -570,7 +645,10 @@
             
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
-            const mainContent = doc.querySelector('main') || doc.querySelector('[role="main"]') || doc.querySelector('#wb-cont') || doc.body; 
+            errorDiv.innerHTML = '<div class="text-gray-300 italic text-sm mt-3">Fetching dynamic page fragments...</div>';
+            await window.resolveAjaxElements(doc, currentBaseUrl || url);
+
+            const mainContent = doc.querySelector('main') || doc.querySelector('[role="main"]') || doc.querySelector('#wb-cont') || doc.body;
             
             if (mainContent) {
               currentBaseUrl = url;
