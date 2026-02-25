@@ -35,11 +35,11 @@
     }
   </style>
 </head>
-<body class="h-screen w-screen overflow-hidden bg-gray-100 text-black font-sans">
+<body class="h-screen w-screen overflow-hidden bg-gray-100 text-black font-sans relative">
   
-  <div id="app-root" class="flex flex-col h-screen w-full">
+  <div id="app-root" class="flex flex-col h-screen w-full relative">
     <!-- Top Control Bar -->
-    <div class="bg-slate-900 p-4 shadow-lg">
+    <div class="bg-slate-900 p-4 shadow-lg z-10 relative">
       <div class="flex items-center gap-4">
         <h1 class="text-2xl font-bold text-white">
           <i class="fa-solid fa-file-word"></i> DocBuddy
@@ -58,22 +58,20 @@
           </div>
           
           <button type="button" onclick="fetchBothPages()" 
-            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded text-sm transition-colors whitespace-nowrap">
+            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded text-sm transition-colors whitespace-nowrap shadow-md">
             Load Content
           </button>
         </div>
       </div>
-      
-      <div id="error" class="mt-2"></div>
     </div>
     
     <!-- Split Preview -->
-    <div class="flex-1 flex gap-0 overflow-hidden">
+    <div class="flex-1 flex gap-0 overflow-hidden bg-gray-200">
       <div class="flex-1 flex flex-col bg-white border-r-2 border-gray-300">
         <div class="bg-blue-100 p-3 border-b-2 border-blue-300">
           <div class="font-bold text-blue-900 text-center mb-2">English</div>
           <button type="button" id="exportEnBtn" onclick="exportWord('en')" disabled 
-            class="w-full bg-blue-800 hover:bg-blue-900 disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded text-sm transition-colors">
+            class="w-full bg-blue-800 hover:bg-blue-900 disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded text-sm transition-colors shadow-sm">
             <i class="fa-solid fa-download"></i> Export ENG Document (.docx <i class="fa-solid fa-file-word"></i>)
           </button>
         </div>
@@ -84,13 +82,16 @@
         <div class="bg-red-100 p-3 border-b-2 border-red-300">
           <div class="font-bold text-red-900 text-center mb-2">Français</div>
           <button type="button" id="exportFrBtn" onclick="exportWord('fr')" disabled 
-            class="w-full bg-blue-800 hover:bg-blue-900 disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded text-sm transition-colors">
+            class="w-full bg-blue-800 hover:bg-blue-900 disabled:bg-gray-400 disabled:text-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded text-sm transition-colors shadow-sm">
             <i class="fa-solid fa-download"></i> Export FRA Document (.docx <i class="fa-solid fa-file-word"></i>)
           </button>
         </div>
         <iframe id="previewFrameFr" class="flex-1 border-none w-full bg-white"></iframe>
       </div>
     </div>
+
+    <!-- Floating Error / Status Div (Moved here) -->
+    <div id="error" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 w-11/12 max-w-2xl empty:hidden drop-shadow-2xl"></div>
   </div>
 
 <script>
@@ -112,6 +113,7 @@
       showPlaceholder('en');
       showPlaceholder('fr');
       updateExportButtons();
+      document.getElementById('error').innerHTML = '';
     }
     
     function updateExportButtons() {
@@ -371,13 +373,13 @@
       errorDiv.innerHTML = '';
       
       if (!url) {
-        errorDiv.innerHTML = '<div class="text-red-700 bg-red-100 p-2 rounded border border-red-700 font-bold text-sm">Please enter a URL</div>';
+        errorDiv.innerHTML = '<div class="text-red-700 bg-red-100 p-3 rounded-lg border border-red-700 shadow-xl font-bold text-sm text-center"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Please enter a URL</div>';
         return;
       }
       
       const fullUrl = url.startsWith('http') ? url : 'https://' + url;
       
-      errorDiv.innerHTML = '<div class="text-gray-300 italic text-sm">Loading content and dynamic fragments...</div>';
+      errorDiv.innerHTML = '<div class="text-white bg-slate-800 p-3 rounded-lg border border-slate-700 shadow-xl font-bold text-sm text-center flex items-center justify-center gap-2"><i class="fa-solid fa-spinner fa-spin"></i> Loading content and dynamic fragments...</div>';
       
       try {
         // Fetch the first page
@@ -416,9 +418,13 @@
               urlEn = altResult.url;
             }
             
-            errorDiv.innerHTML = '<div class="text-green-800 bg-green-100 p-2 rounded border border-green-800 font-bold text-sm">Both languages and fragments loaded successfully!</div>';
+            errorDiv.innerHTML = '<div class="text-green-800 bg-green-100 p-3 rounded-lg border border-green-800 shadow-xl font-bold text-sm text-center"><i class="fa-solid fa-check-circle mr-1"></i> Successful content import.</div>';
+            
+            // Auto hide success message after 4 seconds
+            setTimeout(() => { if(errorDiv.innerHTML.includes('Successful')) errorDiv.innerHTML = ''; }, 4000);
+            
           } catch (altError) {
-            errorDiv.innerHTML = '<div class="text-yellow-800 bg-yellow-100 p-2 rounded border border-yellow-800 font-bold text-sm">Loaded one language. Could not find alternate language version.</div>';
+            errorDiv.innerHTML = '<div class="text-yellow-800 bg-yellow-100 p-3 rounded-lg border border-yellow-800 shadow-xl font-bold text-sm text-center"><i class="fa-solid fa-circle-info mr-1"></i> Loaded one language. Could not find alternate language version.</div>';
             if (!isEnglish) {
               showPlaceholder('en');
             } else {
@@ -426,7 +432,7 @@
             }
           }
         } else {
-          errorDiv.innerHTML = '<div class="text-yellow-800 bg-yellow-100 p-2 rounded border border-yellow-800 font-bold text-sm">Loaded one language. Could not find language toggle link.</div>';
+          errorDiv.innerHTML = '<div class="text-yellow-800 bg-yellow-100 p-3 rounded-lg border border-yellow-800 shadow-xl font-bold text-sm text-center"><i class="fa-solid fa-circle-info mr-1"></i> Loaded one language. Could not find language toggle link.</div>';
           if (!isEnglish) {
             showPlaceholder('en');
           } else {
@@ -437,7 +443,7 @@
         updateExportButtons();
         
       } catch (error) {
-        errorDiv.innerHTML = '<div class="text-red-700 bg-red-100 p-2 rounded border border-red-700 font-bold text-sm">Error loading content: ' + error.message + '</div>';
+        errorDiv.innerHTML = '<div class="text-red-700 bg-red-100 p-3 rounded-lg border border-red-700 shadow-xl font-bold text-sm text-center"><i class="fa-solid fa-circle-xmark mr-1"></i> Error loading content: ' + error.message + '</div>';
       }
     }
     
@@ -480,6 +486,9 @@
         const parser = new DOMParser();
         const doc = parser.parseFromString(content, 'text/html');
         
+        // Remove visually hidden WET text 
+        doc.querySelectorAll('.wb-inv').forEach(el => el.remove());
+        
         // Remove unwanted tags
         const tagsToRemove = ['script', 'style', 'link', 'meta', 'iframe', 'button', 'input', 'form', 'svg'];
         tagsToRemove.forEach(tag => doc.querySelectorAll(tag).forEach(el => el.remove()));
@@ -488,7 +497,6 @@
         doc.querySelectorAll('ol, ul').forEach(list => {
           const classes = list.className || '';
           
-          // Detect WET list types and add inline styles for Word
           if (classes.includes('lst-lwr-alph')) {
             list.setAttribute('style', 'list-style-type: lower-alpha;');
           } else if (classes.includes('lst-upr-alph')) {
@@ -503,21 +511,17 @@
             list.setAttribute('style', 'list-style-type: disc;');
           }
           
-          // Remove classes but keep the style
           list.removeAttribute('class');
         });
         
         // Enhanced table processing with WET4 styling
         doc.querySelectorAll('table').forEach(table => {
-          // Base table styling - always add borders
           table.setAttribute('style', 'border-collapse: collapse; width: 100%; border: 1px solid #000;');
           
-          // Process all cells (th and td)
           table.querySelectorAll('th, td').forEach(cell => {
             let styles = ['border: 1px solid #000', 'padding: 8px'];
             const classes = cell.className || '';
             
-            // Preserve WET4 background colors
             if (classes.includes('bg-primary')) {
               styles.push('background-color: #269abc', 'color: #fff');
             } else if (classes.includes('bg-success')) {
@@ -540,12 +544,10 @@
               styles.push('background-color: #d9edf7');
             }
             
-            // Header cells get bold and grey background by default if no other bg color
             if (cell.tagName === 'TH' && !classes.match(/bg-|active|success|warning|danger|info/)) {
               styles.push('background-color: #f5f5f5', 'font-weight: bold');
             }
             
-            // Text alignment
             if (classes.includes('text-center')) {
               styles.push('text-align: center');
             } else if (classes.includes('text-right')) {
@@ -566,7 +568,6 @@
           }
           el.removeAttribute('id');
           el.removeAttribute('onclick');
-          // Don't remove style from lists and tables
           if (el.tagName !== 'OL' && el.tagName !== 'UL' && el.tagName !== 'TABLE' && el.tagName !== 'TH' && el.tagName !== 'TD') {
             el.removeAttribute('style');
           }
@@ -584,7 +585,6 @@
         
         if (imagePromises.length > 0) await Promise.all(imagePromises);
         
-        // Create URL header section
         const urlHeader = sourceUrl ? `
           <div style="margin-bottom: 20px; padding: 15px; background-color: #f0f0f0; border-left: 4px solid #269abc;">
             <p style="margin: 0; font-size: 12px; color: #666;"><strong>Source URL:</strong></p>
@@ -592,7 +592,9 @@
           </div>
         ` : '';
         
-        const cleanHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title></head><body>${urlHeader}${doc.body.innerHTML}</body></html>`;
+        // Added Calibri font-family to the body tag
+        const cleanHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title></head><body style="font-family: 'Calibri', sans-serif;">${urlHeader}${doc.body.innerHTML}</body></html>`;
+        
         const blob = htmlDocx.asBlob(cleanHtml);
         const url = URL.createObjectURL(blob);
         const downloadLink = document.createElement('a');
@@ -603,9 +605,13 @@
         document.body.removeChild(downloadLink);
         URL.revokeObjectURL(url);
         
-        errorDiv.innerHTML = `<div class="text-green-800 bg-green-100 p-2 rounded border border-green-800 font-bold text-sm">Word document generated with URL header and preserved formatting!</div>`;
+        errorDiv.innerHTML = `<div class="text-green-800 bg-green-100 p-3 rounded-lg border border-green-800 shadow-xl font-bold text-sm text-center"><i class="fa-solid fa-file-word mr-1"></i> Word document generated successfully!</div>`;
+        
+        // Auto hide success message after 4 seconds
+        setTimeout(() => { if(errorDiv.innerHTML.includes('generated successfully')) errorDiv.innerHTML = ''; }, 4000);
+        
       } catch (e) {
-        errorDiv.innerHTML = `<div class="text-red-700 bg-red-100 p-2 rounded border border-red-700 font-bold text-sm">Error: ${e.message}</div>`;
+        errorDiv.innerHTML = `<div class="text-red-700 bg-red-100 p-3 rounded-lg border border-red-700 shadow-xl font-bold text-sm text-center"><i class="fa-solid fa-circle-xmark mr-1"></i> Error: ${e.message}</div>`;
       } finally {
         exportBtn.disabled = false;
         exportBtn.innerHTML = originalBtnText;
