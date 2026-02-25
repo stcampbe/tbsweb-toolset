@@ -278,6 +278,16 @@
           } catch (e) { }
         }
       });
+	  
+	  doc.querySelectorAll('gcds-icon[src], gcds-img[src]').forEach(el => {
+		  const src = el.getAttribute('src');
+		  if (src && !src.startsWith('http') && !src.startsWith('//') && !src.startsWith('data:')) {
+			try {
+			  const absoluteUrl = new URL(src, baseUrl).href;
+			  el.setAttribute('src', absoluteUrl);
+			} catch (e) { }
+		  }
+		});
       
       return doc.body.innerHTML;
     }
@@ -291,10 +301,16 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>${pageTitle}</title>
         <link rel="stylesheet" href="https://use.fontawesome.com/releases/v7.0.1/css/all.css">
-        <link rel="stylesheet" href="https://www.canada.ca/etc/designs/canada/wet-boew/css/theme.min.css">
+			<script blocking="render" src="https://www.canada.ca/etc/designs/canada/wet-boew/js/gcdsloader.min.js"><\/script>
+            <link rel="stylesheet" href="https://www.canada.ca/etc/designs/canada/wet-boew/css/theme.min.css">
+			<noscript><link rel="stylesheet" href="https://www.canada.ca/etc/designs/canada/wet-boew/css/noscript.min.css"/><\/noscript>
         <style>
-          body { text-align: left; font-family: 'Noto Sans', sans-serif;}
-        </style>
+      body { text-align: left; font-family: 'Noto Sans', sans-serif;}
+      /* Hide GCDS header and footer in preview */
+      gcds-header, gcds-footer { display: none !important; }
+    </style>
+    <script type="module" src="https://cdn.design-system.alpha.canada.ca/@cdssnc/gcds-components@latest/dist/gcds/gcds.esm.js"><\/script>
+    <script nomodule src="https://cdn.design-system.alpha.canada.ca/@cdssnc/gcds-components@latest/dist/gcds/gcds.js"><\/script>
       </head>
       <body>
         <div style="background:#eee; padding:10px; margin:8px; border-bottom:1px solid #ccc;">
@@ -302,8 +318,9 @@
         </div>
         ${bodyContent}
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"><\/script>
-        <script src="https://www.canada.ca/etc/designs/canada/wet-boew/js/wet-boew.min.js"><\/script>
-        <script src="https://www.canada.ca/etc/designs/canada/wet-boew/js/theme.min.js"><\/script>
+			<script src="https://www.canada.ca/etc/designs/canada/wet-boew/js/ep-pp.min.js"><\/script>
+            <script src="https://www.canada.ca/etc/designs/canada/wet-boew/js/wet-boew.min.js"><\/script>
+            <script src="https://www.canada.ca/etc/designs/canada/wet-boew/js/theme.min.js"><\/script>
       </body>
       </html>`;
     }
@@ -337,15 +354,32 @@
       const parser = new DOMParser();
       const doc = parser.parseFromString(html, 'text/html');
 
-      // NEW: Resolve all WET-BOEW AJAX elements before extracting main content
       await window.resolveAjaxElements(doc, url);
 
-      const mainContent = doc.querySelector('main') || doc.querySelector('[role="main"]') || doc.querySelector('#wb-cont') || doc.body;
-      
-      if (mainContent) {
-        const content = fixPaths(mainContent.outerHTML, url);
-        const h1 = doc.querySelector('h1');
-        const title = h1 ? h1.textContent.trim() : 'Canada.ca Page';
+      const mainContent = doc.querySelector('main') || doc.querySelector('[role="main"]') || doc.querySelector('#wb-cont');
+		const gcdsContainers = doc.querySelectorAll('gcds-container');
+
+		let contentToProcess = '';
+
+		// Get main content if it exists
+		if (mainContent) {
+		  contentToProcess = mainContent.outerHTML;
+		}
+
+		// Append all gcds-container content (even if they're outside <main>)
+		gcdsContainers.forEach(container => {
+		  contentToProcess += container.outerHTML;
+		});
+
+		// Fallback to body if nothing found
+		if (!contentToProcess && doc.body) {
+		  contentToProcess = doc.body.innerHTML;
+		}
+
+		if (contentToProcess) {
+		  const content = fixPaths(contentToProcess, url);
+		  const h1 = doc.querySelector('h1');
+		  const title = h1 ? h1.textContent.trim() : 'Canada.ca Page';
         
         const fullHtml = generateFullHtml(content, title);
         const iframeDoc = frame.contentDocument || frame.contentWindow.document;
@@ -367,85 +401,87 @@
     }
     
     window.fetchBothPages = async function() {
-      const url = document.getElementById('urlInput').value.trim();
-      const errorDiv = document.getElementById('error');
-      
-      errorDiv.innerHTML = '';
-      
-      if (!url) {
-        errorDiv.innerHTML = '<div class="text-red-700 bg-red-100 p-3 rounded-lg border border-red-700 shadow-xl font-bold text-sm text-center"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Please enter a URL</div>';
-        return;
-      }
-      
-      const fullUrl = url.startsWith('http') ? url : 'https://' + url;
-      
-      errorDiv.innerHTML = '<div class="text-white bg-slate-800 p-3 rounded-lg border border-slate-700 shadow-xl font-bold text-sm text-center flex items-center justify-center gap-2"><i class="fa-solid fa-spinner fa-spin"></i> Loading content and dynamic fragments...</div>';
-      
+  const url = document.getElementById('urlInput').value.trim();
+  const errorDiv = document.getElementById('error');
+  
+  errorDiv.innerHTML = '';
+  
+  if (!url) {
+    errorDiv.innerHTML = '<div class="text-red-700 bg-red-100 p-3 rounded-lg border border-red-700 shadow-xl font-bold text-sm text-center"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Please enter a URL</div>';
+    return;
+  }
+  
+  const fullUrl = url.startsWith('http') ? url : 'https://' + url;
+  
+  errorDiv.innerHTML = '<div class="text-white bg-slate-800 p-3 rounded-lg border border-slate-700 shadow-xl font-bold text-sm text-center flex items-center justify-center gap-2"><i class="fa-solid fa-spinner fa-spin"></i> Loading content and dynamic fragments...</div>';
+  
+  try {
+    // Detect which language we're loading based on URL
+    const isEnglish = !fullUrl.includes('/fr/');
+    
+    // Fetch the first page and load it into the correct window
+    const result = await fetchPage(fullUrl, isEnglish ? 'en' : 'fr');
+    
+    if (isEnglish) {
+      contentEn = result.content;
+      titleEn = result.title;
+      urlEn = result.url;
+    } else {
+      contentFr = result.content;
+      titleFr = result.title;
+      urlFr = result.url;
+    }
+    
+    // Try to load the other language
+    if (result.altLangLink) {
       try {
-        // Fetch the first page
-        const result = await fetchPage(fullUrl, 'en'); // We'll determine actual lang later
+        // Make the alternate language URL absolute
+        const altUrl = result.altLangLink.startsWith('http') 
+          ? result.altLangLink 
+          : new URL(result.altLangLink, fullUrl).href;
         
-        // Detect which language we loaded based on URL
-        const isEnglish = !fullUrl.includes('/fr/');
+        const altResult = await fetchPage(altUrl, isEnglish ? 'fr' : 'en');
         
         if (isEnglish) {
-          contentEn = result.content;
-          titleEn = result.title;
-          urlEn = result.url;
+          contentFr = altResult.content;
+          titleFr = altResult.title;
+          urlFr = altResult.url;
         } else {
-          contentFr = result.content;
-          titleFr = result.title;
-          urlFr = result.url;
+          contentEn = altResult.content;
+          titleEn = altResult.title;
+          urlEn = altResult.url;
         }
         
-        // Try to load the other language
-        if (result.altLangLink) {
-          try {
-            // Make the alternate language URL absolute
-            const altUrl = result.altLangLink.startsWith('http') 
-              ? result.altLangLink 
-              : new URL(result.altLangLink, fullUrl).href;
-            
-            const altResult = await fetchPage(altUrl, isEnglish ? 'fr' : 'en');
-            
-            if (isEnglish) {
-              contentFr = altResult.content;
-              titleFr = altResult.title;
-              urlFr = altResult.url;
-            } else {
-              contentEn = altResult.content;
-              titleEn = altResult.title;
-              urlEn = altResult.url;
-            }
-            
-            errorDiv.innerHTML = '<div class="text-green-800 bg-green-100 p-3 rounded-lg border border-green-800 shadow-xl font-bold text-sm text-center"><i class="fa-solid fa-check-circle mr-1"></i> Successful content import.</div>';
-            
-            // Auto hide success message after 4 seconds
-            setTimeout(() => { if(errorDiv.innerHTML.includes('Successful')) errorDiv.innerHTML = ''; }, 4000);
-            
-          } catch (altError) {
-            errorDiv.innerHTML = '<div class="text-yellow-800 bg-yellow-100 p-3 rounded-lg border border-yellow-800 shadow-xl font-bold text-sm text-center"><i class="fa-solid fa-circle-info mr-1"></i> Loaded one language. Could not find alternate language version.</div>';
-            if (!isEnglish) {
-              showPlaceholder('en');
-            } else {
-              showPlaceholder('fr');
-            }
-          }
+        errorDiv.innerHTML = '<div class="text-green-800 bg-green-100 p-3 rounded-lg border border-green-800 shadow-xl font-bold text-sm text-center"><i class="fa-solid fa-check-circle mr-1"></i> Successful content import.</div>';
+        
+        // Auto hide success message after 4 seconds
+        setTimeout(() => { if(errorDiv.innerHTML.includes('Successful')) errorDiv.innerHTML = ''; }, 4000);
+        
+      } catch (altError) {
+        errorDiv.innerHTML = '<div class="text-yellow-800 bg-yellow-100 p-3 rounded-lg border border-yellow-800 shadow-xl font-bold text-sm text-center"><i class="fa-solid fa-circle-info mr-1"></i> Loaded one language. Could not find alternate language version.</div>';
+        // Show placeholder in the window that didn't load
+        if (isEnglish) {
+          showPlaceholder('fr');
         } else {
-          errorDiv.innerHTML = '<div class="text-yellow-800 bg-yellow-100 p-3 rounded-lg border border-yellow-800 shadow-xl font-bold text-sm text-center"><i class="fa-solid fa-circle-info mr-1"></i> Loaded one language. Could not find language toggle link.</div>';
-          if (!isEnglish) {
-            showPlaceholder('en');
-          } else {
-            showPlaceholder('fr');
-          }
+          showPlaceholder('en');
         }
-        
-        updateExportButtons();
-        
-      } catch (error) {
-        errorDiv.innerHTML = '<div class="text-red-700 bg-red-100 p-3 rounded-lg border border-red-700 shadow-xl font-bold text-sm text-center"><i class="fa-solid fa-circle-xmark mr-1"></i> Error loading content: ' + error.message + '</div>';
+      }
+    } else {
+      errorDiv.innerHTML = '<div class="text-yellow-800 bg-yellow-100 p-3 rounded-lg border border-yellow-800 shadow-xl font-bold text-sm text-center"><i class="fa-solid fa-circle-info mr-1"></i> Loaded one language. Could not find language toggle link.</div>';
+      // Show placeholder in the window that didn't load
+      if (isEnglish) {
+        showPlaceholder('fr');
+      } else {
+        showPlaceholder('en');
       }
     }
+    
+    updateExportButtons();
+    
+  } catch (error) {
+    errorDiv.innerHTML = '<div class="text-red-700 bg-red-100 p-3 rounded-lg border border-red-700 shadow-xl font-bold text-sm text-center"><i class="fa-solid fa-circle-xmark mr-1"></i> Error loading content: ' + error.message + '</div>';
+  }
+}
     
     async function toBase64(url) {
       try {
@@ -584,8 +620,73 @@
         });
         
         if (imagePromises.length > 0) await Promise.all(imagePromises);
-        
-        const urlHeader = sourceUrl ? `
+
+		// Convert GCDS components to standard HTML for Word export
+		doc.querySelectorAll('gcds-button').forEach(btn => {
+		  const newBtn = doc.createElement('button');
+		  newBtn.innerHTML = btn.innerHTML || btn.textContent;
+		  const type = btn.getAttribute('button-role') || btn.getAttribute('type') || 'primary';
+		  let bgColor = '#26374a';
+		  if (type === 'primary') bgColor = '#26374a';
+		  else if (type === 'secondary') bgColor = '#fff';
+		  else if (type === 'danger') bgColor = '#d3080c';
+		  newBtn.setAttribute('style', `background-color: ${bgColor}; color: ${type === 'secondary' ? '#26374a' : '#fff'}; padding: 12px 24px; border: ${type === 'secondary' ? '2px solid #26374a' : 'none'}; border-radius: 4px; font-weight: 700; font-size: 16px; cursor: pointer; display: inline-block;`);
+		  btn.replaceWith(newBtn);
+		});
+
+		doc.querySelectorAll('gcds-alert').forEach(alert => {
+		  const div = doc.createElement('div');
+		  const alertType = alert.getAttribute('alert-role') || 'info';
+		  let bgColor = '#d9edf7', borderColor = '#269abc';
+		  if (alertType === 'danger') { bgColor = '#f2dede'; borderColor = '#d3080c'; }
+		  else if (alertType === 'warning') { bgColor = '#fcf8e3'; borderColor = '#f90'; }
+		  else if (alertType === 'success') { bgColor = '#dff0d8'; borderColor = '#278400'; }
+		  
+		  div.innerHTML = alert.innerHTML || alert.textContent;
+		  div.setAttribute('style', `background-color: ${bgColor}; border-left: 4px solid ${borderColor}; padding: 15px; margin: 15px 0; color: #000;`);
+		  alert.replaceWith(div);
+		});
+
+		doc.querySelectorAll('gcds-card').forEach(card => {
+		  const div = doc.createElement('div');
+		  div.innerHTML = card.innerHTML || card.textContent;
+		  div.setAttribute('style', 'border: 1px solid #ddd; border-radius: 4px; padding: 20px; margin: 15px 0; background-color: #fff;');
+		  card.replaceWith(div);
+		});
+
+		doc.querySelectorAll('gcds-heading').forEach(heading => {
+		  const level = heading.getAttribute('tag') || 'h2';
+		  const newHeading = doc.createElement(level);
+		  newHeading.innerHTML = heading.innerHTML || heading.textContent;
+		  newHeading.setAttribute('style', 'font-weight: 700; margin: 20px 0 10px 0; color: #26374a;');
+		  heading.replaceWith(newHeading);
+		});
+
+		doc.querySelectorAll('gcds-text').forEach(text => {
+		  const p = doc.createElement('p');
+		  p.innerHTML = text.innerHTML || text.textContent;
+		  text.replaceWith(p);
+		});
+
+		doc.querySelectorAll('gcds-link').forEach(link => {
+		  const a = doc.createElement('a');
+		  a.innerHTML = link.innerHTML || link.textContent;
+		  a.setAttribute('href', link.getAttribute('href') || '#');
+		  a.setAttribute('style', 'color: #26374a; text-decoration: underline;');
+		  link.replaceWith(a);
+		});
+
+		doc.querySelectorAll('gcds-container').forEach(container => {
+		  const div = doc.createElement('div');
+		  div.innerHTML = container.innerHTML;
+		  div.setAttribute('style', 'max-width: 1200px; margin: 0 auto; padding: 20px;');
+		  container.replaceWith(div);
+		});
+
+		// Remove GCDS header and footer from Word export
+		doc.querySelectorAll('gcds-header, gcds-footer').forEach(el => el.remove());
+
+		const urlHeader = sourceUrl ? `
             <div style="margin-bottom: 20px; padding: 15px; background-color: #f0f0f0; border-left: 4px solid #269abc;">
                 <p style="margin: 0; font-size: 12px; color: #666;"><strong>Source URL:</strong></p>
                 <p style="margin: 5px 0 0 0; font-size: 14px; word-break: break-all;"><a href="${sourceUrl}">${sourceUrl}</a></p>
