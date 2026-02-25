@@ -467,20 +467,20 @@
     }
     
     window.exportWord = async function(lang) {
-      const errorDiv = document.getElementById('error');
-      const exportBtn = document.getElementById(lang === 'en' ? 'exportEnBtn' : 'exportFrBtn');
-      
-      const content = lang === 'en' ? contentEn : contentFr;
-      const title = lang === 'en' ? titleEn : titleFr;
-      const sourceUrl = lang === 'en' ? urlEn : urlFr;
-      
-      if (!content) return;
-      
-      const originalBtnText = exportBtn.innerHTML;
-      exportBtn.disabled = true;
-      exportBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
-      
-      try {
+    const errorDiv = document.getElementById('error');
+    const exportBtn = document.getElementById(lang === 'en' ? 'exportEnBtn' : 'exportFrBtn');
+    
+    const content = lang === 'en' ? contentEn : contentFr;
+    const title = lang === 'en' ? titleEn : titleFr;
+    const sourceUrl = lang === 'en' ? urlEn : urlFr;
+    
+    if (!content) return;
+    
+    const originalBtnText = exportBtn.innerHTML;
+    exportBtn.disabled = true;
+    exportBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
+    
+    try {
         if (typeof htmlDocx === 'undefined') throw new Error('Library missing.');
         
         const parser = new DOMParser();
@@ -495,101 +495,101 @@
         
         // Enhanced list processing - preserve WET list types
         doc.querySelectorAll('ol, ul').forEach(list => {
-          const classes = list.className || '';
-          
-          if (classes.includes('lst-lwr-alph')) {
-            list.setAttribute('style', 'list-style-type: lower-alpha;');
-          } else if (classes.includes('lst-upr-alph')) {
-            list.setAttribute('style', 'list-style-type: upper-alpha;');
-          } else if (classes.includes('lst-lwr-rmn')) {
-            list.setAttribute('style', 'list-style-type: lower-roman;');
-          } else if (classes.includes('lst-upr-rmn')) {
-            list.setAttribute('style', 'list-style-type: upper-roman;');
-          } else if (list.tagName === 'OL') {
-            list.setAttribute('style', 'list-style-type: decimal;');
-          } else {
-            list.setAttribute('style', 'list-style-type: disc;');
-          }
-          
-          list.removeAttribute('class');
+            const classes = list.className || '';
+            
+            if (classes.includes('lst-lwr-alph')) {
+                list.setAttribute('style', 'list-style-type: lower-alpha;');
+            } else if (classes.includes('lst-upr-alph')) {
+                list.setAttribute('style', 'list-style-type: upper-alpha;');
+            } else if (classes.includes('lst-lwr-rmn')) {
+                list.setAttribute('style', 'list-style-type: lower-roman;');
+            } else if (classes.includes('lst-upr-rmn')) {
+                list.setAttribute('style', 'list-style-type: upper-roman;');
+            } else if (list.tagName === 'OL') {
+                list.setAttribute('style', 'list-style-type: decimal;');
+            } else {
+                list.setAttribute('style', 'list-style-type: disc;');
+            }
+            
+            list.removeAttribute('class');
         });
         
         // Enhanced table processing with WET4 styling
         doc.querySelectorAll('table').forEach(table => {
-          table.setAttribute('style', 'border-collapse: collapse; width: 100%; border: 1px solid #000;');
-          
-          table.querySelectorAll('th, td').forEach(cell => {
-            let styles = ['border: 1px solid #000', 'padding: 8px'];
-            const classes = cell.className || '';
+            table.setAttribute('style', 'border-collapse: collapse; width: 100%; border: 1px solid #000;');
             
-            if (classes.includes('bg-primary')) {
-              styles.push('background-color: #269abc', 'color: #fff');
-            } else if (classes.includes('bg-success')) {
-              styles.push('background-color: #278400', 'color: #fff');
-            } else if (classes.includes('bg-info')) {
-              styles.push('background-color: #269abc', 'color: #fff');
-            } else if (classes.includes('bg-warning')) {
-              styles.push('background-color: #f90', 'color: #000');
-            } else if (classes.includes('bg-danger')) {
-              styles.push('background-color: #d3080c', 'color: #fff');
-            } else if (classes.includes('active')) {
-              styles.push('background-color: #d9edf7');
-            } else if (classes.includes('success')) {
-              styles.push('background-color: #dff0d8');
-            } else if (classes.includes('warning')) {
-              styles.push('background-color: #fcf8e3');
-            } else if (classes.includes('danger')) {
-              styles.push('background-color: #f2dede');
-            } else if (classes.includes('info')) {
-              styles.push('background-color: #d9edf7');
-            }
+            table.querySelectorAll('th, td').forEach(cell => {
+                let styles = ['border: 1px solid #000', 'padding: 8px'];
+                const classes = cell.className || '';
+                
+                if (classes.includes('bg-primary')) {
+                    styles.push('background-color: #269abc', 'color: #fff');
+                } else if (classes.includes('bg-success')) {
+                    styles.push('background-color: #278400', 'color: #fff');
+                } else if (classes.includes('bg-info')) {
+                    styles.push('background-color: #269abc', 'color: #fff');
+                } else if (classes.includes('bg-warning')) {
+                    styles.push('background-color: #f90', 'color: #000');
+                } else if (classes.includes('bg-danger')) {
+                    styles.push('background-color: #d3080c', 'color: #fff');
+                } else if (classes.includes('active')) {
+                    styles.push('background-color: #d9edf7');
+                } else if (classes.includes('success')) {
+                    styles.push('background-color: #dff0d8');
+                } else if (classes.includes('warning')) {
+                    styles.push('background-color: #fcf8e3');
+                } else if (classes.includes('danger')) {
+                    styles.push('background-color: #f2dede');
+                } else if (classes.includes('info')) {
+                    styles.push('background-color: #d9edf7');
+                }
+                
+                if (cell.tagName === 'TH' && !classes.match(/bg-|active|success|warning|danger|info/)) {
+                    styles.push('background-color: #f5f5f5', 'font-weight: bold');
+                }
+                
+                if (classes.includes('text-center')) {
+                    styles.push('text-align: center');
+                } else if (classes.includes('text-right')) {
+                    styles.push('text-align: right');
+                }
+                
+                cell.setAttribute('style', styles.join('; ') + ';');
+                cell.removeAttribute('class');
+            });
             
-            if (cell.tagName === 'TH' && !classes.match(/bg-|active|success|warning|danger|info/)) {
-              styles.push('background-color: #f5f5f5', 'font-weight: bold');
-            }
-            
-            if (classes.includes('text-center')) {
-              styles.push('text-align: center');
-            } else if (classes.includes('text-right')) {
-              styles.push('text-align: right');
-            }
-            
-            cell.setAttribute('style', styles.join('; ') + ';');
-            cell.removeAttribute('class');
-          });
-          
-          table.removeAttribute('class');
+            table.removeAttribute('class');
         });
         
         // Clean up other attributes
         doc.querySelectorAll('*').forEach(el => {
-          if (el.tagName !== 'OL' && el.tagName !== 'UL' && el.tagName !== 'TABLE') {
-            el.removeAttribute('class');
-          }
-          el.removeAttribute('id');
-          el.removeAttribute('onclick');
-          if (el.tagName !== 'OL' && el.tagName !== 'UL' && el.tagName !== 'TABLE' && el.tagName !== 'TH' && el.tagName !== 'TD') {
-            el.removeAttribute('style');
-          }
+            if (el.tagName !== 'OL' && el.tagName !== 'UL' && el.tagName !== 'TABLE') {
+                el.removeAttribute('class');
+            }
+            el.removeAttribute('id');
+            el.removeAttribute('onclick');
+            if (el.tagName !== 'OL' && el.tagName !== 'UL' && el.tagName !== 'TABLE' && el.tagName !== 'TH' && el.tagName !== 'TD') {
+                el.removeAttribute('style');
+            }
         });
         
         // Process images
         const images = doc.querySelectorAll('img');
         const imagePromises = Array.from(images).map(async (img) => {
-          const src = img.getAttribute('src');
-          if (src && !src.startsWith('data:')) {
-            const base64 = await toBase64(src);
-            if (base64) img.setAttribute('src', base64);
-          }
+            const src = img.getAttribute('src');
+            if (src && !src.startsWith('data:')) {
+                const base64 = await toBase64(src);
+                if (base64) img.setAttribute('src', base64);
+            }
         });
         
         if (imagePromises.length > 0) await Promise.all(imagePromises);
         
         const urlHeader = sourceUrl ? `
-          <div style="margin-bottom: 20px; padding: 15px; background-color: #f0f0f0; border-left: 4px solid #269abc;">
-            <p style="margin: 0; font-size: 12px; color: #666;"><strong>Source URL:</strong></p>
-            <p style="margin: 5px 0 0 0; font-size: 14px; word-break: break-all;"><a href="${sourceUrl}">${sourceUrl}</a></p>
-          </div>
+            <div style="margin-bottom: 20px; padding: 15px; background-color: #f0f0f0; border-left: 4px solid #269abc;">
+                <p style="margin: 0; font-size: 12px; color: #666;"><strong>Source URL:</strong></p>
+                <p style="margin: 5px 0 0 0; font-size: 14px; word-break: break-all;"><a href="${sourceUrl}">${sourceUrl}</a></p>
+            </div>
         ` : '';
         
         // Added Calibri font-family to the body tag
@@ -599,7 +599,29 @@
         const url = URL.createObjectURL(blob);
         const downloadLink = document.createElement('a');
         downloadLink.href = url;
-        downloadLink.download = `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.docx`;
+        
+        // Generate filename from the language-specific URL and date
+        let filename = 'canada_page';
+        if (sourceUrl) {
+            try {
+                const urlObj = new URL(sourceUrl);
+                const pathname = urlObj.pathname;
+                // Get the last part of the path, remove .html extension if present
+                const lastPart = pathname.split('/').filter(p => p).pop() || 'page';
+                filename = lastPart.replace(/\.html?$/i, '').replace(/[^a-z0-9_-]/gi, '_');
+            } catch (e) {
+                // If URL parsing fails, use title as fallback
+                filename = title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+            }
+        }
+        
+        // Add language suffix and date in YYYYMMDD format
+        const today = new Date();
+        const dateStr = today.getFullYear() + 
+                       String(today.getMonth() + 1).padStart(2, '0') + 
+                       String(today.getDate()).padStart(2, '0');
+        
+        downloadLink.download = `${filename}_${dateStr}.docx`;
         document.body.appendChild(downloadLink);
         downloadLink.click();
         document.body.removeChild(downloadLink);
@@ -610,13 +632,13 @@
         // Auto hide success message after 4 seconds
         setTimeout(() => { if(errorDiv.innerHTML.includes('generated successfully')) errorDiv.innerHTML = ''; }, 4000);
         
-      } catch (e) {
+    } catch (e) {
         errorDiv.innerHTML = `<div class="text-red-700 bg-red-100 p-3 rounded-lg border border-red-700 shadow-xl font-bold text-sm text-center"><i class="fa-solid fa-circle-xmark mr-1"></i> Error: ${e.message}</div>`;
-      } finally {
+    } finally {
         exportBtn.disabled = false;
         exportBtn.innerHTML = originalBtnText;
-      }
     }
+}
     
     // Initialize placeholders on load
     showPlaceholder('en');
