@@ -5,8 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DocBuddy</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/html-docx-js@0.3.1/dist/html-docx.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
   <style>
     ::-webkit-scrollbar {
       width: 8px;
@@ -29,14 +41,14 @@
     <!-- Top Control Bar -->
     <div class="bg-slate-900 p-4 shadow-lg">
       <div class="flex items-center gap-4">
-        <h1 class="text-2xl mt-0 mb-4 font-bold text-white">
+        <h1 class="text-2xl font-bold text-white">
           <i class="fa-solid fa-file-word"></i> DocBuddy
         </h1>
         
         <div class="flex-1 flex gap-3 items-center">
           <div class="flex-1 relative">
             <input type="text" id="urlInput" placeholder="Enter Canada.ca URL (English or French)" 
-              class="w-full p-2.5 pr-10 border-2 border-zinc-600 rounded text-sm bg-slate-900 text-white outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-500" autocomplete="off">
+              class="w-full p-2.5 pr-10 border-2 border-zinc-600 rounded text-sm bg-[#1a1a1a] text-white outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-500" autocomplete="off">
             <button type="button" onclick="clearInput()" title="Clear" 
               class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
@@ -159,6 +171,83 @@
       
       return null;
     }
+
+    // --- AJAX FETCH INTEGRATION START ---
+    window.resolveAjaxElements = async function(doc, baseUrl) {
+      // WET supports several injection methods
+      const ajaxTypes = ['data-ajax-replace', 'data-ajax-before', 'data-ajax-after', 'data-ajax-append', 'data-ajax-prepend'];
+      let depth = 0;
+      const maxDepth = 3; // Prevent infinite loops in case of nested ajax calls
+
+      while (depth < maxDepth) {
+          let foundAny = false;
+          for (const type of ajaxTypes) {
+              const elements = Array.from(doc.querySelectorAll(`[${type}]`));
+              for (const el of elements) {
+                  foundAny = true;
+                  const fragmentUrl = el.getAttribute(type);
+                  
+                  // Remove the attribute immediately so we don't re-process it
+                  el.removeAttribute(type);
+                  
+                  if (!fragmentUrl) continue;
+                  
+                  try {
+                      // Resolve relative URLs (like /content/canadasite/...)
+                      const absoluteUrl = new URL(fragmentUrl, baseUrl).href;
+                      const [urlPart, hashPart] = absoluteUrl.split('#');
+                      
+                      // Fetch the fragment HTML
+                      let fragmentHtml = '';
+                      try {
+                          const response = await fetch(urlPart);
+                          if (!response.ok) throw new Error('Direct fetch failed');
+                          fragmentHtml = await response.text();
+                      } catch (e) {
+                          // Fallback to proxy just like the main fetch
+                          const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(urlPart)}`;
+                          const proxyResponse = await fetch(proxyUrl);
+                          if (!proxyResponse.ok) throw new Error('Proxy fetch failed');
+                          fragmentHtml = await proxyResponse.text();
+                      }
+                      
+                      const fragmentDoc = new DOMParser().parseFromString(fragmentHtml, 'text/html');
+                      let contentToInject = '';
+                      
+                      // If a hash is provided, only grab that specific element. Otherwise, grab the whole body.
+                      if (hashPart) {
+                          const targetEl = fragmentDoc.getElementById(hashPart);
+                          if (targetEl) {
+                              contentToInject = targetEl.outerHTML;
+                          }
+                      } else {
+                          contentToInject = fragmentDoc.body.innerHTML;
+                      }
+                      
+                      // Inject the content based on the WET attribute type
+                      if (contentToInject) {
+                          if (type === 'data-ajax-replace') {
+                              el.outerHTML = contentToInject;
+                          } else if (type === 'data-ajax-before') {
+                              el.insertAdjacentHTML('beforebegin', contentToInject);
+                          } else if (type === 'data-ajax-after') {
+                              el.insertAdjacentHTML('afterend', contentToInject);
+                          } else if (type === 'data-ajax-append') {
+                              el.insertAdjacentHTML('beforeend', contentToInject);
+                          } else if (type === 'data-ajax-prepend') {
+                              el.insertAdjacentHTML('afterbegin', contentToInject);
+                          }
+                      }
+                  } catch (err) {
+                      console.warn(`DocBuddy: Failed to resolve WET ajax content for ${fragmentUrl}`, err);
+                  }
+              }
+          }
+          if (!foundAny) break;
+          depth++;
+      }
+    };
+    // --- AJAX FETCH INTEGRATION END ---
     
     function fixPaths(html, baseUrl) {
       const parser = new DOMParser();
@@ -245,6 +334,10 @@
       
       const parser = new DOMParser();
       const doc = parser.parseFromString(html, 'text/html');
+
+      // NEW: Resolve all WET-BOEW AJAX elements before extracting main content
+      await window.resolveAjaxElements(doc, url);
+
       const mainContent = doc.querySelector('main') || doc.querySelector('[role="main"]') || doc.querySelector('#wb-cont') || doc.body;
       
       if (mainContent) {
@@ -284,7 +377,7 @@
       
       const fullUrl = url.startsWith('http') ? url : 'https://' + url;
       
-      errorDiv.innerHTML = '<div class="text-gray-300 italic text-sm">Loading content...</div>';
+      errorDiv.innerHTML = '<div class="text-gray-300 italic text-sm">Loading content and dynamic fragments...</div>';
       
       try {
         // Fetch the first page
@@ -323,7 +416,7 @@
               urlEn = altResult.url;
             }
             
-            errorDiv.innerHTML = '<div class="text-green-800 bg-green-100 p-2 rounded border border-green-800 font-bold text-sm">Both languages loaded successfully!</div>';
+            errorDiv.innerHTML = '<div class="text-green-800 bg-green-100 p-2 rounded border border-green-800 font-bold text-sm">Both languages and fragments loaded successfully!</div>';
           } catch (altError) {
             errorDiv.innerHTML = '<div class="text-yellow-800 bg-yellow-100 p-2 rounded border border-yellow-800 font-bold text-sm">Loaded one language. Could not find alternate language version.</div>';
             if (!isEnglish) {
