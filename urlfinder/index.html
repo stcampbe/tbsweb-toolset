@@ -5,12 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LinkBuddy</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/html-docx-js@0.3.1/dist/html-docx.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       theme: {
         extend: {
+		  fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          }
           colors: {
             'wet-blue': '#0066cc',
             'wet-blue-hover': '#0052a3',
@@ -39,6 +43,18 @@
         font-family: 'Inter', sans-serif;
         background-color: #0F172A;
     }
+	
+	/* Modal link styles */
+  .info-modal-content a {
+    color: #60a5fa;
+    text-decoration: underline;
+    font-weight: 500;
+    transition: color 0.2s;
+  }
+  
+  .info-modal-content a:hover {
+    color: #93c5fd;
+  }
     
   </style>
 </head>
@@ -61,8 +77,33 @@
         const appTemplate = `
         <div id="app-root" class="main-container flex h-screen w-full gap-0">
             <div class="left-panel w-1/4 min-w-[300px] max-w-[50%] p-5 overflow-y-auto shadow-md flex flex-col z-10" id="leftPanel">
-            <h1 class="text-2xl mt-0 mb-4 font-bold text-white"><i class="fa-solid fa-link"></i> LinkBuddy</h1>
+            <h1 class="text-2xl mt-0 mb-4 font-bold text-white"><i class="fa-solid fa-link"></i> LinkBuddy
+			<button id="infoBtn" class="px-2 py-1 text-lg font-semibold bg-gray-700 text-white rounded-xl hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-600 focus:ring-opacity-50 font-bold"><i class="fa-solid fa-circle-info"></i></button>
+			</h1>
+            <div id="infoModal" class="fixed inset-0 z-50 overflow-y-auto hidden bg-gray-900 bg-opacity-75 flex items-center justify-center">
+    <div class="bg-gray-800 p-8 rounded-lg shadow-xl max-w-2xl w-full text-white relative">
+        <button id="closeInfoModalBtn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-200">
+            <i class="fas fa-times"></i>
+        </button>
+        <h2 class="text-xl font-bold mb-4"><i class="fa-solid fa-circle-info"></i> App Info</h2>
+        <div class="info-modal-content text-sm text-gray-300 space-y-4">
+            <p>This is a small application made find and check all links within the content area of a Canada.ca page.</p>
+			<section class="p-4 mt-2 text-sm text-blue-900 rounded-lg bg-cyan-50">
+			<p class="mb-2"><strong>How to use:</strong></p>
+			<p class="mb-2">Simply enter an English OR French www.canada.ca URL, then click <strong>Load Page Content</strong>. The relevant content will populate the preview area (with no header/footer) and multiple options will be available to use. Disable theme (<i class="fa-solid fa-ban"></i>), export a CSV file of all links, export a Word doc, check broken links (and export a CSV of errors) or deep search for URL's. <strong>Use the preview for reference only as pages may not be rendered correctly 1:1</strong>.</p>
+			<p class="mb-2"><strong>IMPORTANT:</strong> This may not work for all Canada.ca subdomains (like parks.canada.ca), nor any *.gc.ca and any other external website. For best results, pages must be hosted by AEM on Canada.ca (like <a href="https://www.canada.ca/en/government/system.html" target="_blank">www.canada.ca/en/government/system.html</a>)</p>
             
+			</section>
+			<p>Developed with help from AI (Claude and Gemini). However, it's important to note that this app <strong>does NOT actively use AI</strong> in any way. No user data is being collected or stored in any form.</p>
+			<p>Originally developed for web services needs at Treasury Board of Canada Secretariat. Other helpful web-related tools available:</p>
+			<ul>
+			<li class="mb-2"><i class="fa-solid fa-pen-to-square"></i> <a href="https://stcampbe.github.io/tbsweb-toolset/rich-content-wizard/" target="_blank">MarkupBuddy</a></li>
+			<li><i class="fa-solid fa-file-word"></i> <a href="https://stcampbe.github.io/tbsweb-toolset/urltodoc/" target="_blank">DocBuddy</a></li>
+			</ul>
+            <p>Project source code is <a href="https://github.com/stcampbe/tbsweb-toolset/tree/main/urlfinder" target="_blank">available on GitHub</a>. For more detailed information or help, please contact:</p><p><strong>Stratton Campbell</strong><br> Communications Officer, Web Publishing @ Strategic Communications and Ministerial Affairs<br>Treasury Board of Canada Secretariat / Government of Canada<br><a href="mailto:Stratton.Campbell@tbs-sct.gc.ca">Stratton.Campbell@tbs-sct.gc.ca</a></p>
+        </div>
+    </div>
+</div>
             <div class="input-group mb-4">
                 <label for="urlInput" class="block mb-1.5 text-white text-sm">Enter a Canada.ca page to search:</label>
                 <div class="relative w-full">
@@ -1449,6 +1490,21 @@ let warningCount = 0;
         }
 
         window.showPlaceholder();
+		
+		document.getElementById('infoBtn').addEventListener('click', function() {
+  document.getElementById('infoModal').classList.remove('hidden');
+});
+
+document.getElementById('closeInfoModalBtn').addEventListener('click', function() {
+  document.getElementById('infoModal').classList.add('hidden');
+});
+
+// Close modal when clicking outside of it
+document.getElementById('infoModal').addEventListener('click', function(e) {
+  if (e.target === this) {
+    this.classList.add('hidden');
+  }
+});
 
     })();
   </script>
