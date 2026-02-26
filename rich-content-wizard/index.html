@@ -6,22 +6,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MarkupBuddy</title>
 	<meta name="author" content="Stratton Campbell - Communications Officer, Web Publishing @ Strategic Communications and Ministerial Affairs at Treasury Board of Canada Secretariat">
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+	<script src="https://cdn.jsdelivr.net/npm/html-docx-js@0.3.1/dist/html-docx.min.js"></script>
     <script src="js/tailwind.js"></script>
     <script src="js/beautify-html.min.js"></script>
     <script src="js/loader.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css">
+    
 </head>
 
 <body>
     <header class="content-wizard-header">
-        <h1 class="text-left"><i class="fa-solid fa-pen-to-square"></i> MarkupBuddy <button id="infoBtn" class="px-2 py-1 text-lg font-semibold bg-gray-700 text-white rounded-xl hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-600 focus:ring-opacity-50 font-bold"><i class="fa-solid fa-circle-info"></i></button><button id="howToUseBtn"  class="ml-2 px-2 py-2 text-sm font-semibold bg-gray-700 text-white rounded-xl hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-600 focus:ring-opacity-50 font-bold">How to Use <i class="fa-solid fa-book-open"></i></button></h1>
+        <h1 class="text-left"><i class="fa-solid fa-pen-to-square"></i> MarkupBuddy <button id="infoBtn" class="px-2 py-1 text-lg font-semibold bg-gray-700 text-white rounded-xl hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-600 focus:ring-opacity-50 font-bold"><i class="fa-solid fa-circle-info"></i></button><button id="howToUseBtn"  class="ml-2 px-2 py-2 text-sm font-semibold bg-gray-700 text-white rounded-xl hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-600 focus:ring-opacity-50 font-bold">How to Use <i class="fa-solid fa-book-open"></i></button>
+		<a href="/tbsweb-toolset/urlfinder/" target="_blank" class="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold">LinkBuddy <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+		<a href="/tbsweb-toolset/urltodoc/" target="_blank" class="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold">DocBuddy <i class="fa-solid fa-arrow-up-right-from-square"></i></a></h1>
         <div id="editorModeToggle" class="inline-flex rounded-md shadow-sm" role="group">
             <label for="table-search-dropdown" class="px-3 py-2 text-sm font-medium">Toolset:</label>
             <button id="contentModeBtn" class="px-3 py-1 text-lg bg-gray-600 text-white rounded-l-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold"><i class="fa-solid fa-file-code"></i> Content Mode</button>
             <button id="tableModeBtn" class="px-3 py-1 text-lg bg-gray-600 text-white rounded-r-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 font-bold"><i class="fa-solid fa-table"></i> Table Mode</button>
         </div>
-        <a href="/tbsweb-toolset/urlfinder/" class="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 font-bold">LinkBuddy <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+        
     </header>
 
 
@@ -906,15 +911,20 @@
         </div>
     </div>
 	<div id="infoModal" class="fixed inset-0 z-50 overflow-y-auto hidden bg-gray-900 bg-opacity-75 flex items-center justify-center">
-    <div class="bg-gray-800 p-8 rounded-lg shadow-xl max-w-lg w-full text-white relative">
+    <div class="bg-gray-800 p-8 rounded-lg shadow-xl max-w-2xl w-full text-white relative">
         <button id="closeInfoModalBtn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-200">
             <i class="fas fa-times"></i>
         </button>
         <h2 class="text-xl font-bold mb-4"><i class="fa-solid fa-circle-info"></i> App Info</h2>
         <div class="info-modal-content text-sm text-gray-300 space-y-4">
-            <p>This browser-based web application is a rich-content HTML "wizard" designed to provide a free development environment for web services needs at <a href="https://www.canada.ca/en/treasury-board-secretariat.html">Treasury Board of Canada Secretariat</a>.</p>
+            <p>This browser-based web application is a rich-content HTML "wizard" designed to provide a free and fast development environment for GoC web services teams.</p>
             <p>It's tailor-made to handle conversion of MS Office documents and offer quick, clean, accessible formatting of HTML for use on AEM (Adobe Experience Manager). It also provides a space to produce, validate and preview in real time before the need to interact with a live staging enivornment first. Compatible with WET4, GCWeb and the new GoC Design System.</p>
-            <p>Developed with help from the following tools and frameworks: <em><a href="https://hugerte.org/">HugeRTE</a>, <a href="https://microsoft.github.io/monaco-editor/">Monaco editor</a>, <a href="https://tailwindcss.com/">Tailwind CSS</a>, <a href="https://fontawesome.com/">Font Awesome</a>, <a href="https://github.com/beautifier/js-beautify">HTML Beautify</a> and Radia AI (primarily Google Gemini 2.5)</em>.</p>
+            <p>Developed with help from the following tools and frameworks: <em><a href="https://hugerte.org/">HugeRTE</a>, <a href="https://microsoft.github.io/monaco-editor/">Monaco editor</a>, <a href="https://tailwindcss.com/">Tailwind CSS</a>, <a href="https://fontawesome.com/">Font Awesome</a>, <a href="https://github.com/beautifier/js-beautify">HTML Beautify</a> and Radia AI (primarily Google Gemini)</em>. Note that this app was developed with help from AI, but this app <strong>does NOT actively use AI</strong> in any way. No user data is being collected or stored in any form.</p>
+			<p>Originally developed for web services needs at Treasury Board of Canada Secretariat. Other helpful web-related tools available:</p>
+			<ul>
+			<li class="mb-2"><i class="fa-solid fa-link"></i> <a href="https://stcampbe.github.io/tbsweb-toolset/urlfinder/" target="_blank">LinkBuddy</a></li>
+			<li><i class="fa-solid fa-file-word"></i> <a href="https://stcampbe.github.io/tbsweb-toolset/urltodoc/" target="_blank">DocBuddy</a></li>
+			</ul>
             <p>Project source code is <a href="https://github.com/stcampbe/tbsweb-toolset/tree/main/rich-content-wizard">available on GitHub</a>. For more detailed information or help, please contact:</p><p><strong>Stratton Campbell</strong><br> Communications Officer, Web Publishing @ Strategic Communications and Ministerial Affairs<br>Treasury Board of Canada Secretariat / Government of Canada<br><a href="mailto:Stratton.Campbell@tbs-sct.gc.ca">Stratton.Campbell@tbs-sct.gc.ca</a></p>
         </div>
     </div>
