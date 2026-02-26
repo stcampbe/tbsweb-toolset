@@ -21,18 +21,30 @@
   </script>
   <style>
     ::-webkit-scrollbar {
-      width: 8px;
-    }
-    ::-webkit-scrollbar-track {
-      background: transparent; 
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #ccc; 
-      border-radius: 4px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #aaa; 
-    }
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent; 
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #ccc; 
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #aaa; 
+  }
+  
+  /* Modal link styles */
+  .info-modal-content a {
+    color: #60a5fa;
+    text-decoration: underline;
+    font-weight: 500;
+    transition: color 0.2s;
+  }
+  
+  .info-modal-content a:hover {
+    color: #93c5fd;
+  }
   </style>
 </head>
 <body class="h-screen w-screen overflow-hidden bg-gray-100 text-black font-sans relative">
@@ -43,6 +55,7 @@
       <div class="flex items-center gap-4">
         <h1 class="text-2xl font-bold text-white">
           <i class="fa-solid fa-file-word"></i> DocBuddy
+		  <button id="infoBtn" class="px-2 py-1 text-lg font-semibold bg-gray-700 text-white rounded-xl hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-600 focus:ring-opacity-50 font-bold"><i class="fa-solid fa-circle-info"></i></button>
         </h1>
         
         <div class="flex-1 flex gap-3 items-center">
@@ -93,6 +106,30 @@
     <!-- Floating Error / Status Div (Moved here) -->
     <div id="error" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 w-11/12 max-w-2xl empty:hidden drop-shadow-2xl"></div>
   </div>
+  <div id="infoModal" class="fixed inset-0 z-50 overflow-y-auto hidden bg-gray-900 bg-opacity-75 flex items-center justify-center">
+    <div class="bg-gray-800 p-8 rounded-lg shadow-xl max-w-2xl w-full text-white relative">
+        <button id="closeInfoModalBtn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-200">
+            <i class="fas fa-times"></i>
+        </button>
+        <h2 class="text-xl font-bold mb-4"><i class="fa-solid fa-circle-info"></i> App Info</h2>
+        <div class="info-modal-content text-sm text-gray-300 space-y-4">
+            <p>This is a small application focusing on URL's within Canada.ca pages to QA and check.</p>
+			<section class="p-4 mt-2 text-sm text-blue-900 rounded-lg bg-cyan-50">
+			<p class="mb-2"><strong>How to use:</strong></p>
+			<p class="mb-2">Simply enter an English OR French www.canada.ca URL, then click <strong>Load Content</strong>. The relevant content will populate the preview area (with no header/footer) and export options will be made available. <strong>Use the preview for reference only as pages may not be rendered correctly 1:1</strong>.</p>
+			<p class="mb-2"><strong>IMPORTANT:</strong> This may not work for all Canada.ca subdomains (like parks.canada.ca), nor any *.gc.ca and any other external website. For best results, pages must be hosted by AEM on Canada.ca (like <a href="https://www.canada.ca/en/government/system.html" target="_blank">www.canada.ca/en/government/system.html</a>)</p>
+            
+			</section>
+			<p>Developed with help from AI (Claude and Gemini). However, it's important to note that this app <strong>does NOT actively use AI</strong> in any way. No user data is being collected or stored in any form.</p>
+			<p>Originally developed for web services needs at Treasury Board of Canada Secretariat. Other helpful web-related tools available:</p>
+			<ul>
+			<li class="mb-2"><i class="fa-solid fa-pen-to-square"></i> <a href="https://stcampbe.github.io/tbsweb-toolset/rich-content-wizard/" target="_blank">MarkupBuddy</a></li>
+			<li><i class="fa-solid fa-link"></i> <a href="https://stcampbe.github.io/tbsweb-toolset/urlfinder/" target="_blank">LinkBuddy</a></li>
+			</ul>
+            <p>Project source code is <a href="https://github.com/stcampbe/tbsweb-toolset/tree/main/urltodoc" target="_blank">available on GitHub</a>. For more detailed information or help, please contact:</p><p><strong>Stratton Campbell</strong><br> Communications Officer, Web Publishing @ Strategic Communications and Ministerial Affairs<br>Treasury Board of Canada Secretariat / Government of Canada<br><a href="mailto:Stratton.Campbell@tbs-sct.gc.ca">Stratton.Campbell@tbs-sct.gc.ca</a></p>
+        </div>
+    </div>
+</div>
 
 <script>
     let contentEn = '';
@@ -147,6 +184,21 @@
       `);
       iframeDoc.close();
     }
+	// Info modal functionality
+document.getElementById('infoBtn').addEventListener('click', function() {
+  document.getElementById('infoModal').classList.remove('hidden');
+});
+
+document.getElementById('closeInfoModalBtn').addEventListener('click', function() {
+  document.getElementById('infoModal').classList.add('hidden');
+});
+
+// Close modal when clicking outside of it
+document.getElementById('infoModal').addEventListener('click', function(e) {
+  if (e.target === this) {
+    this.classList.add('hidden');
+  }
+});
     
     function findLanguageToggleLink(doc) {
       // Look for the language toggle link in the header
