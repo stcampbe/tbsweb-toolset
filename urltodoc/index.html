@@ -60,7 +60,7 @@
         
         <div class="flex-1 flex gap-3 items-center">
           <div class="flex-1 relative">
-            <input type="text" id="urlInput" placeholder="Enter Canada.ca URL (English or French)" 
+            <input type="text" id="urlInput" placeholder="Enter Canada.ca or Preview URL (English or French)" 
               class="w-full p-2.5 pr-10 border-2 border-zinc-600 rounded text-sm bg-[#1a1a1a] text-white outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-500" autocomplete="off">
             <button type="button" onclick="clearInput()" title="Clear" 
               class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors">
@@ -70,7 +70,7 @@
             </button>
           </div>
           
-          <button type="button" onclick="fetchBothPages()" 
+          <button type="button" onclick="checkUrlAndLoad()" 
             class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded text-sm transition-colors whitespace-nowrap shadow-md">
             Load Content
           </button>
@@ -103,9 +103,11 @@
       </div>
     </div>
 
-    <!-- Floating Error / Status Div (Moved here) -->
+    <!-- Floating Error / Status Div -->
     <div id="error" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 w-11/12 max-w-2xl empty:hidden drop-shadow-2xl"></div>
   </div>
+  
+  <!-- Info Modal -->
   <div id="infoModal" class="fixed inset-0 z-50 overflow-y-auto hidden bg-gray-900 bg-opacity-75 flex items-center justify-center">
     <div class="bg-gray-800 p-8 rounded-lg shadow-xl max-w-2xl w-full text-white relative">
         <button id="closeInfoModalBtn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-200">
@@ -131,6 +133,37 @@
     </div>
 </div>
 
+<!-- PREVIEW WARNING MODAL -->
+<div id="previewModal" class="fixed inset-0 z-50 overflow-y-auto hidden bg-slate-900 bg-opacity-90 flex items-center justify-center backdrop-blur-sm">
+    <div class="bg-white p-8 rounded-xl shadow-2xl max-w-lg w-full text-slate-800 relative border-2 border-yellow-500">
+        <button onclick="closePreviewModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
+            <i class="fas fa-times text-xl"></i>
+        </button>
+        
+        <div class="text-center mb-6">
+            <div class="mx-auto w-16 h-16 bg-fuchsia-100 rounded-full flex items-center justify-center mb-4">
+                <i class="fa-solid fa-shield-halved text-3xl text-fuchsia-600"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-slate-900">Preview Link Detected</h2>
+        </div>
+
+        <div class="space-y-4 text-sm text-gray-600">
+            
+            <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                <p class="mb-2"><i class="fa-solid fa-triangle-exclamation text-yellow-600 mr-2"></i><strong>It looks like you are trying to access a preview link.</strong></p>
+                <p>This version cannot publically access unpublished content directly due to security restrictions. <strong>Alternatively, you can access an internal version of this app below with no restrictions.</strong></p>
+            </div>
+            
+            
+            <a id="redirectBtn" href="#" target="_blank" 
+               class="block w-full bg-fuchsia-700 hover:bg-fuchsia-800 text-white font-bold py-4 px-6 rounded-lg text-center transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+               <i class="fa-solid fa-arrow-up-right-from-square mr-2"></i> Use DocBuddy+ (must be in office or on VPN)
+            </a>
+            
+        </div>
+    </div>
+</div>
+
 <script>
     let contentEn = '';
     let contentFr = '';
@@ -139,6 +172,59 @@
     let urlEn = '';
     let urlFr = '';
     
+    // --- URL CHECKER LOGIC ---
+    window.checkUrlAndLoad = function() {
+        const url = document.getElementById('urlInput').value.trim();
+        const errorDiv = document.getElementById('error');
+        errorDiv.innerHTML = '';
+
+        if (!url) {
+            errorDiv.innerHTML = '<div class="text-red-700 bg-red-100 p-3 rounded-lg border border-red-700 shadow-xl font-bold text-sm text-center"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Please enter a URL</div>';
+            return;
+        }
+
+        // Detect if the App ITSELF is running on the internal preview domain
+        const isInternalTool = window.location.hostname.includes('canada-preview.adobecqms.net');
+
+        // Check for AEM Preview Domain in input
+        // Only block if the user is NOT already on the internal tool
+        if (url.includes('canada-preview.adobecqms.net') && !isInternalTool) {
+            showPreviewModal(url);
+        } else {
+            // Normal Load
+            fetchBothPages(url);
+        }
+    }
+
+    // Show the modal and construct the forwarding URL
+    function showPreviewModal(userUrl) {
+        const modal = document.getElementById('previewModal');
+        const btn = document.getElementById('redirectBtn');
+        
+        // Base Internal URL
+        const internalBase = "https://canada-preview.adobecqms.net/en/treasury-board-secretariat/templates/web-solutions-en/docbuddy-en.html";
+        
+        // Ensure userUrl has protocol for the query param
+        const safeUserUrl = userUrl.startsWith('http') ? userUrl : 'https://' + userUrl;
+        
+        // Construct new href with query parameter
+        btn.href = `${internalBase}?target=${encodeURIComponent(safeUserUrl)}`;
+        
+        modal.classList.remove('hidden');
+    }
+
+    function closePreviewModal() {
+        document.getElementById('previewModal').classList.add('hidden');
+    }
+
+    // If user clicks "Try anyway"
+    window.forceFetch = function() {
+        const url = document.getElementById('urlInput').value.trim();
+        closePreviewModal();
+        fetchBothPages(url);
+    }
+    // -------------------------
+
     window.clearInput = function() {
       document.getElementById('urlInput').value = '';
       contentEn = '';
@@ -184,21 +270,29 @@
       `);
       iframeDoc.close();
     }
-	// Info modal functionality
-document.getElementById('infoBtn').addEventListener('click', function() {
-  document.getElementById('infoModal').classList.remove('hidden');
-});
+    
+    // Info modal functionality
+    document.getElementById('infoBtn').addEventListener('click', function() {
+      document.getElementById('infoModal').classList.remove('hidden');
+    });
 
-document.getElementById('closeInfoModalBtn').addEventListener('click', function() {
-  document.getElementById('infoModal').classList.add('hidden');
-});
+    document.getElementById('closeInfoModalBtn').addEventListener('click', function() {
+      document.getElementById('infoModal').classList.add('hidden');
+    });
 
-// Close modal when clicking outside of it
-document.getElementById('infoModal').addEventListener('click', function(e) {
-  if (e.target === this) {
-    this.classList.add('hidden');
-  }
-});
+    // Close modal when clicking outside of it
+    document.getElementById('infoModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        this.classList.add('hidden');
+      }
+    });
+
+    // Close Preview modal when clicking outside
+    document.getElementById('previewModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        this.classList.add('hidden');
+      }
+    });
     
     function findLanguageToggleLink(doc) {
       // Look for the language toggle link in the header
@@ -226,6 +320,33 @@ document.getElementById('infoModal').addEventListener('click', function(e) {
       return null;
     }
 
+    // --- ROBUST FETCH HELPER ---
+    // Tries direct fetch first (for Intranet/VPN users with CORS extensions)
+    // Falls back to Proxy (for public-but-CORS-blocked pages)
+    async function fetchUrlContent(url) {
+        // Add timestamp to prevent caching of preview pages
+        const cleanUrl = url.split('#')[0];
+        const cacheBuster = (cleanUrl.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
+        const urlWithCache = cleanUrl + cacheBuster;
+
+        try {
+            // Attempt 1: Direct Fetch
+            const response = await fetch(urlWithCache);
+            if (!response.ok) throw new Error(`Direct fetch status: ${response.status}`);
+            return await response.text();
+        } catch (directError) {
+            console.warn('Direct fetch failed, attempting proxy fallback...', directError);
+            
+            // Attempt 2: Proxy Fallback
+            // Note: Proxy cannot see VPN sites. 
+            // If this fails and Direct failed, the user needs a CORS extension.
+            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(urlWithCache)}`;
+            const response = await fetch(proxyUrl);
+            if (!response.ok) throw new Error('Proxy fetch failed');
+            return await response.text();
+        }
+    }
+
     // --- AJAX FETCH INTEGRATION START ---
     window.resolveAjaxElements = async function(doc, baseUrl) {
       // WET supports several injection methods
@@ -251,19 +372,8 @@ document.getElementById('infoModal').addEventListener('click', function(e) {
                       const absoluteUrl = new URL(fragmentUrl, baseUrl).href;
                       const [urlPart, hashPart] = absoluteUrl.split('#');
                       
-                      // Fetch the fragment HTML
-                      let fragmentHtml = '';
-                      try {
-                          const response = await fetch(urlPart);
-                          if (!response.ok) throw new Error('Direct fetch failed');
-                          fragmentHtml = await response.text();
-                      } catch (e) {
-                          // Fallback to proxy just like the main fetch
-                          const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(urlPart)}`;
-                          const proxyResponse = await fetch(proxyUrl);
-                          if (!proxyResponse.ok) throw new Error('Proxy fetch failed');
-                          fragmentHtml = await proxyResponse.text();
-                      }
+                      // Use robust fetch helper
+                      const fragmentHtml = await fetchUrlContent(urlPart);
                       
                       const fragmentDoc = new DOMParser().parseFromString(fragmentHtml, 'text/html');
                       let contentToInject = '';
@@ -306,7 +416,14 @@ document.getElementById('infoModal').addEventListener('click', function(e) {
     function fixPaths(html, baseUrl) {
       const parser = new DOMParser();
       const doc = parser.parseFromString(html, 'text/html');
-      
+
+      // 1. Force details open (optional, good for previewing all content)
+      // We do NOT add styles, HRs, or Arrows here anymore.
+      doc.querySelectorAll('details').forEach(detail => {
+         detail.setAttribute('open', '');
+      });
+
+      // 2. Fix Links
       doc.querySelectorAll('a[href]').forEach(link => {
         const href = link.getAttribute('href');
         if (href && !href.startsWith('#')) {
@@ -321,6 +438,7 @@ document.getElementById('infoModal').addEventListener('click', function(e) {
         }
       });
       
+      // 3. Fix Images
       doc.querySelectorAll('img[src]').forEach(img => {
         const src = img.getAttribute('src');
         if (src && !src.startsWith('http') && !src.startsWith('//') && !src.startsWith('data:')) {
@@ -331,6 +449,7 @@ document.getElementById('infoModal').addEventListener('click', function(e) {
         }
       });
 	  
+      // 4. Fix GCDS Components
 	  doc.querySelectorAll('gcds-icon[src], gcds-img[src]').forEach(el => {
 		  const src = el.getAttribute('src');
 		  if (src && !src.startsWith('http') && !src.startsWith('//') && !src.startsWith('data:')) {
@@ -391,17 +510,8 @@ document.getElementById('infoModal').addEventListener('click', function(e) {
         throw new Error('Invalid URL format');
       }
       
-      let html = '';
-      try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Direct fetch failed');
-        html = await response.text();
-      } catch (directError) {
-        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-        const proxyResponse = await fetch(proxyUrl);
-        if (!proxyResponse.ok) throw new Error('Failed to fetch content');
-        html = await proxyResponse.text();
-      }
+      // Use robust fetch helper instead of direct fetch
+      const html = await fetchUrlContent(url);
       
       const parser = new DOMParser();
       const doc = parser.parseFromString(html, 'text/html');
@@ -409,7 +519,7 @@ document.getElementById('infoModal').addEventListener('click', function(e) {
       await window.resolveAjaxElements(doc, url);
 
       const mainContent = doc.querySelector('main') || doc.querySelector('[role="main"]') || doc.querySelector('#wb-cont');
-		const gcdsContainers = doc.querySelectorAll('gcds-container');
+      const gcdsContainers = doc.querySelectorAll('gcds-container');
 
 		let contentToProcess = '';
 
@@ -428,7 +538,7 @@ document.getElementById('infoModal').addEventListener('click', function(e) {
 		  contentToProcess = doc.body.innerHTML;
 		}
 
-		if (contentToProcess) {
+      if (contentToProcess) {
 		  const content = fixPaths(contentToProcess, url);
 		  const h1 = doc.querySelector('h1');
 		  const title = h1 ? h1.textContent.trim() : 'Canada.ca Page';
@@ -452,107 +562,111 @@ document.getElementById('infoModal').addEventListener('click', function(e) {
       throw new Error('Could not find main content');
     }
     
-    window.fetchBothPages = async function() {
-  const url = document.getElementById('urlInput').value.trim();
-  const errorDiv = document.getElementById('error');
-  
-  errorDiv.innerHTML = '';
-  
-  if (!url) {
-    errorDiv.innerHTML = '<div class="text-red-700 bg-red-100 p-3 rounded-lg border border-red-700 shadow-xl font-bold text-sm text-center"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Please enter a URL</div>';
-    return;
-  }
-  
-  const fullUrl = url.startsWith('http') ? url : 'https://' + url;
-  
-  errorDiv.innerHTML = '<div class="text-white bg-slate-800 p-3 rounded-lg border border-slate-700 shadow-xl font-bold text-sm text-center flex items-center justify-center gap-2"><i class="fa-solid fa-spinner fa-spin"></i> Loading content and dynamic fragments...</div>';
-  
-  try {
-    // Detect which language we're loading based on URL
-    const isEnglish = !fullUrl.includes('/fr/');
-    
-    // Fetch the first page and load it into the correct window
-    const result = await fetchPage(fullUrl, isEnglish ? 'en' : 'fr');
-    
-    if (isEnglish) {
-      contentEn = result.content;
-      titleEn = result.title;
-      urlEn = result.url;
-    } else {
-      contentFr = result.content;
-      titleFr = result.title;
-      urlFr = result.url;
-    }
-    
-    // Try to load the other language
-    if (result.altLangLink) {
+    window.fetchBothPages = async function(urlOverride) {
+      // Use override if provided (for the forceFetch function), otherwise get input
+      const url = urlOverride || document.getElementById('urlInput').value.trim();
+      const errorDiv = document.getElementById('error');
+      
+      errorDiv.innerHTML = '';
+      
+      if (!url) {
+        errorDiv.innerHTML = '<div class="text-red-700 bg-red-100 p-3 rounded-lg border border-red-700 shadow-xl font-bold text-sm text-center"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Please enter a URL</div>';
+        return;
+      }
+      
+      const fullUrl = url.startsWith('http') ? url : 'https://' + url;
+      
+      errorDiv.innerHTML = '<div class="text-white bg-slate-800 p-3 rounded-lg border border-slate-700 shadow-xl font-bold text-sm text-center flex items-center justify-center gap-2"><i class="fa-solid fa-spinner fa-spin"></i> Loading content...</div>';
+      
       try {
-        // Make the alternate language URL absolute
-        const altUrl = result.altLangLink.startsWith('http') 
-          ? result.altLangLink 
-          : new URL(result.altLangLink, fullUrl).href;
+        // Detect which language we're loading based on URL
+        const isEnglish = !fullUrl.includes('/fr/');
         
-        const altResult = await fetchPage(altUrl, isEnglish ? 'fr' : 'en');
+        // Fetch the first page and load it into the correct window
+        const result = await fetchPage(fullUrl, isEnglish ? 'en' : 'fr');
         
         if (isEnglish) {
-          contentFr = altResult.content;
-          titleFr = altResult.title;
-          urlFr = altResult.url;
+          contentEn = result.content;
+          titleEn = result.title;
+          urlEn = result.url;
         } else {
-          contentEn = altResult.content;
-          titleEn = altResult.title;
-          urlEn = altResult.url;
+          contentFr = result.content;
+          titleFr = result.title;
+          urlFr = result.url;
         }
         
-        errorDiv.innerHTML = '<div class="text-green-800 bg-green-100 p-3 rounded-lg border border-green-800 shadow-xl font-bold text-sm text-center"><i class="fa-solid fa-check-circle mr-1"></i> Successful content import.</div>';
-        
-        // Auto hide success message after 4 seconds
-        setTimeout(() => { if(errorDiv.innerHTML.includes('Successful')) errorDiv.innerHTML = ''; }, 4000);
-        
-      } catch (altError) {
-        errorDiv.innerHTML = '<div class="text-yellow-800 bg-yellow-100 p-3 rounded-lg border border-yellow-800 shadow-xl font-bold text-sm text-center"><i class="fa-solid fa-circle-info mr-1"></i> Loaded one language. Could not find alternate language version.</div>';
-        // Show placeholder in the window that didn't load
-        if (isEnglish) {
-          showPlaceholder('fr');
+        // Try to load the other language
+        if (result.altLangLink) {
+          try {
+            // Make the alternate language URL absolute
+            const altUrl = result.altLangLink.startsWith('http') 
+              ? result.altLangLink 
+              : new URL(result.altLangLink, fullUrl).href;
+            
+            const altResult = await fetchPage(altUrl, isEnglish ? 'fr' : 'en');
+            
+            if (isEnglish) {
+              contentFr = altResult.content;
+              titleFr = altResult.title;
+              urlFr = altResult.url;
+            } else {
+              contentEn = altResult.content;
+              titleEn = altResult.title;
+              urlEn = altResult.url;
+            }
+            
+            errorDiv.innerHTML = '<div class="text-green-800 bg-green-100 p-3 rounded-lg border border-green-800 shadow-xl font-bold text-sm text-center"><i class="fa-solid fa-check-circle mr-1"></i> Successful content import.</div>';
+            
+            // Auto hide success message after 4 seconds
+            setTimeout(() => { if(errorDiv.innerHTML.includes('Successful')) errorDiv.innerHTML = ''; }, 4000);
+            
+          } catch (altError) {
+            errorDiv.innerHTML = '<div class="text-yellow-800 bg-yellow-100 p-3 rounded-lg border border-yellow-800 shadow-xl font-bold text-sm text-center"><i class="fa-solid fa-circle-info mr-1"></i> Loaded one language. Could not find alternate language version.</div>';
+            // Show placeholder in the window that didn't load
+            if (isEnglish) {
+              showPlaceholder('fr');
+            } else {
+              showPlaceholder('en');
+            }
+          }
         } else {
-          showPlaceholder('en');
+          errorDiv.innerHTML = '<div class="text-yellow-800 bg-yellow-100 p-3 rounded-lg border border-yellow-800 shadow-xl font-bold text-sm text-center"><i class="fa-solid fa-circle-info mr-1"></i> Loaded one language. Could not find language toggle link.</div>';
+          // Show placeholder in the window that didn't load
+          if (isEnglish) {
+            showPlaceholder('fr');
+          } else {
+            showPlaceholder('en');
+          }
         }
-      }
-    } else {
-      errorDiv.innerHTML = '<div class="text-yellow-800 bg-yellow-100 p-3 rounded-lg border border-yellow-800 shadow-xl font-bold text-sm text-center"><i class="fa-solid fa-circle-info mr-1"></i> Loaded one language. Could not find language toggle link.</div>';
-      // Show placeholder in the window that didn't load
-      if (isEnglish) {
-        showPlaceholder('fr');
-      } else {
-        showPlaceholder('en');
+        
+        updateExportButtons();
+        
+      } catch (error) {
+        let msg = error.message;
+        // Suggest CORS solution if it's likely an intranet/network failure
+        if (fullUrl.includes('adobecqms') || msg.includes('Failed to fetch')) {
+            msg = `Could not access URL. If this is a preview link behind VPN, <strong>please install a "Allow CORS" browser extension</strong> and try again.`;
+        }
+        errorDiv.innerHTML = '<div class="text-red-700 bg-red-100 p-3 rounded-lg border border-red-700 shadow-xl text-sm text-center"><p class="font-bold"><i class="fa-solid fa-circle-xmark mr-1"></i> Error loading content</p><p class="mt-1">' + msg + '</p></div>';
       }
     }
-    
-    updateExportButtons();
-    
-  } catch (error) {
-    errorDiv.innerHTML = '<div class="text-red-700 bg-red-100 p-3 rounded-lg border border-red-700 shadow-xl font-bold text-sm text-center"><i class="fa-solid fa-circle-xmark mr-1"></i> Error loading content: ' + error.message + '</div>';
-  }
-}
     
     async function toBase64(url) {
-      try {
-        let response;
-        try { response = await fetch(url, { cache: 'no-cache' }); } catch(e) { response = { ok: false }; }
-        if (!response.ok) {
-          const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-          response = await fetch(proxyUrl);
-        }
-        if (!response.ok) throw new Error('Failed to fetch');
-        const blob = await response.blob();
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result);
-          reader.onerror = reject;
-          reader.readAsDataURL(blob);
-        });
-      } catch (e) { return null; }
-    }
+  try {
+    const response = await fetch(url, { cache: 'no-cache' });
+    if (!response.ok) throw new Error('Failed to fetch image');
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch (e) { 
+    console.warn('Failed to convert image to base64:', url);
+    return null; 
+  }
+}
     
     window.exportWord = async function(lang) {
     const errorDiv = document.getElementById('error');
@@ -574,7 +688,35 @@ document.getElementById('infoModal').addEventListener('click', function(e) {
         const parser = new DOMParser();
         const doc = parser.parseFromString(content, 'text/html');
         
-        // Remove visually hidden WET text 
+        doc.querySelectorAll('details').forEach(detail => {
+            
+            // 1. Create separators (Horizontal Rules)
+            const hrTop = doc.createElement('hr');
+            const hrBottom = doc.createElement('hr');
+            
+            // Insert HR Before the <details> tag
+            if (detail.parentNode) {
+                detail.parentNode.insertBefore(hrTop, detail);
+                // Insert HR After
+                detail.parentNode.insertBefore(hrBottom, detail.nextSibling);
+            }
+
+            // 2. Format the Summary (Arrow + Bold + Underline)
+            const summary = detail.querySelector('summary');
+            if (summary) {
+                // Remove default CSS marker
+                summary.style.listStyle = 'none'; 
+                
+                // Apply inline styles for Word
+                summary.setAttribute('style', 'font-weight: bold; text-decoration: underline; margin-bottom: 10px; color: #000;');
+                
+                // Manually inject the Down Arrow
+                if (!summary.innerHTML.includes('▼')) {
+                    summary.innerHTML = '&#9660; ' + summary.innerHTML;
+                }
+            }
+        });
+		
         doc.querySelectorAll('.wb-inv').forEach(el => el.remove());
         
         // Remove unwanted tags
@@ -602,50 +744,134 @@ document.getElementById('infoModal').addEventListener('click', function(e) {
             list.removeAttribute('class');
         });
         
-        // Enhanced table processing with WET4 styling
+        // Enhanced table processing with WET4 styling & Text Colors
         doc.querySelectorAll('table').forEach(table => {
-            table.setAttribute('style', 'border-collapse: collapse; width: 100%; border: 1px solid #000;');
+
+            // --- 1. TFOOT FIX ---
+            const tfoot = table.querySelector('tfoot');
+            let tbody = table.querySelector('tbody');
+            if (tfoot) {
+                if (!tbody) {
+                    tbody = doc.createElement('tbody');
+                    table.appendChild(tbody);
+                }
+                while (tfoot.firstChild) tbody.appendChild(tfoot.firstChild);
+                tfoot.remove();
+            }
+
+            // --- Helpers ---
+            const getAlignment = (className) => {
+                if (!className) return null;
+                if (className.includes('text-right')) return 'right';
+                if (className.includes('text-center')) return 'center';
+                if (className.includes('text-left')) return 'left';
+                return null;
+            };
+
+            const getBackgroundColor = (className) => {
+                if (!className) return null;
+                // WET / Bootstrap colors
+                if (className.includes('bg-primary')) return { bg: '#26374a', color: '#fff' };
+                if (className.includes('bg-success')) return { bg: '#278400', color: '#fff' };
+                if (className.includes('bg-info')) return { bg: '#269abc', color: '#fff' };
+                if (className.includes('bg-warning')) return { bg: '#f90', color: '#000' };
+                if (className.includes('bg-danger')) return { bg: '#d3080c', color: '#fff' };
+                if (className.includes('bg-dark')) return { bg: '#333333', color: '#fff' }; // Added bg-dark
+                
+                if (className.includes('active')) return { bg: '#f5f5f5', color: '#000' };
+                if (className.includes('success')) return { bg: '#dff0d8', color: '#000' };
+                if (className.includes('warning')) return { bg: '#fcf8e3', color: '#000' };
+                if (className.includes('danger')) return { bg: '#f2dede', color: '#000' };
+                if (className.includes('info')) return { bg: '#d9edf7', color: '#000' };
+                return null;
+            };
+
+            // --- 2. Table Level Styles ---
+            const tableClass = table.className || '';
+            const tableAlign = getAlignment(tableClass);
             
-            table.querySelectorAll('th, td').forEach(cell => {
-                let styles = ['border: 1px solid #000', 'padding: 8px'];
-                const classes = cell.className || '';
+            table.setAttribute('style', 'border-collapse: collapse; width: 100%; border: 1px solid #000; margin-bottom: 10px;');
+
+            // --- 3. Caption Handling (Convert to P) ---
+            const caption = table.querySelector('caption');
+            if (caption) {
+                const p = doc.createElement('p');
+                p.innerHTML = caption.innerHTML;
+                const capClass = caption.className || '';
                 
-                if (classes.includes('bg-primary')) {
-                    styles.push('background-color: #269abc', 'color: #fff');
-                } else if (classes.includes('bg-success')) {
-                    styles.push('background-color: #278400', 'color: #fff');
-                } else if (classes.includes('bg-info')) {
-                    styles.push('background-color: #269abc', 'color: #fff');
-                } else if (classes.includes('bg-warning')) {
-                    styles.push('background-color: #f90', 'color: #000');
-                } else if (classes.includes('bg-danger')) {
-                    styles.push('background-color: #d3080c', 'color: #fff');
-                } else if (classes.includes('active')) {
-                    styles.push('background-color: #d9edf7');
-                } else if (classes.includes('success')) {
-                    styles.push('background-color: #dff0d8');
-                } else if (classes.includes('warning')) {
-                    styles.push('background-color: #fcf8e3');
-                } else if (classes.includes('danger')) {
-                    styles.push('background-color: #f2dede');
-                } else if (classes.includes('info')) {
-                    styles.push('background-color: #d9edf7');
-                }
+                // Determine Alignment
+                let capAlign = 'left';
+                if (capClass.includes('text-center')) capAlign = 'center';
+                else if (capClass.includes('text-right')) capAlign = 'right';
                 
-                if (cell.tagName === 'TH' && !classes.match(/bg-|active|success|warning|danger|info/)) {
-                    styles.push('background-color: #f5f5f5', 'font-weight: bold');
-                }
+                p.setAttribute('style', `text-align: ${capAlign}; font-weight: bold; margin-bottom: 3px; margin-top: 12px; font-size: 11pt;`);
                 
-                if (classes.includes('text-center')) {
-                    styles.push('text-align: center');
-                } else if (classes.includes('text-right')) {
-                    styles.push('text-align: right');
-                }
+                table.parentNode.insertBefore(p, table);
+                caption.remove();
+            }
+
+            // --- 4. Process Rows and Cells ---
+            table.querySelectorAll('tr').forEach(row => {
+                const rowClass = row.className || '';
+                const rowAlign = getAlignment(rowClass);
+                const rowBg = getBackgroundColor(rowClass);
+
+                row.querySelectorAll('th, td').forEach(cell => {
+                    const isHeader = cell.tagName === 'TH';
+                    const cellClass = cell.className || '';
+                    
+                    // Combine classes to check for text overrides
+                    const combinedClass = rowClass + ' ' + cellClass;
+
+                    let styles = ['border: 1px solid #000', 'padding: 4px', 'line-height: 1.1'];
+
+                    // --- ALIGNMENT ---
+                    let finalAlign = 'left';
+                    const cellAlign = getAlignment(cellClass);
+                    
+                    if (cellAlign) finalAlign = cellAlign;
+                    else if (rowAlign) finalAlign = rowAlign;
+                    else if (tableAlign && !isHeader) finalAlign = tableAlign;
+                    
+                    styles.push(`text-align: ${finalAlign}`);
+
+                    // --- BACKGROUND & COLOR ---
+                    const cellBg = getBackgroundColor(cellClass);
+                    const finalBg = cellBg || rowBg; // Cell takes precedence
+                    
+                    if (finalBg) {
+                        styles.push(`background-color: ${finalBg.bg}`);
+                        
+                        // Determine Text Color:
+                        // 1. Explicit text class (text-white)
+                        // 2. Implied by background (bg-dark)
+                        // 3. Default
+                        if (combinedClass.includes('text-white')) {
+                            styles.push('color: #ffffff');
+                        } else if (combinedClass.includes('text-dark')) {
+                            styles.push('color: #000000');
+                        } else if (finalBg.color) {
+                            styles.push(`color: ${finalBg.color}`);
+                        }
+                    } else {
+                        // No BG, but check for text color classes anyway
+                        if (combinedClass.includes('text-white')) styles.push('color: #ffffff'); // Likely invisible without BG, but strictly following rule
+                        if (combinedClass.includes('text-dark')) styles.push('color: #000000');
+                    }
+
+                    // --- FONT WEIGHT ---
+                    if (isHeader) {
+                        if (cellClass.includes('fnt-nrml')) styles.push('font-weight: normal');
+                        else styles.push('font-weight: bold');
+                    }
+
+                    cell.setAttribute('style', styles.join('; ') + ';');
+                    cell.removeAttribute('class');
+                });
                 
-                cell.setAttribute('style', styles.join('; ') + ';');
-                cell.removeAttribute('class');
+                row.removeAttribute('class');
             });
-            
+
             table.removeAttribute('class');
         });
         
@@ -661,9 +887,30 @@ document.getElementById('infoModal').addEventListener('click', function(e) {
             }
         });
         
-        // Process images
+        // Process images (Base64 conversion + Layout Fixes)
         const images = doc.querySelectorAll('img');
         const imagePromises = Array.from(images).map(async (img) => {
+            
+            // 1. Force Image to own line (Display Block / Clear Both)
+            // We wrap it in a paragraph to ensure Word treats it as a block element
+            if (img.parentElement.tagName !== 'P') {
+                const wrapper = doc.createElement('p');
+                wrapper.setAttribute('style', 'clear: both; margin: 15px 0;');
+                img.parentNode.insertBefore(wrapper, img);
+                wrapper.appendChild(img);
+            } else {
+                // If already in a P, ensure that P clears floats
+                img.parentElement.setAttribute('style', 'text-align: center; clear: both; margin: 15px 0;');
+            }
+            
+            // 2. Remove WET/Bootstrap floating classes
+            img.classList.remove('pull-left', 'pull-right', 'float-start', 'float-end', 'align-left', 'align-right');
+            
+            // 3. Ensure image itself has no float style
+            img.style.float = 'none';
+            img.style.display = 'inline-block'; // Inline-block inside the centered P works best for Word
+
+            // 4. Existing Base64 Logic
             const src = img.getAttribute('src');
             if (src && !src.startsWith('data:')) {
                 const base64 = await toBase64(src);
@@ -738,7 +985,7 @@ document.getElementById('infoModal').addEventListener('click', function(e) {
 		// Remove GCDS header and footer from Word export
 		doc.querySelectorAll('gcds-header, gcds-footer').forEach(el => el.remove());
 
-		const urlHeader = sourceUrl ? `
+        const urlHeader = sourceUrl ? `
             <div style="margin-bottom: 20px; padding: 15px; background-color: #f0f0f0; border-left: 4px solid #269abc;">
                 <p style="margin: 0; font-size: 12px; color: #666;"><strong>Source URL:</strong></p>
                 <p style="margin: 5px 0 0 0; font-size: 14px; word-break: break-all;"><a href="${sourceUrl}">${sourceUrl}</a></p>
@@ -793,6 +1040,22 @@ document.getElementById('infoModal').addEventListener('click', function(e) {
     }
 }
     
+    window.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetUrl = urlParams.get('target');
+        
+        if (targetUrl) {
+            // Populate the input
+            document.getElementById('urlInput').value = targetUrl;
+            
+            // Bypass the check and fetch directly
+            // We use a small timeout to ensure the DOM is fully ready
+            setTimeout(() => {
+                fetchBothPages(targetUrl);
+            }, 500);
+        }
+    });
+
     // Initialize placeholders on load
     showPlaceholder('en');
     showPlaceholder('fr');
