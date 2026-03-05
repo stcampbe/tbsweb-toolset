@@ -324,22 +324,16 @@
     // Tries direct fetch first (for Intranet/VPN users with CORS extensions)
     // Falls back to Proxy (for public-but-CORS-blocked pages)
     async function fetchUrlContent(url) {
-        // Add timestamp to prevent caching of preview pages
         const cleanUrl = url.split('#')[0];
         const cacheBuster = (cleanUrl.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
         const urlWithCache = cleanUrl + cacheBuster;
 
         try {
-            // Attempt 1: Direct Fetch
             const response = await fetch(urlWithCache);
             if (!response.ok) throw new Error(`Direct fetch status: ${response.status}`);
             return await response.text();
         } catch (directError) {
             console.warn('Direct fetch failed, attempting proxy fallback...', directError);
-            
-            // Attempt 2: Proxy Fallback
-            // Note: Proxy cannot see VPN sites. 
-            // If this fails and Direct failed, the user needs a CORS extension.
             const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(urlWithCache)}`;
             const response = await fetch(proxyUrl);
             if (!response.ok) throw new Error('Proxy fetch failed');
@@ -347,71 +341,96 @@
         }
     }
 
-    // --- AJAX FETCH INTEGRATION START ---
+    // --- IMPROVED AJAX RESOLVER (Supports data-ajax-* AND .wb-ajax JSON) ---
     window.resolveAjaxElements = async function(doc, baseUrl) {
-      // WET supports several injection methods
-      const ajaxTypes = ['data-ajax-replace', 'data-ajax-before', 'data-ajax-after', 'data-ajax-append', 'data-ajax-prepend'];
       let depth = 0;
-      const maxDepth = 3; // Prevent infinite loops in case of nested ajax calls
+      const maxDepth = 3;
 
       while (depth < maxDepth) {
           let foundAny = false;
+
+          // ---------------------------------------------------------
+          // STRATEGY A: Standard WET attributes (data-ajax-replace)
+          // ---------------------------------------------------------
+          const ajaxTypes = ['data-ajax-replace', 'data-ajax-before', 'data-ajax-after', 'data-ajax-append', 'data-ajax-prepend'];
           for (const type of ajaxTypes) {
               const elements = Array.from(doc.querySelectorAll(`[${type}]`));
               for (const el of elements) {
                   foundAny = true;
                   const fragmentUrl = el.getAttribute(type);
-                  
-                  // Remove the attribute immediately so we don't re-process it
-                  el.removeAttribute(type);
+                  el.removeAttribute(type); // Prevent infinite loops
                   
                   if (!fragmentUrl) continue;
-                  
-                  try {
-                      // Resolve relative URLs (like /content/canadasite/...)
-                      const absoluteUrl = new URL(fragmentUrl, baseUrl).href;
-                      const [urlPart, hashPart] = absoluteUrl.split('#');
-                      
-                      // Use robust fetch helper
-                      const fragmentHtml = await fetchUrlContent(urlPart);
-                      
-                      const fragmentDoc = new DOMParser().parseFromString(fragmentHtml, 'text/html');
-                      let contentToInject = '';
-                      
-                      // If a hash is provided, only grab that specific element. Otherwise, grab the whole body.
-                      if (hashPart) {
-                          const targetEl = fragmentDoc.getElementById(hashPart);
-                          if (targetEl) {
-                              contentToInject = targetEl.outerHTML;
-                          }
-                      } else {
-                          contentToInject = fragmentDoc.body.innerHTML;
-                      }
-                      
-                      // Inject the content based on the WET attribute type
-                      if (contentToInject) {
-                          if (type === 'data-ajax-replace') {
-                              el.outerHTML = contentToInject;
-                          } else if (type === 'data-ajax-before') {
-                              el.insertAdjacentHTML('beforebegin', contentToInject);
-                          } else if (type === 'data-ajax-after') {
-                              el.insertAdjacentHTML('afterend', contentToInject);
-                          } else if (type === 'data-ajax-append') {
-                              el.insertAdjacentHTML('beforeend', contentToInject);
-                          } else if (type === 'data-ajax-prepend') {
-                              el.insertAdjacentHTML('afterbegin', contentToInject);
-                          }
-                      }
-                  } catch (err) {
-                      console.warn(`DocBuddy: Failed to resolve WET ajax content for ${fragmentUrl}`, err);
-                  }
+                  await processAjaxInjection(el, type.replace('data-ajax-', ''), fragmentUrl, baseUrl);
               }
           }
+
+          // ---------------------------------------------------------
+          // STRATEGY B: .wb-ajax Class with JSON config
+          // Found on pages like: responsible-use-ai
+          // ---------------------------------------------------------
+          const wbAjaxElements = Array.from(doc.querySelectorAll('.wb-ajax'));
+          for (const el of wbAjaxElements) {
+              foundAny = true;
+              const rawConfig = el.getAttribute('data-wb-ajax');
+              
+              // Remove class and attribute to prevent re-processing
+              el.classList.remove('wb-ajax');
+              el.removeAttribute('data-wb-ajax');
+
+              if (!rawConfig) continue;
+
+              try {
+                  // Parse the JSON config (e.g., {"url": "...", "type": "replace"})
+                  const config = JSON.parse(rawConfig);
+                  if (config.url) {
+                      // Default type is 'replace' if not specified
+                      const type = config.type || 'replace';
+                      await processAjaxInjection(el, type, config.url, baseUrl);
+                  }
+              } catch (e) {
+                  console.warn('DocBuddy: Invalid JSON in wb-ajax', e);
+              }
+          }
+
           if (!foundAny) break;
           depth++;
       }
     };
-    // --- AJAX FETCH INTEGRATION END ---
+
+    // Helper function to handle the actual fetching and DOM insertion
+    async function processAjaxInjection(el, type, fragmentUrl, baseUrl) {
+        try {
+            // Resolve absolute URLs
+            const absoluteUrl = new URL(fragmentUrl, baseUrl).href;
+            const [urlPart, hashPart] = absoluteUrl.split('#');
+            
+            // Fetch content using our robust fetcher
+            const fragmentHtml = await fetchUrlContent(urlPart);
+            const fragmentDoc = new DOMParser().parseFromString(fragmentHtml, 'text/html');
+            
+            let contentToInject = '';
+            
+            // Extract specific ID or grab Body
+            if (hashPart) {
+                const targetEl = fragmentDoc.getElementById(hashPart);
+                if (targetEl) contentToInject = targetEl.outerHTML;
+            } else {
+                contentToInject = fragmentDoc.body.innerHTML;
+            }
+            
+            // Perform the Injection
+            if (contentToInject) {
+                if (type === 'replace') el.outerHTML = contentToInject;
+                else if (type === 'before') el.insertAdjacentHTML('beforebegin', contentToInject);
+                else if (type === 'after') el.insertAdjacentHTML('afterend', contentToInject);
+                else if (type === 'append') el.insertAdjacentHTML('beforeend', contentToInject);
+                else if (type === 'prepend') el.insertAdjacentHTML('afterbegin', contentToInject);
+            }
+        } catch (err) {
+            console.warn(`DocBuddy: Failed to resolve content for ${fragmentUrl}`, err);
+        }
+    }
     
     function fixPaths(html, baseUrl) {
       const parser = new DOMParser();
@@ -668,25 +687,26 @@
   }
 }
     
-    window.exportWord = async function(lang) {
-    const errorDiv = document.getElementById('error');
-    const exportBtn = document.getElementById(lang === 'en' ? 'exportEnBtn' : 'exportFrBtn');
-    
-    const content = lang === 'en' ? contentEn : contentFr;
-    const title = lang === 'en' ? titleEn : titleFr;
-    const sourceUrl = lang === 'en' ? urlEn : urlFr;
-    
-    if (!content) return;
-    
-    const originalBtnText = exportBtn.innerHTML;
-    exportBtn.disabled = true;
-    exportBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
-    
-    try {
-        if (typeof htmlDocx === 'undefined') throw new Error('Library missing.');
+     window.exportWord = async function(lang) {
+        const errorDiv = document.getElementById('error');
+        const exportBtn = document.getElementById(lang === 'en' ? 'exportEnBtn' : 'exportFrBtn');
         
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(content, 'text/html');
+        const content = lang === 'en' ? contentEn : contentFr;
+        const title = lang === 'en' ? titleEn : titleFr;
+        const sourceUrl = lang === 'en' ? urlEn : urlFr;
+        
+        if (!content) return;
+        
+        const originalBtnText = exportBtn.innerHTML;
+        exportBtn.disabled = true;
+        exportBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
+        
+        try {
+            if (typeof htmlDocx === 'undefined') throw new Error('Library missing.');
+            
+            const parser = new DOMParser();
+            // Parse HTML with a wrapper to ensure fragment structure is maintained
+            const doc = parser.parseFromString(`<div>${content}</div>`, 'text/html');
         
         doc.querySelectorAll('details').forEach(detail => {
             
