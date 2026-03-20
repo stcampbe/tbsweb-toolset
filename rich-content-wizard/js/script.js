@@ -6667,7 +6667,6 @@ document.getElementById('frSecToCH6Btn')
                     details = doc.createElement('details');
                     details.id = detailsId;
                     summary = doc.createElement('summary');
-                    summary.className = 'wb-toggle';
                     ulOrOl = doc.createElement(initialListTagName);
                     details.appendChild(summary);
                     details.appendChild(ulOrOl);
