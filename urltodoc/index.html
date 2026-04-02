@@ -687,7 +687,7 @@
   }
 }
     
-     window.exportWord = async function(lang) {
+    window.exportWord = async function(lang) {
         const errorDiv = document.getElementById('error');
         const exportBtn = document.getElementById(lang === 'en' ? 'exportEnBtn' : 'exportFrBtn');
         
@@ -708,357 +708,368 @@
             // Parse HTML with a wrapper to ensure fragment structure is maintained
             const doc = parser.parseFromString(`<div>${content}</div>`, 'text/html');
         
-        doc.querySelectorAll('details').forEach(detail => {
-            
-            // 1. Create separators (Horizontal Rules)
-            const hrTop = doc.createElement('hr');
-            const hrBottom = doc.createElement('hr');
-            
-            // Insert HR Before the <details> tag
-            if (detail.parentNode) {
-                detail.parentNode.insertBefore(hrTop, detail);
-                // Insert HR After
-                detail.parentNode.insertBefore(hrBottom, detail.nextSibling);
-            }
-
-            // 2. Format the Summary (Arrow + Bold + Underline)
-            const summary = detail.querySelector('summary');
-            if (summary) {
-                // Remove default CSS marker
-                summary.style.listStyle = 'none'; 
+            doc.querySelectorAll('details').forEach(detail => {
                 
-                // Apply inline styles for Word
-                summary.setAttribute('style', 'font-weight: bold; text-decoration: underline; margin-bottom: 10px; color: #000;');
+                // 1. Create separators (Horizontal Rules)
+                const hrTop = doc.createElement('hr');
+                const hrBottom = doc.createElement('hr');
                 
-                // Manually inject the Down Arrow
-                if (!summary.innerHTML.includes('▼')) {
-                    summary.innerHTML = '&#9660; ' + summary.innerHTML;
+                // Insert HR Before the <details> tag
+                if (detail.parentNode) {
+                    detail.parentNode.insertBefore(hrTop, detail);
+                    // Insert HR After
+                    detail.parentNode.insertBefore(hrBottom, detail.nextSibling);
                 }
-            }
-        });
-		
-        doc.querySelectorAll('.wb-inv').forEach(el => el.remove());
-        
-        // Remove unwanted tags
-        const tagsToRemove = ['script', 'style', 'link', 'meta', 'iframe', 'button', 'input', 'form', 'svg'];
-        tagsToRemove.forEach(tag => doc.querySelectorAll(tag).forEach(el => el.remove()));
-        
-        // Enhanced list processing - preserve WET list types
-        doc.querySelectorAll('ol, ul').forEach(list => {
-            const classes = list.className || '';
-            
-            if (classes.includes('lst-lwr-alph')) {
-                list.setAttribute('style', 'list-style-type: lower-alpha;');
-            } else if (classes.includes('lst-upr-alph')) {
-                list.setAttribute('style', 'list-style-type: upper-alpha;');
-            } else if (classes.includes('lst-lwr-rmn')) {
-                list.setAttribute('style', 'list-style-type: lower-roman;');
-            } else if (classes.includes('lst-upr-rmn')) {
-                list.setAttribute('style', 'list-style-type: upper-roman;');
-            } else if (list.tagName === 'OL') {
-                list.setAttribute('style', 'list-style-type: decimal;');
-            } else {
-                list.setAttribute('style', 'list-style-type: disc;');
-            }
-            
-            list.removeAttribute('class');
-        });
-        
-        // Enhanced table processing with WET4 styling & Text Colors
-        doc.querySelectorAll('table').forEach(table => {
 
-            // --- 1. TFOOT FIX ---
-            const tfoot = table.querySelector('tfoot');
-            let tbody = table.querySelector('tbody');
-            if (tfoot) {
-                if (!tbody) {
-                    tbody = doc.createElement('tbody');
-                    table.appendChild(tbody);
+                // 2. Format the Summary (Arrow + Bold + Underline)
+                const summary = detail.querySelector('summary');
+                if (summary) {
+                    // Remove default CSS marker
+                    summary.style.listStyle = 'none'; 
+                    
+                    // Apply inline styles for Word
+                    summary.setAttribute('style', 'font-weight: bold; text-decoration: underline; margin-bottom: 10px; color: #000;');
+                    
+                    // Manually inject the Down Arrow
+                    if (!summary.innerHTML.includes('▼')) {
+                        summary.innerHTML = '&#9660; ' + summary.innerHTML;
+                    }
                 }
-                while (tfoot.firstChild) tbody.appendChild(tfoot.firstChild);
-                tfoot.remove();
-            }
-
-            // --- Helpers ---
-            const getAlignment = (className) => {
-                if (!className) return null;
-                if (className.includes('text-right')) return 'right';
-                if (className.includes('text-center')) return 'center';
-                if (className.includes('text-left')) return 'left';
-                return null;
-            };
-
-            const getBackgroundColor = (className) => {
-                if (!className) return null;
-                // WET / Bootstrap colors
-                if (className.includes('bg-primary')) return { bg: '#26374a', color: '#fff' };
-                if (className.includes('bg-success')) return { bg: '#278400', color: '#fff' };
-                if (className.includes('bg-info')) return { bg: '#269abc', color: '#fff' };
-                if (className.includes('bg-warning')) return { bg: '#f90', color: '#000' };
-                if (className.includes('bg-danger')) return { bg: '#d3080c', color: '#fff' };
-                if (className.includes('bg-dark')) return { bg: '#333333', color: '#fff' }; // Added bg-dark
-                
-                if (className.includes('active')) return { bg: '#f5f5f5', color: '#000' };
-                if (className.includes('success')) return { bg: '#dff0d8', color: '#000' };
-                if (className.includes('warning')) return { bg: '#fcf8e3', color: '#000' };
-                if (className.includes('danger')) return { bg: '#f2dede', color: '#000' };
-                if (className.includes('info')) return { bg: '#d9edf7', color: '#000' };
-                return null;
-            };
-
-            // --- 2. Table Level Styles ---
-            const tableClass = table.className || '';
-            const tableAlign = getAlignment(tableClass);
+            });
             
-            table.setAttribute('style', 'border-collapse: collapse; width: 100%; border: 1px solid #000; margin-bottom: 10px;');
-
-            // --- 3. Caption Handling (Convert to P) ---
-            const caption = table.querySelector('caption');
-            if (caption) {
-                const p = doc.createElement('p');
-                p.innerHTML = caption.innerHTML;
-                const capClass = caption.className || '';
+            doc.querySelectorAll('.wb-inv').forEach(el => el.remove());
+            
+            // Remove unwanted tags
+            const tagsToRemove = ['script', 'style', 'link', 'meta', 'iframe', 'button', 'input', 'form', 'svg'];
+            tagsToRemove.forEach(tag => doc.querySelectorAll(tag).forEach(el => el.remove()));
+            
+            // Enhanced list processing - preserve WET list types
+            doc.querySelectorAll('ol, ul').forEach(list => {
+                const classes = list.className || '';
                 
-                // Determine Alignment
-                let capAlign = 'left';
-                if (capClass.includes('text-center')) capAlign = 'center';
-                else if (capClass.includes('text-right')) capAlign = 'right';
+                if (classes.includes('lst-lwr-alph')) {
+                    list.setAttribute('style', 'list-style-type: lower-alpha;');
+                } else if (classes.includes('lst-upr-alph')) {
+                    list.setAttribute('style', 'list-style-type: upper-alpha;');
+                } else if (classes.includes('lst-lwr-rmn')) {
+                    list.setAttribute('style', 'list-style-type: lower-roman;');
+                } else if (classes.includes('lst-upr-rmn')) {
+                    list.setAttribute('style', 'list-style-type: upper-roman;');
+                } else if (list.tagName === 'OL') {
+                    list.setAttribute('style', 'list-style-type: decimal;');
+                } else {
+                    list.setAttribute('style', 'list-style-type: disc;');
+                }
                 
-                p.setAttribute('style', `text-align: ${capAlign}; font-weight: bold; margin-bottom: 3px; margin-top: 12px; font-size: 11pt;`);
+                list.removeAttribute('class');
+            });
+            
+            // Enhanced table processing with WET4 styling & Text Colors
+            doc.querySelectorAll('table').forEach(table => {
+
+                // --- 1. TFOOT FIX ---
+                const tfoot = table.querySelector('tfoot');
+                let tbody = table.querySelector('tbody');
+                if (tfoot) {
+                    if (!tbody) {
+                        tbody = doc.createElement('tbody');
+                        table.appendChild(tbody);
+                    }
+                    while (tfoot.firstChild) tbody.appendChild(tfoot.firstChild);
+                    tfoot.remove();
+                }
+
+                // --- Helpers ---
+                const getAlignment = (className) => {
+                    if (!className) return null;
+                    if (className.includes('text-right')) return 'right';
+                    if (className.includes('text-center')) return 'center';
+                    if (className.includes('text-left')) return 'left';
+                    return null;
+                };
+
+                const getBackgroundColor = (className) => {
+                    if (!className) return null;
+                    if (className.includes('bg-primary')) return { bg: '#26374a', color: '#fff' };
+                    if (className.includes('bg-success')) return { bg: '#278400', color: '#fff' };
+                    if (className.includes('bg-info')) return { bg: '#269abc', color: '#fff' };
+                    if (className.includes('bg-warning')) return { bg: '#f90', color: '#000' };
+                    if (className.includes('bg-danger')) return { bg: '#d3080c', color: '#fff' };
+                    if (className.includes('bg-dark')) return { bg: '#333333', color: '#fff' }; 
+                    
+                    if (className.includes('active')) return { bg: '#f5f5f5', color: '#000' };
+                    if (className.includes('success')) return { bg: '#dff0d8', color: '#000' };
+                    if (className.includes('warning')) return { bg: '#fcf8e3', color: '#000' };
+                    if (className.includes('danger')) return { bg: '#f2dede', color: '#000' };
+                    if (className.includes('info')) return { bg: '#d9edf7', color: '#000' };
+                    return null;
+                };
+
+                // --- 2. Table Level Styles ---
+                const tableClass = table.className || '';
+                const tableAlign = getAlignment(tableClass);
                 
-                table.parentNode.insertBefore(p, table);
-                caption.remove();
-            }
+                table.setAttribute('style', 'border-collapse: collapse; width: 100%; border: 1px solid #000; margin-bottom: 10px;');
 
-            // --- 4. Process Rows and Cells ---
-            table.querySelectorAll('tr').forEach(row => {
-                const rowClass = row.className || '';
-                const rowAlign = getAlignment(rowClass);
-                const rowBg = getBackgroundColor(rowClass);
-
-                row.querySelectorAll('th, td').forEach(cell => {
-                    const isHeader = cell.tagName === 'TH';
-                    const cellClass = cell.className || '';
+                // --- 3. Caption Handling (Convert to P) ---
+                const caption = table.querySelector('caption');
+                if (caption) {
+                    const p = doc.createElement('p');
+                    p.innerHTML = caption.innerHTML;
+                    const capClass = caption.className || '';
                     
-                    // Combine classes to check for text overrides
-                    const combinedClass = rowClass + ' ' + cellClass;
-
-                    let styles = ['border: 1px solid #000', 'padding: 4px', 'line-height: 1.1'];
-
-                    // --- ALIGNMENT ---
-                    let finalAlign = 'left';
-                    const cellAlign = getAlignment(cellClass);
+                    let capAlign = 'left';
+                    if (capClass.includes('text-center')) capAlign = 'center';
+                    else if (capClass.includes('text-right')) capAlign = 'right';
                     
-                    if (cellAlign) finalAlign = cellAlign;
-                    else if (rowAlign) finalAlign = rowAlign;
-                    else if (tableAlign && !isHeader) finalAlign = tableAlign;
+                    p.setAttribute('style', `text-align: ${capAlign}; font-weight: bold; margin-bottom: 3px; margin-top: 12px; font-size: 11pt;`);
                     
-                    styles.push(`text-align: ${finalAlign}`);
+                    table.parentNode.insertBefore(p, table);
+                    caption.remove();
+                }
 
-                    // --- BACKGROUND & COLOR ---
-                    const cellBg = getBackgroundColor(cellClass);
-                    const finalBg = cellBg || rowBg; // Cell takes precedence
-                    
-                    if (finalBg) {
-                        styles.push(`background-color: ${finalBg.bg}`);
+                // --- 4. Process Rows and Cells ---
+                table.querySelectorAll('tr').forEach(row => {
+                    const rowClass = row.className || '';
+                    const rowAlign = getAlignment(rowClass);
+                    const rowBg = getBackgroundColor(rowClass);
+
+                    row.querySelectorAll('th, td').forEach(cell => {
+                        const isHeader = cell.tagName === 'TH';
+                        const cellClass = cell.className || '';
                         
-                        // Determine Text Color:
-                        // 1. Explicit text class (text-white)
-                        // 2. Implied by background (bg-dark)
-                        // 3. Default
-                        if (combinedClass.includes('text-white')) {
-                            styles.push('color: #ffffff');
-                        } else if (combinedClass.includes('text-dark')) {
-                            styles.push('color: #000000');
-                        } else if (finalBg.color) {
-                            styles.push(`color: ${finalBg.color}`);
+                        const combinedClass = rowClass + ' ' + cellClass;
+                        let styles = ['border: 1px solid #000', 'padding: 4px', 'line-height: 1.1'];
+
+                        // --- ALIGNMENT ---
+                        let finalAlign = 'left';
+                        const cellAlign = getAlignment(cellClass);
+                        
+                        if (cellAlign) finalAlign = cellAlign;
+                        else if (rowAlign) finalAlign = rowAlign;
+                        else if (tableAlign && !isHeader) finalAlign = tableAlign;
+                        
+                        styles.push(`text-align: ${finalAlign}`);
+
+                        // --- BACKGROUND & COLOR ---
+                        const cellBg = getBackgroundColor(cellClass);
+                        const finalBg = cellBg || rowBg; 
+                        
+                        if (finalBg) {
+                            styles.push(`background-color: ${finalBg.bg}`);
+                            
+                            if (combinedClass.includes('text-white')) {
+                                styles.push('color: #ffffff');
+                            } else if (combinedClass.includes('text-dark')) {
+                                styles.push('color: #000000');
+                            } else if (finalBg.color) {
+                                styles.push(`color: ${finalBg.color}`);
+                            }
+                        } else {
+                            if (combinedClass.includes('text-white')) styles.push('color: #ffffff'); 
+                            if (combinedClass.includes('text-dark')) styles.push('color: #000000');
                         }
-                    } else {
-                        // No BG, but check for text color classes anyway
-                        if (combinedClass.includes('text-white')) styles.push('color: #ffffff'); // Likely invisible without BG, but strictly following rule
-                        if (combinedClass.includes('text-dark')) styles.push('color: #000000');
-                    }
 
-                    // --- FONT WEIGHT ---
-                    if (isHeader) {
-                        if (cellClass.includes('fnt-nrml')) styles.push('font-weight: normal');
-                        else styles.push('font-weight: bold');
-                    }
+                        // --- FONT WEIGHT ---
+                        if (isHeader) {
+                            if (cellClass.includes('fnt-nrml')) styles.push('font-weight: normal');
+                            else styles.push('font-weight: bold');
+                        }
 
-                    cell.setAttribute('style', styles.join('; ') + ';');
-                    cell.removeAttribute('class');
+                        cell.setAttribute('style', styles.join('; ') + ';');
+                        cell.removeAttribute('class');
+                    });
+                    
+                    row.removeAttribute('class');
                 });
+
+                table.removeAttribute('class');
+            });
+            
+            // --- FIX FOR HREF LOSS ON STYLED LINKS ---
+            doc.querySelectorAll('a[href]').forEach(a => {
+                if (a.querySelector('img')) return; // Leave linked images alone
                 
-                row.removeAttribute('class');
+                // If the link contains formatting, extract the styling and flatten to plain text
+                if (a.children.length > 0) {
+                    const hasItalic = a.querySelector('em, i');
+                    const hasBold = a.querySelector('strong, b');
+                    const hasUnderline = a.querySelector('u');
+                    
+                    a.innerHTML = a.textContent; 
+                    
+                    let styles = [];
+                    if (hasItalic) styles.push('font-style: italic');
+                    if (hasBold) styles.push('font-weight: bold');
+                    if (hasUnderline) styles.push('text-decoration: underline');
+                    
+                    if (styles.length > 0) {
+                        let existingStyle = a.getAttribute('style') || '';
+                        if (existingStyle && !existingStyle.trim().endsWith(';')) existingStyle += ';';
+                        a.setAttribute('style', existingStyle + (existingStyle ? ' ' : '') + styles.join('; '));
+                    }
+                }
             });
 
-            table.removeAttribute('class');
-        });
-        
-        // Clean up other attributes
-        doc.querySelectorAll('*').forEach(el => {
-            if (el.tagName !== 'OL' && el.tagName !== 'UL' && el.tagName !== 'TABLE') {
-                el.removeAttribute('class');
-            }
-            el.removeAttribute('id');
-            el.removeAttribute('onclick');
-            if (el.tagName !== 'OL' && el.tagName !== 'UL' && el.tagName !== 'TABLE' && el.tagName !== 'TH' && el.tagName !== 'TD') {
-                el.removeAttribute('style');
-            }
-        });
-        
-        // Process images (Base64 conversion + Layout Fixes)
-        const images = doc.querySelectorAll('img');
-        const imagePromises = Array.from(images).map(async (img) => {
+            // Clean up other attributes
+            doc.querySelectorAll('*').forEach(el => {
+                if (el.tagName !== 'OL' && el.tagName !== 'UL' && el.tagName !== 'TABLE') {
+                    el.removeAttribute('class');
+                }
+                el.removeAttribute('id');
+                el.removeAttribute('onclick');
+                // Added "A" to the exception list so flattened links keep their new inline styles
+                if (el.tagName !== 'OL' && el.tagName !== 'UL' && el.tagName !== 'TABLE' && el.tagName !== 'TH' && el.tagName !== 'TD' && el.tagName !== 'A') {
+                    el.removeAttribute('style');
+                }
+            });
             
-            // 1. Force Image to own line (Display Block / Clear Both)
-            // We wrap it in a paragraph to ensure Word treats it as a block element
-            if (img.parentElement.tagName !== 'P') {
-                const wrapper = doc.createElement('p');
-                wrapper.setAttribute('style', 'clear: both; margin: 15px 0;');
-                img.parentNode.insertBefore(wrapper, img);
-                wrapper.appendChild(img);
-            } else {
-                // If already in a P, ensure that P clears floats
-                img.parentElement.setAttribute('style', 'text-align: center; clear: both; margin: 15px 0;');
+            // Process images (Base64 conversion + Layout Fixes)
+            const images = doc.querySelectorAll('img');
+            const imagePromises = Array.from(images).map(async (img) => {
+                
+                if (img.parentElement.tagName !== 'P') {
+                    const wrapper = doc.createElement('p');
+                    wrapper.setAttribute('style', 'clear: both; margin: 15px 0;');
+                    img.parentNode.insertBefore(wrapper, img);
+                    wrapper.appendChild(img);
+                } else {
+                    img.parentElement.setAttribute('style', 'text-align: center; clear: both; margin: 15px 0;');
+                }
+                
+                img.classList.remove('pull-left', 'pull-right', 'float-start', 'float-end', 'align-left', 'align-right');
+                
+                img.style.float = 'none';
+                img.style.display = 'inline-block'; 
+
+                const src = img.getAttribute('src');
+                if (src && !src.startsWith('data:')) {
+                    const base64 = await toBase64(src);
+                    if (base64) img.setAttribute('src', base64);
+                }
+            });
+            
+            if (imagePromises.length > 0) await Promise.all(imagePromises);
+
+            // Convert GCDS components to standard HTML for Word export
+            doc.querySelectorAll('gcds-button').forEach(btn => {
+              const newBtn = doc.createElement('button');
+              newBtn.innerHTML = btn.innerHTML || btn.textContent;
+              const type = btn.getAttribute('button-role') || btn.getAttribute('type') || 'primary';
+              let bgColor = '#26374a';
+              if (type === 'primary') bgColor = '#26374a';
+              else if (type === 'secondary') bgColor = '#fff';
+              else if (type === 'danger') bgColor = '#d3080c';
+              newBtn.setAttribute('style', `background-color: ${bgColor}; color: ${type === 'secondary' ? '#26374a' : '#fff'}; padding: 12px 24px; border: ${type === 'secondary' ? '2px solid #26374a' : 'none'}; border-radius: 4px; font-weight: 700; font-size: 16px; cursor: pointer; display: inline-block;`);
+              btn.replaceWith(newBtn);
+            });
+
+            doc.querySelectorAll('gcds-alert').forEach(alert => {
+              const div = doc.createElement('div');
+              const alertType = alert.getAttribute('alert-role') || 'info';
+              let bgColor = '#d9edf7', borderColor = '#269abc';
+              if (alertType === 'danger') { bgColor = '#f2dede'; borderColor = '#d3080c'; }
+              else if (alertType === 'warning') { bgColor = '#fcf8e3'; borderColor = '#f90'; }
+              else if (alertType === 'success') { bgColor = '#dff0d8'; borderColor = '#278400'; }
+              
+              div.innerHTML = alert.innerHTML || alert.textContent;
+              div.setAttribute('style', `background-color: ${bgColor}; border-left: 4px solid ${borderColor}; padding: 15px; margin: 15px 0; color: #000;`);
+              alert.replaceWith(div);
+            });
+
+            doc.querySelectorAll('gcds-card').forEach(card => {
+              const div = doc.createElement('div');
+              div.innerHTML = card.innerHTML || card.textContent;
+              div.setAttribute('style', 'border: 1px solid #ddd; border-radius: 4px; padding: 20px; margin: 15px 0; background-color: #fff;');
+              card.replaceWith(div);
+            });
+
+            doc.querySelectorAll('gcds-heading').forEach(heading => {
+              const level = heading.getAttribute('tag') || 'h2';
+              const newHeading = doc.createElement(level);
+              newHeading.innerHTML = heading.innerHTML || heading.textContent;
+              newHeading.setAttribute('style', 'font-weight: 700; margin: 20px 0 10px 0; color: #26374a;');
+              heading.replaceWith(newHeading);
+            });
+
+            doc.querySelectorAll('gcds-text').forEach(text => {
+              const p = doc.createElement('p');
+              p.innerHTML = text.innerHTML || text.textContent;
+              text.replaceWith(p);
+            });
+
+            doc.querySelectorAll('gcds-link').forEach(link => {
+              const a = doc.createElement('a');
+              a.innerHTML = link.innerHTML || link.textContent;
+              a.setAttribute('href', link.getAttribute('href') || '#');
+              a.setAttribute('style', 'color: #26374a; text-decoration: underline;');
+              link.replaceWith(a);
+            });
+
+            doc.querySelectorAll('gcds-container').forEach(container => {
+              const div = doc.createElement('div');
+              div.innerHTML = container.innerHTML;
+              div.setAttribute('style', 'max-width: 1200px; margin: 0 auto; padding: 20px;');
+              container.replaceWith(div);
+            });
+
+            // Remove GCDS header and footer from Word export
+            doc.querySelectorAll('gcds-header, gcds-footer').forEach(el => el.remove());
+
+            const urlHeader = sourceUrl ? `
+                <div style="margin-bottom: 20px; padding: 15px; background-color: #f0f0f0; border-left: 4px solid #269abc;">
+                    <p style="margin: 0; font-size: 12px; color: #666;"><strong>Source URL:</strong></p>
+                    <p style="margin: 5px 0 0 0; font-size: 14px; word-break: break-all;"><a href="${sourceUrl}">${sourceUrl}</a></p>
+                </div>
+            ` : '';
+            
+            // Added Calibri font-family to the body tag
+            const cleanHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title></head><body style="font-family: 'Calibri', sans-serif;">${urlHeader}${doc.body.innerHTML}</body></html>`;
+            
+            const blob = htmlDocx.asBlob(cleanHtml);
+            const url = URL.createObjectURL(blob);
+            const downloadLink = document.createElement('a');
+            downloadLink.href = url;
+            
+            // Generate filename from the language-specific URL and date
+            let filename = 'canada_page';
+            if (sourceUrl) {
+                try {
+                    const urlObj = new URL(sourceUrl);
+                    const pathname = urlObj.pathname;
+                    // Get the last part of the path, remove .html extension if present
+                    const lastPart = pathname.split('/').filter(p => p).pop() || 'page';
+                    filename = lastPart.replace(/\.html?$/i, '').replace(/[^a-z0-9_-]/gi, '_');
+                } catch (e) {
+                    // If URL parsing fails, use title as fallback
+                    filename = title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+                }
             }
             
-            // 2. Remove WET/Bootstrap floating classes
-            img.classList.remove('pull-left', 'pull-right', 'float-start', 'float-end', 'align-left', 'align-right');
+            // Add language suffix and date in YYYYMMDD format
+            const today = new Date();
+            const dateStr = today.getFullYear() + 
+                           String(today.getMonth() + 1).padStart(2, '0') + 
+                           String(today.getDate()).padStart(2, '0');
             
-            // 3. Ensure image itself has no float style
-            img.style.float = 'none';
-            img.style.display = 'inline-block'; // Inline-block inside the centered P works best for Word
-
-            // 4. Existing Base64 Logic
-            const src = img.getAttribute('src');
-            if (src && !src.startsWith('data:')) {
-                const base64 = await toBase64(src);
-                if (base64) img.setAttribute('src', base64);
-            }
-        });
-        
-        if (imagePromises.length > 0) await Promise.all(imagePromises);
-
-		// Convert GCDS components to standard HTML for Word export
-		doc.querySelectorAll('gcds-button').forEach(btn => {
-		  const newBtn = doc.createElement('button');
-		  newBtn.innerHTML = btn.innerHTML || btn.textContent;
-		  const type = btn.getAttribute('button-role') || btn.getAttribute('type') || 'primary';
-		  let bgColor = '#26374a';
-		  if (type === 'primary') bgColor = '#26374a';
-		  else if (type === 'secondary') bgColor = '#fff';
-		  else if (type === 'danger') bgColor = '#d3080c';
-		  newBtn.setAttribute('style', `background-color: ${bgColor}; color: ${type === 'secondary' ? '#26374a' : '#fff'}; padding: 12px 24px; border: ${type === 'secondary' ? '2px solid #26374a' : 'none'}; border-radius: 4px; font-weight: 700; font-size: 16px; cursor: pointer; display: inline-block;`);
-		  btn.replaceWith(newBtn);
-		});
-
-		doc.querySelectorAll('gcds-alert').forEach(alert => {
-		  const div = doc.createElement('div');
-		  const alertType = alert.getAttribute('alert-role') || 'info';
-		  let bgColor = '#d9edf7', borderColor = '#269abc';
-		  if (alertType === 'danger') { bgColor = '#f2dede'; borderColor = '#d3080c'; }
-		  else if (alertType === 'warning') { bgColor = '#fcf8e3'; borderColor = '#f90'; }
-		  else if (alertType === 'success') { bgColor = '#dff0d8'; borderColor = '#278400'; }
-		  
-		  div.innerHTML = alert.innerHTML || alert.textContent;
-		  div.setAttribute('style', `background-color: ${bgColor}; border-left: 4px solid ${borderColor}; padding: 15px; margin: 15px 0; color: #000;`);
-		  alert.replaceWith(div);
-		});
-
-		doc.querySelectorAll('gcds-card').forEach(card => {
-		  const div = doc.createElement('div');
-		  div.innerHTML = card.innerHTML || card.textContent;
-		  div.setAttribute('style', 'border: 1px solid #ddd; border-radius: 4px; padding: 20px; margin: 15px 0; background-color: #fff;');
-		  card.replaceWith(div);
-		});
-
-		doc.querySelectorAll('gcds-heading').forEach(heading => {
-		  const level = heading.getAttribute('tag') || 'h2';
-		  const newHeading = doc.createElement(level);
-		  newHeading.innerHTML = heading.innerHTML || heading.textContent;
-		  newHeading.setAttribute('style', 'font-weight: 700; margin: 20px 0 10px 0; color: #26374a;');
-		  heading.replaceWith(newHeading);
-		});
-
-		doc.querySelectorAll('gcds-text').forEach(text => {
-		  const p = doc.createElement('p');
-		  p.innerHTML = text.innerHTML || text.textContent;
-		  text.replaceWith(p);
-		});
-
-		doc.querySelectorAll('gcds-link').forEach(link => {
-		  const a = doc.createElement('a');
-		  a.innerHTML = link.innerHTML || link.textContent;
-		  a.setAttribute('href', link.getAttribute('href') || '#');
-		  a.setAttribute('style', 'color: #26374a; text-decoration: underline;');
-		  link.replaceWith(a);
-		});
-
-		doc.querySelectorAll('gcds-container').forEach(container => {
-		  const div = doc.createElement('div');
-		  div.innerHTML = container.innerHTML;
-		  div.setAttribute('style', 'max-width: 1200px; margin: 0 auto; padding: 20px;');
-		  container.replaceWith(div);
-		});
-
-		// Remove GCDS header and footer from Word export
-		doc.querySelectorAll('gcds-header, gcds-footer').forEach(el => el.remove());
-
-        const urlHeader = sourceUrl ? `
-            <div style="margin-bottom: 20px; padding: 15px; background-color: #f0f0f0; border-left: 4px solid #269abc;">
-                <p style="margin: 0; font-size: 12px; color: #666;"><strong>Source URL:</strong></p>
-                <p style="margin: 5px 0 0 0; font-size: 14px; word-break: break-all;"><a href="${sourceUrl}">${sourceUrl}</a></p>
-            </div>
-        ` : '';
-        
-        // Added Calibri font-family to the body tag
-        const cleanHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title></head><body style="font-family: 'Calibri', sans-serif;">${urlHeader}${doc.body.innerHTML}</body></html>`;
-        
-        const blob = htmlDocx.asBlob(cleanHtml);
-        const url = URL.createObjectURL(blob);
-        const downloadLink = document.createElement('a');
-        downloadLink.href = url;
-        
-        // Generate filename from the language-specific URL and date
-        let filename = 'canada_page';
-        if (sourceUrl) {
-            try {
-                const urlObj = new URL(sourceUrl);
-                const pathname = urlObj.pathname;
-                // Get the last part of the path, remove .html extension if present
-                const lastPart = pathname.split('/').filter(p => p).pop() || 'page';
-                filename = lastPart.replace(/\.html?$/i, '').replace(/[^a-z0-9_-]/gi, '_');
-            } catch (e) {
-                // If URL parsing fails, use title as fallback
-                filename = title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-            }
+            downloadLink.download = `${filename}_${dateStr}.docx`;
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+            URL.revokeObjectURL(url);
+            
+            errorDiv.innerHTML = `<div class="text-green-800 bg-green-100 p-3 rounded-lg border border-green-800 shadow-xl font-bold text-sm text-center"><i class="fa-solid fa-file-word mr-1"></i> Word document generated successfully!</div>`;
+            
+            // Auto hide success message after 4 seconds
+            setTimeout(() => { if(errorDiv.innerHTML.includes('generated successfully')) errorDiv.innerHTML = ''; }, 4000);
+            
+        } catch (e) {
+            errorDiv.innerHTML = `<div class="text-red-700 bg-red-100 p-3 rounded-lg border border-red-700 shadow-xl font-bold text-sm text-center"><i class="fa-solid fa-circle-xmark mr-1"></i> Error: ${e.message}</div>`;
+        } finally {
+            exportBtn.disabled = false;
+            exportBtn.innerHTML = originalBtnText;
         }
-        
-        // Add language suffix and date in YYYYMMDD format
-        const today = new Date();
-        const dateStr = today.getFullYear() + 
-                       String(today.getMonth() + 1).padStart(2, '0') + 
-                       String(today.getDate()).padStart(2, '0');
-        
-        downloadLink.download = `${filename}_${dateStr}.docx`;
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        document.body.removeChild(downloadLink);
-        URL.revokeObjectURL(url);
-        
-        errorDiv.innerHTML = `<div class="text-green-800 bg-green-100 p-3 rounded-lg border border-green-800 shadow-xl font-bold text-sm text-center"><i class="fa-solid fa-file-word mr-1"></i> Word document generated successfully!</div>`;
-        
-        // Auto hide success message after 4 seconds
-        setTimeout(() => { if(errorDiv.innerHTML.includes('generated successfully')) errorDiv.innerHTML = ''; }, 4000);
-        
-    } catch (e) {
-        errorDiv.innerHTML = `<div class="text-red-700 bg-red-100 p-3 rounded-lg border border-red-700 shadow-xl font-bold text-sm text-center"><i class="fa-solid fa-circle-xmark mr-1"></i> Error: ${e.message}</div>`;
-    } finally {
-        exportBtn.disabled = false;
-        exportBtn.innerHTML = originalBtnText;
     }
-}
     
     window.addEventListener('DOMContentLoaded', () => {
         const urlParams = new URLSearchParams(window.location.search);
