@@ -152,7 +152,7 @@ const APP_CONFIG = {
             'pause', 'play', 'pre-scrollable', 'prev', 'previous', 'progress',
             'provisional', 'radio', 'relative', 'row', 'section', 'show', 'simple',
             'small', 'sr-only', 'static', 'sticky', 'success', 'tab-content', 'table',
-            'tgl-tab', 'thumbnail', 'tooltip', 'top-0', 'visible', 'warning', 'well',
+            'tgl-tab', 'thumbnail', 'tooltip', 'toc' 'top-0', 'visible', 'warning', 'well',
             'zoom-in',
 
             // Custom classes (exact matches)
@@ -169,7 +169,7 @@ const APP_CONFIG = {
             'navbar-', 'nojs-', 'opacity-', 'p-', 'pagination-', 'panel-', 'pb-',
             'pddng-', 'pl-', 'pr-', 'prefix_', 'progress-', 'print-', 'pt-', 'pull-', 'push-',
             'px-', 'py-', 'radio-', 'right-', 'rounded', 'shadow', 'space-', 'suffix_', 'table-',
-            'text-', 'tgl-', 'tooltip-', 'visible-', 'w-', 'wb-', 'well-', 'wet-', 'z-',
+            'text-', 'tgl-', 'tooltip-', 'top-', 'visible-', 'w-', 'wb-', 'well-', 'wet-', 'z-',
 			
 			// Custom classes (prefix)
 			// IMPORTANT: Add any class prefixes if a custom CSS is required, otherwise the cleaning operation will remove it.
