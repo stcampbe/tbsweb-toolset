@@ -152,7 +152,7 @@ const APP_CONFIG = {
             'pause', 'play', 'pre-scrollable', 'prev', 'previous', 'progress',
             'provisional', 'radio', 'relative', 'row', 'section', 'show', 'simple',
             'small', 'sr-only', 'static', 'sticky', 'success', 'tab-content', 'table',
-            'tgl-tab', 'thumbnail', 'tooltip', 'toc' 'top-0', 'visible', 'warning', 'well',
+            'tgl-tab', 'thumbnail', 'tooltip', 'toc', 'top-0', 'visible', 'warning', 'well',
             'zoom-in',
 
             // Custom classes (exact matches)
